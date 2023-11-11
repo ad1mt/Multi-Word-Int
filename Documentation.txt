@@ -1,0 +1,88 @@
+Multi_int Library For Free Pascal.
+==================================
+
+Multi_int is a library that provides large integers for the Free Pascal compiler.
+
+The large integer types are:
+
+Multi_Int_X2    fixed 2 word integer  (in a 64bit environment = 128 bits)
+Multi_Int_X3    fixed 3 word integer  (in a 64bit environment = 256 bits)
+Multi_Int_X4    fixed 4 word integer  (in a 64bit environment = 512 bits)
+Multi_Int_X48   user definable muliple word integer
+
+The types Multi_Int_X2, Multi_Int_X3 and Multi_Int_X4 are provided for maximum speed.
+Multi_Int_X48 is user definable in size at compile time. It has been tested up to 2048 words (= 16384 bits).
+
+The following arithmetical operations are available:
+
+add           +
+subtract      -
+multiply      *
+divide        div
+exclusive or  xor
+modulo        mod
+power         **
+
+All the usual comparison operators are available:
+  =  <>  >  >=  <  <=
+
+Conversion to/from other types is automatic/implicit, for the following types:
+to/from integers
+to/from real
+from string is automatic
+to string with "ToStr" method
+to/from string in hex notation with ToHex and FromHex methods
+to/from different large integer types with typecast functions To_Multi_Int_X48, To_Multi_Int_X4, To_Multi_Int_X3 and To_Multi_Int_X2
+
+Other operations/functions:
+Odd
+Even
+Defined
+Overflow
+
+The following constants are calculated (technically, these are actually variables calculated during initialisation):
+
+Multi_Int_X2_MAXINT
+Multi_Int_X3_MAXINT
+Multi_Int_X4_MAXINT
+Multi_Int_X48_MAXINT
+
+There are two example/test programs included with the library code, to illustrate how the library can be used and fill in any gaps in this documentation.
+
+Technical Notes
+---------------
+The code will only compile & work correctly in Delphi mode. The "advancedrecords" mode will not work correctlly.
+
+The code will compile in both 32bit and 64bit environments. In the Multi_Int.pas file you must set a define "{$define 64bit}" or "{$define 32bit}" depending on the environment, i.e. whether standard integers are 32bit or 64bit.
+
+In the Multi_Int.pas file you can set/remove a define "{$define RAISE_EXCEPTIONS_ENABLED}", if set this enables run-time exceptions to be generated. If removed/unset, run-time exceptions will not be generated, but the Defined and Overload attributes will still be set and can be checked explicitly in the calling code.
+
+In the Multi_Int_Interface.pas file you can set/change a define called "X48_max". This is the size in half-words of the Multi_Int_X48 type (zero base). So, if you specify 127, that means the size is 128 half-words, which equals 64 whole words, which equals 4096 bits. Set this size to be the maximum you need for your application (with a small margin of error). The larger the size, the slower the calculations become.
+
+The name "Multi_Int_X48" should be better, its a hangover from earlier days, and I'm a bit scared to do a global search and replace in the code. Suggestions for a new name are welcome.
+
+The standard integer types have been aliased as follows, to make the coding easier in both 32bit and 64bit environments:
+int8u = byte;
+int8 = shortint;
+int16 = smallint;
+int16u = word;
+int32 = longint;
+int32u = longword;
+int64u = QWord;
+
+INT_1W_S, INT_1W_U, INT_2W_S, and INT_2W_U are aliased to the above types depending on whether "{$define 64bit}" or "{$define 32bit}" are defined. For example the following are defined for a 64bit environment:
+INT_1W_S = int32;
+INT_1W_U = int32u;
+INT_2W_S = int64;
+INT_2W_U = int64u;
+
+The following functions/procedures are used internally by the division algorithm, but are also available to calling code:
+ShiftUp_MultiBits       bit shift towards most significant bits
+ShiftDown_MultiBits     bit shift towards least significant bits
+
+The library code defines a unit to provide an exotic boolean type:
+UBool = (UBool_UNDEF,UBool_FALSE,UBool_TRUE); and T_UBool.
+These types implement methods and implicit conversion to/from standard boolean values.
+The main feature of the T_UBool and UBool types are to provide boolean variables that can have an additional value of "undefined".
+
+The power function really needs a better (faster) algorithm... this will probably follow soon.
