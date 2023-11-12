@@ -1,0 +1,200 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CONFIG>
+  <ProjectSession>
+    <PathDelim Value="\"/>
+    <Version Value="11"/>
+    <BuildModes Active="Default"/>
+    <Units Count="6">
+      <Unit0>
+        <Filename Value="calc.lpr"/>
+        <IsPartOfProject Value="True"/>
+        <IsVisibleTab Value="True"/>
+        <TopLine Value="6"/>
+        <CursorPos X="14" Y="32"/>
+        <UsageCount Value="43"/>
+        <Loaded Value="True"/>
+      </Unit0>
+      <Unit1>
+        <Filename Value="Multi_Int_Implementation.pas"/>
+        <IsPartOfProject Value="True"/>
+        <EditorIndex Value="1"/>
+        <TopLine Value="9765"/>
+        <CursorPos Y="9797"/>
+        <UsageCount Value="43"/>
+        <Loaded Value="True"/>
+      </Unit1>
+      <Unit2>
+        <Filename Value="Multi_Int_Interface.pas"/>
+        <IsPartOfProject Value="True"/>
+        <EditorIndex Value="2"/>
+        <TopLine Value="307"/>
+        <CursorPos Y="341"/>
+        <UsageCount Value="43"/>
+        <Loaded Value="True"/>
+      </Unit2>
+      <Unit3>
+        <Filename Value="Multi_Int.pas"/>
+        <IsPartOfProject Value="True"/>
+        <EditorIndex Value="3"/>
+        <TopLine Value="175"/>
+        <CursorPos Y="202"/>
+        <UsageCount Value="26"/>
+        <Loaded Value="True"/>
+      </Unit3>
+      <Unit4>
+        <Filename Value="ubool_unit.pas"/>
+        <UnitName Value="UBool_unit"/>
+        <EditorIndex Value="-1"/>
+        <CursorPos Y="21"/>
+        <UsageCount Value="27"/>
+      </Unit4>
+      <Unit5>
+        <Filename Value="Multi_Int.pp"/>
+        <EditorIndex Value="-1"/>
+        <TopLine Value="169"/>
+        <CursorPos X="4" Y="190"/>
+        <UsageCount Value="37"/>
+      </Unit5>
+    </Units>
+    <JumpHistory Count="28" HistoryIndex="27">
+      <Position1>
+        <Filename Value="Multi_Int_Implementation.pas"/>
+        <Caret Line="9720" TopLine="9702"/>
+      </Position1>
+      <Position2>
+        <Filename Value="Multi_Int_Implementation.pas"/>
+        <Caret Line="9721" TopLine="9702"/>
+      </Position2>
+      <Position3>
+        <Filename Value="Multi_Int_Implementation.pas"/>
+        <Caret Line="9722" TopLine="9702"/>
+      </Position3>
+      <Position4>
+        <Filename Value="Multi_Int_Implementation.pas"/>
+        <Caret Line="9719" TopLine="9702"/>
+      </Position4>
+      <Position5>
+        <Filename Value="Multi_Int_Implementation.pas"/>
+        <Caret Line="9720" TopLine="9702"/>
+      </Position5>
+      <Position6>
+        <Filename Value="Multi_Int_Implementation.pas"/>
+        <Caret Line="9722" TopLine="9702"/>
+      </Position6>
+      <Position7>
+        <Filename Value="Multi_Int_Implementation.pas"/>
+        <Caret Line="9709" TopLine="9676"/>
+      </Position7>
+      <Position8>
+        <Filename Value="Multi_Int_Implementation.pas"/>
+        <Caret Line="9719" TopLine="9702"/>
+      </Position8>
+      <Position9>
+        <Filename Value="Multi_Int_Implementation.pas"/>
+        <Caret Line="9720" TopLine="9702"/>
+      </Position9>
+      <Position10>
+        <Filename Value="Multi_Int_Implementation.pas"/>
+        <Caret Line="9721" TopLine="9702"/>
+      </Position10>
+      <Position11>
+        <Filename Value="Multi_Int_Implementation.pas"/>
+        <Caret Line="9722" TopLine="9702"/>
+      </Position11>
+      <Position12>
+        <Filename Value="Multi_Int_Implementation.pas"/>
+        <Caret Line="9719" TopLine="9702"/>
+      </Position12>
+      <Position13>
+        <Filename Value="Multi_Int_Implementation.pas"/>
+        <Caret Line="9697" TopLine="9677"/>
+      </Position13>
+      <Position14>
+        <Filename Value="Multi_Int_Implementation.pas"/>
+        <Caret Line="9698" TopLine="9677"/>
+      </Position14>
+      <Position15>
+        <Filename Value="Multi_Int_Implementation.pas"/>
+        <Caret Line="9699" TopLine="9677"/>
+      </Position15>
+      <Position16>
+        <Filename Value="Multi_Int_Implementation.pas"/>
+        <Caret Line="9700" TopLine="9677"/>
+      </Position16>
+      <Position17>
+        <Filename Value="Multi_Int_Implementation.pas"/>
+        <Caret Line="9701" TopLine="9677"/>
+      </Position17>
+      <Position18>
+        <Filename Value="Multi_Int_Implementation.pas"/>
+        <Caret Line="9702" TopLine="9677"/>
+      </Position18>
+      <Position19>
+        <Filename Value="Multi_Int_Implementation.pas"/>
+        <Caret Line="9719" TopLine="9699"/>
+      </Position19>
+      <Position20>
+        <Filename Value="Multi_Int_Implementation.pas"/>
+        <Caret Line="9725" TopLine="9699"/>
+      </Position20>
+      <Position21>
+        <Filename Value="Multi_Int_Implementation.pas"/>
+        <Caret Line="9744" TopLine="9719"/>
+      </Position21>
+      <Position22>
+        <Filename Value="Multi_Int_Implementation.pas"/>
+        <Caret Line="9726" TopLine="9719"/>
+      </Position22>
+      <Position23>
+        <Filename Value="Multi_Int_Implementation.pas"/>
+        <Caret Line="9725" TopLine="9719"/>
+      </Position23>
+      <Position24>
+        <Filename Value="Multi_Int_Implementation.pas"/>
+        <Caret Line="9744" TopLine="9719"/>
+      </Position24>
+      <Position25>
+        <Filename Value="Multi_Int_Implementation.pas"/>
+        <Caret Line="9745" TopLine="9719"/>
+      </Position25>
+      <Position26>
+        <Filename Value="Multi_Int_Implementation.pas"/>
+        <Caret Line="9757" TopLine="9740"/>
+      </Position26>
+      <Position27>
+        <Filename Value="Multi_Int_Implementation.pas"/>
+        <Caret Line="9697" TopLine="9680"/>
+      </Position27>
+      <Position28>
+        <Filename Value="Multi_Int_Implementation.pas"/>
+        <Caret Line="9960" Column="21" TopLine="9942"/>
+      </Position28>
+    </JumpHistory>
+    <RunParams>
+      <FormatVersion Value="2"/>
+      <Modes Count="0" ActiveMode=""/>
+    </RunParams>
+  </ProjectSession>
+  <Debugging>
+    <Watches Count="6">
+      <Item1>
+        <Expression Value="Mi"/>
+      </Item1>
+      <Item2>
+        <Expression Value="Mj"/>
+      </Item2>
+      <Item3>
+        <Expression Value="Multi_Int_X48_MAXINT"/>
+      </Item3>
+      <Item4>
+        <Expression Value="i"/>
+      </Item4>
+      <Item5>
+        <Expression Value="X48_max"/>
+      </Item5>
+      <Item6>
+        <Expression Value="Mk"/>
+      </Item6>
+    </Watches>
+  </Debugging>
+</CONFIG>
