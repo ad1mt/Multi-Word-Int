@@ -32,15 +32,15 @@
         <IsPartOfProject Value="True"/>
       </Unit0>
       <Unit1>
-        <Filename Value="Multi_Int_Implementation.pas"/>
+        <Filename Value="Multi_Int.pas"/>
         <IsPartOfProject Value="True"/>
       </Unit1>
       <Unit2>
-        <Filename Value="Multi_Int_Interface.pas"/>
+        <Filename Value="Multi_Int_Implementation.pas"/>
         <IsPartOfProject Value="True"/>
       </Unit2>
       <Unit3>
-        <Filename Value="Multi_Int.pas"/>
+        <Filename Value="Multi_Int_Interface.pas"/>
         <IsPartOfProject Value="True"/>
       </Unit3>
     </Units>
