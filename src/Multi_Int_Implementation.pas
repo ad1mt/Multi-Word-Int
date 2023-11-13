@@ -1,4 +1,3 @@
-{$MODESWITCH NESTEDCOMMENTS+}
 
 // {$define Overflow_Checks}
 
@@ -65,6 +64,7 @@ v4.19
 - type conversion between Multi_Int_X48, Multi_Int_X4, Multi_Int_X3, Multi_Int_X2
   probably finished
 - square root function finished
+- fixed N^0 bug in power function
 
 *)
 
@@ -2523,6 +2523,7 @@ then
 	exit;
 	end;
 
+R:= 1;
 T:= v1;
 i:= 1;
 while	(i < P)
@@ -5344,6 +5345,7 @@ then
 	exit;
 	end;
 
+R:= 1;
 T:= v1;
 i:= 1;
 while	(i < P)
@@ -8417,6 +8419,7 @@ then
 	exit;
 	end;
 
+R:= 1;
 T:= v1;
 i:= 1;
 while	(i < P)
@@ -11125,6 +11128,7 @@ then
 	exit;
 	end;
 
+R:= 1;
 T:= v1;
 i:= 1;
 while	(i < P)
