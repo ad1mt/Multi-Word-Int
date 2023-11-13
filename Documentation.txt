@@ -54,7 +54,7 @@ There are two example/test programs included with the library code, to illustrat
 
 Technical Notes
 ---------------
-The code will only compile & work correctly in Delphi mode. The "advancedrecords" mode will not work correctlly.
+The code will only compile & work correctly in Delphi mode. The "advancedrecords" mode will not work correctly.
 
 The code will compile in both 32bit and 64bit environments. In the Multi_Int.pas file you must set a define "{$define 64bit}" or "{$define 32bit}" depending on the environment, i.e. whether standard integers are 32bit or 64bit.
 
