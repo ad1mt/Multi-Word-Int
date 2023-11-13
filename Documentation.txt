@@ -39,8 +39,11 @@ Odd
 Even
 Defined
 Overflow
+SqRoot
 
-The following constants are calculated (technically, these are actually variables calculated during initialisation):
+If the SqRoot (square root) function cannot give an exact result, it rounds down, and gives a remainder.
+
+The following constants are available (technically, these are actually variables calculated during initialisation):
 
 Multi_Int_X2_MAXINT
 Multi_Int_X3_MAXINT
