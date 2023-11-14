@@ -66,7 +66,22 @@ v4.19
 - square root function finished
 - fixed N^0 bug in power function
 
+v4.20
+- fast power function
+
 *)
+
+const
+
+{$ifdef 64bit}
+POWER_TABLE_MAX	= 62;
+POWER_TABLE_MAXLEN	= 63;
+{$endif}
+
+{$ifdef 32bit}
+POWER_TABLE_MAX	= 30;
+POWER_TABLE_MAXLEN	= 31;
+{$endif}
 
 (******************************************)
 var
@@ -91,6 +106,15 @@ X48_Last_Dividend,
 X48_Last_Quotient,
 X48_Last_Remainder	:Multi_Int_X48;
 
+POWER_INDEX_TABLE			:array of INT_2W_U;
+POWER_VALUES_TABLE_MAX_X48	:INT_2W_U;
+POWER_VALUES_TABLE_MAX_X4	:INT_2W_U;
+POWER_VALUES_TABLE_MAX_X3	:INT_2W_U;
+POWER_VALUES_TABLE_MAX_X2	:INT_2W_U;
+POWER_VALUES_TABLE_X48		:array of Multi_Int_X48;
+POWER_VALUES_TABLE_X4		:array of Multi_Int_X4;
+POWER_VALUES_TABLE_X3		:array of Multi_Int_X3;
+POWER_VALUES_TABLE_X2		:array of Multi_Int_X2;
 
 (******************************************)
 procedure	T_UBool.Init(v:UBool);
@@ -190,6 +214,32 @@ else
 	end;
 end;
 {$endif}
+
+
+(******************************************)
+procedure BUILD_POWER_INDEX_TABLE;
+var	N,PI:INT_2W_U;
+begin
+setlength(POWER_INDEX_TABLE, POWER_TABLE_MAXLEN);
+N:= 1;
+PI:= 0;
+while (PI <= POWER_TABLE_MAX) do
+	begin
+    POWER_INDEX_TABLE[PI]:= N;
+	Inc(PI);
+	N:= (N * 2);
+	end;
+end;
+
+
+(******************************************)
+procedure SEARCH_POWER_INDEX_TABLE(var PI:INT_2W_S; const PT:INT_2W_S);
+begin
+while	(PI >= 1)
+and		(POWER_INDEX_TABLE[PI] > PT)
+do
+	Dec(PI);
+end;
 
 
 {
@@ -2496,9 +2546,37 @@ end;
 
 
 (******************************************)
-class operator Multi_Int_X2.**(const v1:Multi_Int_X2;P:INT_1W_U):Multi_Int_X2;
-var	R,T	:Multi_Int_X2;
-	i	:INT_1W_U;
+procedure BUILD_POWER_VALUES_TABLE_X2(const v1:Multi_Int_X2; const P:INT_2W_S);
+var
+TV,R	:Multi_Int_X2;
+PI		:INT_2W_S;
+
+begin
+TV:= v1;
+PI:= 0;
+while	(PI <= POWER_TABLE_MAX)
+and		(POWER_INDEX_TABLE[PI] <= P)
+and		(not TV.overflow)
+do
+	begin
+    POWER_VALUES_TABLE_X2[PI]:= TV;
+	Inc(PI);
+	try
+		multiply_Multi_Int_X2(TV,TV,R);
+	except
+	end;
+	TV:= R;
+	end;
+POWER_VALUES_TABLE_MAX_X2:= (PI - 1);
+end;
+
+
+(********************v2********************)
+class operator Multi_Int_X2.**(const v1:Multi_Int_X2; const P:INT_2W_S):Multi_Int_X2;
+var
+R,TV,TM	:Multi_Int_X2;
+PI,PT	:INT_2W_S;
+
 begin
 if	(Not v1.Defined_flag)
 then
@@ -2518,33 +2596,60 @@ then
 	Result.Overflow_flag:=TRUE;
 	Result.Defined_flag:=TRUE;
 	{$ifdef RAISE_EXCEPTIONS_ENABLED}
-		Raise EIntOverflow.create('Overflow on multiply');
+		Raise EIntOverflow.create('Overflow in power function');
 	{$endif}
 	exit;
 	end;
 
-R:= 1;
-T:= v1;
-i:= 1;
-while	(i < P)
-and		(R.Overflow_flag = FALSE)
-do
-	begin
-	multiply_Multi_Int_X2(T,v1,R);
-	if	(T.Negative = v1.Negative) then
-		R.Negative:= FALSE
-	else
-		R.Negative:= TRUE;
-	T:= R;
-	Inc(i);
-	end;
+BUILD_POWER_VALUES_TABLE_X2(v1,P);
 
+if  (P < 0) then
+	R:= 0
+else if  (P < 1) then
+	R:= 1
+else if  (P < 2) then
+	R:= v1
+else
+	begin
+	PT:= P;
+	R:= 1;
+	TV:= 1;
+	PI:= POWER_VALUES_TABLE_MAX_X2;
+	while	(PT > 0)
+	and		(R.Overflow_flag = FALSE)
+	do
+		begin
+		repeat
+			if	(PI > 0) then
+				SEARCH_POWER_INDEX_TABLE(PI,PT);
+			TM:= POWER_VALUES_TABLE_X2[PI];
+			try
+				multiply_Multi_Int_X2(TV,TM,R);
+			except
+			end;
+			if	(R.Overflow_flag) then
+				Dec(PI);
+		until	(PI < 0)
+		or		(R.Overflow_flag = FALSE);
+
+		if	(R.Overflow_flag = FALSE)
+		or	(PI >= 0) then
+			begin
+			if	(TV.Negative = v1.Negative) then
+				R.Negative:= FALSE
+			else
+				R.Negative:= TRUE;
+			TV:= R;
+	        PT:= (PT - POWER_INDEX_TABLE[PI]);
+			end;
+		end;
+	end;
 Result:= R;
 
 if	R.Overflow_flag then
 	begin
 	{$ifdef RAISE_EXCEPTIONS_ENABLED}
-		Raise EIntOverflow.create('Overflow on multiply');
+		Raise EIntOverflow.create('Overflow in power function');
 	{$endif}
 	end;
 end;
@@ -5318,9 +5423,37 @@ end;
 
 
 (******************************************)
-class operator Multi_Int_X3.**(const v1:Multi_Int_X3;P:INT_1W_U):Multi_Int_X3;
-var	R,T	:Multi_Int_X3;
-	i	:INT_1W_U;
+procedure BUILD_POWER_VALUES_TABLE_X3(const v1:Multi_Int_X3; const P:INT_2W_S);
+var
+TV,R	:Multi_Int_X3;
+PI		:INT_2W_S;
+
+begin
+TV:= v1;
+PI:= 0;
+while	(PI <= POWER_TABLE_MAX)
+and		(POWER_INDEX_TABLE[PI] <= P)
+and		(not TV.overflow)
+do
+	begin
+    POWER_VALUES_TABLE_X3[PI]:= TV;
+	Inc(PI);
+	try
+		multiply_Multi_Int_X3(TV,TV,R);
+	except
+	end;
+	TV:= R;
+	end;
+POWER_VALUES_TABLE_MAX_X3:= (PI - 1);
+end;
+
+
+(********************v2********************)
+class operator Multi_Int_X3.**(const v1:Multi_Int_X3; const P:INT_2W_S):Multi_Int_X3;
+var
+R,TV,TM	:Multi_Int_X3;
+PI,PT	:INT_2W_S;
+
 begin
 if	(Not v1.Defined_flag)
 then
@@ -5340,33 +5473,60 @@ then
 	Result.Overflow_flag:=TRUE;
 	Result.Defined_flag:=TRUE;
 	{$ifdef RAISE_EXCEPTIONS_ENABLED}
-		Raise EIntOverflow.create('Overflow on multiply');
+		Raise EIntOverflow.create('Overflow in power function');
 	{$endif}
 	exit;
 	end;
 
-R:= 1;
-T:= v1;
-i:= 1;
-while	(i < P)
-and		(R.Overflow_flag = FALSE)
-do
-	begin
-	multiply_Multi_Int_X3(T,v1,R);
-	if	(T.Negative = v1.Negative) then
-		R.Negative:= FALSE
-	else
-		R.Negative:= TRUE;
-	T:= R;
-	Inc(i);
-	end;
+BUILD_POWER_VALUES_TABLE_X3(v1,P);
 
+if  (P < 0) then
+	R:= 0
+else if  (P < 1) then
+	R:= 1
+else if  (P < 2) then
+	R:= v1
+else
+	begin
+	PT:= P;
+	R:= 1;
+	TV:= 1;
+	PI:= POWER_VALUES_TABLE_MAX_X3;
+	while	(PT > 0)
+	and		(R.Overflow_flag = FALSE)
+	do
+		begin
+		repeat
+			if	(PI > 0) then
+				SEARCH_POWER_INDEX_TABLE(PI,PT);
+			TM:= POWER_VALUES_TABLE_X3[PI];
+			try
+				multiply_Multi_Int_X3(TV,TM,R);
+			except
+			end;
+			if	(R.Overflow_flag) then
+				Dec(PI);
+		until	(PI < 0)
+		or		(R.Overflow_flag = FALSE);
+
+		if	(R.Overflow_flag = FALSE)
+		or	(PI >= 0) then
+			begin
+			if	(TV.Negative = v1.Negative) then
+				R.Negative:= FALSE
+			else
+				R.Negative:= TRUE;
+			TV:= R;
+	        PT:= (PT - POWER_INDEX_TABLE[PI]);
+			end;
+		end;
+	end;
 Result:= R;
 
 if	R.Overflow_flag then
 	begin
 	{$ifdef RAISE_EXCEPTIONS_ENABLED}
-		Raise EIntOverflow.create('Overflow on multiply');
+		Raise EIntOverflow.create('Overflow in power function');
 	{$endif}
 	end;
 end;
@@ -8392,9 +8552,37 @@ end;
 
 
 (******************************************)
-class operator Multi_Int_X4.**(const v1:Multi_Int_X4;P:INT_1W_U):Multi_Int_X4;
-var	R,T	:Multi_Int_X4;
-	i	:INT_1W_U;
+procedure BUILD_POWER_VALUES_TABLE_X4(const v1:Multi_Int_X4; const P:INT_2W_S);
+var
+TV,R	:Multi_Int_X4;
+PI		:INT_2W_S;
+
+begin
+TV:= v1;
+PI:= 0;
+while	(PI <= POWER_TABLE_MAX)
+and		(POWER_INDEX_TABLE[PI] <= P)
+and		(not TV.overflow)
+do
+	begin
+    POWER_VALUES_TABLE_X4[PI]:= TV;
+	Inc(PI);
+	try
+		multiply_Multi_Int_X4(TV,TV,R);
+	except
+	end;
+	TV:= R;
+	end;
+POWER_VALUES_TABLE_MAX_X4:= (PI - 1);
+end;
+
+
+(********************v2********************)
+class operator Multi_Int_X4.**(const v1:Multi_Int_X4; const P:INT_2W_S):Multi_Int_X4;
+var
+R,TV,TM	:Multi_Int_X4;
+PI,PT	:INT_2W_S;
+
 begin
 if	(Not v1.Defined_flag)
 then
@@ -8414,33 +8602,60 @@ then
 	Result.Overflow_flag:=TRUE;
 	Result.Defined_flag:=TRUE;
 	{$ifdef RAISE_EXCEPTIONS_ENABLED}
-		Raise EIntOverflow.create('Overflow on multiply');
+		Raise EIntOverflow.create('Overflow in power function');
 	{$endif}
 	exit;
 	end;
 
-R:= 1;
-T:= v1;
-i:= 1;
-while	(i < P)
-and		(R.Overflow_flag = FALSE)
-do
-	begin
-	multiply_Multi_Int_X4(T,v1,R);
-	if	(T.Negative = v1.Negative) then
-		R.Negative:= FALSE
-	else
-		R.Negative:= TRUE;
-	T:= R;
-	Inc(i);
-	end;
+BUILD_POWER_VALUES_TABLE_X4(v1,P);
 
+if  (P < 0) then
+	R:= 0
+else if  (P < 1) then
+	R:= 1
+else if  (P < 2) then
+	R:= v1
+else
+	begin
+	PT:= P;
+	R:= 1;
+	TV:= 1;
+	PI:= POWER_VALUES_TABLE_MAX_X4;
+	while	(PT > 0)
+	and		(R.Overflow_flag = FALSE)
+	do
+		begin
+		repeat
+			if	(PI > 0) then
+				SEARCH_POWER_INDEX_TABLE(PI,PT);
+			TM:= POWER_VALUES_TABLE_X4[PI];
+			try
+				multiply_Multi_Int_X4(TV,TM,R);
+			except
+			end;
+			if	(R.Overflow_flag) then
+				Dec(PI);
+		until	(PI < 0)
+		or		(R.Overflow_flag = FALSE);
+
+		if	(R.Overflow_flag = FALSE)
+		or	(PI >= 0) then
+			begin
+			if	(TV.Negative = v1.Negative) then
+				R.Negative:= FALSE
+			else
+				R.Negative:= TRUE;
+			TV:= R;
+	        PT:= (PT - POWER_INDEX_TABLE[PI]);
+			end;
+		end;
+	end;
 Result:= R;
 
 if	R.Overflow_flag then
 	begin
 	{$ifdef RAISE_EXCEPTIONS_ENABLED}
-		Raise EIntOverflow.create('Overflow on multiply');
+		Raise EIntOverflow.create('Overflow in power function');
 	{$endif}
 	end;
 end;
@@ -11100,10 +11315,38 @@ if	R.Overflow_flag then
 end;
 
 
-(******************************************)
-class operator Multi_Int_X48.**(const v1:Multi_Int_X48;P:INT_1W_U):Multi_Int_X48;
-var	R,T	:Multi_Int_X48;
-	i	:INT_1W_U;
+(*----------------------------------*)
+procedure BUILD_POWER_VALUES_TABLE_X48(const v1:Multi_Int_X48; const P:INT_2W_S);
+var
+TV,R	:Multi_Int_X48;
+PI		:INT_2W_S;
+
+begin
+TV:= v1;
+PI:= 0;
+while	(PI <= POWER_TABLE_MAX)
+and		(POWER_INDEX_TABLE[PI] <= P)
+and		(not TV.overflow)
+do
+	begin
+    POWER_VALUES_TABLE_X48[PI]:= TV;
+	Inc(PI);
+	try
+		multiply_Multi_Int_X48(TV,TV,R);
+	except
+	end;
+	TV:= R;
+	end;
+POWER_VALUES_TABLE_MAX_X48:= (PI - 1);
+end;
+
+
+(********************v2********************)
+class operator Multi_Int_X48.**(const v1:Multi_Int_X48; const P:INT_2W_S):Multi_Int_X48;
+var
+R,TV,TM	:Multi_Int_X48;
+PI,PT	:INT_2W_S;
+
 begin
 if	(Not v1.Defined_flag)
 then
@@ -11123,33 +11366,60 @@ then
 	Result.Overflow_flag:=TRUE;
 	Result.Defined_flag:=TRUE;
 	{$ifdef RAISE_EXCEPTIONS_ENABLED}
-		Raise EIntOverflow.create('Overflow on multiply');
+		Raise EIntOverflow.create('Overflow in power function');
 	{$endif}
 	exit;
 	end;
 
-R:= 1;
-T:= v1;
-i:= 1;
-while	(i < P)
-and		(R.Overflow_flag = FALSE)
-do
-	begin
-	multiply_Multi_Int_X48(T,v1,R);
-	if	(T.Negative = v1.Negative) then
-		R.Negative:= FALSE
-	else
-		R.Negative:= TRUE;
-	T:= R;
-	Inc(i);
-	end;
+BUILD_POWER_VALUES_TABLE_X48(v1,P);
 
+if  (P < 0) then
+	R:= 0
+else if  (P < 1) then
+	R:= 1
+else if  (P < 2) then
+	R:= v1
+else
+	begin
+	PT:= P;
+	R:= 1;
+	TV:= 1;
+	PI:= POWER_VALUES_TABLE_MAX_X48;
+	while	(PT > 0)
+	and		(R.Overflow_flag = FALSE)
+	do
+		begin
+		repeat
+			if	(PI > 0) then
+				SEARCH_POWER_INDEX_TABLE(PI,PT);
+			TM:= POWER_VALUES_TABLE_X48[PI];
+			try
+				multiply_Multi_Int_X48(TV,TM,R);
+			except
+			end;
+			if	(R.Overflow_flag) then
+				Dec(PI);
+		until	(PI < 0)
+		or		(R.Overflow_flag = FALSE);
+
+		if	(R.Overflow_flag = FALSE)
+		or	(PI >= 0) then
+			begin
+			if	(TV.Negative = v1.Negative) then
+				R.Negative:= FALSE
+			else
+				R.Negative:= TRUE;
+			TV:= R;
+	        PT:= (PT - POWER_INDEX_TABLE[PI]);
+			end;
+		end;
+	end;
 Result:= R;
 
 if	R.Overflow_flag then
 	begin
 	{$ifdef RAISE_EXCEPTIONS_ENABLED}
-		Raise EIntOverflow.create('Overflow on multiply');
+		Raise EIntOverflow.create('Overflow in power function');
 	{$endif}
 	end;
 end;
@@ -11440,6 +11710,12 @@ while (i <= X48_max) do
 	Multi_Int_X48_MAXINT.M_Value[i]:= INT_1W_U_MAXINT;
 	Inc(i);
 	end;
+
+BUILD_POWER_INDEX_TABLE;
+setlength(POWER_VALUES_TABLE_X48, POWER_TABLE_MAXLEN);
+setlength(POWER_VALUES_TABLE_X4, POWER_TABLE_MAXLEN);
+setlength(POWER_VALUES_TABLE_X3, POWER_TABLE_MAXLEN);
+setlength(POWER_VALUES_TABLE_X2, POWER_TABLE_MAXLEN);
 end;
 
 

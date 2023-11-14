@@ -114,6 +114,9 @@ v4.19
   probably finished
 - square root function finished
 
+v4.20
+- fast power function
+
 NB - UBool type gets broken when separated into it own unit!
 
 *)
