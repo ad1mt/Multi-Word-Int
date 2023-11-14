@@ -145,8 +145,6 @@ Multi_Int_X2	=	record
 						function ToStr:string; inline;
 						function ToHex(const LZ:T_Leading_Zeros=Trim_Leading_Zeros):string; inline;
 						function FromHex(const v1:string):Multi_Int_X2; inline;
-                        function Odd:boolean; inline;
-                        function Even:boolean; inline;
                         function Overflow:boolean; inline;
                         function Defined:boolean; inline;
 						procedure ShiftUp_MultiBits(Var v1:Multi_Int_X2; NBits:INT_1W_U); inline;
@@ -197,8 +195,6 @@ Multi_Int_X3	=	record
 						function ToStr:string; inline;
 						function ToHex(const LZ:T_Leading_Zeros=Trim_Leading_Zeros):string; inline;
 						function FromHex(const v1:string):Multi_Int_X3; inline;
-                        function Odd:boolean; inline;
-                        function Even:boolean; inline;
                         function Overflow:boolean; inline;
                         function Defined:boolean; inline;
 						procedure ShiftUp_MultiBits(Var v1:Multi_Int_X3; NBits:INT_1W_U); inline;
@@ -250,8 +246,6 @@ Multi_Int_X4	=	record
 						function ToStr:string; inline;
 						function ToHex(const LZ:T_Leading_Zeros=Trim_Leading_Zeros):string; inline;
 						function FromHex(const v1:string):Multi_Int_X4; inline;
-                        function Odd:boolean; inline;
-                        function Even:boolean; inline;
                         function Overflow:boolean; inline;
                         function Defined:boolean; inline;
 						procedure ShiftUp_MultiBits(Var v1:Multi_Int_X4; NBits:INT_1W_U); inline;
@@ -304,8 +298,6 @@ Multi_Int_X48	=	record
 						function ToStr:string; inline;
 						function ToHex(const LZ:T_Leading_Zeros=Trim_Leading_Zeros):string; inline;
 						function FromHex(const v1:string):Multi_Int_X48; inline;
-                        function Odd:boolean; inline;
-                        function Even:boolean; inline;
                         function Overflow:boolean; inline;
                         function Defined:boolean; inline;
 						procedure ShiftUp_MultiBits(var v1:Multi_Int_X48; NBits:INT_1W_U); inline;
