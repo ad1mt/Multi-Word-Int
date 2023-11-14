@@ -6,10 +6,8 @@ X48_max is the number of half-words (minus 1) in the Multi-word integer type nam
 using zero-base, therefore 1 means 2.
 The value must be 1 or greater (i.e. 2 half-words minimum), but 
 there is no point in having less than 7, because the type named Multi_Int_X4 uses 7.
-The number is half-words, so if you specify 127 that is 128 half-words, which equals
-64 words, which equals 512 bits.
 *)
-	X48_max		= 1023;
+	X48_max		= 127;
 
 (*
 X48_max is the only thing you should change in here.
@@ -182,7 +180,7 @@ Multi_Int_X2	=	record
 						class operator -(const v1:Multi_Int_X2):Multi_Int_X2; inline;
                         class operator >=(const v1,v2:Multi_Int_X2):Boolean; inline;
 						class operator <=(const v1,v2:Multi_Int_X2):Boolean; inline;
-						class operator **(const v1:Multi_Int_X2;P:INT_1W_S):Multi_Int_X2; inline;
+						class operator **(const v1:Multi_Int_X2;P:INT_1W_U):Multi_Int_X2; inline;
 					end;
 
 
@@ -235,7 +233,7 @@ Multi_Int_X3	=	record
 						class operator -(const v1:Multi_Int_X3):Multi_Int_X3; inline;
                         class operator >=(const v1,v2:Multi_Int_X3):Boolean; inline;
 						class operator <=(const v1,v2:Multi_Int_X3):Boolean; inline;
-						class operator **(const v1:Multi_Int_X3;P:INT_1W_S):Multi_Int_X3; inline;
+						class operator **(const v1:Multi_Int_X3;P:INT_1W_U):Multi_Int_X3; inline;
 					end;
 
 
@@ -290,7 +288,7 @@ Multi_Int_X4	=	record
 						class operator -(const v1:Multi_Int_X4):Multi_Int_X4; inline;
                         class operator >=(const v1,v2:Multi_Int_X4):Boolean; inline;
 						class operator <=(const v1,v2:Multi_Int_X4):Boolean; inline;
-						class operator **(const v1:Multi_Int_X4;P:INT_1W_S):Multi_Int_X4; inline;
+						class operator **(const v1:Multi_Int_X4;P:INT_1W_U):Multi_Int_X4; inline;
 					end;
 
 
@@ -343,11 +341,11 @@ Multi_Int_X48	=	record
 						class operator -(const v1:Multi_Int_X48):Multi_Int_X48; inline;
                         class operator >=(const v1,v2:Multi_Int_X48):Boolean; inline;
 						class operator <=(const v1,v2:Multi_Int_X48):Boolean; inline;
-						class operator **(const v1:Multi_Int_X48; const P:INT_2W_S):Multi_Int_X48; inline;
+						class operator **(const v1:Multi_Int_X48;P:INT_1W_U):Multi_Int_X48; inline;
 					end;
 
 var
-OVERFLOW_ERROR			:boolean;
+Overflow_Error			:boolean;
 Multi_Int_X2_MAXINT		:Multi_Int_X2;
 Multi_Int_X3_MAXINT		:Multi_Int_X3;
 Multi_Int_X4_MAXINT		:Multi_Int_X4;
@@ -383,5 +381,4 @@ function To_Multi_Int_X3(const v1:Multi_Int_X2):Multi_Int_X3; overload;
 function To_Multi_Int_X2(const v1:Multi_Int_X48):Multi_Int_X2; overload;
 function To_Multi_Int_X2(const v1:Multi_Int_X4):Multi_Int_X2; overload;
 function To_Multi_Int_X2(const v1:Multi_Int_X3):Multi_Int_X2; overload;
-
 
