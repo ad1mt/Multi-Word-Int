@@ -7,4 +7,4 @@ Will compile and run on 32bit and 64bit environments.
 Written purely in Pascal to be portable and reliable (no assembly or C language code).
 This should be considered a beta development version.
 
-Version 4.2 has a better power function, and bug fixes for Odd/Even functions.
+Version 4.21 has a better power function, and bug fixes for Odd/Even functions.
