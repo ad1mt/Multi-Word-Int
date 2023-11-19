@@ -2902,13 +2902,13 @@ end;
 
 class operator Multi_Int_X2.**(const v1:Multi_Int_X2; const P:INT_2W_S):Multi_Int_X2;
 var
-TV,Y	:Multi_Int_X2;
-PT		:INT_2W_S;
+Y,TV,T,R	:Multi_Int_X2;
+PT			:INT_2W_S;
 begin
 PT:= P;
 TV:= v1;
-if	(PT < 0) then result:= 0
-else if	(PT = 0) then result:= 1
+if	(PT < 0) then R:= 0
+else if	(PT = 0) then R:= 1
 else
 	begin
 	Y := 1;
@@ -2916,14 +2916,55 @@ else
 		begin
 		if	odd(PT) then
 			begin
-			Y := TV * Y;
+			// Y := TV * Y;
+			multiply_Multi_Int_X2(TV,Y, T);
+			if	(T.Overflow_flag)
+			then
+				begin
+				Result:= 0;
+				Result.Defined_flag:= FALSE;
+				Result.Overflow_flag:= TRUE;
+				{$ifdef RAISE_EXCEPTIONS_ENABLED}
+					Raise EIntOverflow.create('Overflow on Power');
+				{$endif}
+				exit;
+				end;
+
+			Y:= T;
 			PT := PT - 1;
 			end;
-		TV := TV * TV;
+		// TV := TV * TV;
+		multiply_Multi_Int_X2(TV,TV, T);
+		if	(TV.Overflow_flag)
+		then
+			begin
+			Result:= 0;
+			Result.Defined_flag:= FALSE;
+			Result.Overflow_flag:= TRUE;
+			{$ifdef RAISE_EXCEPTIONS_ENABLED}
+				Raise EIntOverflow.create('Overflow on Power');
+			{$endif}
+			exit;
+			end;
+		TV:= T;
+
 		PT := (PT div 2);
 		end;
-	result:= (TV * Y);
+	// R:= (TV * Y);
+	multiply_Multi_Int_X2(TV,Y, R);
+	if	(R.Overflow_flag)
+	then
+		begin
+		Result:= 0;
+		Result.Defined_flag:= FALSE;
+		Result.Overflow_flag:= TRUE;
+		{$ifdef RAISE_EXCEPTIONS_ENABLED}
+			Raise EIntOverflow.create('Overflow on Power');
+		{$endif}
+		exit;
+		end;
 	end;
+Result:= R;
 end;
 
 
@@ -5828,13 +5869,13 @@ end;
 
 class operator Multi_Int_X3.**(const v1:Multi_Int_X3; const P:INT_2W_S):Multi_Int_X3;
 var
-TV,Y	:Multi_Int_X3;
-PT		:INT_2W_S;
+Y,TV,T,R	:Multi_Int_X3;
+PT			:INT_2W_S;
 begin
 PT:= P;
 TV:= v1;
-if	(PT < 0) then result:= 0
-else if	(PT = 0) then result:= 1
+if	(PT < 0) then R:= 0
+else if	(PT = 0) then R:= 1
 else
 	begin
 	Y := 1;
@@ -5842,14 +5883,55 @@ else
 		begin
 		if	odd(PT) then
 			begin
-			Y := TV * Y;
+			// Y := TV * Y;
+			multiply_Multi_Int_X3(TV,Y, T);
+			if	(T.Overflow_flag)
+			then
+				begin
+				Result:= 0;
+				Result.Defined_flag:= FALSE;
+				Result.Overflow_flag:= TRUE;
+				{$ifdef RAISE_EXCEPTIONS_ENABLED}
+					Raise EIntOverflow.create('Overflow on Power');
+				{$endif}
+				exit;
+				end;
+
+			Y:= T;
 			PT := PT - 1;
 			end;
-		TV := TV * TV;
+		// TV := TV * TV;
+		multiply_Multi_Int_X3(TV,TV, T);
+		if	(TV.Overflow_flag)
+		then
+			begin
+			Result:= 0;
+			Result.Defined_flag:= FALSE;
+			Result.Overflow_flag:= TRUE;
+			{$ifdef RAISE_EXCEPTIONS_ENABLED}
+				Raise EIntOverflow.create('Overflow on Power');
+			{$endif}
+			exit;
+			end;
+		TV:= T;
+
 		PT := (PT div 2);
 		end;
-	result:= (TV * Y);
+	// R:= (TV * Y);
+	multiply_Multi_Int_X3(TV,Y, R);
+	if	(R.Overflow_flag)
+	then
+		begin
+		Result:= 0;
+		Result.Defined_flag:= FALSE;
+		Result.Overflow_flag:= TRUE;
+		{$ifdef RAISE_EXCEPTIONS_ENABLED}
+			Raise EIntOverflow.create('Overflow on Power');
+		{$endif}
+		exit;
+		end;
 	end;
+Result:= R;
 end;
 
 
@@ -8916,13 +8998,13 @@ end;
 
 class operator Multi_Int_X4.**(const v1:Multi_Int_X4; const P:INT_2W_S):Multi_Int_X4;
 var
-TV,Y	:Multi_Int_X4;
-PT		:INT_2W_S;
+Y,TV,T,R	:Multi_Int_X4;
+PT			:INT_2W_S;
 begin
 PT:= P;
 TV:= v1;
-if	(PT < 0) then result:= 0
-else if	(PT = 0) then result:= 1
+if	(PT < 0) then R:= 0
+else if	(PT = 0) then R:= 1
 else
 	begin
 	Y := 1;
@@ -8930,14 +9012,55 @@ else
 		begin
 		if	odd(PT) then
 			begin
-			Y := TV * Y;
+			// Y := TV * Y;
+			multiply_Multi_Int_X4(TV,Y, T);
+			if	(T.Overflow_flag)
+			then
+				begin
+				Result:= 0;
+				Result.Defined_flag:= FALSE;
+				Result.Overflow_flag:= TRUE;
+				{$ifdef RAISE_EXCEPTIONS_ENABLED}
+					Raise EIntOverflow.create('Overflow on Power');
+				{$endif}
+				exit;
+				end;
+
+			Y:= T;
 			PT := PT - 1;
 			end;
-		TV := TV * TV;
+		// TV := TV * TV;
+		multiply_Multi_Int_X4(TV,TV, T);
+		if	(TV.Overflow_flag)
+		then
+			begin
+			Result:= 0;
+			Result.Defined_flag:= FALSE;
+			Result.Overflow_flag:= TRUE;
+			{$ifdef RAISE_EXCEPTIONS_ENABLED}
+				Raise EIntOverflow.create('Overflow on Power');
+			{$endif}
+			exit;
+			end;
+		TV:= T;
+
 		PT := (PT div 2);
 		end;
-	result:= (TV * Y);
+	// R:= (TV * Y);
+	multiply_Multi_Int_X4(TV,Y, R);
+	if	(R.Overflow_flag)
+	then
+		begin
+		Result:= 0;
+		Result.Defined_flag:= FALSE;
+		Result.Overflow_flag:= TRUE;
+		{$ifdef RAISE_EXCEPTIONS_ENABLED}
+			Raise EIntOverflow.create('Overflow on Power');
+		{$endif}
+		exit;
+		end;
 	end;
+Result:= R;
 end;
 
 
@@ -11629,13 +11752,13 @@ end;
 
 class operator Multi_Int_X48.**(const v1:Multi_Int_X48; const P:INT_2W_S):Multi_Int_X48;
 var
-Y,TV	:Multi_Int_X48;
-PT		:INT_2W_S;
+Y,TV,T,R	:Multi_Int_X48;
+PT			:INT_2W_S;
 begin
 PT:= P;
 TV:= v1;
-if	(PT < 0) then result:= 0
-else if	(PT = 0) then result:= 1
+if	(PT < 0) then R:= 0
+else if	(PT = 0) then R:= 1
 else
 	begin
 	Y := 1;
@@ -11643,99 +11766,55 @@ else
 		begin
 		if	odd(PT) then
 			begin
-			Y := TV * Y;
+			// Y := TV * Y;
+			multiply_Multi_Int_X48(TV,Y, T);
+			if	(T.Overflow_flag)
+			then
+				begin
+				Result:= 0;
+				Result.Defined_flag:= FALSE;
+				Result.Overflow_flag:= TRUE;
+				{$ifdef RAISE_EXCEPTIONS_ENABLED}
+					Raise EIntOverflow.create('Overflow on Power');
+				{$endif}
+				exit;
+				end;
+
+			Y:= T;
 			PT := PT - 1;
 			end;
-		TV := TV * TV;
+		// TV := TV * TV;
+		multiply_Multi_Int_X48(TV,TV, T);
+		if	(TV.Overflow_flag)
+		then
+			begin
+			Result:= 0;
+			Result.Defined_flag:= FALSE;
+			Result.Overflow_flag:= TRUE;
+			{$ifdef RAISE_EXCEPTIONS_ENABLED}
+				Raise EIntOverflow.create('Overflow on Power');
+			{$endif}
+			exit;
+			end;
+		TV:= T;
+
 		PT := (PT div 2);
 		end;
-	result:= (TV * Y);
-	end;
-end;
-
-
-(********************v2********************)
-procedure intdivide_Shift_And_Sub_X48_v2(const P_dividend,P_divisor:Multi_Int_X48;var P_quotient,P_remainder:Multi_Int_X48);
-var
-dividend,
-divisor,
-quotient,
-quotient_factor,
-prev_subtraction	:Multi_Int_X48;
-nlz_bits_dividend,
-nlz_bits_divisor,
-nlz_bits_P_divisor,
-nlz_bits_diff		:INT_2W_S;
-
-begin
-if	(P_divisor <> 0) then
-	begin
-	quotient:= 0;
-	P_remainder:= 0;
-	dividend:= P_dividend;
-	dividend.Negative:= FALSE;
-	divisor:= P_divisor;
-	divisor.Negative:= FALSE;
-	quotient_factor:= 1;
-
-	{ Round 0 }
-	nlz_bits_dividend:= nlz_MultiBits_X48(dividend);
-	nlz_bits_divisor:= nlz_MultiBits_X48(divisor);
-	nlz_bits_P_divisor:= nlz_bits_divisor;
-	nlz_bits_diff:= (nlz_bits_divisor - nlz_bits_dividend - 1);
-	if	(nlz_bits_diff > 0) then
+	// R:= (TV * Y);
+	multiply_Multi_Int_X48(TV,Y, R);
+	if	(R.Overflow_flag)
+	then
 		begin
-		ShiftUp_MultiBits_Multi_Int_X48(divisor, nlz_bits_diff);
-		ShiftUp_MultiBits_Multi_Int_X48(quotient_factor, nlz_bits_diff);
-		end
-	else nlz_bits_diff:= 0;
-	{ Round X }
-	repeat
-		dividend:= (dividend - divisor);
-		repeat
-            prev_subtraction:= dividend;
-			quotient:= (quotient + quotient_factor);
-			dividend:= (dividend - divisor);
-		until (dividend < 0);
-		dividend:= prev_subtraction;
-		nlz_bits_divisor:= nlz_MultiBits_X48(divisor);
-		if (nlz_bits_divisor < nlz_bits_P_divisor) then
-			begin
-			nlz_bits_dividend:= nlz_MultiBits_X48(dividend);
-			nlz_bits_diff:= (nlz_bits_dividend - nlz_bits_divisor + 1);
-			if ((nlz_bits_divisor + nlz_bits_diff) > nlz_bits_P_divisor) then
-				nlz_bits_diff:= (nlz_bits_P_divisor - nlz_bits_divisor);
-			ShiftDown_MultiBits_Multi_Int_X48(divisor, nlz_bits_diff);
-			ShiftDown_MultiBits_Multi_Int_X48(quotient_factor, nlz_bits_diff);
-			end;
-	until	(dividend < P_divisor)
-	or		(nlz_bits_divisor >= nlz_bits_P_divisor)
-	or		(divisor = 0)
-	;
-
-	P_quotient:= quotient;
-	P_remainder:= dividend;
-
-	if	(P_dividend.Negative = TRUE) and (P_remainder > 0)
-	then
-		P_remainder.Negative:= TRUE;
-
-	if	(P_dividend.Negative <> P_divisor.Negative)
-	and	(P_quotient > 0)
-	then
-		P_quotient.Negative:= TRUE;
-
-	end
-else
-	begin
-	P_quotient:= 0;
-	P_quotient.Defined_flag:= FALSE;
-	P_quotient.Overflow_flag:= TRUE;
-	P_remainder:= 0;
-	P_remainder.Defined_flag:= FALSE;
-	P_remainder.Overflow_flag:= TRUE;
-	Multi_Int_OVERFLOW_ERROR:= TRUE;
+		Result:= 0;
+		Result.Defined_flag:= FALSE;
+		Result.Overflow_flag:= TRUE;
+		{$ifdef RAISE_EXCEPTIONS_ENABLED}
+			Raise EIntOverflow.create('Overflow on Power');
+		{$endif}
+		exit;
+		end;
 	end;
+Result:= R;
 end;
 
 
