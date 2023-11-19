@@ -26,23 +26,15 @@
       <FormatVersion Value="2"/>
       <Modes Count="0"/>
     </RunParams>
-    <Units Count="4">
+    <Units Count="2">
       <Unit0>
         <Filename Value="speed_test.lpr"/>
         <IsPartOfProject Value="True"/>
       </Unit0>
       <Unit1>
-        <Filename Value="Multi_Int.pas"/>
+        <Filename Value="Multi_Int\Multi_Int.pas"/>
         <IsPartOfProject Value="True"/>
       </Unit1>
-      <Unit2>
-        <Filename Value="Multi_Int_Implementation.pas"/>
-        <IsPartOfProject Value="True"/>
-      </Unit2>
-      <Unit3>
-        <Filename Value="Multi_Int_Interface.pas"/>
-        <IsPartOfProject Value="True"/>
-      </Unit3>
     </Units>
   </ProjectOptions>
   <CompilerOptions>
@@ -53,6 +45,7 @@
     </Target>
     <SearchPaths>
       <IncludeFiles Value="$(ProjOutDir)"/>
+      <OtherUnitFiles Value="Multi_Int"/>
       <UnitOutputDirectory Value="lib\$(TargetCPU)-$(TargetOS)"/>
     </SearchPaths>
     <CodeGeneration>
