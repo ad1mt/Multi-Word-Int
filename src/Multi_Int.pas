@@ -385,6 +385,24 @@ procedure SqRoot(const v1:Multi_Int_X4;var VR,VREM:Multi_Int_X4); overload;
 procedure SqRoot(const v1:Multi_Int_X3;var VR,VREM:Multi_Int_X3); overload;
 procedure SqRoot(const v1:Multi_Int_X2;var VR,VREM:Multi_Int_X2); overload;
 
+procedure ShiftUp(var v1:Multi_Int_X2; NBits:INT_1W_U); overload; inline;
+procedure ShiftDown(var v1:Multi_Int_X2; NBits:INT_1W_U); overload; inline;
+procedure ShiftUp(var v1:Multi_Int_X3; NBits:INT_1W_U); overload; inline;
+procedure ShiftDown(var v1:Multi_Int_X3; NBits:INT_1W_U); overload; inline;
+procedure ShiftUp(var v1:Multi_Int_X4; NBits:INT_1W_U); overload; inline;
+procedure ShiftDown(var v1:Multi_Int_X4; NBits:INT_1W_U); overload; inline;
+procedure ShiftUp(var v1:Multi_Int_X48; NBits:INT_1W_U); overload; inline;
+procedure ShiftDown(var v1:Multi_Int_X48; NBits:INT_1W_U); overload; inline;
+
+procedure RotateUp(Var v1:Multi_Int_X2; NBits:INT_1W_U); overload; inline;
+procedure RotateDown(Var v1:Multi_Int_X2; NBits:INT_1W_U); overload; inline;
+procedure RotateUp(Var v1:Multi_Int_X3; NBits:INT_1W_U); overload; inline;
+procedure RotateDown(Var v1:Multi_Int_X3; NBits:INT_1W_U); overload; inline;
+procedure RotateUp(Var v1:Multi_Int_X4; NBits:INT_1W_U); overload; inline;
+procedure RotateDown(Var v1:Multi_Int_X4; NBits:INT_1W_U); overload; inline;
+procedure RotateUp(Var v1:Multi_Int_X48; NBits:INT_1W_U); overload; inline;
+procedure RotateDown(Var v1:Multi_Int_X48; NBits:INT_1W_U); overload; inline;
+
 function To_Multi_Int_X48(const v1:Multi_Int_X4):Multi_Int_X48; overload;
 function To_Multi_Int_X48(const v1:Multi_Int_X3):Multi_Int_X48; overload;
 function To_Multi_Int_X48(const v1:Multi_Int_X2):Multi_Int_X48; overload;
@@ -863,6 +881,13 @@ end;
 
 
 (******************************************)
+procedure RotateUp(Var v1:Multi_Int_X2; NBits:INT_1W_U); overload;
+begin
+RotateUp_MultiBits_Multi_Int_X2(v1, NBits);
+end;
+
+
+(******************************************)
 procedure RotateDown_NBits_Multi_Int_X2(Var v1:Multi_Int_X2; NBits:INT_1W_U);
 var	carry_bits_1,
 	carry_bits_2,
@@ -960,6 +985,13 @@ end;
 
 (******************************************)
 procedure Multi_Int_X2.RotateDown_MultiBits(Var v1:Multi_Int_X2; NBits:INT_1W_U);
+begin
+RotateDown_MultiBits_Multi_Int_X2(v1, NBits);
+end;
+
+
+(******************************************)
+procedure RotateDown(Var v1:Multi_Int_X2; NBits:INT_1W_U); overload;
 begin
 RotateDown_MultiBits_Multi_Int_X2(v1, NBits);
 end;
@@ -1066,6 +1098,13 @@ ShiftUp_MultiBits_Multi_Int_X2(v1, NBits);
 end;
 
 
+{******************************************}
+procedure ShiftUp(var v1:Multi_Int_X2; NBits:INT_1W_U); overload;
+begin
+ShiftUp_MultiBits_Multi_Int_X2(v1, NBits);
+end;
+
+
 (******************************************)
 procedure ShiftDown_NBits_Multi_Int_X2(Var v1:Multi_Int_X2; NBits:INT_1W_U);
 var	carry_bits_1,
@@ -1160,6 +1199,13 @@ end;
 
 {******************************************}
 procedure Multi_Int_X2.ShiftDown_MultiBits(Var v1:Multi_Int_X2; NBits:INT_1W_U);
+begin
+ShiftDown_MultiBits_Multi_Int_X2(v1, NBits);
+end;
+
+
+{******************************************}
+procedure ShiftDown(Var v1:Multi_Int_X2; NBits:INT_1W_U); overload;
 begin
 ShiftDown_MultiBits_Multi_Int_X2(v1, NBits);
 end;
@@ -3429,6 +3475,13 @@ end;
 
 
 (******************************************)
+procedure RotateUp(Var v1:Multi_Int_X3; NBits:INT_1W_U); overload;
+begin
+RotateUp_MultiBits_Multi_Int_X3(v1, NBits);
+end;
+
+
+(******************************************)
 procedure RotateDown_NBits_Multi_Int_X3(Var v1:Multi_Int_X3; NBits:INT_1W_U);
 var	carry_bits_1,
 	carry_bits_2,
@@ -3540,6 +3593,13 @@ end;
 
 (******************************************)
 procedure Multi_Int_X3.RotateDown_MultiBits(Var v1:Multi_Int_X3; NBits:INT_1W_U);
+begin
+RotateDown_MultiBits_Multi_Int_X3(v1, NBits);
+end;
+
+
+(******************************************)
+procedure RotateDown(Var v1:Multi_Int_X3; NBits:INT_1W_U); overload;
 begin
 RotateDown_MultiBits_Multi_Int_X3(v1, NBits);
 end;
@@ -3677,6 +3737,13 @@ ShiftUp_MultiBits_Multi_Int_X3(v1, NBits);
 end;
 
 
+{******************************************}
+procedure ShiftUp(Var v1:Multi_Int_X3; NBits:INT_1W_U); overload;
+begin
+ShiftUp_MultiBits_Multi_Int_X3(v1, NBits);
+end;
+
+
 (******************************************)
 procedure ShiftDown_NBits_Multi_Int_X3(Var v1:Multi_Int_X3; NBits:INT_1W_U);
 var	carry_bits_1,
@@ -3759,6 +3826,13 @@ end;
 
 {******************************************}
 procedure Multi_Int_X3.ShiftDown_MultiBits(Var v1:Multi_Int_X3; NBits:INT_1W_U);
+begin
+ShiftDown_MultiBits_Multi_Int_X3(v1, NBits);
+end;
+
+
+{******************************************}
+procedure ShiftDown(Var v1:Multi_Int_X3; NBits:INT_1W_U); overload;
 begin
 ShiftDown_MultiBits_Multi_Int_X3(v1, NBits);
 end;
@@ -6255,6 +6329,13 @@ end;
 
 
 (******************************************)
+procedure RotateUp(Var v1:Multi_Int_X4; NBits:INT_1W_U); overload;
+begin
+RotateUp_MultiBits_Multi_Int_X4(v1, NBits);
+end;
+
+
+(******************************************)
 procedure RotateDown_NBits_Multi_Int_X4(Var v1:Multi_Int_X4; NBits:INT_1W_U);
 var	carry_bits_1,
 	carry_bits_2,
@@ -6375,6 +6456,13 @@ end;
 
 (******************************************)
 procedure Multi_Int_X4.RotateDown_MultiBits(Var v1:Multi_Int_X4; NBits:INT_1W_U);
+begin
+RotateDown_MultiBits_Multi_Int_X4(v1, NBits);
+end;
+
+
+(******************************************)
+procedure RotateDown(Var v1:Multi_Int_X4; NBits:INT_1W_U); overload;
 begin
 RotateDown_MultiBits_Multi_Int_X4(v1, NBits);
 end;
@@ -6587,6 +6675,13 @@ end;
 
 
 {******************************************}
+procedure ShiftUp(Var v1:Multi_Int_X4; NBits:INT_1W_U); overload;
+begin
+ShiftUp_MultiBits_Multi_Int_X4(v1, NBits);
+end;
+
+
+{******************************************}
 procedure ShiftDown_MultiBits_Multi_Int_X4(Var v1:Multi_Int_X4; NBits:INT_1W_U);
 var
 NWords_count,
@@ -6608,6 +6703,13 @@ end;
 
 {******************************************}
 procedure Multi_Int_X4.ShiftDown_MultiBits(Var v1:Multi_Int_X4; NBits:INT_1W_U);
+begin
+ShiftDown_MultiBits_Multi_Int_X4(v1, NBits);
+end;
+
+
+{******************************************}
+procedure ShiftDown(Var v1:Multi_Int_X4; NBits:INT_1W_U); overload;
 begin
 ShiftDown_MultiBits_Multi_Int_X4(v1, NBits);
 end;
@@ -9177,6 +9279,13 @@ ShiftUp_MultiBits_Multi_Int_X48(v1, NBits);
 end;
 
 
+{******************************************}
+procedure ShiftUp(var v1:Multi_Int_X48; NBits:INT_1W_U); overload;
+begin
+ShiftUp_MultiBits_Multi_Int_X48(v1, NBits);
+end;
+
+
 (******************************************)
 procedure RotateUp_NBits_Multi_Int_X48(var v1:Multi_Int_X48; NBits:INT_1W_U);
 var	carry_bits_1,
@@ -9278,6 +9387,13 @@ end;
 
 (******************************************)
 procedure Multi_Int_X48.RotateUp_MultiBits(var v1:Multi_Int_X48; NBits:INT_1W_U);
+begin
+RotateUp_MultiBits_Multi_Int_X48(v1, NBits);
+end;
+
+
+(******************************************)
+procedure RotateUp(var v1:Multi_Int_X48; NBits:INT_1W_U); overload;
 begin
 RotateUp_MultiBits_Multi_Int_X48(v1, NBits);
 end;
@@ -9388,6 +9504,13 @@ ShiftDown_MultiBits_Multi_Int_X48(v1, NBits);
 end;
 
 
+{******************************************}
+procedure ShiftDown(var v1:Multi_Int_X48; NBits:INT_1W_U); overload;
+begin
+ShiftDown_MultiBits_Multi_Int_X48(v1, NBits);
+end;
+
+
 (******************************************)
 procedure RotateDown_NBits_Multi_Int_X48(var v1:Multi_Int_X48; NBits:INT_1W_U);
 var	carry_bits_1,
@@ -9491,6 +9614,13 @@ end;
 
 (******************************************)
 procedure Multi_Int_X48.RotateDown_MultiBits(var v1:Multi_Int_X48; NBits:INT_1W_U);
+begin
+RotateDown_MultiBits_Multi_Int_X48(v1, NBits);
+end;
+
+
+(******************************************)
+procedure RotateDown(var v1:Multi_Int_X48; NBits:INT_1W_U); overload;
 begin
 RotateDown_MultiBits_Multi_Int_X48(v1, NBits);
 end;
