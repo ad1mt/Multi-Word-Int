@@ -33,7 +33,7 @@ using zero-base, therefore 1 means 2.
 The value must be 1 or greater (i.e. 2 half-words minimum), but
 there is no point in having less than 7, because the type named Multi_Int_X4 uses 8 (7).
 The number is half-words, so if you specify 127 that is 128 half-words, which equals
-64 words, which equals 512 bits (with 64bits).
+64 words, which equals 512 bits (in 64bit environment).
 *)
 	X48_max		= 127;
 
@@ -438,12 +438,6 @@ X48_Last_Divisor,
 X48_Last_Dividend,
 X48_Last_Quotient,
 X48_Last_Remainder	:Multi_Int_X48;
-
-subtraction_X48		:array[1..SUBTRACTION_TABLE_SIZE] of Multi_Int_X48;
-subtraction_X4		:array[1..SUBTRACTION_TABLE_SIZE] of Multi_Int_X4;
-subtraction_X3		:array[1..SUBTRACTION_TABLE_SIZE] of Multi_Int_X3;
-subtraction_X2		:array[1..SUBTRACTION_TABLE_SIZE] of Multi_Int_X2;
-subtraction_i		:INT_2W_S;
 
 (******************************************)
 procedure	T_Multi_UBool.Init(v:Multi_UBool_Values);
@@ -2870,7 +2864,8 @@ var
 dividend,
 divisor,
 quotient,
-quotient_factor		:Multi_Int_X2;
+quotient_factor,
+prev_subtraction	:Multi_Int_X2;
 nlz_bits_dividend,
 nlz_bits_divisor,
 nlz_bits_P_divisor,
@@ -2902,28 +2897,13 @@ if	(P_divisor <> 0) then
 
 	{ Round X }
 	repeat
-		subtraction_i:= 0;
+		dividend:= (dividend - divisor);
 		repeat
+            prev_subtraction:= dividend;
+			quotient:= (quotient + quotient_factor);
 			dividend:= (dividend - divisor);
-			Inc(subtraction_i);
-			if	(subtraction_i > SUBTRACTION_TABLE_SIZE) then
-				begin
-				P_quotient:= 0;
-				P_quotient.Defined_flag:= FALSE;
-				P_quotient.Overflow_flag:= TRUE;
-				P_remainder:= 0;
-				P_remainder.Defined_flag:= FALSE;
-				P_remainder.Overflow_flag:= TRUE;
-				Multi_Int_OVERFLOW_ERROR:= TRUE;
-				{$ifdef RAISE_EXCEPTIONS_ENABLED}
-				Raise EInterror.create('Internal error: table overflow');
-				{$endif}
-				exit;
-				end;
-            subtraction_X2[subtraction_i]:= dividend;
-			if (dividend >= 0) then quotient:= (quotient + quotient_factor);
 		until (dividend < 0);
-		dividend:= subtraction_X2[subtraction_i - 1];
+		dividend:= prev_subtraction;
 
 		nlz_bits_divisor:= nlz_MultiBits_X2(divisor);
 		if (nlz_bits_divisor < nlz_bits_P_divisor) then
@@ -5670,7 +5650,8 @@ var
 dividend,
 divisor,
 quotient,
-quotient_factor		:Multi_Int_X3;
+quotient_factor,
+prev_subtraction		:Multi_Int_X3;
 nlz_bits_dividend,
 nlz_bits_divisor,
 nlz_bits_P_divisor,
@@ -5702,28 +5683,13 @@ if	(P_divisor <> 0) then
 
 	{ Round X }
 	repeat
-		subtraction_i:= 0;
+		dividend:= (dividend - divisor);
 		repeat
+            prev_subtraction:= dividend;
+			quotient:= (quotient + quotient_factor);
 			dividend:= (dividend - divisor);
-			Inc(subtraction_i);
-			if	(subtraction_i > SUBTRACTION_TABLE_SIZE) then
-				begin
-				P_quotient:= 0;
-				P_quotient.Defined_flag:= FALSE;
-				P_quotient.Overflow_flag:= TRUE;
-				P_remainder:= 0;
-				P_remainder.Defined_flag:= FALSE;
-				P_remainder.Overflow_flag:= TRUE;
-				Multi_Int_OVERFLOW_ERROR:= TRUE;
-				{$ifdef RAISE_EXCEPTIONS_ENABLED}
-				Raise EInterror.create('Internal error: table overflow');
-				{$endif}
-				exit;
-				end;
-            subtraction_X3[subtraction_i]:= dividend;
-			if (dividend >= 0) then quotient:= (quotient + quotient_factor);
 		until (dividend < 0);
-		dividend:= subtraction_X3[subtraction_i - 1];
+		dividend:= prev_subtraction;
 
 		nlz_bits_divisor:= nlz_MultiBits_X3(divisor);
 		if (nlz_bits_divisor < nlz_bits_P_divisor) then
@@ -8722,7 +8688,8 @@ var
 dividend,
 divisor,
 quotient,
-quotient_factor		:Multi_Int_X4;
+quotient_factor,
+prev_subtraction	:Multi_Int_X4;
 nlz_bits_dividend,
 nlz_bits_divisor,
 nlz_bits_P_divisor,
@@ -8754,28 +8721,13 @@ if	(P_divisor <> 0) then
 
 	{ Round X }
 	repeat
-		subtraction_i:= 0;
+		dividend:= (dividend - divisor);
 		repeat
+            prev_subtraction:= dividend;
+			quotient:= (quotient + quotient_factor);
 			dividend:= (dividend - divisor);
-			Inc(subtraction_i);
-			if	(subtraction_i > SUBTRACTION_TABLE_SIZE) then
-				begin
-				P_quotient:= 0;
-				P_quotient.Defined_flag:= FALSE;
-				P_quotient.Overflow_flag:= TRUE;
-				P_remainder:= 0;
-				P_remainder.Defined_flag:= FALSE;
-				P_remainder.Overflow_flag:= TRUE;
-				Multi_Int_OVERFLOW_ERROR:= TRUE;
-				{$ifdef RAISE_EXCEPTIONS_ENABLED}
-				Raise EInterror.create('Internal error: table overflow');
-				{$endif}
-				exit;
-				end;
-            subtraction_X4[subtraction_i]:= dividend;
-			if (dividend >= 0) then quotient:= (quotient + quotient_factor);
 		until (dividend < 0);
-		dividend:= subtraction_X4[subtraction_i - 1];
+		dividend:= prev_subtraction;
 
 		nlz_bits_divisor:= nlz_MultiBits_X4(divisor);
 		if (nlz_bits_divisor < nlz_bits_P_divisor) then
@@ -11409,7 +11361,8 @@ var
 dividend,
 divisor,
 quotient,
-quotient_factor		:Multi_Int_X48;
+quotient_factor,
+prev_subtraction	:Multi_Int_X48;
 nlz_bits_dividend,
 nlz_bits_divisor,
 nlz_bits_P_divisor,
@@ -11441,32 +11394,13 @@ if	(P_divisor <> 0) then
 
 	{ Round X }
 	repeat
-		subtraction_i:= 0;
+		dividend:= (dividend - divisor);
 		repeat
+            prev_subtraction:= dividend;
+			quotient:= (quotient + quotient_factor);
 			dividend:= (dividend - divisor);
-			Inc(subtraction_i);
-			if	(subtraction_i > SUBTRACTION_TABLE_SIZE) then
-				begin
-				P_quotient:= 0;
-				P_quotient.Defined_flag:= FALSE;
-				P_quotient.Overflow_flag:= TRUE;
-				P_remainder:= 0;
-				P_remainder.Defined_flag:= FALSE;
-				P_remainder.Overflow_flag:= TRUE;
-				Multi_Int_OVERFLOW_ERROR:= TRUE;
-				{$ifdef RAISE_EXCEPTIONS_ENABLED}
-				Raise EInterror.create('Internal error: table overflow');
-				{$endif}
-				exit;
-				end;
-
-            subtraction_X48[subtraction_i]:= dividend;
-			if (dividend >= 0) then
-				quotient:= (quotient + quotient_factor);
 		until (dividend < 0);
-
-		// dividend:= (dividend + divisor);
-		dividend:= subtraction_X48[subtraction_i - 1];
+		dividend:= prev_subtraction;
 
 		nlz_bits_divisor:= nlz_MultiBits_X48(divisor);
 		if (nlz_bits_divisor < nlz_bits_P_divisor) then
