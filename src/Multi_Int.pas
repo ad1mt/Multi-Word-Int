@@ -2676,96 +2676,6 @@ if	(Result.Negative = Multi_UBool_UNDEF) then Result.Negative:= Neg;
 end;
 
 
-(*-----------------------*)
-procedure SqRoot(const v1:Multi_Int_X2;var VR,VREM:Multi_Int_X2);
-var
-D,D2		:INT_2W_S;
-H,L,C,CC	:Multi_Int_X2;
-R_EXACT,
-finished	:boolean;
-begin
-if	(Not v1.Defined_flag)
-then
-	begin
-	VR:= 0;
-	VR.Defined_flag:= FALSE;
-	VREM:= 0;
-	VREM.Defined_flag:= FALSE;
-	{$ifdef RAISE_EXCEPTIONS_ENABLED}
-	Raise EInterror.create('Uninitialised variable');
-	{$endif}
-	exit;
-	end;
-
-if	(v1.Overflow_flag)
-then
-	begin
-	VR:= 0;
-	VR.Defined_flag:= FALSE;
-	VREM:= 0;
-	VREM.Defined_flag:= FALSE;
-	{$ifdef RAISE_EXCEPTIONS_ENABLED}
-		Raise EIntOverflow.create('Overflow on Dec');
-	{$endif}
-	exit;
-	end;
-
-D:= length(v1.ToStr);
-D2:= D div 2;
-if ((D mod 2)=0) then
-	begin
-	L:= '1' + AddCharR('0','',D2-1);
-	H:= '1' + AddCharR('0','',D2);
-	end
-else
-	begin
-	L:= '1' + AddCharR('0','',D2);
-	H:= '1' + AddCharR('0','',D2+1);
-	end;
-
-R_EXACT:= FALSE;
-finished:= FALSE;
-while not finished do
-	begin
-	C:= (L + ((H - L) div 2));
-	CC:= (C * C);
-	if (CC.Overflow) then begin writeln('Overflow!');halt end;
-	if (CC > v1)
-	then
-		begin
-		if (C < H) then H:= C
-		else
-			begin
-			finished:= TRUE;
-			VREM:= (v1 - (C * C));
-			end
-		end
-	else if (CC < v1) then
-		begin
-		if (C > L) then L:= C
-		else
-			begin
-			VREM:= (v1 - (C * C));
-			finished:= TRUE;
-			end
-		end
-	else if (CC = v1) then
-		begin
-		R_EXACT:= TRUE;
-		VREM:= 0;
-		finished:= TRUE;
-		end
-	else
-		begin
-		writeln('Panic in find_root!');
-		halt;
-		end;
-	end;
-
-VR:= C;
-end;
-
-
 (******************************************)
 class operator Multi_Int_X2.-(const v1:Multi_Int_X2):Multi_Int_X2;
 begin
@@ -2827,11 +2737,6 @@ Result.M_Value[0]:= M_Val[0];
 Result.M_Value[1]:= M_Val[1];
 Result.M_Value[2]:= M_Val[2];
 Result.M_Value[3]:= M_Val[3];
-{$ifdef RAISE_EXCEPTIONS_ENABLED}
-if (Result.Overflow_flag) then
-	Raise EIntOverflow.create('Overflow on multiply');
-{$endif}
-
 end;
 
 
@@ -2871,6 +2776,124 @@ if	(R.Negative = Multi_UBool_UNDEF) then
 	else R.Negative:=Multi_UBool_TRUE;
 
 Result:= R;
+
+if	R.Overflow_flag then
+	begin
+	{$ifdef RAISE_EXCEPTIONS_ENABLED}
+		Raise EIntOverflow.create('Overflow on multiply');
+	{$endif}
+	end;
+end;
+
+
+(*-----------------------*)
+procedure SqRoot(const v1:Multi_Int_X2;var VR,VREM:Multi_Int_X2);
+var
+D,D2		:INT_2W_S;
+H,L,C,CC,T	:Multi_Int_X2;
+R_EXACT,
+finished		:boolean;
+begin
+if	(Not v1.Defined_flag)
+then
+	begin
+	VR:= 0;
+	VR.Defined_flag:= FALSE;
+	VREM:= 0;
+	VREM.Defined_flag:= FALSE;
+	{$ifdef RAISE_EXCEPTIONS_ENABLED}
+	Raise EInterror.create('Uninitialised variable');
+	{$endif}
+	exit;
+	end;
+
+if	(v1.Overflow_flag)
+then
+	begin
+	VR:= 0;
+	VR.Defined_flag:= FALSE;
+	VREM:= 0;
+	VREM.Defined_flag:= FALSE;
+	{$ifdef RAISE_EXCEPTIONS_ENABLED}
+		Raise EIntOverflow.create('Overflow on Dec');
+	{$endif}
+	exit;
+	end;
+
+if	(v1.Negative = Multi_UBool_TRUE)
+then
+	begin
+	VR:= 0;
+	VR.Defined_flag:= FALSE;
+	VREM:= 0;
+	VREM.Defined_flag:= FALSE;
+	{$ifdef RAISE_EXCEPTIONS_ENABLED}
+		Raise EIntOverflow.create('SqRoot is negative');
+	{$endif}
+	exit;
+	end;
+
+D:= length(v1.ToStr);
+D2:= D div 2;
+if ((D mod 2)=0) then
+	begin
+	L:= '1' + AddCharR('0','',D2-1);
+	H:= '1' + AddCharR('0','',D2);
+	end
+else
+	begin
+	L:= '1' + AddCharR('0','',D2);
+	H:= '1' + AddCharR('0','',D2+1);
+	end;
+
+R_EXACT:= FALSE;
+finished:= FALSE;
+while not finished do
+	begin
+	// C:= (L + ((H - L) div 2));
+    T:= subtract_Multi_Int_X2(H,L);
+    ShiftDown(T,1);
+    C:= add_Multi_Int_X2(L,T);
+
+	// CC:= (C * C);
+    multiply_Multi_Int_X2(C,C, CC);
+
+	if	(CC.Overflow)
+	or	ABS_greaterthan_Multi_Int_X2(CC,v1)
+	then
+		begin
+		if ABS_lessthan_Multi_Int_X2(C,H) then
+			H:= C
+		else
+			begin
+			finished:= TRUE;
+			// VREM:= (v1 - (C * C));
+			multiply_Multi_Int_X2(C,C, T);
+			VREM:= subtract_Multi_Int_X2(v1,T);
+			end
+		end
+	// else if (CC < v1) then
+	else if ABS_lessthan_Multi_Int_X2(CC,v1) then
+		begin
+		if ABS_greaterthan_Multi_Int_X2(C,L) then
+			L:= C
+		else
+			begin
+			finished:= TRUE;
+			// VREM:= (v1 - (C * C));
+			multiply_Multi_Int_X2(C,C, T);
+			VREM:= subtract_Multi_Int_X2(v1,T);
+			end
+		end
+	else
+		begin
+		R_EXACT:= TRUE;
+		VREM:= 0;
+		finished:= TRUE;
+		end;
+	end;
+
+VR:= C;
 end;
 
 
@@ -2933,7 +2956,6 @@ if	(P_divisor <> 0) then
 	nlz_bits_divisor:= nlz_MultiBits_X2(divisor);
 	nlz_bits_P_divisor:= nlz_bits_divisor;
 	nlz_bits_diff:= (nlz_bits_divisor - nlz_bits_dividend - 1);
-
 	if	(nlz_bits_diff > 0) then
 		begin
 		ShiftUp_MultiBits_Multi_Int_X2(divisor, nlz_bits_diff);
@@ -5489,7 +5511,7 @@ end;
 
 
 (*-----------------------*)
-procedure SqRoot(const v1:Multi_Int_X3;var VR,VREM:Multi_Int_X3);
+procedure SqRoot_v1(const v1:Multi_Int_X3;var VR,VREM:Multi_Int_X3);
 var
 D,D2		:INT_2W_S;
 H,L,C,CC	:Multi_Int_X3;
@@ -5641,11 +5663,6 @@ Result.M_Value[2]:= M_Val[2];
 Result.M_Value[3]:= M_Val[3];
 Result.M_Value[4]:= M_Val[4];
 Result.M_Value[5]:= M_Val[5];
-{$ifdef RAISE_EXCEPTIONS_ENABLED}
-if (Result.Overflow_flag) then
-	Raise EIntOverflow.create('Overflow on multiply');
-{$endif}
-
 end;
 
 
@@ -5685,6 +5702,124 @@ if	(R.Negative = Multi_UBool_UNDEF) then
 	else R.Negative:=Multi_UBool_TRUE;
 
 Result:= R;
+
+if	R.Overflow_flag then
+	begin
+	{$ifdef RAISE_EXCEPTIONS_ENABLED}
+		Raise EIntOverflow.create('Overflow on multiply');
+	{$endif}
+	end;
+end;
+
+
+(*-----------------------*)
+procedure SqRoot(const v1:Multi_Int_X3;var VR,VREM:Multi_Int_X3);
+var
+D,D2		:INT_2W_S;
+H,L,C,CC,T	:Multi_Int_X3;
+R_EXACT,
+finished		:boolean;
+begin
+if	(Not v1.Defined_flag)
+then
+	begin
+	VR:= 0;
+	VR.Defined_flag:= FALSE;
+	VREM:= 0;
+	VREM.Defined_flag:= FALSE;
+	{$ifdef RAISE_EXCEPTIONS_ENABLED}
+	Raise EInterror.create('Uninitialised variable');
+	{$endif}
+	exit;
+	end;
+
+if	(v1.Overflow_flag)
+then
+	begin
+	VR:= 0;
+	VR.Defined_flag:= FALSE;
+	VREM:= 0;
+	VREM.Defined_flag:= FALSE;
+	{$ifdef RAISE_EXCEPTIONS_ENABLED}
+		Raise EIntOverflow.create('Overflow on Dec');
+	{$endif}
+	exit;
+	end;
+
+if	(v1.Negative = Multi_UBool_TRUE)
+then
+	begin
+	VR:= 0;
+	VR.Defined_flag:= FALSE;
+	VREM:= 0;
+	VREM.Defined_flag:= FALSE;
+	{$ifdef RAISE_EXCEPTIONS_ENABLED}
+		Raise EIntOverflow.create('SqRoot is negative');
+	{$endif}
+	exit;
+	end;
+
+D:= length(v1.ToStr);
+D2:= D div 2;
+if ((D mod 2)=0) then
+	begin
+	L:= '1' + AddCharR('0','',D2-1);
+	H:= '1' + AddCharR('0','',D2);
+	end
+else
+	begin
+	L:= '1' + AddCharR('0','',D2);
+	H:= '1' + AddCharR('0','',D2+1);
+	end;
+
+R_EXACT:= FALSE;
+finished:= FALSE;
+while not finished do
+	begin
+	// C:= (L + ((H - L) div 2));
+    T:= subtract_Multi_Int_X3(H,L);
+    ShiftDown(T,1);
+    C:= add_Multi_Int_X3(L,T);
+
+	// CC:= (C * C);
+    multiply_Multi_Int_X3(C,C, CC);
+
+	if	(CC.Overflow)
+	or	ABS_greaterthan_Multi_Int_X3(CC,v1)
+	then
+		begin
+		if ABS_lessthan_Multi_Int_X3(C,H) then
+			H:= C
+		else
+			begin
+			finished:= TRUE;
+			// VREM:= (v1 - (C * C));
+			multiply_Multi_Int_X3(C,C, T);
+			VREM:= subtract_Multi_Int_X3(v1,T);
+			end
+		end
+	// else if (CC < v1) then
+	else if ABS_lessthan_Multi_Int_X3(CC,v1) then
+		begin
+		if ABS_greaterthan_Multi_Int_X3(C,L) then
+			L:= C
+		else
+			begin
+			finished:= TRUE;
+			// VREM:= (v1 - (C * C));
+			multiply_Multi_Int_X3(C,C, T);
+			VREM:= subtract_Multi_Int_X3(v1,T);
+			end
+		end
+	else
+		begin
+		R_EXACT:= TRUE;
+		VREM:= 0;
+		finished:= TRUE;
+		end;
+	end;
+
+VR:= C;
 end;
 
 
@@ -8551,96 +8686,6 @@ if	(Result.Negative = Multi_UBool_UNDEF) then Result.Negative:= Neg;
 end;
 
 
-(*-----------------------*)
-procedure SqRoot(const v1:Multi_Int_X4;var VR,VREM:Multi_Int_X4);
-var
-D,D2		:INT_2W_S;
-H,L,C,CC	:Multi_Int_X4;
-R_EXACT,
-finished	:boolean;
-begin
-if	(Not v1.Defined_flag)
-then
-	begin
-	VR:= 0;
-	VR.Defined_flag:= FALSE;
-	VREM:= 0;
-	VREM.Defined_flag:= FALSE;
-	{$ifdef RAISE_EXCEPTIONS_ENABLED}
-	Raise EInterror.create('Uninitialised variable');
-	{$endif}
-	exit;
-	end;
-
-if	(v1.Overflow_flag)
-then
-	begin
-	VR:= 0;
-	VR.Defined_flag:= FALSE;
-	VREM:= 0;
-	VREM.Defined_flag:= FALSE;
-	{$ifdef RAISE_EXCEPTIONS_ENABLED}
-		Raise EIntOverflow.create('Overflow on Dec');
-	{$endif}
-	exit;
-	end;
-
-D:= length(v1.ToStr);
-D2:= D div 2;
-if ((D mod 2)=0) then
-	begin
-	L:= '1' + AddCharR('0','',D2-1);
-	H:= '1' + AddCharR('0','',D2);
-	end
-else
-	begin
-	L:= '1' + AddCharR('0','',D2);
-	H:= '1' + AddCharR('0','',D2+1);
-	end;
-
-R_EXACT:= FALSE;
-finished:= FALSE;
-while not finished do
-	begin
-	C:= (L + ((H - L) div 2));
-	CC:= (C * C);
-	if (CC.Overflow) then begin writeln('Overflow!');halt end;
-	if (CC > v1)
-	then
-		begin
-		if (C < H) then H:= C
-		else
-			begin
-			finished:= TRUE;
-			VREM:= (v1 - (C * C));
-			end
-		end
-	else if (CC < v1) then
-		begin
-		if (C > L) then L:= C
-		else
-			begin
-			VREM:= (v1 - (C * C));
-			finished:= TRUE;
-			end
-		end
-	else if (CC = v1) then
-		begin
-		R_EXACT:= TRUE;
-		VREM:= 0;
-		finished:= TRUE;
-		end
-	else
-		begin
-		writeln('Panic in find_root!');
-		halt;
-		end;
-	end;
-
-VR:= C;
-end;
-
-
 (******************************************)
 class operator Multi_Int_X4.-(const v1:Multi_Int_X4):Multi_Int_X4;
 begin
@@ -8706,12 +8751,6 @@ Result.M_Value[4]:= M_Val[4];
 Result.M_Value[5]:= M_Val[5];
 Result.M_Value[6]:= M_Val[6];
 Result.M_Value[7]:= M_Val[7];
-
-{$ifdef RAISE_EXCEPTIONS_ENABLED}
-if (Result.Overflow_flag) then
-	Raise EIntOverflow.create('Overflow on multiply');
-{$endif}
-
 end;
 
 
@@ -8751,6 +8790,124 @@ if	(R.Negative = Multi_UBool_UNDEF) then
 	else R.Negative:=Multi_UBool_TRUE;
 
 Result:= R;
+
+if	R.Overflow_flag then
+	begin
+	{$ifdef RAISE_EXCEPTIONS_ENABLED}
+		Raise EIntOverflow.create('Overflow on multiply');
+	{$endif}
+	end;
+end;
+
+
+(*-----------------------*)
+procedure SqRoot(const v1:Multi_Int_X4;var VR,VREM:Multi_Int_X4);
+var
+D,D2		:INT_2W_S;
+H,L,C,CC,T	:Multi_Int_X4;
+R_EXACT,
+finished		:boolean;
+begin
+if	(Not v1.Defined_flag)
+then
+	begin
+	VR:= 0;
+	VR.Defined_flag:= FALSE;
+	VREM:= 0;
+	VREM.Defined_flag:= FALSE;
+	{$ifdef RAISE_EXCEPTIONS_ENABLED}
+	Raise EInterror.create('Uninitialised variable');
+	{$endif}
+	exit;
+	end;
+
+if	(v1.Overflow_flag)
+then
+	begin
+	VR:= 0;
+	VR.Defined_flag:= FALSE;
+	VREM:= 0;
+	VREM.Defined_flag:= FALSE;
+	{$ifdef RAISE_EXCEPTIONS_ENABLED}
+		Raise EIntOverflow.create('Overflow on Dec');
+	{$endif}
+	exit;
+	end;
+
+if	(v1.Negative = Multi_UBool_TRUE)
+then
+	begin
+	VR:= 0;
+	VR.Defined_flag:= FALSE;
+	VREM:= 0;
+	VREM.Defined_flag:= FALSE;
+	{$ifdef RAISE_EXCEPTIONS_ENABLED}
+		Raise EIntOverflow.create('SqRoot is negative');
+	{$endif}
+	exit;
+	end;
+
+D:= length(v1.ToStr);
+D2:= D div 2;
+if ((D mod 2)=0) then
+	begin
+	L:= '1' + AddCharR('0','',D2-1);
+	H:= '1' + AddCharR('0','',D2);
+	end
+else
+	begin
+	L:= '1' + AddCharR('0','',D2);
+	H:= '1' + AddCharR('0','',D2+1);
+	end;
+
+R_EXACT:= FALSE;
+finished:= FALSE;
+while not finished do
+	begin
+	// C:= (L + ((H - L) div 2));
+    T:= subtract_Multi_Int_X4(H,L);
+    ShiftDown(T,1);
+    C:= add_Multi_Int_X4(L,T);
+
+	// CC:= (C * C);
+    multiply_Multi_Int_X4(C,C, CC);
+
+	if	(CC.Overflow)
+	or	ABS_greaterthan_Multi_Int_X4(CC,v1)
+	then
+		begin
+		if ABS_lessthan_Multi_Int_X4(C,H) then
+			H:= C
+		else
+			begin
+			finished:= TRUE;
+			// VREM:= (v1 - (C * C));
+			multiply_Multi_Int_X4(C,C, T);
+			VREM:= subtract_Multi_Int_X4(v1,T);
+			end
+		end
+	// else if (CC < v1) then
+	else if ABS_lessthan_Multi_Int_X4(CC,v1) then
+		begin
+		if ABS_greaterthan_Multi_Int_X4(C,L) then
+			L:= C
+		else
+			begin
+			finished:= TRUE;
+			// VREM:= (v1 - (C * C));
+			multiply_Multi_Int_X4(C,C, T);
+			VREM:= subtract_Multi_Int_X4(v1,T);
+			end
+		end
+	else
+		begin
+		R_EXACT:= TRUE;
+		VREM:= 0;
+		finished:= TRUE;
+		end;
+	end;
+
+VR:= C;
 end;
 
 
@@ -10858,11 +11015,6 @@ if	M_Val[n] > INT_1W_U_MAXINT then
 	M_Val[n]:= (M_Val[n] MOD INT_1W_U_MAXINT_1);
 	Result.Defined_flag:= FALSE;
 	Result.Overflow_flag:=TRUE;
-(*
-	{$ifdef RAISE_EXCEPTIONS_ENABLED}
-	Raise EIntOverflow.create('Overflow on add');
-	{$endif}
-*)
 	end;
 
 M_Val_All_Zero:= TRUE;
@@ -10918,11 +11070,6 @@ if	M_Val[n] < 0 then
 	begin
 	Result.Defined_flag:= FALSE;
 	Result.Overflow_flag:=TRUE;
-(*
-	{$ifdef RAISE_EXCEPTIONS_ENABLED}
-	Raise EIntOverflow.create('Overflow on subtract');
-	{$endif}
-*)
 	end;
 
 M_Val_All_Zero:=TRUE;
@@ -11221,95 +11368,6 @@ if	(Result.Negative = Multi_UBool_UNDEF) then Result.Negative:= Neg;
 end;
 
 
-(*-----------------------*)
-procedure SqRoot(const v1:Multi_Int_X48;var VR,VREM:Multi_Int_X48);
-var
-D,D2		:INT_2W_S;
-H,L,C,CC	:Multi_Int_X48;
-R_EXACT,
-finished	:boolean;
-begin
-if	(Not v1.Defined_flag)
-then
-	begin
-	VR:= 0;
-	VR.Defined_flag:= FALSE;
-	VREM:= 0;
-	VREM.Defined_flag:= FALSE;
-	{$ifdef RAISE_EXCEPTIONS_ENABLED}
-	Raise EInterror.create('Uninitialised variable');
-	{$endif}
-	exit;
-	end;
-
-if	(v1.Overflow_flag)
-then
-	begin
-	VR:= 0;
-	VR.Defined_flag:= FALSE;
-	VREM:= 0;
-	VREM.Defined_flag:= FALSE;
-	{$ifdef RAISE_EXCEPTIONS_ENABLED}
-		Raise EIntOverflow.create('Overflow on Dec');
-	{$endif}
-	exit;
-	end;
-
-D:= length(v1.ToStr);
-D2:= D div 2;
-if ((D mod 2)=0) then
-	begin
-	L:= '1' + AddCharR('0','',D2-1);
-	H:= '1' + AddCharR('0','',D2);
-	end
-else
-	begin
-	L:= '1' + AddCharR('0','',D2);
-	H:= '1' + AddCharR('0','',D2+1);
-	end;
-
-R_EXACT:= FALSE;
-finished:= FALSE;
-while not finished do
-	begin
-	C:= (L + ((H - L) div 2));
-	CC:= (C * C);
-	if (CC.Overflow) then begin writeln('Overflow!');halt end;
-	if (CC > v1)
-	then
-		begin
-		if (C < H) then H:= C
-		else
-			begin
-			finished:= TRUE;
-			VREM:= (v1 - (C * C));
-			end
-		end
-	else if (CC < v1) then
-		begin
-		if (C > L) then L:= C
-		else
-			begin
-			VREM:= (v1 - (C * C));
-			finished:= TRUE;
-			end
-		end
-	else if (CC = v1) then
-		begin
-		R_EXACT:= TRUE;
-		VREM:= 0;
-		finished:= TRUE;
-		end
-	else
-		begin
-		writeln('Panic in find_root!');
-		halt;
-		end;
-	end;
-
-VR:= C;
-end;
-
 
 (******************************************)
 class operator Multi_Int_X48.-(const v1:Multi_Int_X48):Multi_Int_X48;
@@ -11455,12 +11513,123 @@ if	R.Overflow_flag then
 end;
 
 
+(*-----------------------*)
+procedure SqRoot(const v1:Multi_Int_X48;var VR,VREM:Multi_Int_X48);
+var
+D,D2		:INT_2W_S;
+H,L,C,CC,T	:Multi_Int_X48;
+R_EXACT,
+finished		:boolean;
+begin
+if	(Not v1.Defined_flag)
+then
+	begin
+	VR:= 0;
+	VR.Defined_flag:= FALSE;
+	VREM:= 0;
+	VREM.Defined_flag:= FALSE;
+	{$ifdef RAISE_EXCEPTIONS_ENABLED}
+	Raise EInterror.create('Uninitialised variable');
+	{$endif}
+	exit;
+	end;
+
+if	(v1.Overflow_flag)
+then
+	begin
+	VR:= 0;
+	VR.Defined_flag:= FALSE;
+	VREM:= 0;
+	VREM.Defined_flag:= FALSE;
+	{$ifdef RAISE_EXCEPTIONS_ENABLED}
+		Raise EIntOverflow.create('Overflow on Dec');
+	{$endif}
+	exit;
+	end;
+
+if	(v1.Negative = Multi_UBool_TRUE)
+then
+	begin
+	VR:= 0;
+	VR.Defined_flag:= FALSE;
+	VREM:= 0;
+	VREM.Defined_flag:= FALSE;
+	{$ifdef RAISE_EXCEPTIONS_ENABLED}
+		Raise EIntOverflow.create('SqRoot is negative');
+	{$endif}
+	exit;
+	end;
+
+D:= length(v1.ToStr);
+D2:= D div 2;
+if ((D mod 2)=0) then
+	begin
+	L:= '1' + AddCharR('0','',D2-1);
+	H:= '1' + AddCharR('0','',D2);
+	end
+else
+	begin
+	L:= '1' + AddCharR('0','',D2);
+	H:= '1' + AddCharR('0','',D2+1);
+	end;
+
+R_EXACT:= FALSE;
+finished:= FALSE;
+while not finished do
+	begin
+	// C:= (L + ((H - L) div 2));
+    T:= subtract_Multi_Int_X48(H,L);
+    ShiftDown(T,1);
+    C:= add_Multi_Int_X48(L,T);
+
+	// CC:= (C * C);
+    multiply_Multi_Int_X48(C,C, CC);
+
+	if	(CC.Overflow)
+	or	ABS_greaterthan_Multi_Int_X48(CC,v1)
+	then
+		begin
+		if ABS_lessthan_Multi_Int_X48(C,H) then
+			H:= C
+		else
+			begin
+			finished:= TRUE;
+			// VREM:= (v1 - (C * C));
+			multiply_Multi_Int_X48(C,C, T);
+			VREM:= subtract_Multi_Int_X48(v1,T);
+			end
+		end
+	// else if (CC < v1) then
+	else if ABS_lessthan_Multi_Int_X48(CC,v1) then
+		begin
+		if ABS_greaterthan_Multi_Int_X48(C,L) then
+			L:= C
+		else
+			begin
+			finished:= TRUE;
+			// VREM:= (v1 - (C * C));
+			multiply_Multi_Int_X48(C,C, T);
+			VREM:= subtract_Multi_Int_X48(v1,T);
+			end
+		end
+	else
+		begin
+		R_EXACT:= TRUE;
+		VREM:= 0;
+		finished:= TRUE;
+		end;
+	end;
+
+VR:= C;
+end;
+
+
 (********************v3********************)
 { Function exp_by_squaring_iterative(TV, P) }
 
 class operator Multi_Int_X48.**(const v1:Multi_Int_X48; const P:INT_2W_S):Multi_Int_X48;
 var
-TV,Y	:Multi_Int_X48;
+Y,TV	:Multi_Int_X48;
 PT		:INT_2W_S;
 begin
 PT:= P;
@@ -11486,7 +11655,7 @@ end;
 
 
 (********************v2********************)
-procedure intdivide_Shift_And_Sub_X48(const P_dividend,P_divisor:Multi_Int_X48;var P_quotient,P_remainder:Multi_Int_X48);
+procedure intdivide_Shift_And_Sub_X48_v2(const P_dividend,P_divisor:Multi_Int_X48;var P_quotient,P_remainder:Multi_Int_X48);
 var
 dividend,
 divisor,
@@ -11514,14 +11683,98 @@ if	(P_divisor <> 0) then
 	nlz_bits_divisor:= nlz_MultiBits_X48(divisor);
 	nlz_bits_P_divisor:= nlz_bits_divisor;
 	nlz_bits_diff:= (nlz_bits_divisor - nlz_bits_dividend - 1);
-
 	if	(nlz_bits_diff > 0) then
 		begin
 		ShiftUp_MultiBits_Multi_Int_X48(divisor, nlz_bits_diff);
 		ShiftUp_MultiBits_Multi_Int_X48(quotient_factor, nlz_bits_diff);
 		end
 	else nlz_bits_diff:= 0;
+	{ Round X }
+	repeat
+		dividend:= (dividend - divisor);
+		repeat
+            prev_subtraction:= dividend;
+			quotient:= (quotient + quotient_factor);
+			dividend:= (dividend - divisor);
+		until (dividend < 0);
+		dividend:= prev_subtraction;
+		nlz_bits_divisor:= nlz_MultiBits_X48(divisor);
+		if (nlz_bits_divisor < nlz_bits_P_divisor) then
+			begin
+			nlz_bits_dividend:= nlz_MultiBits_X48(dividend);
+			nlz_bits_diff:= (nlz_bits_dividend - nlz_bits_divisor + 1);
+			if ((nlz_bits_divisor + nlz_bits_diff) > nlz_bits_P_divisor) then
+				nlz_bits_diff:= (nlz_bits_P_divisor - nlz_bits_divisor);
+			ShiftDown_MultiBits_Multi_Int_X48(divisor, nlz_bits_diff);
+			ShiftDown_MultiBits_Multi_Int_X48(quotient_factor, nlz_bits_diff);
+			end;
+	until	(dividend < P_divisor)
+	or		(nlz_bits_divisor >= nlz_bits_P_divisor)
+	or		(divisor = 0)
+	;
 
+	P_quotient:= quotient;
+	P_remainder:= dividend;
+
+	if	(P_dividend.Negative = TRUE) and (P_remainder > 0)
+	then
+		P_remainder.Negative:= TRUE;
+
+	if	(P_dividend.Negative <> P_divisor.Negative)
+	and	(P_quotient > 0)
+	then
+		P_quotient.Negative:= TRUE;
+
+	end
+else
+	begin
+	P_quotient:= 0;
+	P_quotient.Defined_flag:= FALSE;
+	P_quotient.Overflow_flag:= TRUE;
+	P_remainder:= 0;
+	P_remainder.Defined_flag:= FALSE;
+	P_remainder.Overflow_flag:= TRUE;
+	Multi_Int_OVERFLOW_ERROR:= TRUE;
+	end;
+end;
+
+
+(********************v3********************)
+procedure intdivide_Shift_And_Sub_X48(const P_dividend,P_divisor:Multi_Int_X48;var P_quotient,P_remainder:Multi_Int_X48);
+var
+dividend,
+divisor,
+quotient,
+quotient_factor,
+prev_subtraction	:Multi_Int_X48;
+nlz_bits_dividend,
+nlz_bits_divisor,
+nlz_bits_P_divisor,
+nlz_bits_diff		:INT_2W_S;
+
+begin
+if	(P_divisor <> 0) then
+	begin
+	quotient:= 0;
+	P_remainder:= 0;
+	dividend:= P_dividend;
+	dividend.Negative:= FALSE;
+	divisor:= P_divisor;
+	divisor.Negative:= FALSE;
+	quotient_factor:= 1;
+	nlz_bits_divisor:= nlz_MultiBits_X48(divisor);
+	nlz_bits_P_divisor:= nlz_bits_divisor;
+	nlz_bits_dividend:= nlz_MultiBits_X48(dividend);
+
+	{ Round 0 }
+	nlz_bits_diff:= (nlz_bits_divisor - nlz_bits_dividend - 1);
+	if	(nlz_bits_diff > 0) then
+		begin
+		ShiftUp_MultiBits_Multi_Int_X48(divisor, nlz_bits_diff);
+		nlz_bits_divisor:= (nlz_bits_divisor - nlz_bits_diff);
+		ShiftUp_MultiBits_Multi_Int_X48(quotient_factor, nlz_bits_diff);
+		end
+	else nlz_bits_diff:= 0;
 	{ Round X }
 	repeat
 		dividend:= (dividend - divisor);
@@ -11532,7 +11785,6 @@ if	(P_divisor <> 0) then
 		until (dividend < 0);
 		dividend:= prev_subtraction;
 
-		nlz_bits_divisor:= nlz_MultiBits_X48(divisor);
 		if (nlz_bits_divisor < nlz_bits_P_divisor) then
 			begin
 			nlz_bits_dividend:= nlz_MultiBits_X48(dividend);
@@ -11542,10 +11794,12 @@ if	(P_divisor <> 0) then
 				nlz_bits_diff:= (nlz_bits_P_divisor - nlz_bits_divisor);
 
 			ShiftDown_MultiBits_Multi_Int_X48(divisor, nlz_bits_diff);
+			nlz_bits_divisor:= (nlz_bits_divisor + nlz_bits_diff);
+
 			ShiftDown_MultiBits_Multi_Int_X48(quotient_factor, nlz_bits_diff);
 			end;
-	until	(dividend < P_divisor)
-	or		(nlz_bits_divisor >= nlz_bits_P_divisor)
+	until	(nlz_bits_divisor >= nlz_bits_P_divisor)
+	or		(dividend < P_divisor)
 	or		(divisor = 0)
 	;
 
