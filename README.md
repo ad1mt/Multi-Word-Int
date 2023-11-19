@@ -7,4 +7,4 @@ Will compile and run on 32bit and 64bit environments.
 Written purely in Pascal to be portable and reliable (no assembly or C language code).
 This should be considered a beta development version.
 
-Version 4.22 has a slightly faster divide algorithm, and some changes to type and const names.
+Version 4.22 has a slightly faster divide algorithm, and some changes to type and const names, and improvements to the visibility and usability of some functions/procedures.
