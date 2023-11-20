@@ -2982,7 +2982,27 @@ nlz_bits_P_divisor,
 nlz_bits_diff		:INT_2W_S;
 
 begin
-if	(P_divisor <> 0) then
+if	(P_divisor = 0) then
+	begin
+	P_quotient:= 0;
+	P_quotient.Defined_flag:= FALSE;
+	P_quotient.Overflow_flag:= TRUE;
+ 	P_remainder:= 0;
+	P_remainder.Defined_flag:= FALSE;
+	P_remainder.Overflow_flag:= TRUE;
+	Multi_Int_OVERFLOW_ERROR:= TRUE;
+    end
+else if	(P_divisor > P_dividend) then
+	begin
+	P_quotient:= 0;
+ 	P_remainder:= P_dividend;
+    end
+else if	(P_divisor = P_dividend) then
+	begin
+	P_quotient:= 1;
+ 	P_remainder:= 0;
+    end
+else
 	begin
 	quotient:= 0;
 	P_remainder:= 0;
@@ -3046,16 +3066,6 @@ if	(P_divisor <> 0) then
 	then
 		P_quotient.Negative:= TRUE;
 
-	end
-else
-	begin
-	P_quotient:= 0;
-	P_quotient.Defined_flag:= FALSE;
-	P_quotient.Overflow_flag:= TRUE;
-	P_remainder:= 0;
-	P_remainder.Defined_flag:= FALSE;
-	P_remainder.Overflow_flag:= TRUE;
-	Multi_Int_OVERFLOW_ERROR:= TRUE;
 	end;
 end;
 
@@ -5859,7 +5869,27 @@ nlz_bits_P_divisor,
 nlz_bits_diff		:INT_2W_S;
 
 begin
-if	(P_divisor <> 0) then
+if	(P_divisor = 0) then
+	begin
+	P_quotient:= 0;
+	P_quotient.Defined_flag:= FALSE;
+	P_quotient.Overflow_flag:= TRUE;
+ 	P_remainder:= 0;
+	P_remainder.Defined_flag:= FALSE;
+	P_remainder.Overflow_flag:= TRUE;
+	Multi_Int_OVERFLOW_ERROR:= TRUE;
+    end
+else if	(P_divisor > P_dividend) then
+	begin
+	P_quotient:= 0;
+ 	P_remainder:= P_dividend;
+    end
+else if	(P_divisor = P_dividend) then
+	begin
+	P_quotient:= 1;
+ 	P_remainder:= 0;
+    end
+else
 	begin
 	quotient:= 0;
 	P_remainder:= 0;
@@ -5924,16 +5954,6 @@ if	(P_divisor <> 0) then
 	then
 		P_quotient.Negative:= TRUE;
 
-	end
-else
-	begin
-	P_quotient:= 0;
-	P_quotient.Defined_flag:= FALSE;
-	P_quotient.Overflow_flag:= TRUE;
-	P_remainder:= 0;
-	P_remainder.Defined_flag:= FALSE;
-	P_remainder.Overflow_flag:= TRUE;
-	Multi_Int_OVERFLOW_ERROR:= TRUE;
 	end;
 end;
 
@@ -8988,7 +9008,27 @@ nlz_bits_P_divisor,
 nlz_bits_diff		:INT_2W_S;
 
 begin
-if	(P_divisor <> 0) then
+if	(P_divisor = 0) then
+	begin
+	P_quotient:= 0;
+	P_quotient.Defined_flag:= FALSE;
+	P_quotient.Overflow_flag:= TRUE;
+ 	P_remainder:= 0;
+	P_remainder.Defined_flag:= FALSE;
+	P_remainder.Overflow_flag:= TRUE;
+	Multi_Int_OVERFLOW_ERROR:= TRUE;
+    end
+else if	(P_divisor > P_dividend) then
+	begin
+	P_quotient:= 0;
+ 	P_remainder:= P_dividend;
+    end
+else if	(P_divisor = P_dividend) then
+	begin
+	P_quotient:= 1;
+ 	P_remainder:= 0;
+    end
+else
 	begin
 	quotient:= 0;
 	P_remainder:= 0;
@@ -9050,16 +9090,6 @@ if	(P_divisor <> 0) then
 	then
 		P_quotient.Negative:= TRUE;
 
-	end
-else
-	begin
-	P_quotient:= 0;
-	P_quotient.Defined_flag:= FALSE;
-	P_quotient.Overflow_flag:= TRUE;
-	P_remainder:= 0;
-	P_remainder.Defined_flag:= FALSE;
-	P_remainder.Overflow_flag:= TRUE;
-	Multi_Int_OVERFLOW_ERROR:= TRUE;
 	end;
 end;
 
@@ -11742,7 +11772,27 @@ nlz_bits_P_divisor,
 nlz_bits_diff		:INT_2W_S;
 
 begin
-if	(P_divisor <> 0) then
+if	(P_divisor = 0) then
+	begin
+	P_quotient:= 0;
+	P_quotient.Defined_flag:= FALSE;
+	P_quotient.Overflow_flag:= TRUE;
+ 	P_remainder:= 0;
+	P_remainder.Defined_flag:= FALSE;
+	P_remainder.Overflow_flag:= TRUE;
+	Multi_Int_OVERFLOW_ERROR:= TRUE;
+    end
+else if	(P_divisor > P_dividend) then
+	begin
+	P_quotient:= 0;
+ 	P_remainder:= P_dividend;
+    end
+else if	(P_divisor = P_dividend) then
+	begin
+	P_quotient:= 1;
+ 	P_remainder:= 0;
+    end
+else
 	begin
 	quotient:= 0;
 	P_remainder:= 0;
@@ -11803,17 +11853,6 @@ if	(P_divisor <> 0) then
 	and	(P_quotient > 0)
 	then
 		P_quotient.Negative:= TRUE;
-
-	end
-else
-	begin
-	P_quotient:= 0;
-	P_quotient.Defined_flag:= FALSE;
-	P_quotient.Overflow_flag:= TRUE;
-	P_remainder:= 0;
-	P_remainder.Defined_flag:= FALSE;
-	P_remainder.Overflow_flag:= TRUE;
-	Multi_Int_OVERFLOW_ERROR:= TRUE;
 	end;
 end;
 
