@@ -4,7 +4,7 @@ UNIT Multi_Int;
 
 {$MODESWITCH NESTEDCOMMENTS+}
 
-(* v4.22B *)
+(* v4.22C *)
 
 (* USER OPTIONAL DEFINES *)
 
@@ -37,7 +37,7 @@ there is no point in having less than 7, because the type named Multi_Int_X4 use
 The number is half-words, so if you specify 127 that is 128 half-words, which equals
 64 words, which equals 512 bits (in 64bit environment).
 *)
-	X48_max		= 127;
+	X48_max		= 1;
 
 (*
 X48_max is the only thing you should change in here.
@@ -357,7 +357,7 @@ Multi_Int_X48	=	record
 						class operator dec(const v1:Multi_Int_X48):Multi_Int_X48; inline;
 						class operator xor(const v1,v2:Multi_Int_X48):Multi_Int_X48; inline;
 						class operator multiply(const v1,v2:Multi_Int_X48):Multi_Int_X48; inline;
-						class operator intdivide(const v1,v2:Multi_Int_X48):Multi_Int_X48; inline;
+						class operator intdivide(const v1,v2:Multi_Int_X48):Multi_Int_X48;
 						class operator modulus(const v1,v2:Multi_Int_X48):Multi_Int_X48; inline;
 						class operator -(const v1:Multi_Int_X48):Multi_Int_X48; inline;
 						class operator >=(const v1,v2:Multi_Int_X48):Boolean; inline;
@@ -2972,6 +2972,7 @@ end;
 
 (******************************************)
 procedure intdivide_Shift_And_Sub_X2(const P_dividend,P_divisor:Multi_Int_X2;var P_quotient,P_remainder:Multi_Int_X2);
+label	9999;
 var
 dividend,
 divisor,
@@ -2994,11 +2995,6 @@ if	(P_divisor = 0) then
 	P_remainder.Overflow_flag:= TRUE;
 	Multi_Int_OVERFLOW_ERROR:= TRUE;
     end
-else if	(P_divisor > P_dividend) then
-	begin
-	P_quotient:= 0;
- 	P_remainder:= P_dividend;
-    end
 else if	(P_divisor = P_dividend) then
 	begin
 	P_quotient:= 1;
@@ -3006,12 +3002,20 @@ else if	(P_divisor = P_dividend) then
     end
 else
 	begin
-	quotient:= 0;
-	P_remainder:= 0;
 	dividend:= P_dividend;
 	dividend.Negative:= FALSE;
 	divisor:= P_divisor;
 	divisor.Negative:= FALSE;
+
+	if	(divisor > dividend) then
+		begin
+		P_quotient:= 0;
+	 	P_remainder:= P_dividend;
+		goto 9999;
+	    end;
+
+	quotient:= 0;
+	P_remainder:= 0;
 	quotient_factor:= 1;
 
 	{ Round 0 }
@@ -3031,7 +3035,8 @@ else
 	repeat
 		repeat
 			dividend:= (dividend - divisor);
-			if (dividend >= 0) then quotient:= (quotient + quotient_factor);
+			if (dividend >= 0) then
+				quotient:= (quotient + quotient_factor);
 		until (dividend < 0);
 		dividend:= (dividend + divisor);
 
@@ -3055,9 +3060,6 @@ else
 	P_quotient:= quotient;
 	P_remainder:= dividend;
 
-	P_quotient:= quotient;
-	P_remainder:= dividend;
-
 	if	(P_dividend.Negative = TRUE) and (P_remainder > 0)
 	then
 		P_remainder.Negative:= TRUE;
@@ -3066,8 +3068,8 @@ else
 	and	(P_quotient > 0)
 	then
 		P_quotient.Negative:= TRUE;
-
 	end;
+9999:
 end;
 
 
@@ -3110,12 +3112,12 @@ then
 else
 	begin
 	intdivide_Shift_And_Sub_X2(v1,v2,Quotient,Remainder);
-
+{
 	if	(v1.Negative <> v2.Negative)
 	then Quotient.Negative:= TRUE
 	else if	(v2.Negative)
 	then Remainder.Negative:= TRUE;
-
+}
 	X2_Last_Divisor:= v2;
 	X2_Last_Dividend:= v1;
 	X2_Last_Quotient:= Quotient;
@@ -5858,12 +5860,13 @@ end;
 
 (******************************************)
 procedure intdivide_Shift_And_Sub_X3(const P_dividend,P_divisor:Multi_Int_X3;var P_quotient,P_remainder:Multi_Int_X3);
+label	9999;
 var
 dividend,
 divisor,
 quotient,
 quotient_factor,
-prev_subtraction		:Multi_Int_X3;
+prev_subtraction	:Multi_Int_X3;
 nlz_bits_dividend,
 nlz_bits_divisor,
 nlz_bits_P_divisor,
@@ -5880,11 +5883,6 @@ if	(P_divisor = 0) then
 	P_remainder.Overflow_flag:= TRUE;
 	Multi_Int_OVERFLOW_ERROR:= TRUE;
     end
-else if	(P_divisor > P_dividend) then
-	begin
-	P_quotient:= 0;
- 	P_remainder:= P_dividend;
-    end
 else if	(P_divisor = P_dividend) then
 	begin
 	P_quotient:= 1;
@@ -5892,12 +5890,20 @@ else if	(P_divisor = P_dividend) then
     end
 else
 	begin
-	quotient:= 0;
-	P_remainder:= 0;
 	dividend:= P_dividend;
 	dividend.Negative:= FALSE;
 	divisor:= P_divisor;
 	divisor.Negative:= FALSE;
+
+	if	(divisor > dividend) then
+		begin
+		P_quotient:= 0;
+	 	P_remainder:= P_dividend;
+		goto 9999;
+	    end;
+
+	quotient:= 0;
+	P_remainder:= 0;
 	quotient_factor:= 1;
 
 	{ Round 0 }
@@ -5917,7 +5923,8 @@ else
 	repeat
 		repeat
 			dividend:= (dividend - divisor);
-			if (dividend >= 0) then quotient:= (quotient + quotient_factor);
+			if (dividend >= 0) then
+				quotient:= (quotient + quotient_factor);
 		until (dividend < 0);
 		dividend:= (dividend + divisor);
 
@@ -5941,9 +5948,6 @@ else
 	P_quotient:= quotient;
 	P_remainder:= dividend;
 
-	P_quotient:= quotient;
-	P_remainder:= dividend;
-
 	if	(P_dividend.Negative = TRUE) and (P_remainder > 0)
 	then
 		P_remainder.Negative:= TRUE;
@@ -5952,8 +5956,8 @@ else
 	and	(P_quotient > 0)
 	then
 		P_quotient.Negative:= TRUE;
-
 	end;
+9999:
 end;
 
 
@@ -5996,12 +6000,12 @@ then
 else
 	begin
 	intdivide_Shift_And_Sub_X3(v1,v2,Quotient,Remainder);
-
+{
 	if	(v1.Negative <> v2.Negative)
 	then Quotient.Negative:= TRUE
 	else if	(v2.Negative)
 	then Remainder.Negative:= TRUE;
-
+}
 	X3_Last_Divisor:= v2;
 	X3_Last_Dividend:= v1;
 	X3_Last_Quotient:= Quotient;
@@ -8995,6 +8999,7 @@ end;
 
 (******************************************)
 procedure intdivide_Shift_And_Sub_X4(const P_dividend,P_divisor:Multi_Int_X4;var P_quotient,P_remainder:Multi_Int_X4);
+label	9999;
 var
 dividend,
 divisor,
@@ -9017,11 +9022,6 @@ if	(P_divisor = 0) then
 	P_remainder.Overflow_flag:= TRUE;
 	Multi_Int_OVERFLOW_ERROR:= TRUE;
     end
-else if	(P_divisor > P_dividend) then
-	begin
-	P_quotient:= 0;
- 	P_remainder:= P_dividend;
-    end
 else if	(P_divisor = P_dividend) then
 	begin
 	P_quotient:= 1;
@@ -9029,12 +9029,20 @@ else if	(P_divisor = P_dividend) then
     end
 else
 	begin
-	quotient:= 0;
-	P_remainder:= 0;
 	dividend:= P_dividend;
 	dividend.Negative:= FALSE;
 	divisor:= P_divisor;
 	divisor.Negative:= FALSE;
+
+	if	(divisor > dividend) then
+		begin
+		P_quotient:= 0;
+	 	P_remainder:= P_dividend;
+		goto 9999;
+	    end;
+
+	quotient:= 0;
+	P_remainder:= 0;
 	quotient_factor:= 1;
 
 	{ Round 0 }
@@ -9054,7 +9062,8 @@ else
 	repeat
 		repeat
 			dividend:= (dividend - divisor);
-			if (dividend >= 0) then quotient:= (quotient + quotient_factor);
+			if (dividend >= 0) then
+				quotient:= (quotient + quotient_factor);
 		until (dividend < 0);
 		dividend:= (dividend + divisor);
 
@@ -9086,8 +9095,8 @@ else
 	and	(P_quotient > 0)
 	then
 		P_quotient.Negative:= TRUE;
-
 	end;
+9999:
 end;
 
 
@@ -9135,12 +9144,12 @@ then
 else
 	begin
 	intdivide_Shift_And_Sub_X4(P_v1,P_v2,Quotient,Remainder);
-
+{
 	if	(v1.Negative <> v2.Negative)
 	then Quotient.Negative:= TRUE
 	else if	(v2.Negative)
 	then Remainder.Negative:= TRUE;
-
+}
 	X4_Last_Divisor:= P_v2;
 	X4_Last_Dividend:= P_v1;
 	X4_Last_Quotient:= Quotient;
@@ -9210,7 +9219,19 @@ end;
 
 {
 ******************************************
+******************************************
+******************************************
+******************************************
+******************************************
+******************************************
+
 Multi_Int_X48
+
+******************************************
+******************************************
+******************************************
+******************************************
+******************************************
 ******************************************
 }
 
@@ -11757,6 +11778,7 @@ end;
 
 (********************v3********************)
 procedure intdivide_Shift_And_Sub_X48(const P_dividend,P_divisor:Multi_Int_X48;var P_quotient,P_remainder:Multi_Int_X48);
+label	9999;
 var
 dividend,
 divisor,
@@ -11779,11 +11801,6 @@ if	(P_divisor = 0) then
 	P_remainder.Overflow_flag:= TRUE;
 	Multi_Int_OVERFLOW_ERROR:= TRUE;
     end
-else if	(P_divisor > P_dividend) then
-	begin
-	P_quotient:= 0;
- 	P_remainder:= P_dividend;
-    end
 else if	(P_divisor = P_dividend) then
 	begin
 	P_quotient:= 1;
@@ -11791,12 +11808,20 @@ else if	(P_divisor = P_dividend) then
     end
 else
 	begin
-	quotient:= 0;
-	P_remainder:= 0;
 	dividend:= P_dividend;
 	dividend.Negative:= FALSE;
 	divisor:= P_divisor;
 	divisor.Negative:= FALSE;
+
+	if	(divisor > dividend) then
+		begin
+		P_quotient:= 0;
+	 	P_remainder:= P_dividend;
+		goto 9999;
+	    end;
+
+	quotient:= 0;
+	P_remainder:= 0;
 	quotient_factor:= 1;
 
 	{ Round 0 }
@@ -11850,6 +11875,7 @@ else
 	then
 		P_quotient.Negative:= TRUE;
 	end;
+9999:
 end;
 
 
@@ -11892,11 +11918,12 @@ then
 else	// different values than last time
 	begin
 	intdivide_Shift_And_Sub_X48(v1,v2,Quotient,Remainder);
-
+{
 	if	(v1.Negative <> v2.Negative)
 	then Quotient.Negative:= TRUE
 	else if	(v2.Negative)
 	then Remainder.Negative:= TRUE;
+}
 
 	X48_Last_Divisor:= v2;
 	X48_Last_Dividend:= v1;
@@ -11956,12 +11983,12 @@ then
 else	// different values than last time
 	begin
 	intdivide_Shift_And_Sub_X48(v1,v2,Quotient,Remainder);
-
+{
 	if	(v1.Negative <> v2.Negative)
 	then Quotient.Negative:= TRUE
 	else if	(v2.Negative)
 	then Remainder.Negative:= TRUE;
-
+}
 	X48_Last_Divisor:= v2;
 	X48_Last_Dividend:= v1;
 	X48_Last_Quotient:= Quotient;
