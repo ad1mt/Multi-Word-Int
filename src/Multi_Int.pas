@@ -3017,6 +3017,7 @@ else
 	nlz_bits_divisor:= nlz_MultiBits_X2(divisor);
 	nlz_bits_P_divisor:= nlz_bits_divisor;
 	nlz_bits_diff:= (nlz_bits_divisor - nlz_bits_dividend - 1);
+
 	if	(nlz_bits_diff > 0) then
 		begin
 		ShiftUp_MultiBits_Multi_Int_X2(divisor, nlz_bits_diff);
@@ -3026,13 +3027,11 @@ else
 
 	{ Round X }
 	repeat
-		dividend:= (dividend - divisor);
 		repeat
-            prev_subtraction:= dividend;
-			quotient:= (quotient + quotient_factor);
 			dividend:= (dividend - divisor);
+			if (dividend >= 0) then quotient:= (quotient + quotient_factor);
 		until (dividend < 0);
-		dividend:= prev_subtraction;
+		dividend:= (dividend + divisor);
 
 		nlz_bits_divisor:= nlz_MultiBits_X2(divisor);
 		if (nlz_bits_divisor < nlz_bits_P_divisor) then
@@ -5914,13 +5913,11 @@ else
 
 	{ Round X }
 	repeat
-		dividend:= (dividend - divisor);
 		repeat
-            prev_subtraction:= dividend;
-			quotient:= (quotient + quotient_factor);
 			dividend:= (dividend - divisor);
+			if (dividend >= 0) then quotient:= (quotient + quotient_factor);
 		until (dividend < 0);
-		dividend:= prev_subtraction;
+		dividend:= (dividend + divisor);
 
 		nlz_bits_divisor:= nlz_MultiBits_X3(divisor);
 		if (nlz_bits_divisor < nlz_bits_P_divisor) then
@@ -9053,13 +9050,11 @@ else
 
 	{ Round X }
 	repeat
-		dividend:= (dividend - divisor);
 		repeat
-            prev_subtraction:= dividend;
-			quotient:= (quotient + quotient_factor);
 			dividend:= (dividend - divisor);
+			if (dividend >= 0) then quotient:= (quotient + quotient_factor);
 		until (dividend < 0);
-		dividend:= prev_subtraction;
+		dividend:= (dividend + divisor);
 
 		nlz_bits_divisor:= nlz_MultiBits_X4(divisor);
 		if (nlz_bits_divisor < nlz_bits_P_divisor) then
@@ -11801,29 +11796,30 @@ else
 	divisor:= P_divisor;
 	divisor.Negative:= FALSE;
 	quotient_factor:= 1;
-	nlz_bits_divisor:= nlz_MultiBits_X48(divisor);
-	nlz_bits_P_divisor:= nlz_bits_divisor;
-	nlz_bits_dividend:= nlz_MultiBits_X48(dividend);
 
 	{ Round 0 }
+	nlz_bits_dividend:= nlz_MultiBits_X48(dividend);
+	nlz_bits_divisor:= nlz_MultiBits_X48(divisor);
+	nlz_bits_P_divisor:= nlz_bits_divisor;
 	nlz_bits_diff:= (nlz_bits_divisor - nlz_bits_dividend - 1);
+
 	if	(nlz_bits_diff > 0) then
 		begin
 		ShiftUp_MultiBits_Multi_Int_X48(divisor, nlz_bits_diff);
-		nlz_bits_divisor:= (nlz_bits_divisor - nlz_bits_diff);
 		ShiftUp_MultiBits_Multi_Int_X48(quotient_factor, nlz_bits_diff);
 		end
 	else nlz_bits_diff:= 0;
+
 	{ Round X }
 	repeat
-		dividend:= (dividend - divisor);
 		repeat
-            prev_subtraction:= dividend;
-			quotient:= (quotient + quotient_factor);
 			dividend:= (dividend - divisor);
+			if (dividend >= 0) then
+				quotient:= (quotient + quotient_factor);
 		until (dividend < 0);
-		dividend:= prev_subtraction;
+		dividend:= (dividend + divisor);
 
+		nlz_bits_divisor:= nlz_MultiBits_X48(divisor);
 		if (nlz_bits_divisor < nlz_bits_P_divisor) then
 			begin
 			nlz_bits_dividend:= nlz_MultiBits_X48(dividend);
@@ -11833,12 +11829,10 @@ else
 				nlz_bits_diff:= (nlz_bits_P_divisor - nlz_bits_divisor);
 
 			ShiftDown_MultiBits_Multi_Int_X48(divisor, nlz_bits_diff);
-			nlz_bits_divisor:= (nlz_bits_divisor + nlz_bits_diff);
-
 			ShiftDown_MultiBits_Multi_Int_X48(quotient_factor, nlz_bits_diff);
 			end;
-	until	(nlz_bits_divisor >= nlz_bits_P_divisor)
-	or		(dividend < P_divisor)
+	until	(dividend < P_divisor)
+	or		(nlz_bits_divisor >= nlz_bits_P_divisor)
 	or		(divisor = 0)
 	;
 
