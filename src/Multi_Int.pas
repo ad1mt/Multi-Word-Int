@@ -1228,7 +1228,7 @@ Result:=FALSE;
 if ( (v1.Negative = FALSE) and (v2.Negative = TRUE) )
 then Result:=FALSE
 else
-	if ( (v1.Negative = TRUE) and (v2.Negative = TRUE) )
+	if ( (v1.Negative = TRUE) and (v2.Negative = FALSE) )
 	then Result:=TRUE
 	else
 		if ( (v1.Negative = FALSE) and (v2.Negative = FALSE) )
@@ -3927,7 +3927,7 @@ Result:=FALSE;
 if ( (v1.Negative = FALSE) and (v2.Negative = TRUE) )
 then Result:=FALSE
 else
-	if ( (v1.Negative = TRUE) and (v2.Negative = TRUE) )
+	if ( (v1.Negative = TRUE) and (v2.Negative = FALSE) )
 	then Result:=TRUE
 	else
 		if ( (v1.Negative = FALSE) and (v2.Negative = FALSE) )
@@ -6876,7 +6876,7 @@ Result:=FALSE;
 if ( (v1.Negative = FALSE) and (v2.Negative = TRUE) )
 then Result:=FALSE
 else
-	if ( (v1.Negative = TRUE) and (v2.Negative = TRUE) )
+	if ( (v1.Negative = TRUE) and (v2.Negative = FALSE) )
 	then Result:=TRUE
 	else
 		if ( (v1.Negative = FALSE) and (v2.Negative = FALSE) )
@@ -9977,7 +9977,7 @@ Result:=FALSE;
 if ( (v1.Negative = FALSE) and (v2.Negative = TRUE) )
 then Result:=FALSE
 else
-	if ( (v1.Negative = TRUE) and (v2.Negative = TRUE) )
+	if ( (v1.Negative = TRUE) and (v2.Negative = FALSE) )
 	then Result:=TRUE
 	else
 		if ( (v1.Negative = FALSE) and (v2.Negative = FALSE) )
