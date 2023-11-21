@@ -4,6 +4,8 @@ UNIT Multi_Int;
 
 {$MODESWITCH NESTEDCOMMENTS+}
 
+(* v4.22B *)
+
 (* USER OPTIONAL DEFINES *)
 
 // This should be changed to 32bit for 32 bit CPUs
@@ -2935,7 +2937,7 @@ else
 			end;
 		// TV := TV * TV;
 		multiply_Multi_Int_X2(TV,TV, T);
-		if	(TV.Overflow_flag)
+		if	(T.Overflow_flag)
 		then
 			begin
 			Result:= 0;
@@ -5821,7 +5823,7 @@ else
 			end;
 		// TV := TV * TV;
 		multiply_Multi_Int_X3(TV,TV, T);
-		if	(TV.Overflow_flag)
+		if	(T.Overflow_flag)
 		then
 			begin
 			Result:= 0;
@@ -8958,7 +8960,7 @@ else
 			end;
 		// TV := TV * TV;
 		multiply_Multi_Int_X4(TV,TV, T);
-		if	(TV.Overflow_flag)
+		if	(T.Overflow_flag)
 		then
 			begin
 			Result:= 0;
@@ -11720,7 +11722,7 @@ else
 			end;
 		// TV := TV * TV;
 		multiply_Multi_Int_X48(TV,TV, T);
-		if	(TV.Overflow_flag)
+		if	(T.Overflow_flag)
 		then
 			begin
 			Result:= 0;
