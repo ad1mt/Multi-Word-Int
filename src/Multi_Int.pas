@@ -26,7 +26,7 @@ v4.23B
 
 // comment-out the following line to disable exceptions
 
-{$define RAISE_EXCEPTIONS_ENABLED}
+// {$define RAISE_EXCEPTIONS_ENABLED}
 
 (* END OF USER OPTIONAL DEFINES *)
 	
@@ -3036,7 +3036,7 @@ end;
 
 (******************************************)
 procedure intdivide_Shift_And_Sub_X2(const P_dividend,P_divisor:Multi_Int_X2;var P_quotient,P_remainder:Multi_Int_X2);
-label	1000;
+label	1000,9999;
 var
 dividend,
 divisor,
@@ -3061,11 +3061,6 @@ if	(P_divisor = ZERO) then
 	P_remainder.Overflow_flag:= TRUE;
 	Multi_Int_OVERFLOW_ERROR:= TRUE;
     end
-else if	(P_divisor > P_dividend) then
-	begin
-	P_quotient:= ZERO;
- 	P_remainder:= P_dividend;
-    end
 else if	(P_divisor = P_dividend) then
 	begin
 	P_quotient:= 1;
@@ -3073,12 +3068,20 @@ else if	(P_divisor = P_dividend) then
     end
 else
 	begin
-	quotient:= ZERO;
-	P_remainder:= ZERO;
 	dividend:= P_dividend;
 	dividend.Negative_flag:= FALSE;
 	divisor:= P_divisor;
 	divisor.Negative_flag:= FALSE;
+
+	if	(divisor > dividend) then
+		begin
+		P_quotient:= ZERO;
+	 	P_remainder:= P_dividend;
+		goto 9999;
+	    end;
+
+	quotient:= ZERO;
+	P_remainder:= ZERO;
 	quotient_factor:= 1;
 
 	{ Round 0 }
@@ -3138,6 +3141,7 @@ else
 	then
 		P_quotient.Negative_flag:= TRUE;
 	end;
+9999:
 end;
 
 
@@ -5970,7 +5974,7 @@ end;
 
 (******************************************)
 procedure intdivide_Shift_And_Sub_X3(const P_dividend,P_divisor:Multi_Int_X3;var P_quotient,P_remainder:Multi_Int_X3);
-label	1000;
+label	1000,9999;
 var
 dividend,
 divisor,
@@ -5995,11 +5999,6 @@ if	(P_divisor = ZERO) then
 	P_remainder.Overflow_flag:= TRUE;
 	Multi_Int_OVERFLOW_ERROR:= TRUE;
     end
-else if	(P_divisor > P_dividend) then
-	begin
-	P_quotient:= ZERO;
- 	P_remainder:= P_dividend;
-    end
 else if	(P_divisor = P_dividend) then
 	begin
 	P_quotient:= 1;
@@ -6007,12 +6006,20 @@ else if	(P_divisor = P_dividend) then
     end
 else
 	begin
-	quotient:= ZERO;
-	P_remainder:= ZERO;
 	dividend:= P_dividend;
 	dividend.Negative_flag:= FALSE;
 	divisor:= P_divisor;
 	divisor.Negative_flag:= FALSE;
+
+	if	(divisor > dividend) then
+		begin
+		P_quotient:= ZERO;
+	 	P_remainder:= P_dividend;
+		goto 9999;
+	    end;
+
+	quotient:= ZERO;
+	P_remainder:= ZERO;
 	quotient_factor:= 1;
 
 	{ Round 0 }
@@ -6072,6 +6079,7 @@ else
 	then
 		P_quotient.Negative_flag:= TRUE;
 	end;
+9999:
 end;
 
 
@@ -9155,7 +9163,7 @@ end;
 
 (******************************************)
 procedure intdivide_Shift_And_Sub_X4(const P_dividend,P_divisor:Multi_Int_X4;var P_quotient,P_remainder:Multi_Int_X4);
-label	1000;
+label	1000,9999;
 var
 dividend,
 divisor,
@@ -9180,11 +9188,6 @@ if	(P_divisor = ZERO) then
 	P_remainder.Overflow_flag:= TRUE;
 	Multi_Int_OVERFLOW_ERROR:= TRUE;
     end
-else if	(P_divisor > P_dividend) then
-	begin
-	P_quotient:= ZERO;
- 	P_remainder:= P_dividend;
-    end
 else if	(P_divisor = P_dividend) then
 	begin
 	P_quotient:= 1;
@@ -9192,12 +9195,20 @@ else if	(P_divisor = P_dividend) then
     end
 else
 	begin
-	quotient:= ZERO;
-	P_remainder:= ZERO;
 	dividend:= P_dividend;
 	dividend.Negative_flag:= FALSE;
 	divisor:= P_divisor;
 	divisor.Negative_flag:= FALSE;
+
+	if	(divisor > dividend) then
+		begin
+		P_quotient:= ZERO;
+	 	P_remainder:= P_dividend;
+		goto 9999;
+	    end;
+
+	quotient:= ZERO;
+	P_remainder:= ZERO;
 	quotient_factor:= 1;
 
 	{ Round 0 }
@@ -9257,6 +9268,7 @@ else
 	then
 		P_quotient.Negative_flag:= TRUE;
 	end;
+9999:
 end;
 
 
