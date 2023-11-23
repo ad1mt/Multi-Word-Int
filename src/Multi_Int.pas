@@ -2948,6 +2948,7 @@ while not finished do
 
 VR:= C;
 VR.Negative_flag:= Multi_UBool_FALSE;
+VREM.Negative_flag:= Multi_UBool_FALSE;
 end;
 
 
@@ -5881,6 +5882,7 @@ while not finished do
 
 VR:= C;
 VR.Negative_flag:= Multi_UBool_FALSE;
+VREM.Negative_flag:= Multi_UBool_FALSE;
 end;
 
 
@@ -9065,6 +9067,7 @@ while not finished do
 
 VR:= C;
 VR.Negative_flag:= Multi_UBool_FALSE;
+VREM.Negative_flag:= Multi_UBool_FALSE;
 end;
 
 
