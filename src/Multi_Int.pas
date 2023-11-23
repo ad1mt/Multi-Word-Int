@@ -26,7 +26,7 @@ v4.23B
 
 // comment-out the following line to disable exceptions
 
-// {$define RAISE_EXCEPTIONS_ENABLED}
+{$define RAISE_EXCEPTIONS_ENABLED}
 
 (* END OF USER OPTIONAL DEFINES *)
 	
@@ -49,7 +49,7 @@ there is no point in having less than 7, because the type named Multi_Int_X4 use
 The number is half-words, so if you specify 127 that is 128 half-words, which equals
 64 words, which equals 512 bits (in 64bit environment).
 *)
-	X48_max		= 1;
+	X48_max		= 127;
 
 (*
 X48_max is the only thing you should change in here.
