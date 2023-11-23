@@ -26,7 +26,7 @@ v4.23B
 
 // comment-out the following line to disable exceptions
 
-// {$define RAISE_EXCEPTIONS_ENABLED}
+{$define RAISE_EXCEPTIONS_ENABLED}
 
 (* END OF USER OPTIONAL DEFINES *)
 	
@@ -3110,7 +3110,7 @@ else
 		if (dividend = ZERO) then
 			quotient:= (quotient + quotient_factor);
 		if (dividend < ZERO) then
-			dividend:= (dividend + divisor);
+			dividend:= prev_dividend;
 
 		nlz_bits_divisor:= nlz_MultiBits_X2(divisor);
 		if (nlz_bits_divisor < nlz_bits_P_divisor) then
@@ -6048,7 +6048,7 @@ else
 		if (dividend = ZERO) then
 			quotient:= (quotient + quotient_factor);
 		if (dividend < ZERO) then
-			dividend:= (dividend + divisor);
+			dividend:= prev_dividend;
 
 		nlz_bits_divisor:= nlz_MultiBits_X3(divisor);
 		if (nlz_bits_divisor < nlz_bits_P_divisor) then
@@ -9237,7 +9237,7 @@ else
 		if (dividend = ZERO) then
 			quotient:= (quotient + quotient_factor);
 		if (dividend < ZERO) then
-			dividend:= (dividend + divisor);
+			dividend:= prev_dividend;
 
 		nlz_bits_divisor:= nlz_MultiBits_X4(divisor);
 		if (nlz_bits_divisor < nlz_bits_P_divisor) then
@@ -12063,7 +12063,7 @@ else
 		if (dividend = ZERO) then
 			quotient:= (quotient + quotient_factor);
 		if (dividend < ZERO) then
-			dividend:= (dividend + divisor);
+			dividend:= prev_dividend;
 
 		nlz_bits_divisor:= nlz_MultiBits_X48(divisor);
 		if (nlz_bits_divisor < nlz_bits_P_divisor) then
@@ -12158,7 +12158,6 @@ else	// different values than last time
 		{$endif}
 		end;
 	end;
-
 end;
 
 
