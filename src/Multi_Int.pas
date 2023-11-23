@@ -4,7 +4,19 @@ UNIT Multi_Int;
 
 {$MODESWITCH NESTEDCOMMENTS+}
 
-(* v4.22C *)
+(*
+v4.23B
+-	bug fixes in divide
+-	divide v4 working
+-	sign bug fixes in power
+-	sign bug fixes in sqroot
+
+v4.23B
+-	Negative functions
+-	Abs functions
+-	Additional init procs
+-	Exception bug ifxes in Inc/Dec
+*)
 
 (* USER OPTIONAL DEFINES *)
 
@@ -14,7 +26,7 @@ UNIT Multi_Int;
 
 // comment-out the following line to disable exceptions
 
-{$define RAISE_EXCEPTIONS_ENABLED}
+// {$define RAISE_EXCEPTIONS_ENABLED}
 
 (* END OF USER OPTIONAL DEFINES *)
 	
@@ -165,15 +177,16 @@ T_Multi_UBool	=	record
 Multi_Int_X2	=	record
 					private
 						M_Value			:array[0..Multi_X2_max] of INT_1W_U;
-						Negative		:T_Multi_UBool;
+						Negative_flag	:T_Multi_UBool;
 						Overflow_flag	:boolean;
 						Defined_flag	:boolean;
 					public
-						procedure Init(const v1:string); inline;
+						// procedure Init(const v1:string); inline;
 						function ToStr:string; inline;
 						function ToHex(const LZ:T_Multi_Leading_Zeros=Multi_Trim_Leading_Zeros):string; inline;
 						function FromHex(const v1:string):Multi_Int_X2; inline;
 						function Overflow:boolean; inline;
+						function Negative:boolean; inline;
 						function Defined:boolean; inline;
 						procedure ShiftUp_MultiBits(Var v1:Multi_Int_X2; NBits:INT_1W_U); inline;
 						procedure ShiftDown_MultiBits(Var v1:Multi_Int_X2; NBits:INT_1W_U); inline;
@@ -215,15 +228,16 @@ Multi_Int_X2	=	record
 Multi_Int_X3	=	record
 					private
 						M_Value			:array[0..Multi_X3_max] of INT_1W_U;
-						Negative		:T_Multi_UBool;
+						Negative_flag		:T_Multi_UBool;
 						Overflow_flag	:boolean;
 						Defined_flag	:boolean;
 					public
-						procedure Init(const v1:string); inline;
+						// procedure Init(const v1:string); inline;
 						function ToStr:string; inline;
 						function ToHex(const LZ:T_Multi_Leading_Zeros=Multi_Trim_Leading_Zeros):string; inline;
 						function FromHex(const v1:string):Multi_Int_X3; inline;
 						function Overflow:boolean; inline;
+						function Negative:boolean; inline;
 						function Defined:boolean; inline;
 						procedure ShiftUp_MultiBits(Var v1:Multi_Int_X3; NBits:INT_1W_U); inline;
 						procedure ShiftDown_MultiBits(Var v1:Multi_Int_X3; NBits:INT_1W_U); inline;
@@ -266,15 +280,16 @@ Multi_Int_X3	=	record
 Multi_Int_X4	=	record
 					private
 						M_Value			:array[0..Multi_X4_max] of INT_1W_U;
-						Negative		:T_Multi_UBool;
+						Negative_flag		:T_Multi_UBool;
 						Overflow_flag	:boolean;
 						Defined_flag	:boolean;
 					public
-						procedure Init(const v1:string); inline;
+						// procedure Init(const v1:string); inline;
 						function ToStr:string; inline;
 						function ToHex(const LZ:T_Multi_Leading_Zeros=Multi_Trim_Leading_Zeros):string; inline;
 						function FromHex(const v1:string):Multi_Int_X4; inline;
 						function Overflow:boolean; inline;
+						function Negative:boolean; inline;
 						function Defined:boolean; inline;
 						procedure ShiftUp_MultiBits(Var v1:Multi_Int_X4; NBits:INT_1W_U); inline;
 						procedure ShiftDown_MultiBits(Var v1:Multi_Int_X4; NBits:INT_1W_U); inline;
@@ -318,15 +333,17 @@ Multi_Int_X4	=	record
 Multi_Int_X48	=	record
 					private
 						M_Value			:array[0..X48_max] of INT_1W_U;
-						Negative		:T_Multi_UBool;
+						Negative_flag		:T_Multi_UBool;
 						Overflow_flag	:boolean;
 						Defined_flag	:boolean;
 					public
-						procedure Init(const v1:string); inline;
+						// procedure Init(const v1:string); overload;
+						// procedure Init(const v1:INT_2W_S); overload;
 						function ToStr:string; inline;
 						function ToHex(const LZ:T_Multi_Leading_Zeros=Multi_Trim_Leading_Zeros):string; inline;
 						function FromHex(const v1:string):Multi_Int_X48; inline;
 						function Overflow:boolean; inline;
+						function Negative:boolean; inline;
 						function Defined:boolean; inline;
 						procedure ShiftUp_MultiBits(var v1:Multi_Int_X48; NBits:INT_1W_U); inline;
 						procedure ShiftDown_MultiBits(var v1:Multi_Int_X48; NBits:INT_1W_U); inline;
@@ -357,9 +374,9 @@ Multi_Int_X48	=	record
 						class operator dec(const v1:Multi_Int_X48):Multi_Int_X48; inline;
 						class operator xor(const v1,v2:Multi_Int_X48):Multi_Int_X48; inline;
 						class operator multiply(const v1,v2:Multi_Int_X48):Multi_Int_X48; inline;
-						class operator intdivide(const v1,v2:Multi_Int_X48):Multi_Int_X48;
+						class operator intdivide(const v1,v2:Multi_Int_X48):Multi_Int_X48; inline;
 						class operator modulus(const v1,v2:Multi_Int_X48):Multi_Int_X48; inline;
-						class operator -(const v1:Multi_Int_X48):Multi_Int_X48; inline;
+						class operator -(const v1:Multi_Int_X48):Multi_Int_X48;
 						class operator >=(const v1,v2:Multi_Int_X48):Boolean; inline;
 						class operator <=(const v1,v2:Multi_Int_X48):Boolean; inline;
 						class operator **(const v1:Multi_Int_X48; const P:INT_2W_S):Multi_Int_X48; inline;
@@ -381,6 +398,11 @@ function Even(const v1:Multi_Int_X48):boolean; overload;
 function Even(const v1:Multi_Int_X4):boolean; overload;
 function Even(const v1:Multi_Int_X3):boolean; overload;
 function Even(const v1:Multi_Int_X2):boolean; overload;
+
+function Abs(const v1:Multi_Int_X2):Multi_Int_X2; overload;
+function Abs(const v1:Multi_Int_X3):Multi_Int_X3; overload;
+function Abs(const v1:Multi_Int_X4):Multi_Int_X4; overload;
+function Abs(const v1:Multi_Int_X48):Multi_Int_X48; overload;
 
 procedure SqRoot(const v1:Multi_Int_X48;var VR,VREM:Multi_Int_X48); overload;
 procedure SqRoot(const v1:Multi_Int_X4;var VR,VREM:Multi_Int_X4); overload;
@@ -678,13 +700,6 @@ end;
 
 
 (******************************************)
-function Multi_Int_X2.Overflow:boolean;
-begin
-Result:= self.Overflow_flag;
-end;
-
-
-(******************************************)
 function Multi_Int_X2.Defined:boolean;
 begin
 Result:= self.Defined_flag;
@@ -692,9 +707,38 @@ end;
 
 
 (******************************************)
+function Multi_Int_X2.Overflow:boolean;
+begin
+Result:= self.Overflow_flag;
+end;
+
+
+(******************************************)
 function Overflow(const v1:Multi_Int_X2):boolean; overload;
 begin
 Result:= v1.Overflow_flag;
+end;
+
+
+(******************************************)
+function Multi_Int_X2.Negative:boolean;
+begin
+Result:= self.Negative_flag;
+end;
+
+
+(******************************************)
+function Negative(const v1:Multi_Int_X2):boolean; overload;
+begin
+Result:= v1.Negative_flag;
+end;
+
+
+(******************************************)
+function Abs(const v1:Multi_Int_X2):Multi_Int_X2; overload;
+begin
+Result:= v1;
+Result.Negative_flag:= Multi_UBool_FALSE;
 end;
 
 
@@ -1227,16 +1271,16 @@ then
 	end;
 
 Result:=FALSE;
-if ( (v1.Negative = FALSE) and (v2.Negative = TRUE) )
+if ( (v1.Negative_flag = FALSE) and (v2.Negative_flag = TRUE) )
 then Result:=FALSE
 else
-	if ( (v1.Negative = TRUE) and (v2.Negative = FALSE) )
+	if ( (v1.Negative_flag = TRUE) and (v2.Negative_flag = FALSE) )
 	then Result:=TRUE
 	else
-		if ( (v1.Negative = FALSE) and (v2.Negative = FALSE) )
+		if ( (v1.Negative_flag = FALSE) and (v2.Negative_flag = FALSE) )
 		then Result:= (Not ABS_greaterthan_Multi_Int_X2(v1,v2) )
 		else
-			if ( (v1.Negative = TRUE) and (v2.Negative = TRUE) )
+			if ( (v1.Negative_flag = TRUE) and (v2.Negative_flag = TRUE) )
 			then Result:= (Not ABS_lessthan_Multi_Int_X2(v1,v2));
 end;
 
@@ -1255,16 +1299,16 @@ then
 	end;
 
 Result:=FALSE;
-if ( (v1.Negative = FALSE) and (v2.Negative = TRUE) )
+if ( (v1.Negative_flag = FALSE) and (v2.Negative_flag = TRUE) )
 then Result:=TRUE
 else
-	if ( (v1.Negative = TRUE) and (v2.Negative = FALSE) )
+	if ( (v1.Negative_flag = TRUE) and (v2.Negative_flag = FALSE) )
 	then Result:=FALSE
 	else
-		if ( (v1.Negative = FALSE) and (v2.Negative = FALSE) )
+		if ( (v1.Negative_flag = FALSE) and (v2.Negative_flag = FALSE) )
 		then Result:= (Not ABS_lessthan_Multi_Int_X2(v1,v2) )
 		else
-			if ( (v1.Negative = TRUE) and (v2.Negative = TRUE) )
+			if ( (v1.Negative_flag = TRUE) and (v2.Negative_flag = TRUE) )
 			then Result:= (Not ABS_greaterthan_Multi_Int_X2(v1,v2) );
 end;
 
@@ -1283,16 +1327,16 @@ then
 	end;
 
 Result:=FALSE;
-if ( (v1.Negative = FALSE) and (v2.Negative = TRUE) )
+if ( (v1.Negative_flag = FALSE) and (v2.Negative_flag = TRUE) )
 then Result:=TRUE
 else
-	if ( (v1.Negative = TRUE) and (v2.Negative = FALSE) )
+	if ( (v1.Negative_flag = TRUE) and (v2.Negative_flag = FALSE) )
 	then Result:=FALSE
 	else
-		if ( (v1.Negative = FALSE) and (v2.Negative = FALSE) )
+		if ( (v1.Negative_flag = FALSE) and (v2.Negative_flag = FALSE) )
 		then Result:= ABS_greaterthan_Multi_Int_X2(v1,v2)
 		else
-			if ( (v1.Negative = TRUE) and (v2.Negative = TRUE) )
+			if ( (v1.Negative_flag = TRUE) and (v2.Negative_flag = TRUE) )
 			then Result:= ABS_lessthan_Multi_Int_X2(v1,v2);
 end;
 
@@ -1311,13 +1355,13 @@ then
 	end;
 
 Result:=FALSE;
-if ( (v1.Negative = TRUE) and (v2.Negative = FALSE) )
+if ( (v1.Negative_flag = TRUE) and (v2.Negative_flag = FALSE) )
 then Result:=TRUE
 else
-	if ( (v1.Negative = FALSE) and (v2.Negative = FALSE) )
+	if ( (v1.Negative_flag = FALSE) and (v2.Negative_flag = FALSE) )
 	then Result:= ABS_lessthan_Multi_Int_X2(v1,v2)
 	else
-		if ( (v1.Negative = TRUE) and (v2.Negative = TRUE) )
+		if ( (v1.Negative_flag = TRUE) and (v2.Negative_flag = TRUE) )
 		then Result:= ABS_greaterthan_Multi_Int_X2(v1,v2);
 end;
 
@@ -1336,7 +1380,7 @@ then
 	end;
 
 Result:= TRUE;
-if ( v1.Negative <> v2.Negative )
+if ( v1.Negative_flag <> v2.Negative_flag )
 then Result:= FALSE
 else Result:= ABS_equal_Multi_Int_X2(v1,v2);
 end;
@@ -1356,7 +1400,7 @@ then
 	end;
 
 Result:= FALSE;
-if ( v1.Negative <> v2.Negative )
+if ( v1.Negative_flag <> v2.Negative_flag )
 then Result:= TRUE
 else Result:= (not ABS_equal_Multi_Int_X2(v1,v2));
 end;
@@ -1373,7 +1417,7 @@ var
 begin
 mi.Overflow_flag:=FALSE;
 mi.Defined_flag:= TRUE;
-mi.Negative:= FALSE;
+mi.Negative_flag:= FALSE;
 Signeg:= FALSE;
 Zeroneg:= FALSE;
 
@@ -1454,9 +1498,9 @@ and	(M_Val[2] = 0)
 and	(M_Val[3] = 0)
 then Zeroneg:= TRUE;
 
-if Zeroneg then mi.Negative:= Multi_UBool_FALSE
-else if Signeg then mi.Negative:= Multi_UBool_TRUE
-else mi.Negative:= Multi_UBool_FALSE;
+if Zeroneg then mi.Negative_flag:= Multi_UBool_FALSE
+else if Signeg then mi.Negative_flag:= Multi_UBool_TRUE
+else mi.Negative_flag:= Multi_UBool_FALSE;
 
 999:
 end;
@@ -1468,7 +1512,7 @@ var n :INT_1W_U;
 begin
 Result.Overflow_flag:= v1.Overflow_flag;
 Result.Defined_flag:= v1.Defined_flag;
-Result.Negative:= v1.Negative;
+Result.Negative_flag:= v1.Negative_flag;
 
 if	(v1.Defined_flag = FALSE)
 then
@@ -1506,7 +1550,7 @@ var n :INT_1W_U;
 begin
 Result.Overflow_flag:= v1.Overflow_flag;
 Result.Defined_flag:= v1.Defined_flag;
-Result.Negative:= v1.Negative;
+Result.Negative_flag:= v1.Negative_flag;
 
 if	(v1.Defined_flag = FALSE)
 then
@@ -1544,7 +1588,7 @@ var n :INT_1W_U;
 begin
 Result.Overflow_flag:= v1.Overflow_flag;
 Result.Defined_flag:= v1.Defined_flag;
-Result.Negative:= v1.Negative;
+Result.Negative_flag:= v1.Negative_flag;
 
 if	(v1.Defined_flag = FALSE)
 then
@@ -1577,10 +1621,12 @@ end;
 
 
 (******************************************)
+{
 procedure Multi_Int_X2.Init(const v1:string);
 begin
 string_to_Multi_Int_X2(v1,self);
 end;
+}
 
 
 (******************************************)
@@ -1600,13 +1646,13 @@ mi.M_Value[3]:= 0;
 
 if (v1 < 0) then
 	begin
-	mi.Negative:= Multi_UBool_TRUE;
+	mi.Negative_flag:= Multi_UBool_TRUE;
 	mi.M_Value[0]:= (ABS(v1) MOD INT_1W_U_MAXINT_1);
 	mi.M_Value[1]:= (ABS(v1) DIV INT_1W_U_MAXINT_1);
 	end
 else
 	begin
-	mi.Negative:= Multi_UBool_FALSE;
+	mi.Negative_flag:= Multi_UBool_FALSE;
 	mi.M_Value[0]:= (v1 MOD INT_1W_U_MAXINT_1);
 	mi.M_Value[1]:= (v1 DIV INT_1W_U_MAXINT_1);
 	end;
@@ -1626,7 +1672,7 @@ procedure INT_2W_U_to_Multi_Int_X2(const v1:INT_2W_U; var mi:Multi_Int_X2);
 begin
 mi.Overflow_flag:=FALSE;
 mi.Defined_flag:=TRUE;
-mi.Negative:= Multi_UBool_FALSE;
+mi.Negative_flag:= Multi_UBool_FALSE;
 
 mi.M_Value[0]:= (v1 MOD INT_1W_U_MAXINT_1);
 mi.M_Value[1]:= (v1 DIV INT_1W_U_MAXINT_1);
@@ -1676,7 +1722,7 @@ if (R > 0.0) then
 	begin
 	Result:= 0;
 	Result.Defined_flag:= FALSE;
-	Result.Negative:= Multi_UBool_UNDEF;
+	Result.Negative_flag:= Multi_UBool_UNDEF;
 	Result.Overflow_flag:= TRUE;
 	{$ifdef RAISE_EXCEPTIONS_ENABLED}
 	Raise EIntOverflow.create('Overflow on real conversion');
@@ -1684,7 +1730,7 @@ if (R > 0.0) then
 	end
 else
 	begin
-	if (v1 < 0.0) then M.Negative := TRUE;
+	if (v1 < 0.0) then M.Negative_flag := TRUE;
 	Result:= M;
 	end;
 end;
@@ -1720,7 +1766,7 @@ V:= v1.M_Value[3];
 V:= V * M * M * M;
 R:= R + V;
 
-if v1.Negative then R:= (- R);
+if v1.Negative_flag then R:= (- R);
 Result:= R;
 end;
 
@@ -1759,7 +1805,7 @@ if (R > 0.0) then
 	begin
 	Result:= 0;
 	Result.Defined_flag:= FALSE;
-	Result.Negative:= Multi_UBool_UNDEF;
+	Result.Negative_flag:= Multi_UBool_UNDEF;
 	Result.Overflow_flag:= TRUE;
 	{$ifdef RAISE_EXCEPTIONS_ENABLED}
 	Raise EIntOverflow.create('Overflow on Double conversion');
@@ -1767,7 +1813,7 @@ if (R > 0.0) then
 	end
 else
 	begin
-	if (v1 < 0.0) then M.Negative := TRUE;
+	if (v1 < 0.0) then M.Negative_flag := TRUE;
 	Result:= M;
 	end;
 end;
@@ -1803,7 +1849,7 @@ V:= v1.M_Value[3];
 V:= V * M * M * M;
 R:= R + V;
 
-if v1.Negative then R:= (- R);
+if v1.Negative_flag then R:= (- R);
 Result:= R;
 end;
 
@@ -1838,7 +1884,7 @@ then
 	exit;
 	end;
 
-if v1.Negative
+if v1.Negative_flag
 then Result:= INT_2W_S(-R)
 else Result:= INT_2W_S(R);
 end;
@@ -1907,7 +1953,7 @@ then
 	exit;
 	end;
 
-if v1.Negative
+if v1.Negative_flag
 then Result:= INT_1W_S(-R)
 else Result:= INT_1W_S(R);
 end;
@@ -1919,7 +1965,7 @@ var	R	:INT_2W_U;
 begin
 Multi_Int_OVERFLOW_ERROR:= FALSE;
 if	(Not v1.Defined_flag)
-or	(v1.Negative = Multi_UBool_TRUE)
+or	(v1.Negative_flag = Multi_UBool_TRUE)
 then
 	begin
 	Result:=0;
@@ -1953,7 +1999,7 @@ var	R	:Multi_int8u;
 begin
 Multi_Int_OVERFLOW_ERROR:= FALSE;
 if	(Not v1.Defined_flag)
-or	(v1.Negative = Multi_UBool_TRUE)
+or	(v1.Negative_flag = Multi_UBool_TRUE)
 then
 	begin
 	Result:=0;
@@ -1987,7 +2033,7 @@ var	R	:Multi_int8;
 begin
 Multi_Int_OVERFLOW_ERROR:= FALSE;
 if	(Not v1.Defined_flag)
-or	(v1.Negative = Multi_UBool_TRUE)
+or	(v1.Negative_flag = Multi_UBool_TRUE)
 then
 	begin
 	Result:=0;
@@ -2052,7 +2098,7 @@ s:= s
 	;
 
 if (LZ = Multi_Trim_Leading_Zeros) then Removeleadingchars(s,['0']);
-if	(v1.Negative = Multi_UBool_TRUE) then s:='-' + s;
+if	(v1.Negative_flag = Multi_UBool_TRUE) then s:='-' + s;
 v2:=s;
 end;
 
@@ -2077,7 +2123,7 @@ var
 begin
 mi.Overflow_flag:=FALSE;
 mi.Defined_flag:= TRUE;
-mi.Negative:= FALSE;
+mi.Negative_flag:= FALSE;
 Signeg:= FALSE;
 Zeroneg:= FALSE;
 
@@ -2154,9 +2200,9 @@ while (n <= Multi_X2_max) do
 	end;
 if M_Val_All_Zero then Zeroneg:= TRUE;
 
-if Zeroneg then mi.Negative:= Multi_UBool_FALSE
-else if Signeg then mi.Negative:= Multi_UBool_TRUE
-else mi.Negative:= Multi_UBool_FALSE;
+if Zeroneg then mi.Negative_flag:= Multi_UBool_FALSE
+else if Signeg then mi.Negative_flag:= Multi_UBool_TRUE
+else mi.Negative_flag:= Multi_UBool_FALSE;
 
 999:
 end;
@@ -2220,7 +2266,7 @@ and		(M_Val[2] = 0)
 and		(M_Val[3] = 0)
 ;
 
-if	(v1.Negative = Multi_UBool_TRUE) then s:='-' + s;
+if	(v1.Negative_flag = Multi_UBool_TRUE) then s:='-' + s;
 
 v2:=s;
 end;
@@ -2261,9 +2307,9 @@ Result.M_Value[2]:=(v1.M_Value[2] xor v2.M_Value[2]);
 Result.M_Value[3]:=(v1.M_Value[3] xor v2.M_Value[3]);
 Result.Defined_flag:=TRUE;
 Result.Overflow_flag:=FALSE;
-if (v1.Negative = v2.Negative)
-then Result.Negative:= Multi_UBool_FALSE
-else Result.Negative:= Multi_UBool_TRUE;
+if (v1.Negative_flag = v2.Negative_flag)
+then Result.Negative_flag:= Multi_UBool_FALSE
+else Result.Negative_flag:= Multi_UBool_TRUE;
 end;
 
 
@@ -2276,7 +2322,7 @@ var
 begin
 Result.Overflow_flag:=FALSE;
 Result.Defined_flag:=TRUE;
-Result.Negative.Init(Multi_UBool_UNDEF);
+Result.Negative_flag.Init(Multi_UBool_UNDEF);
 
 tv1:= v1.M_Value[0];
 tv2:= v2.M_Value[0];
@@ -2332,7 +2378,7 @@ if	(M_Val[0] = 0)
 and	(M_Val[1] = 0)
 and	(M_Val[2] = 0)
 and	(M_Val[3] = 0)
-then Result.Negative:=Multi_UBool_FALSE;
+then Result.Negative_flag:=Multi_UBool_FALSE;
 
 end;
 
@@ -2344,7 +2390,7 @@ var
 begin
 Result.Overflow_flag:=FALSE;
 Result.Defined_flag:=TRUE;
-Result.Negative:=Multi_UBool_UNDEF;
+Result.Negative_flag:=Multi_UBool_UNDEF;
 
 M_Val[0]:=(v1.M_Value[0] - v2.M_Value[0]);
 if	M_Val[0] < 0 then
@@ -2391,7 +2437,7 @@ if	(M_Val[0] = 0)
 and	(M_Val[1] = 0)
 and	(M_Val[2] = 0)
 and	(M_Val[3] = 0)
-then Result.Negative:=Multi_UBool_FALSE;
+then Result.Negative_flag:=Multi_UBool_FALSE;
 
 end;
 
@@ -2405,7 +2451,8 @@ if	(Not v1.Defined_flag)
 then
 	begin
 	Result:=0;
-	Result.Defined_flag:= FALSE;
+	Result.Defined_flag:= v1.Defined_flag;
+	Result.Overflow_flag:= v1.Overflow_flag;
 	{$ifdef RAISE_EXCEPTIONS_ENABLED}
 	Raise EInterror.create('Uninitialised variable');
 	{$endif}
@@ -2416,8 +2463,8 @@ if	(v1.Overflow_flag)
 then
 	begin
 	Result:= 0;
-	Result.Overflow_flag:=TRUE;
-	Result.Defined_flag:=TRUE;
+	Result.Defined_flag:= v1.Defined_flag;
+	Result.Overflow_flag:= v1.Overflow_flag;
 	{$ifdef RAISE_EXCEPTIONS_ENABLED}
 		Raise EIntOverflow.create('Overflow on inc');
 	{$endif}
@@ -2427,11 +2474,11 @@ then
 Neg:=Multi_UBool_UNDEF;
 v2:= 1;
 
-if	(v1.Negative = FALSE)
+if	(v1.Negative_flag = FALSE)
 then
 	begin
 	Result:=add_Multi_Int_X2(v1,v2);
-	Neg:= v1.Negative;
+	Neg:= v1.Negative_flag;
 	end
 else
 	begin
@@ -2453,7 +2500,7 @@ if (Result.Overflow_flag = TRUE) then
 	Raise EIntOverflow.create('Overflow on Inc');
 {$endif}
 
-if	(Result.Negative = Multi_UBool_UNDEF) then Result.Negative:= Neg;
+if	(Result.Negative_flag = Multi_UBool_UNDEF) then Result.Negative_flag:= Neg;
 end;
 
 
@@ -2487,14 +2534,14 @@ then
 
 Neg:=Multi_UBool_UNDEF;
 
-if	(v1.Negative = v2.Negative)
+if	(v1.Negative_flag = v2.Negative_flag)
 then
 	begin
 	Result:=add_Multi_Int_X2(v1,v2);
-	Neg:= v1.Negative;
+	Neg:= v1.Negative_flag;
 	end
 else
-	if	((v1.Negative = FALSE) and (v2.Negative = TRUE))
+	if	((v1.Negative_flag = FALSE) and (v2.Negative_flag = TRUE))
 	then
 		begin
 		if	ABS_greaterthan_Multi_Int_X2(v2,v1)
@@ -2529,7 +2576,7 @@ if (Result.Overflow_flag = TRUE) then
 	Raise EIntOverflow.create('Overflow on Add');
 {$endif}
 
-if	(Result.Negative = Multi_UBool_UNDEF) then Result.Negative:= Neg;
+if	(Result.Negative_flag = Multi_UBool_UNDEF) then Result.Negative_flag:= Neg;
 end;
 
 
@@ -2542,7 +2589,8 @@ if	(Not v1.Defined_flag)
 then
 	begin
 	Result:=0;
-	Result.Defined_flag:= FALSE;
+	Result.Defined_flag:= v1.Defined_flag;
+	Result.Overflow_flag:= v1.Overflow_flag;
 	{$ifdef RAISE_EXCEPTIONS_ENABLED}
 	Raise EInterror.create('Uninitialised variable');
 	{$endif}
@@ -2553,10 +2601,10 @@ if	(v1.Overflow_flag)
 then
 	begin
 	Result:= 0;
-	Result.Overflow_flag:=TRUE;
-	Result.Defined_flag:=TRUE;
+	Result.Defined_flag:= v1.Defined_flag;
+	Result.Overflow_flag:= v1.Overflow_flag;
 	{$ifdef RAISE_EXCEPTIONS_ENABLED}
-		Raise EIntOverflow.create('Overflow on Dec');
+		Raise EIntOverflow.create('Overflow on inc');
 	{$endif}
 	exit;
 	end;
@@ -2564,7 +2612,7 @@ then
 Neg:=Multi_UBool_UNDEF;
 v2:= 1;
 
-if	(v1.Negative = FALSE) then
+if	(v1.Negative_flag = FALSE) then
 	begin
 	if	ABS_greaterthan_Multi_Int_X2(v2,v1)
 	then
@@ -2578,7 +2626,7 @@ if	(v1.Negative = FALSE) then
 		Neg:=Multi_UBool_FALSE;
 		end
 	end
-else (* v1 is Negative *)
+else (* v1 is Negative_flag *)
 	begin
 	Result:=add_Multi_Int_X2(v1,v2);
 	Neg:=Multi_UBool_TRUE;
@@ -2589,7 +2637,7 @@ if (Result.Overflow_flag = TRUE) then
 	Raise EIntOverflow.create('Overflow on Dec');
 {$endif}
 
-if	(Result.Negative = Multi_UBool_UNDEF) then Result.Negative:= Neg;
+if	(Result.Negative_flag = Multi_UBool_UNDEF) then Result.Negative_flag:= Neg;
 end;
 
 
@@ -2623,10 +2671,10 @@ then
 
 Neg:=Multi_UBool_UNDEF;
 
-if	(v1.Negative = v2.Negative)
+if	(v1.Negative_flag = v2.Negative_flag)
 then
 	begin
-	if	(v1.Negative = TRUE) then
+	if	(v1.Negative_flag = TRUE) then
 		begin
 		if	ABS_greaterthan_Multi_Int_X2(v1,v2)
 		then
@@ -2640,7 +2688,7 @@ then
 			Neg:=Multi_UBool_FALSE;
 			end
 		end
-	else	(* if	not Negative then	*)
+	else	(* if	not Negative_flag then	*)
 		begin
 		if	ABS_greaterthan_Multi_Int_X2(v2,v1)
 		then
@@ -2655,9 +2703,9 @@ then
 			end
 		end
 	end
-else (* v1.Negative <> v2.Negative *)
+else (* v1.Negative_flag <> v2.Negative_flag *)
 	begin
-	if	(v2.Negative = TRUE) then
+	if	(v2.Negative_flag = TRUE) then
 		begin
 		Result:=add_Multi_Int_X2(v1,v2);
 		Neg:=Multi_UBool_FALSE;
@@ -2674,14 +2722,17 @@ if (Result.Overflow_flag = TRUE) then
 	Raise EIntOverflow.create('Overflow on Subtract');
 {$endif}
 
-if	(Result.Negative = Multi_UBool_UNDEF) then Result.Negative:= Neg;
+if	(Result.Negative_flag = Multi_UBool_UNDEF) then Result.Negative_flag:= Neg;
 end;
 
 
 (******************************************)
 class operator Multi_Int_X2.-(const v1:Multi_Int_X2):Multi_Int_X2;
 begin
-Result:= (0 - v1);
+Result:= v1;
+Result.Negative_flag:= Multi_UBool_FALSE;
+if	(v1.Negative_flag) then
+	Result.Negative_flag:= Multi_UBool_TRUE;
 end;
 
 
@@ -2694,7 +2745,7 @@ var
 begin
 Result.Overflow_flag:=FALSE;
 Result.Defined_flag:=TRUE;
-Result.Negative:=Multi_UBool_UNDEF;
+Result.Negative_flag:=Multi_UBool_UNDEF;
 
 i:=0;
 repeat M_Val[i]:= 0; INC(i); until (i > Multi_X2_max_x2);
@@ -2719,12 +2770,12 @@ repeat
 	i:=0;
 until (j > Multi_X2_max);
 
-Result.Negative:=Multi_UBool_FALSE;
+Result.Negative_flag:=Multi_UBool_FALSE;
 i:=0;
 repeat
 	if (M_Val[i] <> 0) then
 		begin
-		Result.Negative:= Multi_UBool_UNDEF;
+		Result.Negative_flag:= Multi_UBool_UNDEF;
 		if (i > Multi_X2_max) then
 			begin
 			Result.Overflow_flag:=TRUE;
@@ -2772,10 +2823,10 @@ then
 
 multiply_Multi_Int_X2(v1,v2,R);
 
-if	(R.Negative = Multi_UBool_UNDEF) then
-	if	(v1.Negative = v2.Negative)
-	then R.Negative:= Multi_UBool_FALSE
-	else R.Negative:=Multi_UBool_TRUE;
+if	(R.Negative_flag = Multi_UBool_UNDEF) then
+	if	(v1.Negative_flag = v2.Negative_flag)
+	then R.Negative_flag:= Multi_UBool_FALSE
+	else R.Negative_flag:=Multi_UBool_TRUE;
 
 Result:= R;
 
@@ -2822,7 +2873,7 @@ then
 	exit;
 	end;
 
-if	(v1.Negative = Multi_UBool_TRUE)
+if	(v1.Negative_flag = Multi_UBool_TRUE)
 then
 	begin
 	VR:= 0;
@@ -2830,7 +2881,7 @@ then
 	VREM:= 0;
 	VREM.Defined_flag:= FALSE;
 	{$ifdef RAISE_EXCEPTIONS_ENABLED}
-		Raise EIntOverflow.create('SqRoot is negative');
+		Raise EIntOverflow.create('SqRoot is Negative_flag');
 	{$endif}
 	exit;
 	end;
@@ -2896,6 +2947,7 @@ while not finished do
 	end;
 
 VR:= C;
+VR.Negative_flag:= Multi_UBool_FALSE;
 end;
 
 
@@ -2931,6 +2983,10 @@ else
 				{$endif}
 				exit;
 				end;
+			if	(T.Negative_flag = Multi_UBool_UNDEF) then
+				if	(TV.Negative_flag = Y.Negative_flag)
+				then R.Negative_flag:= Multi_UBool_FALSE
+				else R.Negative_flag:= Multi_UBool_TRUE;
 
 			Y:= T;
 			PT := PT - 1;
@@ -2948,8 +3004,10 @@ else
 			{$endif}
 			exit;
 			end;
-		TV:= T;
+		if	(T.Negative_flag = Multi_UBool_UNDEF) then
+			T.Negative_flag:= Multi_UBool_FALSE;
 
+		TV:= T;
 		PT := (PT div 2);
 		end;
 	// R:= (TV * Y);
@@ -2965,57 +3023,61 @@ else
 		{$endif}
 		exit;
 		end;
+	if	(R.Negative_flag = Multi_UBool_UNDEF) then
+		if	(TV.Negative_flag = Y.Negative_flag)
+		then R.Negative_flag:= Multi_UBool_FALSE
+		else R.Negative_flag:= Multi_UBool_TRUE;
 	end;
+
 Result:= R;
 end;
 
 
 (******************************************)
 procedure intdivide_Shift_And_Sub_X2(const P_dividend,P_divisor:Multi_Int_X2;var P_quotient,P_remainder:Multi_Int_X2);
-label	9999;
+label	1000;
 var
 dividend,
 divisor,
 quotient,
 quotient_factor,
-prev_subtraction	:Multi_Int_X2;
+prev_dividend,
+ZERO				:Multi_Int_X2;
 nlz_bits_dividend,
 nlz_bits_divisor,
 nlz_bits_P_divisor,
 nlz_bits_diff		:INT_2W_S;
 
 begin
-if	(P_divisor = 0) then
+ZERO:= 0;
+if	(P_divisor = ZERO) then
 	begin
-	P_quotient:= 0;
+	P_quotient:= ZERO;
 	P_quotient.Defined_flag:= FALSE;
 	P_quotient.Overflow_flag:= TRUE;
- 	P_remainder:= 0;
+ 	P_remainder:= ZERO;
 	P_remainder.Defined_flag:= FALSE;
 	P_remainder.Overflow_flag:= TRUE;
 	Multi_Int_OVERFLOW_ERROR:= TRUE;
     end
+else if	(P_divisor > P_dividend) then
+	begin
+	P_quotient:= ZERO;
+ 	P_remainder:= P_dividend;
+    end
 else if	(P_divisor = P_dividend) then
 	begin
 	P_quotient:= 1;
- 	P_remainder:= 0;
+ 	P_remainder:= ZERO;
     end
 else
 	begin
+	quotient:= ZERO;
+	P_remainder:= ZERO;
 	dividend:= P_dividend;
-	dividend.Negative:= FALSE;
+	dividend.Negative_flag:= FALSE;
 	divisor:= P_divisor;
-	divisor.Negative:= FALSE;
-
-	if	(divisor > dividend) then
-		begin
-		P_quotient:= 0;
-	 	P_remainder:= P_dividend;
-		goto 9999;
-	    end;
-
-	quotient:= 0;
-	P_remainder:= 0;
+	divisor.Negative_flag:= FALSE;
 	quotient_factor:= 1;
 
 	{ Round 0 }
@@ -3024,21 +3086,27 @@ else
 	nlz_bits_P_divisor:= nlz_bits_divisor;
 	nlz_bits_diff:= (nlz_bits_divisor - nlz_bits_dividend - 1);
 
-	if	(nlz_bits_diff > 0) then
+	if	(nlz_bits_diff > ZERO) then
 		begin
 		ShiftUp_MultiBits_Multi_Int_X2(divisor, nlz_bits_diff);
 		ShiftUp_MultiBits_Multi_Int_X2(quotient_factor, nlz_bits_diff);
 		end
-	else nlz_bits_diff:= 0;
+	else nlz_bits_diff:= ZERO;
 
 	{ Round X }
 	repeat
-		repeat
-			dividend:= (dividend - divisor);
-			if (dividend >= 0) then
-				quotient:= (quotient + quotient_factor);
-		until (dividend < 0);
-		dividend:= (dividend + divisor);
+	1000:
+		prev_dividend:= dividend;
+		dividend:= (dividend - divisor);
+		if (dividend > ZERO) then
+			begin
+			quotient:= (quotient + quotient_factor);
+			goto 1000;
+			end;
+		if (dividend = ZERO) then
+			quotient:= (quotient + quotient_factor);
+		if (dividend < ZERO) then
+			dividend:= (dividend + divisor);
 
 		nlz_bits_divisor:= nlz_MultiBits_X2(divisor);
 		if (nlz_bits_divisor < nlz_bits_P_divisor) then
@@ -3054,22 +3122,21 @@ else
 			end;
 	until	(dividend < P_divisor)
 	or		(nlz_bits_divisor >= nlz_bits_P_divisor)
-	or		(divisor = 0)
+	or		(divisor = ZERO)
 	;
 
 	P_quotient:= quotient;
 	P_remainder:= dividend;
 
-	if	(P_dividend.Negative = TRUE) and (P_remainder > 0)
+	if	(P_dividend.Negative_flag = TRUE) and (P_remainder > 0)
 	then
-		P_remainder.Negative:= TRUE;
+		P_remainder.Negative_flag:= TRUE;
 
-	if	(P_dividend.Negative <> P_divisor.Negative)
-	and	(P_quotient > 0)
+	if	(P_dividend.Negative_flag <> P_divisor.Negative_flag)
+	and	(P_quotient > ZERO)
 	then
-		P_quotient.Negative:= TRUE;
+		P_quotient.Negative_flag:= TRUE;
 	end;
-9999:
 end;
 
 
@@ -3113,10 +3180,10 @@ else
 	begin
 	intdivide_Shift_And_Sub_X2(v1,v2,Quotient,Remainder);
 {
-	if	(v1.Negative <> v2.Negative)
-	then Quotient.Negative:= TRUE
-	else if	(v2.Negative)
-	then Remainder.Negative:= TRUE;
+	if	(v1.Negative_flag <> v2.Negative_flag)
+	then Quotient.Negative_flag:= TRUE
+	else if	(v2.Negative_flag)
+	then Remainder.Negative_flag:= TRUE;
 }
 	X2_Last_Divisor:= v2;
 	X2_Last_Dividend:= v1;
@@ -3168,12 +3235,12 @@ then
 else
 	begin
 	intdivide_Shift_And_Sub_X2(v1,v2,Quotient,Remainder);
-
-	if	(v1.Negative <> v2.Negative)
-	then Quotient.Negative:= TRUE
-	else if	(v2.Negative)
-	then Remainder.Negative:= TRUE;
-
+{
+	if	(v1.Negative_flag <> v2.Negative_flag)
+	then Quotient.Negative_flag:= TRUE
+	else if	(v2.Negative_flag)
+	then Remainder.Negative_flag:= TRUE;
+}
 	X2_Last_Divisor:= v2;
 	X2_Last_Dividend:= v1;
 	X2_Last_Quotient:= Quotient;
@@ -3324,6 +3391,28 @@ end;
 function Defined(const v1:Multi_Int_X3):boolean; overload;
 begin
 Result:= v1.Defined_flag;
+end;
+
+
+(******************************************)
+function Multi_Int_X3.Negative:boolean;
+begin
+Result:= self.Negative_flag;
+end;
+
+
+(******************************************)
+function Negative(const v1:Multi_Int_X3):boolean; overload;
+begin
+Result:= v1.Negative_flag;
+end;
+
+
+(******************************************)
+function Abs(const v1:Multi_Int_X3):Multi_Int_X3; overload;
+begin
+Result:= v1;
+Result.Negative_flag:= Multi_UBool_FALSE;
 end;
 
 
@@ -3928,16 +4017,16 @@ then
 	end;
 
 Result:=FALSE;
-if ( (v1.Negative = FALSE) and (v2.Negative = TRUE) )
+if ( (v1.Negative_flag = FALSE) and (v2.Negative_flag = TRUE) )
 then Result:=FALSE
 else
-	if ( (v1.Negative = TRUE) and (v2.Negative = FALSE) )
+	if ( (v1.Negative_flag = TRUE) and (v2.Negative_flag = FALSE) )
 	then Result:=TRUE
 	else
-		if ( (v1.Negative = FALSE) and (v2.Negative = FALSE) )
+		if ( (v1.Negative_flag = FALSE) and (v2.Negative_flag = FALSE) )
 		then Result:= (Not ABS_greaterthan_Multi_Int_X3(v1,v2) )
 		else
-			if ( (v1.Negative = TRUE) and (v2.Negative = TRUE) )
+			if ( (v1.Negative_flag = TRUE) and (v2.Negative_flag = TRUE) )
 			then Result:= (Not ABS_lessthan_Multi_Int_X3(v1,v2));
 end;
 
@@ -3956,16 +4045,16 @@ then
 	end;
 
 Result:=FALSE;
-if ( (v1.Negative = FALSE) and (v2.Negative = TRUE) )
+if ( (v1.Negative_flag = FALSE) and (v2.Negative_flag = TRUE) )
 then Result:=TRUE
 else
-	if ( (v1.Negative = TRUE) and (v2.Negative = FALSE) )
+	if ( (v1.Negative_flag = TRUE) and (v2.Negative_flag = FALSE) )
 	then Result:=FALSE
 	else
-		if ( (v1.Negative = FALSE) and (v2.Negative = FALSE) )
+		if ( (v1.Negative_flag = FALSE) and (v2.Negative_flag = FALSE) )
 		then Result:= (Not ABS_lessthan_Multi_Int_X3(v1,v2) )
 		else
-			if ( (v1.Negative = TRUE) and (v2.Negative = TRUE) )
+			if ( (v1.Negative_flag = TRUE) and (v2.Negative_flag = TRUE) )
 			then Result:= (Not ABS_greaterthan_Multi_Int_X3(v1,v2) );
 end;
 
@@ -3984,16 +4073,16 @@ then
 	end;
 
 Result:=FALSE;
-if ( (v1.Negative = FALSE) and (v2.Negative = TRUE) )
+if ( (v1.Negative_flag = FALSE) and (v2.Negative_flag = TRUE) )
 then Result:=TRUE
 else
-	if ( (v1.Negative = TRUE) and (v2.Negative = FALSE) )
+	if ( (v1.Negative_flag = TRUE) and (v2.Negative_flag = FALSE) )
 	then Result:=FALSE
 	else
-		if ( (v1.Negative = FALSE) and (v2.Negative = FALSE) )
+		if ( (v1.Negative_flag = FALSE) and (v2.Negative_flag = FALSE) )
 		then Result:= ABS_greaterthan_Multi_Int_X3(v1,v2)
 		else
-			if ( (v1.Negative = TRUE) and (v2.Negative = TRUE) )
+			if ( (v1.Negative_flag = TRUE) and (v2.Negative_flag = TRUE) )
 			then Result:= ABS_lessthan_Multi_Int_X3(v1,v2);
 end;
 
@@ -4012,13 +4101,13 @@ then
 	end;
 
 Result:=FALSE;
-if ( (v1.Negative = TRUE) and (v2.Negative = FALSE) )
+if ( (v1.Negative_flag = TRUE) and (v2.Negative_flag = FALSE) )
 then Result:=TRUE
 else
-	if ( (v1.Negative = FALSE) and (v2.Negative = FALSE) )
+	if ( (v1.Negative_flag = FALSE) and (v2.Negative_flag = FALSE) )
 	then Result:= ABS_lessthan_Multi_Int_X3(v1,v2)
 	else
-		if ( (v1.Negative = TRUE) and (v2.Negative = TRUE) )
+		if ( (v1.Negative_flag = TRUE) and (v2.Negative_flag = TRUE) )
 		then Result:= ABS_greaterthan_Multi_Int_X3(v1,v2);
 end;
 
@@ -4037,7 +4126,7 @@ then
 	end;
 
 Result:= TRUE;
-if ( v1.Negative <> v2.Negative )
+if ( v1.Negative_flag <> v2.Negative_flag )
 then Result:= FALSE
 else Result:= ABS_equal_Multi_Int_X3(v1,v2);
 end;
@@ -4057,7 +4146,7 @@ then
 	end;
 
 Result:= FALSE;
-if ( v1.Negative <> v2.Negative )
+if ( v1.Negative_flag <> v2.Negative_flag )
 then Result:= TRUE
 else Result:= (not ABS_equal_Multi_Int_X3(v1,v2));
 end;
@@ -4074,7 +4163,7 @@ var
 begin
 mi.Overflow_flag:=FALSE;
 mi.Defined_flag:= TRUE;
-mi.Negative:= FALSE;
+mi.Negative_flag:= FALSE;
 Signeg:= FALSE;
 Zeroneg:= FALSE;
 
@@ -4175,19 +4264,21 @@ and	(M_Val[4] = 0)
 and	(M_Val[5] = 0)
 then Zeroneg:= TRUE;
 
-if Zeroneg then mi.Negative:= Multi_UBool_FALSE
-else if Signeg then mi.Negative:= Multi_UBool_TRUE
-else mi.Negative:= Multi_UBool_FALSE;
+if Zeroneg then mi.Negative_flag:= Multi_UBool_FALSE
+else if Signeg then mi.Negative_flag:= Multi_UBool_TRUE
+else mi.Negative_flag:= Multi_UBool_FALSE;
 
 999:
 end;
 
 
 (******************************************)
+{
 procedure Multi_Int_X3.Init(const v1:string);
 begin
 string_to_Multi_Int_X3(v1,self);
 end;
+}
 
 
 (******************************************)
@@ -4209,13 +4300,13 @@ mi.M_Value[5]:= 0;
 
 if (v1 < 0) then
 	begin
-	mi.Negative:= Multi_UBool_TRUE;
+	mi.Negative_flag:= Multi_UBool_TRUE;
 	mi.M_Value[0]:= (ABS(v1) MOD INT_1W_U_MAXINT_1);
 	mi.M_Value[1]:= (ABS(v1) DIV INT_1W_U_MAXINT_1);
 	end
 else
 	begin
-	mi.Negative:= Multi_UBool_FALSE;
+	mi.Negative_flag:= Multi_UBool_FALSE;
 	mi.M_Value[0]:= (v1 MOD INT_1W_U_MAXINT_1);
 	mi.M_Value[1]:= (v1 DIV INT_1W_U_MAXINT_1);
 	end;
@@ -4234,7 +4325,7 @@ procedure INT_2W_U_to_Multi_Int_X3(const v1:INT_2W_U; var mi:Multi_Int_X3);
 begin
 mi.Overflow_flag:=FALSE;
 mi.Defined_flag:=TRUE;
-mi.Negative:= Multi_UBool_FALSE;
+mi.Negative_flag:= Multi_UBool_FALSE;
 
 mi.M_Value[0]:= (v1 MOD INT_1W_U_MAXINT_1);
 mi.M_Value[1]:= (v1 DIV INT_1W_U_MAXINT_1);
@@ -4258,7 +4349,7 @@ var n :INT_1W_U;
 begin
 Result.Overflow_flag:= v1.Overflow_flag;
 Result.Defined_flag:= v1.Defined_flag;
-Result.Negative:= v1.Negative;
+Result.Negative_flag:= v1.Negative_flag;
 
 if	(v1.Defined_flag = FALSE)
 then
@@ -4296,7 +4387,7 @@ var n :INT_1W_U;
 begin
 Result.Overflow_flag:= v1.Overflow_flag;
 Result.Defined_flag:= v1.Defined_flag;
-Result.Negative:= v1.Negative;
+Result.Negative_flag:= v1.Negative_flag;
 
 if	(v1.Defined_flag = FALSE)
 then
@@ -4334,7 +4425,7 @@ var n :INT_1W_U;
 begin
 Result.Overflow_flag:= v1.Overflow_flag;
 Result.Defined_flag:= v1.Defined_flag;
-Result.Negative:= v1.Negative;
+Result.Negative_flag:= v1.Negative_flag;
 
 if	(v1.Defined_flag = FALSE)
 then
@@ -4378,7 +4469,7 @@ var
 begin
 MI.Overflow_flag:= v1.Overflow_flag;
 MI.Defined_flag:= v1.Defined_flag;
-MI.Negative:= v1.Negative;
+MI.Negative_flag:= v1.Negative_flag;
 
 if	(v1.Defined_flag = FALSE)
 then
@@ -4466,7 +4557,7 @@ if (R > 0.0) then
 	begin
 	Result:= 0;
 	Result.Defined_flag:= FALSE;
-	Result.Negative:= Multi_UBool_UNDEF;
+	Result.Negative_flag:= Multi_UBool_UNDEF;
 	Result.Overflow_flag:= TRUE;
 	{$ifdef RAISE_EXCEPTIONS_ENABLED}
 	Raise EIntOverflow.create('Overflow on real conversion');
@@ -4474,7 +4565,7 @@ if (R > 0.0) then
 	end
 else
 	begin
-	if (v1 < 0.0) then M.Negative := TRUE;
+	if (v1 < 0.0) then M.Negative_flag := TRUE;
 	Result:= M;
 	end;
 end;
@@ -4518,7 +4609,7 @@ V:= v1.M_Value[5];
 V:= V * M * M * M * M * M;
 R:= R + V;
 
-if v1.Negative then R:= (- R);
+if v1.Negative_flag then R:= (- R);
 Result:= R;
 end;
 
@@ -4567,7 +4658,7 @@ if (R > 0.0) then
 	begin
 	Result:= 0;
 	Result.Defined_flag:= FALSE;
-	Result.Negative:= Multi_UBool_UNDEF;
+	Result.Negative_flag:= Multi_UBool_UNDEF;
 	Result.Overflow_flag:= TRUE;
 	{$ifdef RAISE_EXCEPTIONS_ENABLED}
 	Raise EIntOverflow.create('Overflow on Double conversion');
@@ -4575,7 +4666,7 @@ if (R > 0.0) then
 	end
 else
 	begin
-	if (v1 < 0.0) then M.Negative := TRUE;
+	if (v1 < 0.0) then M.Negative_flag := TRUE;
 	Result:= M;
 	end;
 end;
@@ -4619,7 +4710,7 @@ V:= v1.M_Value[5];
 V:= V * M * M * M * M * M;
 R:= R + V;
 
-if v1.Negative then R:= (- R);
+if v1.Negative_flag then R:= (- R);
 Result:= R;
 end;
 
@@ -4656,7 +4747,7 @@ then
 	exit;
 	end;
 
-if v1.Negative
+if v1.Negative_flag
 then Result:= INT_2W_S(-R)
 else Result:= INT_2W_S(R);
 end;
@@ -4729,7 +4820,7 @@ then
 	exit;
 	end;
 
-if v1.Negative
+if v1.Negative_flag
 then Result:= INT_1W_S(-R)
 else Result:= INT_1W_S(R);
 end;
@@ -4741,7 +4832,7 @@ var	R	:INT_2W_U;
 begin
 Multi_Int_OVERFLOW_ERROR:= FALSE;
 if	(Not v1.Defined_flag)
-or	(v1.Negative = Multi_UBool_TRUE)
+or	(v1.Negative_flag = Multi_UBool_TRUE)
 then
 	begin
 	Result:=0;
@@ -4778,7 +4869,7 @@ class operator Multi_Int_X3.implicit(const v1:Multi_Int_X3):Multi_int8u;
 begin
 Multi_Int_OVERFLOW_ERROR:= FALSE;
 if	(Not v1.Defined_flag)
-or	(v1.Negative = Multi_UBool_TRUE)
+or	(v1.Negative_flag = Multi_UBool_TRUE)
 then
 	begin
 	Result:=0;
@@ -4814,7 +4905,7 @@ class operator Multi_Int_X3.implicit(const v1:Multi_Int_X3):Multi_int8;
 begin
 Multi_Int_OVERFLOW_ERROR:= FALSE;
 if	(Not v1.Defined_flag)
-or	(v1.Negative = Multi_UBool_TRUE)
+or	(v1.Negative_flag = Multi_UBool_TRUE)
 then
 	begin
 	Result:=0;
@@ -4882,7 +4973,7 @@ s:= s
 	;
 
 if (LZ = Multi_Trim_Leading_Zeros) then Removeleadingchars(s,['0']);
-if	(v1.Negative = Multi_UBool_TRUE) then s:='-' + s;
+if	(v1.Negative_flag = Multi_UBool_TRUE) then s:='-' + s;
 v2:=s;
 end;
 
@@ -4907,7 +4998,7 @@ var
 begin
 mi.Overflow_flag:=FALSE;
 mi.Defined_flag:= TRUE;
-mi.Negative:= FALSE;
+mi.Negative_flag:= FALSE;
 Signeg:= FALSE;
 Zeroneg:= FALSE;
 
@@ -4984,9 +5075,9 @@ while (n <= Multi_X3_max) do
 	end;
 if M_Val_All_Zero then Zeroneg:= TRUE;
 
-if Zeroneg then mi.Negative:= Multi_UBool_FALSE
-else if Signeg then mi.Negative:= Multi_UBool_TRUE
-else mi.Negative:= Multi_UBool_FALSE;
+if Zeroneg then mi.Negative_flag:= Multi_UBool_FALSE
+else if Signeg then mi.Negative_flag:= Multi_UBool_TRUE
+else mi.Negative_flag:= Multi_UBool_FALSE;
 
 999:
 end;
@@ -5060,7 +5151,7 @@ and		(M_Val[4] = 0)
 and		(M_Val[5] = 0)
 ;
 
-if	(v1.Negative = Multi_UBool_TRUE) then s:='-' + s;
+if	(v1.Negative_flag = Multi_UBool_TRUE) then s:='-' + s;
 
 v2:=s;
 end;
@@ -5103,9 +5194,9 @@ Result.M_Value[4]:=(v1.M_Value[4] xor v2.M_Value[4]);
 Result.M_Value[5]:=(v1.M_Value[5] xor v2.M_Value[5]);
 Result.Defined_flag:=TRUE;
 Result.Overflow_flag:=FALSE;
-if (v1.Negative = v2.Negative)
-then Result.Negative:= Multi_UBool_FALSE
-else Result.Negative:= Multi_UBool_TRUE;
+if (v1.Negative_flag = v2.Negative_flag)
+then Result.Negative_flag:= Multi_UBool_FALSE
+else Result.Negative_flag:= Multi_UBool_TRUE;
 end;
 
 
@@ -5118,7 +5209,7 @@ var
 begin
 Result.Overflow_flag:=FALSE;
 Result.Defined_flag:=TRUE;
-Result.Negative.Init(Multi_UBool_UNDEF);
+Result.Negative_flag.Init(Multi_UBool_UNDEF);
 
 tv1:= v1.M_Value[0];
 tv2:= v2.M_Value[0];
@@ -5198,7 +5289,7 @@ and	(M_Val[2] = 0)
 and	(M_Val[3] = 0)
 and	(M_Val[4] = 0)
 and	(M_Val[5] = 0)
-then Result.Negative:=Multi_UBool_FALSE;
+then Result.Negative_flag:=Multi_UBool_FALSE;
 
 end;
 
@@ -5210,7 +5301,7 @@ var
 begin
 Result.Overflow_flag:=FALSE;
 Result.Defined_flag:=TRUE;
-Result.Negative:=Multi_UBool_UNDEF;
+Result.Negative_flag:=Multi_UBool_UNDEF;
 
 M_Val[0]:=(v1.M_Value[0] - v2.M_Value[0]);
 if	M_Val[0] < 0 then
@@ -5277,7 +5368,7 @@ and	(M_Val[2] = 0)
 and	(M_Val[3] = 0)
 and	(M_Val[4] = 0)
 and	(M_Val[5] = 0)
-then Result.Negative:=Multi_UBool_FALSE;
+then Result.Negative_flag:=Multi_UBool_FALSE;
 
 end;
 
@@ -5291,7 +5382,8 @@ if	(Not v1.Defined_flag)
 then
 	begin
 	Result:=0;
-	Result.Defined_flag:= FALSE;
+	Result.Defined_flag:= v1.Defined_flag;
+	Result.Overflow_flag:= v1.Overflow_flag;
 	{$ifdef RAISE_EXCEPTIONS_ENABLED}
 	Raise EInterror.create('Uninitialised variable');
 	{$endif}
@@ -5302,8 +5394,8 @@ if	(v1.Overflow_flag)
 then
 	begin
 	Result:= 0;
-	Result.Overflow_flag:=TRUE;
-	Result.Defined_flag:=TRUE;
+	Result.Defined_flag:= v1.Defined_flag;
+	Result.Overflow_flag:= v1.Overflow_flag;
 	{$ifdef RAISE_EXCEPTIONS_ENABLED}
 		Raise EIntOverflow.create('Overflow on inc');
 	{$endif}
@@ -5313,11 +5405,11 @@ then
 Neg:=Multi_UBool_UNDEF;
 v2:= 1;
 
-if	(v1.Negative = FALSE)
+if	(v1.Negative_flag = FALSE)
 then
 	begin
 	Result:=add_Multi_Int_X3(v1,v2);
-	Neg:= v1.Negative;
+	Neg:= v1.Negative_flag;
 	end
 else
 	begin
@@ -5339,7 +5431,7 @@ if (Result.Overflow_flag = TRUE) then
 	Raise EIntOverflow.create('Overflow on Inc');
 {$endif}
 
-if	(Result.Negative = Multi_UBool_UNDEF) then Result.Negative:= Neg;
+if	(Result.Negative_flag = Multi_UBool_UNDEF) then Result.Negative_flag:= Neg;
 end;
 
 
@@ -5373,14 +5465,14 @@ then
 
 Neg:=Multi_UBool_UNDEF;
 
-if	(v1.Negative = v2.Negative)
+if	(v1.Negative_flag = v2.Negative_flag)
 then
 	begin
 	Result:=add_Multi_Int_X3(v1,v2);
-	Neg:= v1.Negative;
+	Neg:= v1.Negative_flag;
 	end
 else
-	if	((v1.Negative = FALSE) and (v2.Negative = TRUE))
+	if	((v1.Negative_flag = FALSE) and (v2.Negative_flag = TRUE))
 	then
 		begin
 		if	ABS_greaterthan_Multi_Int_X3(v2,v1)
@@ -5415,7 +5507,7 @@ if (Result.Overflow_flag = TRUE) then
 	Raise EIntOverflow.create('Overflow on Add');
 {$endif}
 
-if	(Result.Negative = Multi_UBool_UNDEF) then Result.Negative:= Neg;
+if	(Result.Negative_flag = Multi_UBool_UNDEF) then Result.Negative_flag:= Neg;
 end;
 
 
@@ -5428,7 +5520,8 @@ if	(Not v1.Defined_flag)
 then
 	begin
 	Result:=0;
-	Result.Defined_flag:= FALSE;
+	Result.Defined_flag:= v1.Defined_flag;
+	Result.Overflow_flag:= v1.Overflow_flag;
 	{$ifdef RAISE_EXCEPTIONS_ENABLED}
 	Raise EInterror.create('Uninitialised variable');
 	{$endif}
@@ -5439,10 +5532,10 @@ if	(v1.Overflow_flag)
 then
 	begin
 	Result:= 0;
-	Result.Overflow_flag:=TRUE;
-	Result.Defined_flag:=TRUE;
+	Result.Defined_flag:= v1.Defined_flag;
+	Result.Overflow_flag:= v1.Overflow_flag;
 	{$ifdef RAISE_EXCEPTIONS_ENABLED}
-		Raise EIntOverflow.create('Overflow on Dec');
+		Raise EIntOverflow.create('Overflow on inc');
 	{$endif}
 	exit;
 	end;
@@ -5450,7 +5543,7 @@ then
 Neg:=Multi_UBool_UNDEF;
 v2:= 1;
 
-if	(v1.Negative = FALSE) then
+if	(v1.Negative_flag = FALSE) then
 	begin
 	if	ABS_greaterthan_Multi_Int_X3(v2,v1)
 	then
@@ -5464,7 +5557,7 @@ if	(v1.Negative = FALSE) then
 		Neg:=Multi_UBool_FALSE;
 		end
 	end
-else (* v1 is Negative *)
+else (* v1 is Negative_flag *)
 	begin
 	Result:=add_Multi_Int_X3(v1,v2);
 	Neg:=Multi_UBool_TRUE;
@@ -5475,7 +5568,7 @@ if (Result.Overflow_flag = TRUE) then
 	Raise EIntOverflow.create('Overflow on Dec');
 {$endif}
 
-if	(Result.Negative = Multi_UBool_UNDEF) then Result.Negative:= Neg;
+if	(Result.Negative_flag = Multi_UBool_UNDEF) then Result.Negative_flag:= Neg;
 end;
 
 
@@ -5509,10 +5602,10 @@ then
 
 Neg:=Multi_UBool_UNDEF;
 
-if	(v1.Negative = v2.Negative)
+if	(v1.Negative_flag = v2.Negative_flag)
 then
 	begin
-	if	(v1.Negative = TRUE) then
+	if	(v1.Negative_flag = TRUE) then
 		begin
 		if	ABS_greaterthan_Multi_Int_X3(v1,v2)
 		then
@@ -5526,7 +5619,7 @@ then
 			Neg:=Multi_UBool_FALSE;
 			end
 		end
-	else	(* if	not Negative then	*)
+	else	(* if	not Negative_flag then	*)
 		begin
 		if	ABS_greaterthan_Multi_Int_X3(v2,v1)
 		then
@@ -5541,9 +5634,9 @@ then
 			end
 		end
 	end
-else (* v1.Negative <> v2.Negative *)
+else (* v1.Negative_flag <> v2.Negative_flag *)
 	begin
-	if	(v2.Negative = TRUE) then
+	if	(v2.Negative_flag = TRUE) then
 		begin
 		Result:=add_Multi_Int_X3(v1,v2);
 		Neg:=Multi_UBool_FALSE;
@@ -5560,14 +5653,17 @@ if (Result.Overflow_flag = TRUE) then
 	Raise EIntOverflow.create('Overflow on Subtract');
 {$endif}
 
-if	(Result.Negative = Multi_UBool_UNDEF) then Result.Negative:= Neg;
+if	(Result.Negative_flag = Multi_UBool_UNDEF) then Result.Negative_flag:= Neg;
 end;
 
 
 (******************************************)
 class operator Multi_Int_X3.-(const v1:Multi_Int_X3):Multi_Int_X3;
 begin
-Result:= (0 - v1);
+Result:= v1;
+Result.Negative_flag:= Multi_UBool_FALSE;
+if	(v1.Negative_flag) then
+	Result.Negative_flag:= Multi_UBool_TRUE;
 end;
 
 
@@ -5580,7 +5676,7 @@ var
 begin
 Result.Overflow_flag:=FALSE;
 Result.Defined_flag:=TRUE;
-Result.Negative:=Multi_UBool_UNDEF;
+Result.Negative_flag:=Multi_UBool_UNDEF;
 
 i:=0;
 repeat M_Val[i]:= 0; INC(i); until (i > Multi_X3_max_x2);
@@ -5605,12 +5701,12 @@ repeat
 	i:=0;
 until (j > Multi_X3_max);
 
-Result.Negative:=Multi_UBool_FALSE;
+Result.Negative_flag:=Multi_UBool_FALSE;
 i:=0;
 repeat
 	if (M_Val[i] <> 0) then
 		begin
-		Result.Negative:= Multi_UBool_UNDEF;
+		Result.Negative_flag:= Multi_UBool_UNDEF;
 		if (i > Multi_X3_max) then
 			begin
 			Result.Overflow_flag:=TRUE;
@@ -5660,10 +5756,10 @@ then
 
 multiply_Multi_Int_X3(v1,v2,R);
 
-if	(R.Negative = Multi_UBool_UNDEF) then
-	if	(v1.Negative = v2.Negative)
-	then R.Negative:= Multi_UBool_FALSE
-	else R.Negative:=Multi_UBool_TRUE;
+if	(R.Negative_flag = Multi_UBool_UNDEF) then
+	if	(v1.Negative_flag = v2.Negative_flag)
+	then R.Negative_flag:= Multi_UBool_FALSE
+	else R.Negative_flag:=Multi_UBool_TRUE;
 
 Result:= R;
 
@@ -5710,7 +5806,7 @@ then
 	exit;
 	end;
 
-if	(v1.Negative = Multi_UBool_TRUE)
+if	(v1.Negative_flag = Multi_UBool_TRUE)
 then
 	begin
 	VR:= 0;
@@ -5718,7 +5814,7 @@ then
 	VREM:= 0;
 	VREM.Defined_flag:= FALSE;
 	{$ifdef RAISE_EXCEPTIONS_ENABLED}
-		Raise EIntOverflow.create('SqRoot is negative');
+		Raise EIntOverflow.create('SqRoot is Negative_flag');
 	{$endif}
 	exit;
 	end;
@@ -5784,6 +5880,7 @@ while not finished do
 	end;
 
 VR:= C;
+VR.Negative_flag:= Multi_UBool_FALSE;
 end;
 
 
@@ -5819,6 +5916,10 @@ else
 				{$endif}
 				exit;
 				end;
+			if	(T.Negative_flag = Multi_UBool_UNDEF) then
+				if	(TV.Negative_flag = Y.Negative_flag)
+				then R.Negative_flag:= Multi_UBool_FALSE
+				else R.Negative_flag:= Multi_UBool_TRUE;
 
 			Y:= T;
 			PT := PT - 1;
@@ -5836,8 +5937,10 @@ else
 			{$endif}
 			exit;
 			end;
-		TV:= T;
+		if	(T.Negative_flag = Multi_UBool_UNDEF) then
+			T.Negative_flag:= Multi_UBool_FALSE;
 
+		TV:= T;
 		PT := (PT div 2);
 		end;
 	// R:= (TV * Y);
@@ -5853,57 +5956,61 @@ else
 		{$endif}
 		exit;
 		end;
+	if	(R.Negative_flag = Multi_UBool_UNDEF) then
+		if	(TV.Negative_flag = Y.Negative_flag)
+		then R.Negative_flag:= Multi_UBool_FALSE
+		else R.Negative_flag:= Multi_UBool_TRUE;
 	end;
+
 Result:= R;
 end;
 
 
 (******************************************)
 procedure intdivide_Shift_And_Sub_X3(const P_dividend,P_divisor:Multi_Int_X3;var P_quotient,P_remainder:Multi_Int_X3);
-label	9999;
+label	1000;
 var
 dividend,
 divisor,
 quotient,
 quotient_factor,
-prev_subtraction	:Multi_Int_X3;
+prev_dividend,
+ZERO				:Multi_Int_X3;
 nlz_bits_dividend,
 nlz_bits_divisor,
 nlz_bits_P_divisor,
 nlz_bits_diff		:INT_2W_S;
 
 begin
-if	(P_divisor = 0) then
+ZERO:= 0;
+if	(P_divisor = ZERO) then
 	begin
-	P_quotient:= 0;
+	P_quotient:= ZERO;
 	P_quotient.Defined_flag:= FALSE;
 	P_quotient.Overflow_flag:= TRUE;
- 	P_remainder:= 0;
+ 	P_remainder:= ZERO;
 	P_remainder.Defined_flag:= FALSE;
 	P_remainder.Overflow_flag:= TRUE;
 	Multi_Int_OVERFLOW_ERROR:= TRUE;
     end
+else if	(P_divisor > P_dividend) then
+	begin
+	P_quotient:= ZERO;
+ 	P_remainder:= P_dividend;
+    end
 else if	(P_divisor = P_dividend) then
 	begin
 	P_quotient:= 1;
- 	P_remainder:= 0;
+ 	P_remainder:= ZERO;
     end
 else
 	begin
+	quotient:= ZERO;
+	P_remainder:= ZERO;
 	dividend:= P_dividend;
-	dividend.Negative:= FALSE;
+	dividend.Negative_flag:= FALSE;
 	divisor:= P_divisor;
-	divisor.Negative:= FALSE;
-
-	if	(divisor > dividend) then
-		begin
-		P_quotient:= 0;
-	 	P_remainder:= P_dividend;
-		goto 9999;
-	    end;
-
-	quotient:= 0;
-	P_remainder:= 0;
+	divisor.Negative_flag:= FALSE;
 	quotient_factor:= 1;
 
 	{ Round 0 }
@@ -5912,21 +6019,27 @@ else
 	nlz_bits_P_divisor:= nlz_bits_divisor;
 	nlz_bits_diff:= (nlz_bits_divisor - nlz_bits_dividend - 1);
 
-	if	(nlz_bits_diff > 0) then
+	if	(nlz_bits_diff > ZERO) then
 		begin
 		ShiftUp_MultiBits_Multi_Int_X3(divisor, nlz_bits_diff);
 		ShiftUp_MultiBits_Multi_Int_X3(quotient_factor, nlz_bits_diff);
 		end
-	else nlz_bits_diff:= 0;
+	else nlz_bits_diff:= ZERO;
 
 	{ Round X }
 	repeat
-		repeat
-			dividend:= (dividend - divisor);
-			if (dividend >= 0) then
-				quotient:= (quotient + quotient_factor);
-		until (dividend < 0);
-		dividend:= (dividend + divisor);
+	1000:
+		prev_dividend:= dividend;
+		dividend:= (dividend - divisor);
+		if (dividend > ZERO) then
+			begin
+			quotient:= (quotient + quotient_factor);
+			goto 1000;
+			end;
+		if (dividend = ZERO) then
+			quotient:= (quotient + quotient_factor);
+		if (dividend < ZERO) then
+			dividend:= (dividend + divisor);
 
 		nlz_bits_divisor:= nlz_MultiBits_X3(divisor);
 		if (nlz_bits_divisor < nlz_bits_P_divisor) then
@@ -5942,22 +6055,21 @@ else
 			end;
 	until	(dividend < P_divisor)
 	or		(nlz_bits_divisor >= nlz_bits_P_divisor)
-	or		(divisor = 0)
+	or		(divisor = ZERO)
 	;
 
 	P_quotient:= quotient;
 	P_remainder:= dividend;
 
-	if	(P_dividend.Negative = TRUE) and (P_remainder > 0)
+	if	(P_dividend.Negative_flag = TRUE) and (P_remainder > 0)
 	then
-		P_remainder.Negative:= TRUE;
+		P_remainder.Negative_flag:= TRUE;
 
-	if	(P_dividend.Negative <> P_divisor.Negative)
-	and	(P_quotient > 0)
+	if	(P_dividend.Negative_flag <> P_divisor.Negative_flag)
+	and	(P_quotient > ZERO)
 	then
-		P_quotient.Negative:= TRUE;
+		P_quotient.Negative_flag:= TRUE;
 	end;
-9999:
 end;
 
 
@@ -6001,10 +6113,10 @@ else
 	begin
 	intdivide_Shift_And_Sub_X3(v1,v2,Quotient,Remainder);
 {
-	if	(v1.Negative <> v2.Negative)
-	then Quotient.Negative:= TRUE
-	else if	(v2.Negative)
-	then Remainder.Negative:= TRUE;
+	if	(v1.Negative_flag <> v2.Negative_flag)
+	then Quotient.Negative_flag:= TRUE
+	else if	(v2.Negative_flag)
+	then Remainder.Negative_flag:= TRUE;
 }
 	X3_Last_Divisor:= v2;
 	X3_Last_Dividend:= v1;
@@ -6056,12 +6168,12 @@ then
 else
 	begin
 	intdivide_Shift_And_Sub_X3(v1,v2,Quotient,Remainder);
-
-	if	(v1.Negative <> v2.Negative)
-	then Quotient.Negative:= TRUE
-	else if	(v2.Negative)
-	then Remainder.Negative:= TRUE;
-
+{
+	if	(v1.Negative_flag <> v2.Negative_flag)
+	then Quotient.Negative_flag:= TRUE
+	else if	(v2.Negative_flag)
+	then Remainder.Negative_flag:= TRUE;
+}
 	X3_Last_Divisor:= v2;
 	X3_Last_Dividend:= v1;
 	X3_Last_Quotient:= Quotient;
@@ -6243,6 +6355,28 @@ end;
 function Defined(const v1:Multi_Int_X4):boolean; overload;
 begin
 Result:= v1.Defined_flag;
+end;
+
+
+(******************************************)
+function Multi_Int_X4.Negative:boolean;
+begin
+Result:= self.Negative_flag;
+end;
+
+
+(******************************************)
+function Negative(const v1:Multi_Int_X4):boolean; overload;
+begin
+Result:= v1.Negative_flag;
+end;
+
+
+(******************************************)
+function Abs(const v1:Multi_Int_X4):Multi_Int_X4; overload;
+begin
+Result:= v1;
+Result.Negative_flag:= Multi_UBool_FALSE;
 end;
 
 
@@ -6879,16 +7013,16 @@ then
 	end;
 
 Result:=FALSE;
-if ( (v1.Negative = FALSE) and (v2.Negative = TRUE) )
+if ( (v1.Negative_flag = FALSE) and (v2.Negative_flag = TRUE) )
 then Result:=FALSE
 else
-	if ( (v1.Negative = TRUE) and (v2.Negative = FALSE) )
+	if ( (v1.Negative_flag = TRUE) and (v2.Negative_flag = FALSE) )
 	then Result:=TRUE
 	else
-		if ( (v1.Negative = FALSE) and (v2.Negative = FALSE) )
+		if ( (v1.Negative_flag = FALSE) and (v2.Negative_flag = FALSE) )
 		then Result:= (Not ABS_greaterthan_Multi_Int_X4(v1,v2) )
 		else
-			if ( (v1.Negative = TRUE) and (v2.Negative = TRUE) )
+			if ( (v1.Negative_flag = TRUE) and (v2.Negative_flag = TRUE) )
 			then Result:= (Not ABS_lessthan_Multi_Int_X4(v1,v2));
 end;
 
@@ -6907,16 +7041,16 @@ then
 	end;
 
 Result:=FALSE;
-if ( (v1.Negative = FALSE) and (v2.Negative = TRUE) )
+if ( (v1.Negative_flag = FALSE) and (v2.Negative_flag = TRUE) )
 then Result:=TRUE
 else
-	if ( (v1.Negative = TRUE) and (v2.Negative = FALSE) )
+	if ( (v1.Negative_flag = TRUE) and (v2.Negative_flag = FALSE) )
 	then Result:=FALSE
 	else
-		if ( (v1.Negative = FALSE) and (v2.Negative = FALSE) )
+		if ( (v1.Negative_flag = FALSE) and (v2.Negative_flag = FALSE) )
 		then Result:= (Not ABS_lessthan_Multi_Int_X4(v1,v2) )
 		else
-			if ( (v1.Negative = TRUE) and (v2.Negative = TRUE) )
+			if ( (v1.Negative_flag = TRUE) and (v2.Negative_flag = TRUE) )
 			then Result:= (Not ABS_greaterthan_Multi_Int_X4(v1,v2) );
 end;
 
@@ -6935,16 +7069,16 @@ then
 	end;
 
 Result:=FALSE;
-if ( (v1.Negative = FALSE) and (v2.Negative = TRUE) )
+if ( (v1.Negative_flag = FALSE) and (v2.Negative_flag = TRUE) )
 then Result:=TRUE
 else
-	if ( (v1.Negative = TRUE) and (v2.Negative = FALSE) )
+	if ( (v1.Negative_flag = TRUE) and (v2.Negative_flag = FALSE) )
 	then Result:=FALSE
 	else
-		if ( (v1.Negative = FALSE) and (v2.Negative = FALSE) )
+		if ( (v1.Negative_flag = FALSE) and (v2.Negative_flag = FALSE) )
 		then Result:= ABS_greaterthan_Multi_Int_X4(v1,v2)
 		else
-			if ( (v1.Negative = TRUE) and (v2.Negative = TRUE) )
+			if ( (v1.Negative_flag = TRUE) and (v2.Negative_flag = TRUE) )
 			then Result:= ABS_lessthan_Multi_Int_X4(v1,v2);
 end;
 
@@ -6963,13 +7097,13 @@ then
 	end;
 
 Result:=FALSE;
-if ( (v1.Negative = TRUE) and (v2.Negative = FALSE) )
+if ( (v1.Negative_flag = TRUE) and (v2.Negative_flag = FALSE) )
 then Result:=TRUE
 else
-	if ( (v1.Negative = FALSE) and (v2.Negative = FALSE) )
+	if ( (v1.Negative_flag = FALSE) and (v2.Negative_flag = FALSE) )
 	then Result:= ABS_lessthan_Multi_Int_X4(v1,v2)
 	else
-		if ( (v1.Negative = TRUE) and (v2.Negative = TRUE) )
+		if ( (v1.Negative_flag = TRUE) and (v2.Negative_flag = TRUE) )
 		then Result:= ABS_greaterthan_Multi_Int_X4(v1,v2);
 end;
 
@@ -6988,7 +7122,7 @@ then
 	end;
 
 Result:= TRUE;
-if ( v1.Negative <> v2.Negative )
+if ( v1.Negative_flag <> v2.Negative_flag )
 then Result:= FALSE
 else Result:= ABS_equal_Multi_Int_X4(v1,v2);
 end;
@@ -7008,7 +7142,7 @@ then
 	end;
 
 Result:= FALSE;
-if ( v1.Negative <> v2.Negative )
+if ( v1.Negative_flag <> v2.Negative_flag )
 then Result:= TRUE
 else Result:= (not ABS_equal_Multi_Int_X4(v1,v2));
 end;
@@ -7020,7 +7154,7 @@ var n :INT_1W_U;
 begin
 Result.Overflow_flag:= v1.Overflow_flag;
 Result.Defined_flag:= v1.Defined_flag;
-Result.Negative:= v1.Negative;
+Result.Negative_flag:= v1.Negative_flag;
 
 if	(v1.Defined_flag = FALSE)
 then
@@ -7058,7 +7192,7 @@ var n :INT_1W_U;
 begin
 Result.Overflow_flag:= v1.Overflow_flag;
 Result.Defined_flag:= v1.Defined_flag;
-Result.Negative:= v1.Negative;
+Result.Negative_flag:= v1.Negative_flag;
 
 if	(v1.Defined_flag = FALSE)
 then
@@ -7101,7 +7235,7 @@ var n :INT_1W_U;
 begin
 Result.Overflow_flag:= v1.Overflow_flag;
 Result.Defined_flag:= v1.Defined_flag;
-Result.Negative:= v1.Negative;
+Result.Negative_flag:= v1.Negative_flag;
 
 if	(v1.Defined_flag = FALSE)
 then
@@ -7145,7 +7279,7 @@ var
 begin
 MI.Overflow_flag:= v1.Overflow_flag;
 MI.Defined_flag:= v1.Defined_flag;
-MI.Negative:= v1.Negative;
+MI.Negative_flag:= v1.Negative_flag;
 
 if	(v1.Defined_flag = FALSE)
 then
@@ -7196,7 +7330,7 @@ var
 begin
 MI.Overflow_flag:= v1.Overflow_flag;
 MI.Defined_flag:= v1.Defined_flag;
-MI.Negative:= v1.Negative;
+MI.Negative_flag:= v1.Negative_flag;
 
 if	(v1.Defined_flag = FALSE)
 then
@@ -7251,7 +7385,7 @@ var
 begin
 mi.Overflow_flag:=FALSE;
 mi.Defined_flag:= TRUE;
-mi.Negative:= FALSE;
+mi.Negative_flag:= FALSE;
 Signeg:= FALSE;
 Zeroneg:= FALSE;
 
@@ -7371,19 +7505,21 @@ and	(M_Val[6] = 0)
 and	(M_Val[7] = 0)
 then Zeroneg:= TRUE;
 
-if Zeroneg then mi.Negative:= Multi_UBool_FALSE
-else if Signeg then mi.Negative:= Multi_UBool_TRUE
-else mi.Negative:= Multi_UBool_FALSE;
+if Zeroneg then mi.Negative_flag:= Multi_UBool_FALSE
+else if Signeg then mi.Negative_flag:= Multi_UBool_TRUE
+else mi.Negative_flag:= Multi_UBool_FALSE;
 
 999:
 end;
 
 
 (******************************************)
+{
 procedure Multi_Int_X4.Init(const v1:string);
 begin
 string_to_Multi_Int_X4(v1,self);
 end;
+}
 
 
 (******************************************)
@@ -7407,13 +7543,13 @@ mi.M_Value[7]:= 0;
 
 if (v1 < 0) then
 	begin
-	mi.Negative:= Multi_UBool_TRUE;
+	mi.Negative_flag:= Multi_UBool_TRUE;
 	mi.M_Value[0]:= (ABS(v1) MOD INT_1W_U_MAXINT_1);
 	mi.M_Value[1]:= (ABS(v1) DIV INT_1W_U_MAXINT_1);
 	end
 else
 	begin
-	mi.Negative:= Multi_UBool_FALSE;
+	mi.Negative_flag:= Multi_UBool_FALSE;
 	mi.M_Value[0]:= (v1 MOD INT_1W_U_MAXINT_1);
 	mi.M_Value[1]:= (v1 DIV INT_1W_U_MAXINT_1);
 	end;
@@ -7432,7 +7568,7 @@ procedure INT_2W_U_to_Multi_Int_X4(const v1:INT_2W_U; var mi:Multi_Int_X4);
 begin
 mi.Overflow_flag:=FALSE;
 mi.Defined_flag:=TRUE;
-mi.Negative:= Multi_UBool_FALSE;
+mi.Negative_flag:= Multi_UBool_FALSE;
 
 mi.M_Value[0]:= (v1 MOD INT_1W_U_MAXINT_1);
 mi.M_Value[1]:= (v1 DIV INT_1W_U_MAXINT_1);
@@ -7506,7 +7642,7 @@ if (R > 0.0) then
 	begin
 	Result:= 0;
 	Result.Defined_flag:= FALSE;
-	Result.Negative:= Multi_UBool_UNDEF;
+	Result.Negative_flag:= Multi_UBool_UNDEF;
 	Result.Overflow_flag:= TRUE;
 	{$ifdef RAISE_EXCEPTIONS_ENABLED}
 	Raise EIntOverflow.create('Overflow on real conversion');
@@ -7514,7 +7650,7 @@ if (R > 0.0) then
 	end
 else
 	begin
-	if (v1 < 0.0) then M.Negative := TRUE;
+	if (v1 < 0.0) then M.Negative_flag := TRUE;
 	Result:= M;
 	end;
 end;
@@ -7566,7 +7702,7 @@ V:= v1.M_Value[7];
 V:= V * M * M * M * M * M * M * M;
 R:= R + V;
 
-if v1.Negative then R:= (- R);
+if v1.Negative_flag then R:= (- R);
 Result:= R;
 end;
 
@@ -7625,7 +7761,7 @@ if (R > 0.0) then
 	begin
 	Result:= 0;
 	Result.Defined_flag:= FALSE;
-	Result.Negative:= Multi_UBool_UNDEF;
+	Result.Negative_flag:= Multi_UBool_UNDEF;
 	Result.Overflow_flag:= TRUE;
 	{$ifdef RAISE_EXCEPTIONS_ENABLED}
 	Raise EIntOverflow.create('Overflow on Double conversion');
@@ -7633,7 +7769,7 @@ if (R > 0.0) then
 	end
 else
 	begin
-	if (v1 < 0.0) then M.Negative := TRUE;
+	if (v1 < 0.0) then M.Negative_flag := TRUE;
 	Result:= M;
 	end;
 end;
@@ -7685,7 +7821,7 @@ V:= v1.M_Value[7];
 V:= V * M * M * M * M * M * M * M;
 R:= R + V;
 
-if v1.Negative then R:= (- R);
+if v1.Negative_flag then R:= (- R);
 Result:= R;
 end;
 
@@ -7722,7 +7858,7 @@ then
 	exit;
 	end;
 
-if v1.Negative
+if v1.Negative_flag
 then Result:= INT_2W_S(-R)
 else Result:= INT_2W_S(R);
 end;
@@ -7800,7 +7936,7 @@ then
 	exit;
 	end;
 
-if v1.Negative
+if v1.Negative_flag
 then Result:= INT_1W_S(-R)
 else Result:= INT_1W_S(R);
 end;
@@ -7812,7 +7948,7 @@ var	R	:INT_2W_U;
 begin
 Multi_Int_OVERFLOW_ERROR:= FALSE;
 if	(Not v1.Defined_flag)
-or	(v1.Negative = Multi_UBool_TRUE)
+or	(v1.Negative_flag = Multi_UBool_TRUE)
 then
 	begin
 	Result:=0;
@@ -7851,7 +7987,7 @@ class operator Multi_Int_X4.implicit(const v1:Multi_Int_X4):Multi_int8u;
 begin
 Multi_Int_OVERFLOW_ERROR:= FALSE;
 if	(Not v1.Defined_flag)
-or	(v1.Negative = Multi_UBool_TRUE)
+or	(v1.Negative_flag = Multi_UBool_TRUE)
 then
 	begin
 	Result:=0;
@@ -7889,7 +8025,7 @@ class operator Multi_Int_X4.implicit(const v1:Multi_Int_X4):Multi_int8;
 begin
 Multi_Int_OVERFLOW_ERROR:= FALSE;
 if	(Not v1.Defined_flag)
-or	(v1.Negative = Multi_UBool_TRUE)
+or	(v1.Negative_flag = Multi_UBool_TRUE)
 then
 	begin
 	Result:=0;
@@ -7962,7 +8098,7 @@ s:= s
 	;
 
 if (LZ = Multi_Trim_Leading_Zeros) then Removeleadingchars(s,['0']);
-if	(v1.Negative = Multi_UBool_TRUE) then s:='-' + s;
+if	(v1.Negative_flag = Multi_UBool_TRUE) then s:='-' + s;
 v2:=s;
 end;
 
@@ -7987,7 +8123,7 @@ var
 begin
 mi.Overflow_flag:=FALSE;
 mi.Defined_flag:= TRUE;
-mi.Negative:= FALSE;
+mi.Negative_flag:= FALSE;
 Signeg:= FALSE;
 Zeroneg:= FALSE;
 
@@ -8064,9 +8200,9 @@ while (n <= Multi_X4_max) do
 	end;
 if M_Val_All_Zero then Zeroneg:= TRUE;
 
-if Zeroneg then mi.Negative:= Multi_UBool_FALSE
-else if Signeg then mi.Negative:= Multi_UBool_TRUE
-else mi.Negative:= Multi_UBool_FALSE;
+if Zeroneg then mi.Negative_flag:= Multi_UBool_FALSE
+else if Signeg then mi.Negative_flag:= Multi_UBool_TRUE
+else mi.Negative_flag:= Multi_UBool_FALSE;
 
 999:
 end;
@@ -8150,7 +8286,7 @@ and		(M_Val[6] = 0)
 and		(M_Val[7] = 0)
 ;
 
-if	(v1.Negative = Multi_UBool_TRUE) then s:='-' + s;
+if	(v1.Negative_flag = Multi_UBool_TRUE) then s:='-' + s;
 
 v2:=s;
 end;
@@ -8196,9 +8332,9 @@ Result.M_Value[7]:=(v1.M_Value[7] xor v2.M_Value[7]);
 
 Result.Defined_flag:=TRUE;
 Result.Overflow_flag:=FALSE;
-if (v1.Negative = v2.Negative)
-then Result.Negative:= Multi_UBool_FALSE
-else Result.Negative:= Multi_UBool_TRUE;
+if (v1.Negative_flag = v2.Negative_flag)
+then Result.Negative_flag:= Multi_UBool_FALSE
+else Result.Negative_flag:= Multi_UBool_TRUE;
 end;
 
 
@@ -8211,7 +8347,7 @@ var
 begin
 Result.Overflow_flag:=FALSE;
 Result.Defined_flag:=TRUE;
-Result.Negative.Init(Multi_UBool_UNDEF);
+Result.Negative_flag.Init(Multi_UBool_UNDEF);
 
 tv1:= v1.M_Value[0];
 tv2:= v2.M_Value[0];
@@ -8315,7 +8451,7 @@ and	(M_Val[4] = 0)
 and	(M_Val[5] = 0)
 and	(M_Val[6] = 0)
 and	(M_Val[7] = 0)
-then Result.Negative:=Multi_UBool_FALSE;
+then Result.Negative_flag:=Multi_UBool_FALSE;
 
 end;
 
@@ -8327,7 +8463,7 @@ var
 begin
 Result.Overflow_flag:=FALSE;
 Result.Defined_flag:=TRUE;
-Result.Negative:=Multi_UBool_UNDEF;
+Result.Negative_flag:=Multi_UBool_UNDEF;
 
 M_Val[0]:=(v1.M_Value[0] - v2.M_Value[0]);
 if	M_Val[0] < 0 then
@@ -8414,7 +8550,7 @@ and	(M_Val[4] = 0)
 and	(M_Val[5] = 0)
 and	(M_Val[6] = 0)
 and	(M_Val[7] = 0)
-then Result.Negative:=Multi_UBool_FALSE;
+then Result.Negative_flag:=Multi_UBool_FALSE;
 
 end;
 
@@ -8428,7 +8564,8 @@ if	(Not v1.Defined_flag)
 then
 	begin
 	Result:=0;
-	Result.Defined_flag:= FALSE;
+	Result.Defined_flag:= v1.Defined_flag;
+	Result.Overflow_flag:= v1.Overflow_flag;
 	{$ifdef RAISE_EXCEPTIONS_ENABLED}
 	Raise EInterror.create('Uninitialised variable');
 	{$endif}
@@ -8439,8 +8576,8 @@ if	(v1.Overflow_flag)
 then
 	begin
 	Result:= 0;
-	Result.Overflow_flag:=TRUE;
-	Result.Defined_flag:=TRUE;
+	Result.Defined_flag:= v1.Defined_flag;
+	Result.Overflow_flag:= v1.Overflow_flag;
 	{$ifdef RAISE_EXCEPTIONS_ENABLED}
 		Raise EIntOverflow.create('Overflow on inc');
 	{$endif}
@@ -8450,11 +8587,11 @@ then
 Neg:=Multi_UBool_UNDEF;
 v2:= 1;
 
-if	(v1.Negative = FALSE)
+if	(v1.Negative_flag = FALSE)
 then
 	begin
 	Result:=add_Multi_Int_X4(v1,v2);
-	Neg:= v1.Negative;
+	Neg:= v1.Negative_flag;
 	end
 else
 	begin
@@ -8476,7 +8613,7 @@ if (Result.Overflow_flag = TRUE) then
 	Raise EIntOverflow.create('Overflow on Inc');
 {$endif}
 
-if	(Result.Negative = Multi_UBool_UNDEF) then Result.Negative:= Neg;
+if	(Result.Negative_flag = Multi_UBool_UNDEF) then Result.Negative_flag:= Neg;
 end;
 
 
@@ -8510,14 +8647,14 @@ then
 
 Neg:=Multi_UBool_UNDEF;
 
-if	(v1.Negative = v2.Negative)
+if	(v1.Negative_flag = v2.Negative_flag)
 then
 	begin
 	Result:=add_Multi_Int_X4(v1,v2);
-	Neg:= v1.Negative;
+	Neg:= v1.Negative_flag;
 	end
 else
-	if	((v1.Negative = FALSE) and (v2.Negative = TRUE))
+	if	((v1.Negative_flag = FALSE) and (v2.Negative_flag = TRUE))
 	then
 		begin
 		if	ABS_greaterthan_Multi_Int_X4(v2,v1)
@@ -8552,7 +8689,7 @@ if (Result.Overflow_flag = TRUE) then
 	Raise EIntOverflow.create('Overflow on Add');
 {$endif}
 
-if	(Result.Negative = Multi_UBool_UNDEF) then Result.Negative:= Neg;
+if	(Result.Negative_flag = Multi_UBool_UNDEF) then Result.Negative_flag:= Neg;
 end;
 
 
@@ -8586,10 +8723,10 @@ then
 
 Neg:=Multi_UBool_UNDEF;
 
-if	(v1.Negative = v2.Negative)
+if	(v1.Negative_flag = v2.Negative_flag)
 then
 	begin
-	if	(v1.Negative = TRUE) then
+	if	(v1.Negative_flag = TRUE) then
 		begin
 		if	ABS_greaterthan_Multi_Int_X4(v1,v2)
 		then
@@ -8603,7 +8740,7 @@ then
 			Neg:=Multi_UBool_FALSE;
 			end
 		end
-	else	(* if	not Negative then	*)
+	else	(* if	not Negative_flag then	*)
 		begin
 		if	ABS_greaterthan_Multi_Int_X4(v2,v1)
 		then
@@ -8618,9 +8755,9 @@ then
 			end
 		end
 	end
-else (* v1.Negative <> v2.Negative *)
+else (* v1.Negative_flag <> v2.Negative_flag *)
 	begin
-	if	(v2.Negative = TRUE) then
+	if	(v2.Negative_flag = TRUE) then
 		begin
 		Result:=add_Multi_Int_X4(v1,v2);
 		Neg:=Multi_UBool_FALSE;
@@ -8637,7 +8774,7 @@ if (Result.Overflow_flag = TRUE) then
 	Raise EIntOverflow.create('Overflow on Subtract');
 {$endif}
 
-if	(Result.Negative = Multi_UBool_UNDEF) then Result.Negative:= Neg;
+if	(Result.Negative_flag = Multi_UBool_UNDEF) then Result.Negative_flag:= Neg;
 end;
 
 
@@ -8650,7 +8787,8 @@ if	(Not v1.Defined_flag)
 then
 	begin
 	Result:=0;
-	Result.Defined_flag:= FALSE;
+	Result.Defined_flag:= v1.Defined_flag;
+	Result.Overflow_flag:= v1.Overflow_flag;
 	{$ifdef RAISE_EXCEPTIONS_ENABLED}
 	Raise EInterror.create('Uninitialised variable');
 	{$endif}
@@ -8661,10 +8799,10 @@ if	(v1.Overflow_flag)
 then
 	begin
 	Result:= 0;
-	Result.Overflow_flag:=TRUE;
-	Result.Defined_flag:=TRUE;
+	Result.Defined_flag:= v1.Defined_flag;
+	Result.Overflow_flag:= v1.Overflow_flag;
 	{$ifdef RAISE_EXCEPTIONS_ENABLED}
-		Raise EIntOverflow.create('Overflow on Dec');
+		Raise EIntOverflow.create('Overflow on inc');
 	{$endif}
 	exit;
 	end;
@@ -8672,7 +8810,7 @@ then
 Neg:=Multi_UBool_UNDEF;
 v2:= 1;
 
-if	(v1.Negative = FALSE) then
+if	(v1.Negative_flag = FALSE) then
 	begin
 	if	ABS_greaterthan_Multi_Int_X4(v2,v1)
 	then
@@ -8686,7 +8824,7 @@ if	(v1.Negative = FALSE) then
 		Neg:=Multi_UBool_FALSE;
 		end
 	end
-else (* v1 is Negative *)
+else (* v1 is Negative_flag *)
 	begin
 	Result:=add_Multi_Int_X4(v1,v2);
 	Neg:=Multi_UBool_TRUE;
@@ -8697,14 +8835,17 @@ if (Result.Overflow_flag = TRUE) then
 	Raise EIntOverflow.create('Overflow on Dec');
 {$endif}
 
-if	(Result.Negative = Multi_UBool_UNDEF) then Result.Negative:= Neg;
+if	(Result.Negative_flag = Multi_UBool_UNDEF) then Result.Negative_flag:= Neg;
 end;
 
 
 (******************************************)
 class operator Multi_Int_X4.-(const v1:Multi_Int_X4):Multi_Int_X4;
 begin
-Result:= (0 - v1);
+Result:= v1;
+Result.Negative_flag:= Multi_UBool_FALSE;
+if	(v1.Negative_flag) then
+	Result.Negative_flag:= Multi_UBool_TRUE;
 end;
 
 
@@ -8717,7 +8858,7 @@ var
 begin
 Result.Overflow_flag:=FALSE;
 Result.Defined_flag:=TRUE;
-Result.Negative:=Multi_UBool_UNDEF;
+Result.Negative_flag:=Multi_UBool_UNDEF;
 
 i:=0;
 repeat M_Val[i]:= 0; INC(i); until (i > Multi_X4_max_x2);
@@ -8742,12 +8883,12 @@ repeat
 	i:=0;
 until (j > Multi_X4_max);
 
-Result.Negative:=Multi_UBool_FALSE;
+Result.Negative_flag:=Multi_UBool_FALSE;
 i:=0;
 repeat
 	if (M_Val[i] <> 0) then
 		begin
-		Result.Negative:= Multi_UBool_UNDEF;
+		Result.Negative_flag:= Multi_UBool_UNDEF;
 		if (i > Multi_X4_max) then
 			begin
 			Result.Overflow_flag:=TRUE;
@@ -8799,10 +8940,10 @@ then
 
 multiply_Multi_Int_X4(v1,v2,R);
 
-if	(R.Negative = Multi_UBool_UNDEF) then
-	if	(v1.Negative = v2.Negative)
-	then R.Negative:= Multi_UBool_FALSE
-	else R.Negative:=Multi_UBool_TRUE;
+if	(R.Negative_flag = Multi_UBool_UNDEF) then
+	if	(v1.Negative_flag = v2.Negative_flag)
+	then R.Negative_flag:= Multi_UBool_FALSE
+	else R.Negative_flag:=Multi_UBool_TRUE;
 
 Result:= R;
 
@@ -8849,7 +8990,7 @@ then
 	exit;
 	end;
 
-if	(v1.Negative = Multi_UBool_TRUE)
+if	(v1.Negative_flag = Multi_UBool_TRUE)
 then
 	begin
 	VR:= 0;
@@ -8857,7 +8998,7 @@ then
 	VREM:= 0;
 	VREM.Defined_flag:= FALSE;
 	{$ifdef RAISE_EXCEPTIONS_ENABLED}
-		Raise EIntOverflow.create('SqRoot is negative');
+		Raise EIntOverflow.create('SqRoot is Negative_flag');
 	{$endif}
 	exit;
 	end;
@@ -8923,6 +9064,7 @@ while not finished do
 	end;
 
 VR:= C;
+VR.Negative_flag:= Multi_UBool_FALSE;
 end;
 
 
@@ -8958,6 +9100,10 @@ else
 				{$endif}
 				exit;
 				end;
+			if	(T.Negative_flag = Multi_UBool_UNDEF) then
+				if	(TV.Negative_flag = Y.Negative_flag)
+				then R.Negative_flag:= Multi_UBool_FALSE
+				else R.Negative_flag:= Multi_UBool_TRUE;
 
 			Y:= T;
 			PT := PT - 1;
@@ -8975,8 +9121,10 @@ else
 			{$endif}
 			exit;
 			end;
-		TV:= T;
+		if	(T.Negative_flag = Multi_UBool_UNDEF) then
+			T.Negative_flag:= Multi_UBool_FALSE;
 
+		TV:= T;
 		PT := (PT div 2);
 		end;
 	// R:= (TV * Y);
@@ -8992,57 +9140,61 @@ else
 		{$endif}
 		exit;
 		end;
+	if	(R.Negative_flag = Multi_UBool_UNDEF) then
+		if	(TV.Negative_flag = Y.Negative_flag)
+		then R.Negative_flag:= Multi_UBool_FALSE
+		else R.Negative_flag:= Multi_UBool_TRUE;
 	end;
+
 Result:= R;
 end;
 
 
 (******************************************)
 procedure intdivide_Shift_And_Sub_X4(const P_dividend,P_divisor:Multi_Int_X4;var P_quotient,P_remainder:Multi_Int_X4);
-label	9999;
+label	1000;
 var
 dividend,
 divisor,
 quotient,
 quotient_factor,
-prev_subtraction	:Multi_Int_X4;
+prev_dividend,
+ZERO				:Multi_Int_X4;
 nlz_bits_dividend,
 nlz_bits_divisor,
 nlz_bits_P_divisor,
 nlz_bits_diff		:INT_2W_S;
 
 begin
-if	(P_divisor = 0) then
+ZERO:= 0;
+if	(P_divisor = ZERO) then
 	begin
-	P_quotient:= 0;
+	P_quotient:= ZERO;
 	P_quotient.Defined_flag:= FALSE;
 	P_quotient.Overflow_flag:= TRUE;
- 	P_remainder:= 0;
+ 	P_remainder:= ZERO;
 	P_remainder.Defined_flag:= FALSE;
 	P_remainder.Overflow_flag:= TRUE;
 	Multi_Int_OVERFLOW_ERROR:= TRUE;
     end
+else if	(P_divisor > P_dividend) then
+	begin
+	P_quotient:= ZERO;
+ 	P_remainder:= P_dividend;
+    end
 else if	(P_divisor = P_dividend) then
 	begin
 	P_quotient:= 1;
- 	P_remainder:= 0;
+ 	P_remainder:= ZERO;
     end
 else
 	begin
+	quotient:= ZERO;
+	P_remainder:= ZERO;
 	dividend:= P_dividend;
-	dividend.Negative:= FALSE;
+	dividend.Negative_flag:= FALSE;
 	divisor:= P_divisor;
-	divisor.Negative:= FALSE;
-
-	if	(divisor > dividend) then
-		begin
-		P_quotient:= 0;
-	 	P_remainder:= P_dividend;
-		goto 9999;
-	    end;
-
-	quotient:= 0;
-	P_remainder:= 0;
+	divisor.Negative_flag:= FALSE;
 	quotient_factor:= 1;
 
 	{ Round 0 }
@@ -9051,21 +9203,27 @@ else
 	nlz_bits_P_divisor:= nlz_bits_divisor;
 	nlz_bits_diff:= (nlz_bits_divisor - nlz_bits_dividend - 1);
 
-	if	(nlz_bits_diff > 0) then
+	if	(nlz_bits_diff > ZERO) then
 		begin
 		ShiftUp_MultiBits_Multi_Int_X4(divisor, nlz_bits_diff);
 		ShiftUp_MultiBits_Multi_Int_X4(quotient_factor, nlz_bits_diff);
 		end
-	else nlz_bits_diff:= 0;
+	else nlz_bits_diff:= ZERO;
 
 	{ Round X }
 	repeat
-		repeat
-			dividend:= (dividend - divisor);
-			if (dividend >= 0) then
-				quotient:= (quotient + quotient_factor);
-		until (dividend < 0);
-		dividend:= (dividend + divisor);
+	1000:
+		prev_dividend:= dividend;
+		dividend:= (dividend - divisor);
+		if (dividend > ZERO) then
+			begin
+			quotient:= (quotient + quotient_factor);
+			goto 1000;
+			end;
+		if (dividend = ZERO) then
+			quotient:= (quotient + quotient_factor);
+		if (dividend < ZERO) then
+			dividend:= (dividend + divisor);
 
 		nlz_bits_divisor:= nlz_MultiBits_X4(divisor);
 		if (nlz_bits_divisor < nlz_bits_P_divisor) then
@@ -9081,22 +9239,21 @@ else
 			end;
 	until	(dividend < P_divisor)
 	or		(nlz_bits_divisor >= nlz_bits_P_divisor)
-	or		(divisor = 0)
+	or		(divisor = ZERO)
 	;
 
 	P_quotient:= quotient;
 	P_remainder:= dividend;
 
-	if	(P_dividend.Negative = TRUE) and (P_remainder > 0)
+	if	(P_dividend.Negative_flag = TRUE) and (P_remainder > 0)
 	then
-		P_remainder.Negative:= TRUE;
+		P_remainder.Negative_flag:= TRUE;
 
-	if	(P_dividend.Negative <> P_divisor.Negative)
-	and	(P_quotient > 0)
+	if	(P_dividend.Negative_flag <> P_divisor.Negative_flag)
+	and	(P_quotient > ZERO)
 	then
-		P_quotient.Negative:= TRUE;
+		P_quotient.Negative_flag:= TRUE;
 	end;
-9999:
 end;
 
 
@@ -9145,10 +9302,10 @@ else
 	begin
 	intdivide_Shift_And_Sub_X4(P_v1,P_v2,Quotient,Remainder);
 {
-	if	(v1.Negative <> v2.Negative)
-	then Quotient.Negative:= TRUE
-	else if	(v2.Negative)
-	then Remainder.Negative:= TRUE;
+	if	(v1.Negative_flag <> v2.Negative_flag)
+	then Quotient.Negative_flag:= TRUE
+	else if	(v2.Negative_flag)
+	then Remainder.Negative_flag:= TRUE;
 }
 	X4_Last_Divisor:= P_v2;
 	X4_Last_Dividend:= P_v1;
@@ -9200,12 +9357,12 @@ then
 else
 	begin
 	intdivide_Shift_And_Sub_X4(v1,v2,Quotient,Remainder);
-
-	if	(v1.Negative <> v2.Negative)
-	then Quotient.Negative:= TRUE
-	else if	(v2.Negative)
-	then Remainder.Negative:= TRUE;
-
+{
+	if	(v1.Negative_flag <> v2.Negative_flag)
+	then Quotient.Negative_flag:= TRUE
+	else if	(v2.Negative_flag)
+	then Remainder.Negative_flag:= TRUE;
+}
 	X4_Last_Divisor:= v2;
 	X4_Last_Dividend:= v1;
 	X4_Last_Quotient:= Quotient;
@@ -9219,19 +9376,7 @@ end;
 
 {
 ******************************************
-******************************************
-******************************************
-******************************************
-******************************************
-******************************************
-
 Multi_Int_X48
-
-******************************************
-******************************************
-******************************************
-******************************************
-******************************************
 ******************************************
 }
 
@@ -9336,6 +9481,28 @@ end;
 function Defined(const v1:Multi_Int_X48):boolean; overload;
 begin
 Result:= v1.Defined_flag;
+end;
+
+
+(******************************************)
+function Multi_Int_X48.Negative:boolean;
+begin
+Result:= self.Negative_flag;
+end;
+
+
+(******************************************)
+function Negative(const v1:Multi_Int_X48):boolean; overload;
+begin
+Result:= v1.Negative_flag;
+end;
+
+
+(******************************************)
+function Abs(const v1:Multi_Int_X48):Multi_Int_X48; overload;
+begin
+Result:= v1;
+Result.Negative_flag:= Multi_UBool_FALSE;
 end;
 
 
@@ -9878,16 +10045,16 @@ then
 	end;
 
 Result:=FALSE;
-if ( (v1.Negative = FALSE) and (v2.Negative = TRUE) )
+if ( (v1.Negative_flag = FALSE) and (v2.Negative_flag = TRUE) )
 then Result:=TRUE
 else
-	if ( (v1.Negative = TRUE) and (v2.Negative = FALSE) )
+	if ( (v1.Negative_flag = TRUE) and (v2.Negative_flag = FALSE) )
 	then Result:=FALSE
 	else
-		if ( (v1.Negative = FALSE) and (v2.Negative = FALSE) )
+		if ( (v1.Negative_flag = FALSE) and (v2.Negative_flag = FALSE) )
 		then Result:= ABS_greaterthan_Multi_Int_X48(v1,v2)
 		else
-			if ( (v1.Negative = TRUE) and (v2.Negative = TRUE) )
+			if ( (v1.Negative_flag = TRUE) and (v2.Negative_flag = TRUE) )
 			then Result:= ABS_lessthan_Multi_Int_X48(v1,v2);
 end;
 
@@ -9906,13 +10073,13 @@ then
 	end;
 
 Result:=FALSE;
-if ( (v1.Negative = TRUE) and (v2.Negative = FALSE) )
+if ( (v1.Negative_flag = TRUE) and (v2.Negative_flag = FALSE) )
 then Result:=TRUE
 else
-	if ( (v1.Negative = FALSE) and (v2.Negative = FALSE) )
+	if ( (v1.Negative_flag = FALSE) and (v2.Negative_flag = FALSE) )
 	then Result:= ABS_lessthan_Multi_Int_X48(v1,v2)
 	else
-		if ( (v1.Negative = TRUE) and (v2.Negative = TRUE) )
+		if ( (v1.Negative_flag = TRUE) and (v2.Negative_flag = TRUE) )
 		then Result:= ABS_greaterthan_Multi_Int_X48(v1,v2);
 end;
 
@@ -9957,7 +10124,7 @@ then
 	end;
 
 Result:= TRUE;
-if ( v1.Negative <> v2.Negative )
+if ( v1.Negative_flag <> v2.Negative_flag )
 then Result:= FALSE
 else Result:= ABS_equal_Multi_Int_X48(v1,v2);
 end;
@@ -9977,7 +10144,7 @@ then
 	end;
 
 Result:= FALSE;
-if ( v1.Negative <> v2.Negative )
+if ( v1.Negative_flag <> v2.Negative_flag )
 then Result:= TRUE
 else Result:= (not ABS_equal_Multi_Int_X48(v1,v2));
 end;
@@ -9997,16 +10164,16 @@ then
 	end;
 
 Result:=FALSE;
-if ( (v1.Negative = FALSE) and (v2.Negative = TRUE) )
+if ( (v1.Negative_flag = FALSE) and (v2.Negative_flag = TRUE) )
 then Result:=FALSE
 else
-	if ( (v1.Negative = TRUE) and (v2.Negative = FALSE) )
+	if ( (v1.Negative_flag = TRUE) and (v2.Negative_flag = FALSE) )
 	then Result:=TRUE
 	else
-		if ( (v1.Negative = FALSE) and (v2.Negative = FALSE) )
+		if ( (v1.Negative_flag = FALSE) and (v2.Negative_flag = FALSE) )
 		then Result:= (Not ABS_greaterthan_Multi_Int_X48(v1,v2) )
 		else
-			if ( (v1.Negative = TRUE) and (v2.Negative = TRUE) )
+			if ( (v1.Negative_flag = TRUE) and (v2.Negative_flag = TRUE) )
 			then Result:= (Not ABS_lessthan_Multi_Int_X48(v1,v2));
 end;
 
@@ -10025,16 +10192,16 @@ then
 	end;
 
 Result:=FALSE;
-if ( (v1.Negative = FALSE) and (v2.Negative = TRUE) )
+if ( (v1.Negative_flag = FALSE) and (v2.Negative_flag = TRUE) )
 then Result:=TRUE
 else
-	if ( (v1.Negative = TRUE) and (v2.Negative = FALSE) )
+	if ( (v1.Negative_flag = TRUE) and (v2.Negative_flag = FALSE) )
 	then Result:=FALSE
 	else
-		if ( (v1.Negative = FALSE) and (v2.Negative = FALSE) )
+		if ( (v1.Negative_flag = FALSE) and (v2.Negative_flag = FALSE) )
 		then Result:= (Not ABS_lessthan_Multi_Int_X48(v1,v2) )
 		else
-			if ( (v1.Negative = TRUE) and (v2.Negative = TRUE) )
+			if ( (v1.Negative_flag = TRUE) and (v2.Negative_flag = TRUE) )
 			then Result:= (Not ABS_greaterthan_Multi_Int_X48(v1,v2) );
 end;
 
@@ -10052,7 +10219,7 @@ var
 begin
 mi.Overflow_flag:=FALSE;
 mi.Defined_flag:= TRUE;
-mi.Negative:= FALSE;
+mi.Negative_flag:= FALSE;
 Signeg:= FALSE;
 Zeroneg:= FALSE;
 
@@ -10129,19 +10296,21 @@ while (n <= X48_max) do
 
 if M_Val_All_Zero then Zeroneg:= TRUE;
 
-if Zeroneg then mi.Negative:= Multi_UBool_FALSE
-else if Signeg then mi.Negative:= Multi_UBool_TRUE
-else mi.Negative:= Multi_UBool_FALSE;
+if Zeroneg then mi.Negative_flag:= Multi_UBool_FALSE
+else if Signeg then mi.Negative_flag:= Multi_UBool_TRUE
+else mi.Negative_flag:= Multi_UBool_FALSE;
 
 999:
 end;
 
 
 (******************************************)
-procedure Multi_Int_X48.Init(const v1:string);
+{
+procedure Multi_Int_X48.Init(const v1:string); overload;
 begin
 string_to_Multi_Int_X48(v1,self);
 end;
+}
 
 
 (******************************************)
@@ -10201,7 +10370,7 @@ repeat
 
 until M_Val_All_Zero;
 
-if	(v1.Negative = Multi_UBool_TRUE) then s:='-' + s;
+if	(v1.Negative_flag = Multi_UBool_TRUE) then s:='-' + s;
 v2:=s;
 end;
 
@@ -10233,7 +10402,7 @@ var
 begin
 mi.Overflow_flag:=FALSE;
 mi.Defined_flag:= TRUE;
-mi.Negative:= FALSE;
+mi.Negative_flag:= FALSE;
 Signeg:= FALSE;
 Zeroneg:= FALSE;
 
@@ -10310,9 +10479,9 @@ while (n <= X48_max) do
 	end;
 if M_Val_All_Zero then Zeroneg:= TRUE;
 
-if Zeroneg then mi.Negative:= Multi_UBool_FALSE
-else if Signeg then mi.Negative:= Multi_UBool_TRUE
-else mi.Negative:= Multi_UBool_FALSE;
+if Zeroneg then mi.Negative_flag:= Multi_UBool_FALSE
+else if Signeg then mi.Negative_flag:= Multi_UBool_TRUE
+else mi.Negative_flag:= Multi_UBool_FALSE;
 
 999:
 end;
@@ -10361,7 +10530,7 @@ while (i >= 0) do
 	end;
 
 if (LZ = Multi_Trim_Leading_Zeros) then Removeleadingchars(s,['0']);
-if	(v1.Negative = Multi_UBool_TRUE) then s:='-' + s;
+if	(v1.Negative_flag = Multi_UBool_TRUE) then s:='-' + s;
 v2:=s;
 end;
 
@@ -10390,17 +10559,26 @@ while (n <= X48_max) do
 
 if (v1 < 0) then
 	begin
-	mi.Negative:= Multi_UBool_TRUE;
+	mi.Negative_flag:= Multi_UBool_TRUE;
 	mi.M_Value[0]:= (ABS(v1) MOD INT_1W_U_MAXINT_1);
 	mi.M_Value[1]:= (ABS(v1) DIV INT_1W_U_MAXINT_1);
 	end
 else
 	begin
-	mi.Negative:= Multi_UBool_FALSE;
+	mi.Negative_flag:= Multi_UBool_FALSE;
 	mi.M_Value[0]:= (v1 MOD INT_1W_U_MAXINT_1);
 	mi.M_Value[1]:= (v1 DIV INT_1W_U_MAXINT_1);
 	end;
 end;
+
+
+(******************************************)
+{
+procedure Multi_Int_X48.Init(const v1:INT_2W_S); overload;
+begin
+INT_2W_S_to_Multi_Int_X48(v1,self);
+end;
+}
 
 
 (******************************************)
@@ -10416,7 +10594,7 @@ var n :INT_1W_U;
 begin
 Result.Overflow_flag:= v1.Overflow_flag;
 Result.Defined_flag:= v1.Defined_flag;
-Result.Negative:= v1.Negative;
+Result.Negative_flag:= v1.Negative_flag;
 
 if	(v1.Defined_flag = FALSE)
 then
@@ -10459,7 +10637,7 @@ var n :INT_1W_U;
 begin
 Result.Overflow_flag:= v1.Overflow_flag;
 Result.Defined_flag:= v1.Defined_flag;
-Result.Negative:= v1.Negative;
+Result.Negative_flag:= v1.Negative_flag;
 
 if	(v1.Defined_flag = FALSE)
 then
@@ -10502,7 +10680,7 @@ var n :INT_1W_U;
 begin
 Result.Overflow_flag:= v1.Overflow_flag;
 Result.Defined_flag:= v1.Defined_flag;
-Result.Negative:= v1.Negative;
+Result.Negative_flag:= v1.Negative_flag;
 
 if	(v1.Defined_flag = FALSE)
 then
@@ -10546,7 +10724,7 @@ var
 begin
 MI.Overflow_flag:= v1.Overflow_flag;
 MI.Defined_flag:= v1.Defined_flag;
-MI.Negative:= v1.Negative;
+MI.Negative_flag:= v1.Negative_flag;
 
 if	(v1.Defined_flag = FALSE)
 then
@@ -10597,7 +10775,7 @@ var
 begin
 MI.Overflow_flag:= v1.Overflow_flag;
 MI.Defined_flag:= v1.Defined_flag;
-MI.Negative:= v1.Negative;
+MI.Negative_flag:= v1.Negative_flag;
 
 if	(v1.Defined_flag = FALSE)
 then
@@ -10649,7 +10827,7 @@ var
 begin
 MI.Overflow_flag:= v1.Overflow_flag;
 MI.Defined_flag:= v1.Defined_flag;
-MI.Negative:= v1.Negative;
+MI.Negative_flag:= v1.Negative_flag;
 
 if	(v1.Defined_flag = FALSE)
 then
@@ -10700,7 +10878,7 @@ var
 begin
 mi.Overflow_flag:=FALSE;
 mi.Defined_flag:=TRUE;
-mi.Negative:= Multi_UBool_FALSE;
+mi.Negative_flag:= Multi_UBool_FALSE;
 
 mi.M_Value[0]:= (v1 MOD INT_1W_U_MAXINT_1);
 mi.M_Value[1]:= (v1 DIV INT_1W_U_MAXINT_1);
@@ -10745,7 +10923,7 @@ if (R > 0.0) then
 	begin
 	Result:= 0;
 	Result.Defined_flag:= FALSE;
-	Result.Negative:= Multi_UBool_UNDEF;
+	Result.Negative_flag:= Multi_UBool_UNDEF;
 	Result.Overflow_flag:= TRUE;
 	{$ifdef RAISE_EXCEPTIONS_ENABLED}
 	Raise EIntOverflow.create('Overflow on real conversion');
@@ -10753,7 +10931,7 @@ if (R > 0.0) then
 	end
 else
 	begin
-	if (v1 < 0.0) then M.Negative := TRUE;
+	if (v1 < 0.0) then M.Negative_flag := TRUE;
 	Result:= M;
 	end;
 end;
@@ -10783,7 +10961,7 @@ if (R > 0.0) then
 	begin
 	Result:= 0;
 	Result.Defined_flag:= FALSE;
-	Result.Negative:= Multi_UBool_UNDEF;
+	Result.Negative_flag:= Multi_UBool_UNDEF;
 	Result.Overflow_flag:= TRUE;
 	{$ifdef RAISE_EXCEPTIONS_ENABLED}
 	Raise EIntOverflow.create('Overflow on Double conversion');
@@ -10791,7 +10969,7 @@ if (R > 0.0) then
 	end
 else
 	begin
-	if (v1 < 0.0) then M.Negative := TRUE;
+	if (v1 < 0.0) then M.Negative_flag := TRUE;
 	Result:= M;
 	end;
 end;
@@ -10839,7 +11017,7 @@ then
 	exit;
 	end;
 
-if v1.Negative
+if v1.Negative_flag
 then Result:= INT_2W_S(-R)
 else Result:= INT_2W_S(R);
 end;
@@ -10935,7 +11113,7 @@ then
 	exit;
 	end;
 
-if v1.Negative
+if v1.Negative_flag
 then Result:= INT_1W_S(-R)
 else Result:= INT_1W_S(R);
 end;
@@ -10950,7 +11128,7 @@ var
 begin
 Multi_Int_OVERFLOW_ERROR:= FALSE;
 if	(Not v1.Defined_flag)
-or	(v1.Negative = Multi_UBool_TRUE)
+or	(v1.Negative_flag = Multi_UBool_TRUE)
 then
 	begin
 	Result:=0;
@@ -10994,7 +11172,7 @@ class operator Multi_Int_X48.implicit(const v1:Multi_Int_X48):Multi_int8u;
 begin
 Multi_Int_OVERFLOW_ERROR:= FALSE;
 if	(Not v1.Defined_flag)
-or	(v1.Negative = Multi_UBool_TRUE)
+or	(v1.Negative_flag = Multi_UBool_TRUE)
 then
 	begin
 	Result:=0;
@@ -11024,7 +11202,7 @@ class operator Multi_Int_X48.implicit(const v1:Multi_Int_X48):Multi_int8;
 begin
 Multi_Int_OVERFLOW_ERROR:= FALSE;
 if	(Not v1.Defined_flag)
-or	(v1.Negative = Multi_UBool_TRUE)
+or	(v1.Negative_flag = Multi_UBool_TRUE)
 then
 	begin
 	Result:=0;
@@ -11060,7 +11238,7 @@ var
 begin
 Result.Overflow_flag:=FALSE;
 Result.Defined_flag:=TRUE;
-Result.Negative.Init(Multi_UBool_UNDEF);
+Result.Negative_flag.Init(Multi_UBool_UNDEF);
 
 tv1:= v1.M_Value[0];
 tv2:= v2.M_Value[0];
@@ -11108,7 +11286,7 @@ while (n <= X48_max) do
 	end;
 
 if M_Val_All_Zero
-then Result.Negative:=Multi_UBool_FALSE;
+then Result.Negative_flag:=Multi_UBool_FALSE;
 
 end;
 
@@ -11122,7 +11300,7 @@ var
 begin
 Result.Overflow_flag:=FALSE;
 Result.Defined_flag:=TRUE;
-Result.Negative:=Multi_UBool_UNDEF;
+Result.Negative_flag:=Multi_UBool_UNDEF;
 
 M_Val[0]:=(v1.M_Value[0] - v2.M_Value[0]);
 if	M_Val[0] < 0 then
@@ -11163,7 +11341,7 @@ while (n <= X48_max) do
 	end;
 
 if M_Val_All_Zero
-then Result.Negative:=Multi_UBool_FALSE;
+then Result.Negative_flag:=Multi_UBool_FALSE;
 end;
 
 
@@ -11197,14 +11375,14 @@ then
 
 Neg:=Multi_UBool_UNDEF;
 
-if	(v1.Negative = v2.Negative)
+if	(v1.Negative_flag = v2.Negative_flag)
 then
 	begin
 	Result:=add_Multi_Int_X48(v1,v2);
-	Neg:= v1.Negative;
+	Neg:= v1.Negative_flag;
 	end
 else
-	if	((v1.Negative = FALSE) and (v2.Negative = TRUE))
+	if	((v1.Negative_flag = FALSE) and (v2.Negative_flag = TRUE))
 	then
 		begin
 		if	ABS_greaterthan_Multi_Int_X48(v2,v1)
@@ -11239,7 +11417,7 @@ if (Result.Overflow_flag = TRUE) then
 	Raise EIntOverflow.create('Overflow on add');
 {$endif}
 
-if	(Result.Negative = Multi_UBool_UNDEF) then Result.Negative:= Neg;
+if	(Result.Negative_flag = Multi_UBool_UNDEF) then Result.Negative_flag:= Neg;
 end;
 
 
@@ -11252,7 +11430,8 @@ if	(Not v1.Defined_flag)
 then
 	begin
 	Result:=0;
-	Result.Defined_flag:= FALSE;
+	Result.Defined_flag:= v1.Defined_flag;
+	Result.Overflow_flag:= v1.Overflow_flag;
 	{$ifdef RAISE_EXCEPTIONS_ENABLED}
 	Raise EInterror.create('Uninitialised variable');
 	{$endif}
@@ -11263,8 +11442,8 @@ if	(v1.Overflow_flag)
 then
 	begin
 	Result:= 0;
-	Result.Overflow_flag:=TRUE;
-	Result.Defined_flag:=TRUE;
+	Result.Defined_flag:= v1.Defined_flag;
+	Result.Overflow_flag:= v1.Overflow_flag;
 	{$ifdef RAISE_EXCEPTIONS_ENABLED}
 		Raise EIntOverflow.create('Overflow on inc');
 	{$endif}
@@ -11274,11 +11453,11 @@ then
 Neg:=Multi_UBool_UNDEF;
 v2:= 1;
 
-if	(v1.Negative = FALSE)
+if	(v1.Negative_flag = FALSE)
 then
 	begin
 	Result:=add_Multi_Int_X48(v1,v2);
-	Neg:= v1.Negative;
+	Neg:= v1.Negative_flag;
 	end
 else
 	begin
@@ -11300,7 +11479,7 @@ if (Result.Overflow_flag = TRUE) then
 	Raise EIntOverflow.create('Overflow on Inc');
 {$endif}
 
-if	(Result.Negative = Multi_UBool_UNDEF) then Result.Negative:= Neg;
+if	(Result.Negative_flag = Multi_UBool_UNDEF) then Result.Negative_flag:= Neg;
 end;
 
 
@@ -11334,10 +11513,10 @@ then
 
 Neg:=Multi_UBool_UNDEF;
 
-if	(v1.Negative = v2.Negative)
+if	(v1.Negative_flag = v2.Negative_flag)
 then
 	begin
-	if	(v1.Negative = TRUE) then
+	if	(v1.Negative_flag = TRUE) then
 		begin
 		if	ABS_greaterthan_Multi_Int_X48(v1,v2)
 		then
@@ -11351,7 +11530,7 @@ then
 			Neg:=Multi_UBool_FALSE;
 			end
 		end
-	else	(* if	not Negative then	*)
+	else	(* if	not Negative_flag then	*)
 		begin
 		if	ABS_greaterthan_Multi_Int_X48(v2,v1)
 		then
@@ -11366,9 +11545,9 @@ then
 			end
 		end
 	end
-else (* v1.Negative <> v2.Negative *)
+else (* v1.Negative_flag <> v2.Negative_flag *)
 	begin
-	if	(v2.Negative = TRUE) then
+	if	(v2.Negative_flag = TRUE) then
 		begin
 		Result:=add_Multi_Int_X48(v1,v2);
 		Neg:=Multi_UBool_FALSE;
@@ -11385,7 +11564,7 @@ if (Result.Overflow_flag = TRUE) then
 	Raise EIntOverflow.create('Overflow on subtract');
 {$endif}
 
-if	(Result.Negative = Multi_UBool_UNDEF) then Result.Negative:= Neg;
+if	(Result.Negative_flag = Multi_UBool_UNDEF) then Result.Negative_flag:= Neg;
 end;
 
 
@@ -11398,7 +11577,8 @@ if	(Not v1.Defined_flag)
 then
 	begin
 	Result:=0;
-	Result.Defined_flag:= FALSE;
+	Result.Defined_flag:= v1.Defined_flag;
+	Result.Overflow_flag:= v1.Overflow_flag;
 	{$ifdef RAISE_EXCEPTIONS_ENABLED}
 	Raise EInterror.create('Uninitialised variable');
 	{$endif}
@@ -11409,10 +11589,10 @@ if	(v1.Overflow_flag)
 then
 	begin
 	Result:= 0;
-	Result.Overflow_flag:=TRUE;
-	Result.Defined_flag:=TRUE;
+	Result.Defined_flag:= v1.Defined_flag;
+	Result.Overflow_flag:= v1.Overflow_flag;
 	{$ifdef RAISE_EXCEPTIONS_ENABLED}
-		Raise EIntOverflow.create('Overflow on Dec');
+		Raise EIntOverflow.create('Overflow on inc');
 	{$endif}
 	exit;
 	end;
@@ -11420,7 +11600,7 @@ then
 Neg:=Multi_UBool_UNDEF;
 v2:= 1;
 
-if	(v1.Negative = FALSE) then
+if	(v1.Negative_flag = FALSE) then
 	begin
 	if	ABS_greaterthan_Multi_Int_X48(v2,v1)
 	then
@@ -11434,7 +11614,7 @@ if	(v1.Negative = FALSE) then
 		Neg:=Multi_UBool_FALSE;
 		end
 	end
-else (* v1 is Negative *)
+else (* v1 is Negative_flag *)
 	begin
 	Result:=add_Multi_Int_X48(v1,v2);
 	Neg:=Multi_UBool_TRUE;
@@ -11445,7 +11625,7 @@ if (Result.Overflow_flag = TRUE) then
 	Raise EIntOverflow.create('Overflow on Dec');
 {$endif}
 
-if	(Result.Negative = Multi_UBool_UNDEF) then Result.Negative:= Neg;
+if	(Result.Negative_flag = Multi_UBool_UNDEF) then Result.Negative_flag:= Neg;
 end;
 
 
@@ -11453,7 +11633,10 @@ end;
 (******************************************)
 class operator Multi_Int_X48.-(const v1:Multi_Int_X48):Multi_Int_X48;
 begin
-Result:= (0 - v1);
+Result:= v1;
+Result.Negative_flag:= Multi_UBool_FALSE;
+if	(not v1.Negative) then
+	Result.Negative_flag:= Multi_UBool_TRUE;
 end;
 
 
@@ -11483,9 +11666,9 @@ while (n <= X48_max) do
 
 Result.Defined_flag:=TRUE;
 Result.Overflow_flag:=FALSE;
-if (v1.Negative = v2.Negative)
-then Result.Negative:= Multi_UBool_FALSE
-else Result.Negative:= Multi_UBool_TRUE;
+if (v1.Negative_flag = v2.Negative_flag)
+then Result.Negative_flag:= Multi_UBool_FALSE
+else Result.Negative_flag:= Multi_UBool_TRUE;
 end;
 
 
@@ -11498,7 +11681,7 @@ var
 begin
 Result.Overflow_flag:=FALSE;
 Result.Defined_flag:=TRUE;
-Result.Negative:=Multi_UBool_UNDEF;
+Result.Negative_flag:=Multi_UBool_UNDEF;
 
 i:=0;
 repeat M_Val[i]:= 0; INC(i); until (i > X48_max_x2);
@@ -11523,12 +11706,12 @@ repeat
 	i:=0;
 until (j > X48_max);
 
-Result.Negative:=Multi_UBool_FALSE;
+Result.Negative_flag:=Multi_UBool_FALSE;
 i:=0;
 repeat
 	if (M_Val[i] <> 0) then
 		begin
-		Result.Negative:= Multi_UBool_UNDEF;
+		Result.Negative_flag:= Multi_UBool_UNDEF;
 		if (i > X48_max) then
 			begin
 			Result.Overflow_flag:=TRUE;
@@ -11578,10 +11761,10 @@ then
 
 multiply_Multi_Int_X48(v1,v2,R);
 
-if	(R.Negative = Multi_UBool_UNDEF) then
-	if	(v1.Negative = v2.Negative)
-	then R.Negative:= Multi_UBool_FALSE
-	else R.Negative:=Multi_UBool_TRUE;
+if	(R.Negative_flag = Multi_UBool_UNDEF) then
+	if	(v1.Negative_flag = v2.Negative_flag)
+	then R.Negative_flag:= Multi_UBool_FALSE
+	else R.Negative_flag:=Multi_UBool_TRUE;
 
 Result:= R;
 
@@ -11628,7 +11811,7 @@ then
 	exit;
 	end;
 
-if	(v1.Negative = Multi_UBool_TRUE)
+if	(v1.Negative_flag = Multi_UBool_TRUE)
 then
 	begin
 	VR:= 0;
@@ -11636,7 +11819,7 @@ then
 	VREM:= 0;
 	VREM.Defined_flag:= FALSE;
 	{$ifdef RAISE_EXCEPTIONS_ENABLED}
-		Raise EIntOverflow.create('SqRoot is negative');
+		Raise EIntOverflow.create('SqRoot is Negative_flag');
 	{$endif}
 	exit;
 	end;
@@ -11702,6 +11885,8 @@ while not finished do
 	end;
 
 VR:= C;
+VR.Negative_flag:= Multi_UBool_FALSE;
+VREM.Negative_flag:= Multi_UBool_FALSE;
 end;
 
 
@@ -11737,6 +11922,10 @@ else
 				{$endif}
 				exit;
 				end;
+			if	(T.Negative_flag = Multi_UBool_UNDEF) then
+				if	(TV.Negative_flag = Y.Negative_flag)
+				then R.Negative_flag:= Multi_UBool_FALSE
+				else R.Negative_flag:= Multi_UBool_TRUE;
 
 			Y:= T;
 			PT := PT - 1;
@@ -11754,8 +11943,10 @@ else
 			{$endif}
 			exit;
 			end;
-		TV:= T;
+		if	(T.Negative_flag = Multi_UBool_UNDEF) then
+			T.Negative_flag:= Multi_UBool_FALSE;
 
+		TV:= T;
 		PT := (PT div 2);
 		end;
 	// R:= (TV * Y);
@@ -11771,32 +11962,39 @@ else
 		{$endif}
 		exit;
 		end;
+	if	(R.Negative_flag = Multi_UBool_UNDEF) then
+		if	(TV.Negative_flag = Y.Negative_flag)
+		then R.Negative_flag:= Multi_UBool_FALSE
+		else R.Negative_flag:= Multi_UBool_TRUE;
 	end;
+
 Result:= R;
 end;
 
 
-(********************v3********************)
+(********************v4********************)
 procedure intdivide_Shift_And_Sub_X48(const P_dividend,P_divisor:Multi_Int_X48;var P_quotient,P_remainder:Multi_Int_X48);
-label	9999;
+label	1000,9999;
 var
 dividend,
 divisor,
 quotient,
 quotient_factor,
-prev_subtraction	:Multi_Int_X48;
+prev_dividend,
+ZERO				:Multi_Int_X48;
 nlz_bits_dividend,
 nlz_bits_divisor,
 nlz_bits_P_divisor,
 nlz_bits_diff		:INT_2W_S;
 
 begin
-if	(P_divisor = 0) then
+ZERO:= 0;
+if	(P_divisor = ZERO) then
 	begin
-	P_quotient:= 0;
+	P_quotient:= ZERO;
 	P_quotient.Defined_flag:= FALSE;
 	P_quotient.Overflow_flag:= TRUE;
- 	P_remainder:= 0;
+ 	P_remainder:= ZERO;
 	P_remainder.Defined_flag:= FALSE;
 	P_remainder.Overflow_flag:= TRUE;
 	Multi_Int_OVERFLOW_ERROR:= TRUE;
@@ -11804,24 +12002,24 @@ if	(P_divisor = 0) then
 else if	(P_divisor = P_dividend) then
 	begin
 	P_quotient:= 1;
- 	P_remainder:= 0;
+ 	P_remainder:= ZERO;
     end
 else
 	begin
 	dividend:= P_dividend;
-	dividend.Negative:= FALSE;
+	dividend.Negative_flag:= FALSE;
 	divisor:= P_divisor;
-	divisor.Negative:= FALSE;
+	divisor.Negative_flag:= FALSE;
 
 	if	(divisor > dividend) then
 		begin
-		P_quotient:= 0;
+		P_quotient:= ZERO;
 	 	P_remainder:= P_dividend;
 		goto 9999;
 	    end;
 
-	quotient:= 0;
-	P_remainder:= 0;
+	quotient:= ZERO;
+	P_remainder:= ZERO;
 	quotient_factor:= 1;
 
 	{ Round 0 }
@@ -11839,12 +12037,18 @@ else
 
 	{ Round X }
 	repeat
-		repeat
-			dividend:= (dividend - divisor);
-			if (dividend >= 0) then
-				quotient:= (quotient + quotient_factor);
-		until (dividend < 0);
-		dividend:= (dividend + divisor);
+	1000:
+		prev_dividend:= dividend;
+		dividend:= (dividend - divisor);
+		if (dividend > ZERO) then
+			begin
+			quotient:= (quotient + quotient_factor);
+			goto 1000;
+			end;
+		if (dividend = ZERO) then
+			quotient:= (quotient + quotient_factor);
+		if (dividend < ZERO) then
+			dividend:= (dividend + divisor);
 
 		nlz_bits_divisor:= nlz_MultiBits_X48(divisor);
 		if (nlz_bits_divisor < nlz_bits_P_divisor) then
@@ -11860,20 +12064,20 @@ else
 			end;
 	until	(dividend < P_divisor)
 	or		(nlz_bits_divisor >= nlz_bits_P_divisor)
-	or		(divisor = 0)
+	or		(divisor = ZERO)
 	;
 
 	P_quotient:= quotient;
 	P_remainder:= dividend;
 
-	if	(P_dividend.Negative = TRUE) and (P_remainder > 0)
+	if	(P_dividend.Negative_flag = TRUE) and (P_remainder > ZERO)
 	then
-		P_remainder.Negative:= TRUE;
+		P_remainder.Negative_flag:= TRUE;
 
-	if	(P_dividend.Negative <> P_divisor.Negative)
-	and	(P_quotient > 0)
+	if	(P_dividend.Negative_flag <> P_divisor.Negative_flag)
+	and	(P_quotient > ZERO)
 	then
-		P_quotient.Negative:= TRUE;
+		P_quotient.Negative_flag:= TRUE;
 	end;
 9999:
 end;
@@ -11919,12 +12123,11 @@ else	// different values than last time
 	begin
 	intdivide_Shift_And_Sub_X48(v1,v2,Quotient,Remainder);
 {
-	if	(v1.Negative <> v2.Negative)
-	then Quotient.Negative:= TRUE
-	else if	(v2.Negative)
-	then Remainder.Negative:= TRUE;
+	if	(v1.Negative_flag <> v2.Negative_flag)
+	then Quotient.Negative_flag:= TRUE
+	else if	(v2.Negative_flag)
+	then Remainder.Negative_flag:= TRUE;
 }
-
 	X48_Last_Divisor:= v2;
 	X48_Last_Dividend:= v1;
 	X48_Last_Quotient:= Quotient;
@@ -11984,10 +12187,10 @@ else	// different values than last time
 	begin
 	intdivide_Shift_And_Sub_X48(v1,v2,Quotient,Remainder);
 {
-	if	(v1.Negative <> v2.Negative)
-	then Quotient.Negative:= TRUE
-	else if	(v2.Negative)
-	then Remainder.Negative:= TRUE;
+	if	(v1.Negative_flag <> v2.Negative_flag)
+	then Quotient.Negative_flag:= TRUE
+	else if	(v2.Negative_flag)
+	then Remainder.Negative_flag:= TRUE;
 }
 	X48_Last_Divisor:= v2;
 	X48_Last_Dividend:= v1;
