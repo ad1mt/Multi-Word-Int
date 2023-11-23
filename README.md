@@ -7,4 +7,4 @@ Will compile and run on 32bit and 64bit environments.
 Written purely in Pascal to be portable and reliable (no assembly or C language code).
 This should be considered a beta development version.
 
-Version 4.23 has many improvements and minor bug fixes.
+Version 4.23 has many minor bug fixes and improvements.
