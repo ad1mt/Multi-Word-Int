@@ -40,6 +40,7 @@ Even
 Defined
 Overflow
 SqRoot
+Abs
 
 If the SqRoot (square root) function cannot give an exact result, it rounds down, and gives a remainder.
 
@@ -58,7 +59,7 @@ The code will only compile & work correctly in Delphi mode. The "advancedrecords
 
 The code will compile in both 32bit and 64bit environments. In the Multi_Int.pas file you must set a define "{$define 64bit}" or "{$define 32bit}" depending on the environment, i.e. whether standard integers are 32bit or 64bit.
 
-In the Multi_Int.pas file you can set/remove a define "{$define RAISE_EXCEPTIONS_ENABLED}", if set this enables run-time exceptions to be generated. If removed/unset, run-time exceptions will not be generated, but the Defined and Overload attributes will still be set and can be checked explicitly in the calling code.
+The Multi_Int unit exports a variable Multi_Int_RAISE_EXCEPTIONS_ENABLED, if set to TRUE, enables run-time exceptions to be generated. If set to FALSE, run-time exceptions will not be generated, but the Defined and Overload attributes will still be set and can be checked explicitly in the calling code.
 
 In the Multi_Int.pas file you can set/change a define called "X48_max". This is the size in half-words of the Multi_Int_X48 type (zero base). So, if you specify 127, that means the size is 128 half-words, which equals 64 whole words, which equals 4096 bits. Set this size to be the maximum you need for your application (with a small margin of error). The larger the size, the slower the calculations become.
 
@@ -83,9 +84,9 @@ The following functions/procedures are used internally by the division algorithm
 ShiftUp_MultiBits       bit shift towards most significant bits
 ShiftDown_MultiBits     bit shift towards least significant bits
 
-The library code defines a unit to provide an exotic boolean type:
+The library code imports a unit named UBool to provide an exotic boolean type:
 UBool = (UBool_UNDEF,UBool_FALSE,UBool_TRUE); and T_UBool.
 These types implement methods and implicit conversion to/from standard boolean values.
 The main feature of the T_UBool and UBool types are to provide boolean variables that can have an additional value of "undefined".
 
-The power function really needs a better (faster) algorithm... this will probably follow soon.
+The power function has been upgraded to a better (faster) algorithm.
