@@ -4,35 +4,11 @@ UNIT Multi_Int;
 
 {$MODESWITCH NESTEDCOMMENTS+}
 
-(*
-v4.23B
--	bug fixes in divide
--	divide v4 working
--	sign bug fixes in power
--	sign bug fixes in sqroot
-
-v4.23B
--	Negative functions
--	Abs functions
--	Additional init procs
--	Exception bug ifxes in Inc/Dec
-
-v4.23C
-
-v4.23D
--	?
--	sign bug fix in power
-*)
-
 (* USER OPTIONAL DEFINES *)
 
 // This should be changed to 32bit for 32 bit CPUs
 
 {$define 64bit}
-
-// comment-out the following line to disable exceptions
-
-{$define RAISE_EXCEPTIONS_ENABLED}
 
 (* END OF USER OPTIONAL DEFINES *)
 	
@@ -42,6 +18,7 @@ uses	sysutils
 ,		strutils
 ,		strings
 ,		math
+,		UBool
 ;
 
 const
@@ -55,7 +32,7 @@ there is no point in having less than 7, because the type named Multi_Int_X4 use
 The number is half-words, so if you specify 127 that is 128 half-words, which equals
 64 words, which equals 512 bits (in 64bit environment).
 *)
-	X48_max		= 127;
+	X48_max		= 1;
 
 (*
 X48_max is the only thing you should change in here.
@@ -160,25 +137,6 @@ type
 type
 
 T_Multi_Leading_Zeros	=	(Multi_Keep_Leading_Zeros, Multi_Trim_Leading_Zeros);
-
-(********************************************************)
-// UBool type gets broken if separated into it own unit!
-(********************************************************)
-
-Multi_UBool_Values		= 	(Multi_UBool_UNDEF,Multi_UBool_FALSE,Multi_UBool_TRUE);
-T_Multi_UBool	=	record
-					private
-						B_Value		:Multi_UBool_Values;
-					public
-						procedure	Init(v:Multi_UBool_Values); inline;
-						function	ToStr:string; inline;
-						class operator implicit(v:boolean):T_Multi_UBool; inline;
-						class operator implicit(v:T_Multi_UBool):Boolean; inline;
-						class operator implicit(v:Multi_UBool_Values):T_Multi_UBool; inline;
-						class operator implicit(v:T_Multi_UBool):Multi_UBool_Values; inline;
-						class operator equal(v1,v2:T_Multi_UBool):Boolean; inline;
-						class operator notequal(v1,v2:T_Multi_UBool):Boolean; inline;
-					end;
 
 Multi_Int_X2	=	record
 					private
@@ -389,7 +347,8 @@ Multi_Int_X48	=	record
 					end;
 
 var
-Multi_Int_OVERFLOW_ERROR	:boolean;
+Multi_Int_RAISE_EXCEPTIONS_ENABLED,
+Multi_Int_OVERFLOW_ERROR		:boolean;
 Multi_Int_X2_MAXINT			:Multi_Int_X2;
 Multi_Int_X3_MAXINT			:Multi_Int_X3;
 Multi_Int_X4_MAXINT			:Multi_Int_X4;
@@ -460,10 +419,6 @@ IMPLEMENTATION
 {$R+}
 {$endif}
 
-const
-
-SUBTRACTION_TABLE_SIZE = 6;
-
 (******************************************)
 var
 
@@ -486,56 +441,6 @@ X48_Last_Divisor,
 X48_Last_Dividend,
 X48_Last_Quotient,
 X48_Last_Remainder	:Multi_Int_X48;
-
-(******************************************)
-procedure	T_Multi_UBool.Init(v:Multi_UBool_Values);
-begin
-if (v = Multi_UBool_TRUE) then B_Value:= Multi_UBool_TRUE
-else if (v = Multi_UBool_FALSE) then B_Value:= Multi_UBool_FALSE
-else B_Value:= Multi_UBool_UNDEF;
-end;
-
-function	T_Multi_UBool.ToStr:string;
-begin
-if (B_Value = Multi_UBool_TRUE) then Result:= 'TRUE'
-else if (B_Value = Multi_UBool_FALSE) then Result:= 'FALSE'
-else Result:= 'UNDEFINED';
-end;
-
-class operator T_Multi_UBool.implicit(v:Multi_UBool_Values):T_Multi_UBool;
-begin
-Result.B_Value:= v;
-end;
-
-class operator T_Multi_UBool.implicit(v:T_Multi_UBool):Multi_UBool_Values;
-begin
-Result:= v.B_Value;
-end;
-
-class operator T_Multi_UBool.implicit(v:Boolean):T_Multi_UBool;
-begin
-if v then Result.B_Value:= Multi_UBool_TRUE
-else Result.B_Value:= Multi_UBool_FALSE;
-end;
-
-class operator T_Multi_UBool.implicit(v:T_Multi_UBool):Boolean;
-begin
-if (v.B_Value = Multi_UBool_TRUE) then Result:= TRUE
-else Result:= FALSE;
-end;
-
-class operator T_Multi_UBool.equal(v1,v2:T_Multi_UBool):Boolean;
-begin
-if (v1.B_Value = v2.B_Value) then Result:= TRUE
-else Result:= FALSE;
-end;
-
-class operator T_Multi_UBool.notequal(v1,v2:T_Multi_UBool):Boolean;
-begin
-if (v1.B_Value <> v2.B_Value) then Result:= TRUE
-else Result:= FALSE;
-end;
-
 
 {$ifdef 32bit}
 (******************************************)
@@ -1450,9 +1355,10 @@ if	(length(v1) > 0) then
 				on EConvertError do
 					begin
 					mi.Defined_flag:= FALSE;
-					{$ifdef RAISE_EXCEPTIONS_ENABLED}
-					Raise;
-					{$endif}
+					if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
+						begin
+						Raise;
+						end;
 					end;
 			end;
 		if mi.Defined_flag = FALSE then goto 999;
@@ -1483,9 +1389,10 @@ if	(length(v1) > 0) then
 			begin
 			mi.Defined_flag:=FALSE;
 			mi.Overflow_flag:=TRUE;
-			{$ifdef RAISE_EXCEPTIONS_ENABLED}
-			Raise EIntOverflow.create('Overflow on string conversion');
-			{$endif}
+			if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
+				begin
+				Raise EIntOverflow.create('Overflow on string conversion');
+				end;
 			goto 999;
 			end;
 
@@ -1523,9 +1430,10 @@ Result.Negative_flag:= v1.Negative_flag;
 if	(v1.Defined_flag = FALSE)
 then
 	begin
-	{$ifdef RAISE_EXCEPTIONS_ENABLED}
-	Raise EInterror.create('Uninitialised variable');
-	{$endif}
+	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
+		begin
+		Raise EInterror.create('Uninitialised variable');
+		end;
 	Result.Defined_flag:= FALSE;
 	exit;
 	end;
@@ -1534,9 +1442,10 @@ if	(v1.Overflow_flag = TRUE)
 or	(v1 > Multi_Int_X2_MAXINT)
 then
 	begin
-	{$ifdef RAISE_EXCEPTIONS_ENABLED}
-	Raise EInterror.create('Overflow');
-	{$endif}
+	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
+		begin
+		Raise EInterror.create('Overflow');
+		end;
 	Result.Overflow_flag:= TRUE;
 	exit;
 	end;
@@ -1561,9 +1470,10 @@ Result.Negative_flag:= v1.Negative_flag;
 if	(v1.Defined_flag = FALSE)
 then
 	begin
-	{$ifdef RAISE_EXCEPTIONS_ENABLED}
-	Raise EInterror.create('Uninitialised variable');
-	{$endif}
+	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
+		begin
+		Raise EInterror.create('Uninitialised variable');
+		end;
 	Result.Defined_flag:= FALSE;
 	exit;
 	end;
@@ -1572,9 +1482,10 @@ if	(v1.Overflow_flag = TRUE)
 or	(v1 > Multi_Int_X2_MAXINT)
 then
 	begin
-	{$ifdef RAISE_EXCEPTIONS_ENABLED}
-	Raise EInterror.create('Overflow');
-	{$endif}
+	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
+		begin
+		Raise EInterror.create('Overflow');
+		end;
 	Result.Overflow_flag:= TRUE;
 	exit;
 	end;
@@ -1599,9 +1510,10 @@ Result.Negative_flag:= v1.Negative_flag;
 if	(v1.Defined_flag = FALSE)
 then
 	begin
-	{$ifdef RAISE_EXCEPTIONS_ENABLED}
-	Raise EInterror.create('Uninitialised variable');
-	{$endif}
+	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
+		begin
+		Raise EInterror.create('Uninitialised variable');
+		end;
 	Result.Defined_flag:= FALSE;
 	exit;
 	end;
@@ -1610,9 +1522,10 @@ if	(v1.Overflow_flag = TRUE)
 or	(v1 > Multi_Int_X2_MAXINT)
 then
 	begin
-	{$ifdef RAISE_EXCEPTIONS_ENABLED}
-	Raise EInterror.create('Overflow');
-	{$endif}
+	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
+		begin
+		Raise EInterror.create('Overflow');
+		end;
 	Result.Overflow_flag:= TRUE;
 	exit;
 	end;
@@ -1730,9 +1643,10 @@ if (R > 0.0) then
 	Result.Defined_flag:= FALSE;
 	Result.Negative_flag:= Multi_UBool_UNDEF;
 	Result.Overflow_flag:= TRUE;
-	{$ifdef RAISE_EXCEPTIONS_ENABLED}
-	Raise EIntOverflow.create('Overflow on real conversion');
-	{$endif}
+	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
+		begin
+		Raise EIntOverflow.create('Overflow on real conversion');
+		end;
 	end
 else
 	begin
@@ -1750,9 +1664,10 @@ if	(Not v1.Defined_flag)
 then
 	begin
 	Result:=0;
-	{$ifdef RAISE_EXCEPTIONS_ENABLED}
-	Raise EInterror.create('Uninitialised variable');
-	{$endif}
+	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
+		begin
+		Raise EInterror.create('Uninitialised variable');
+		end;
 	exit;
 	end;
 
@@ -1813,9 +1728,10 @@ if (R > 0.0) then
 	Result.Defined_flag:= FALSE;
 	Result.Negative_flag:= Multi_UBool_UNDEF;
 	Result.Overflow_flag:= TRUE;
-	{$ifdef RAISE_EXCEPTIONS_ENABLED}
-	Raise EIntOverflow.create('Overflow on Double conversion');
-	{$endif}
+	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
+		begin
+		Raise EIntOverflow.create('Overflow on Double conversion');
+		end;
 	end
 else
 	begin
@@ -1833,9 +1749,10 @@ if	(Not v1.Defined_flag)
 then
 	begin
 	Result:=0;
-	{$ifdef RAISE_EXCEPTIONS_ENABLED}
-	Raise EInterror.create('Uninitialised variable');
-	{$endif}
+	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
+		begin
+		Raise EInterror.create('Uninitialised variable');
+		end;
 	exit;
 	end;
 
@@ -1869,9 +1786,10 @@ if	(Not v1.Defined_flag)
 then
 	begin
 	Result:=0;
-	{$ifdef RAISE_EXCEPTIONS_ENABLED}
-	Raise EInterror.create('Uninitialised variable');
-	{$endif}
+	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
+		begin
+		Raise EInterror.create('Uninitialised variable');
+		end;
 	exit;
 	end;
 
@@ -1884,9 +1802,10 @@ then
 	begin
 	Result:=0;
 	Multi_Int_OVERFLOW_ERROR:= TRUE;
-	{$ifdef RAISE_EXCEPTIONS_ENABLED}
-	Raise EInterror.create('Overflow');
-	{$endif}
+	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
+		begin
+		Raise EInterror.create('Overflow');
+		end;
 	exit;
 	end;
 
@@ -1905,9 +1824,10 @@ if	(Not v1.Defined_flag)
 then
 	begin
 	Result:=0;
-	{$ifdef RAISE_EXCEPTIONS_ENABLED}
-	Raise EInterror.create('Uninitialised variable');
-	{$endif}
+	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
+		begin
+		Raise EInterror.create('Uninitialised variable');
+		end;
 	exit;
 	end;
 
@@ -1920,9 +1840,10 @@ then
 	begin
 	Result:=0;
 	Multi_Int_OVERFLOW_ERROR:= TRUE;
-	{$ifdef RAISE_EXCEPTIONS_ENABLED}
-	Raise EInterror.create('Overflow');
-	{$endif}
+	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
+		begin
+		Raise EInterror.create('Overflow');
+		end;
 	exit;
 	end;
 Result:= R;
@@ -1938,9 +1859,10 @@ if	(Not v1.Defined_flag)
 then
 	begin
 	Result:=0;
-	{$ifdef RAISE_EXCEPTIONS_ENABLED}
-	Raise EInterror.create('Uninitialised variable');
-	{$endif}
+	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
+		begin
+		Raise EInterror.create('Uninitialised variable');
+		end;
 	exit;
 	end;
 
@@ -1953,9 +1875,10 @@ then
 	begin
 	Result:=0;
 	Multi_Int_OVERFLOW_ERROR:= TRUE;
-	{$ifdef RAISE_EXCEPTIONS_ENABLED}
-	Raise EInterror.create('Overflow');
-	{$endif}
+	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
+		begin
+		Raise EInterror.create('Overflow');
+		end;
 	exit;
 	end;
 
@@ -1975,9 +1898,10 @@ or	(v1.Negative_flag = Multi_UBool_TRUE)
 then
 	begin
 	Result:=0;
-	{$ifdef RAISE_EXCEPTIONS_ENABLED}
-	Raise EInterror.create('Uninitialised variable');
-	{$endif}
+	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
+		begin
+		Raise EInterror.create('Uninitialised variable');
+		end;
 	exit;
 	end;
 
@@ -1989,9 +1913,10 @@ then
 	begin
 	Result:=0;
 	Multi_Int_OVERFLOW_ERROR:= TRUE;
-	{$ifdef RAISE_EXCEPTIONS_ENABLED}
-	Raise EInterror.create('Overflow');
-	{$endif}
+	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
+		begin
+		Raise EInterror.create('Overflow');
+		end;
 	exit;
 	end;
 
@@ -2009,9 +1934,10 @@ or	(v1.Negative_flag = Multi_UBool_TRUE)
 then
 	begin
 	Result:=0;
-	{$ifdef RAISE_EXCEPTIONS_ENABLED}
-	Raise EInterror.create('Uninitialised variable');
-	{$endif}
+	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
+		begin
+		Raise EInterror.create('Uninitialised variable');
+		end;
 	exit;
 	end;
 
@@ -2023,9 +1949,10 @@ then
 	begin
 	Multi_Int_OVERFLOW_ERROR:= TRUE;
 	Result:=0;
-	{$ifdef RAISE_EXCEPTIONS_ENABLED}
-	Raise EInterror.create('Uninitialised variable');
-	{$endif}
+	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
+		begin
+		Raise EInterror.create('Uninitialised variable');
+		end;
 	exit;
 	end;
 
@@ -2043,9 +1970,10 @@ or	(v1.Negative_flag = Multi_UBool_TRUE)
 then
 	begin
 	Result:=0;
-	{$ifdef RAISE_EXCEPTIONS_ENABLED}
-	Raise EInterror.create('Uninitialised variable');
-	{$endif}
+	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
+		begin
+		Raise EInterror.create('Uninitialised variable');
+		end;
 	exit;
 	end;
 
@@ -2057,9 +1985,10 @@ then
 	begin
 	Multi_Int_OVERFLOW_ERROR:= TRUE;
 	Result:=0;
-	{$ifdef RAISE_EXCEPTIONS_ENABLED}
-	Raise EInterror.create('Uninitialised variable');
-	{$endif}
+	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
+		begin
+		Raise EInterror.create('Uninitialised variable');
+		end;
 	exit;
 	end;
 
@@ -2078,18 +2007,20 @@ if	(Not v1.Defined_flag)
 then
 	begin
 	v2:='UNDEFINED';
-	{$ifdef RAISE_EXCEPTIONS_ENABLED}
-	Raise EInterror.create('Uninitialised variable');
-	{$endif}
+	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
+		begin
+		Raise EInterror.create('Uninitialised variable');
+		end;
 	exit;
 	end;
 if	(v1.Overflow_flag)
 then
 	begin
 	v2:='OVERFLOW';
-	{$ifdef RAISE_EXCEPTIONS_ENABLED}
-	Raise EInterror.create('Uninitialised variable');
-	{$endif}
+	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
+		begin
+		Raise EInterror.create('Uninitialised variable');
+		end;
 	exit;
 	end;
 
@@ -2156,9 +2087,10 @@ if	(length(v1) > 0) then
 				on EConvertError do
 					begin
 					mi.Defined_flag:= FALSE;
-					{$ifdef RAISE_EXCEPTIONS_ENABLED}
-					Raise;
-					{$endif}
+					if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
+						begin
+						Raise;
+						end;
 					end;
 			end;
 		if mi.Defined_flag = FALSE then goto 999;
@@ -2187,9 +2119,10 @@ if	(length(v1) > 0) then
 			begin
 			mi.Defined_flag:=FALSE;
 			mi.Overflow_flag:=TRUE;
-			{$ifdef RAISE_EXCEPTIONS_ENABLED}
-			Raise EIntOverflow.create('Overflow on string conversion');
-			{$endif}
+			if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
+				begin
+				Raise EIntOverflow.create('Overflow on string conversion');
+				end;
 			goto 999;
 			end;
 		Inc(c);
@@ -2231,18 +2164,20 @@ if	(Not v1.Defined_flag)
 then
 	begin
 	v2:='UNDEFINED';
-	{$ifdef RAISE_EXCEPTIONS_ENABLED}
-	Raise EInterror.create('Uninitialised variable');
-	{$endif}
+	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
+		begin
+		Raise EInterror.create('Uninitialised variable');
+		end;
 	exit;
 	end;
 if	(v1.Overflow_flag)
 then
 	begin
 	v2:='OVERFLOW';
-	{$ifdef RAISE_EXCEPTIONS_ENABLED}
-	Raise EInterror.create('Uninitialised variable');
-	{$endif}
+	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
+		begin
+		Raise EInterror.create('Uninitialised variable');
+		end;
 	exit;
 	end;
 
@@ -2301,9 +2236,10 @@ then
 	begin
 	Result:=0;
 	Result.Defined_flag:= FALSE;
-	{$ifdef RAISE_EXCEPTIONS_ENABLED}
-	Raise EInterror.create('Uninitialised variable');
-	{$endif}
+	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
+		begin
+		Raise EInterror.create('Uninitialised variable');
+		end;
 	exit;
 	end;
 
@@ -2369,9 +2305,10 @@ if	M_Val[3] > INT_1W_U_MAXINT then
 	Result.Defined_flag:= FALSE;
 	Result.Overflow_flag:=TRUE;
 (*
-	{$ifdef RAISE_EXCEPTIONS_ENABLED}
-	Raise EIntOverflow.create('Overflow on add');
-	{$endif}
+	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
+		begin
+		Raise EIntOverflow.create('Overflow on add');
+		end;
 *)
 	end;
 
@@ -2428,9 +2365,10 @@ if	M_Val[3] < 0 then
 	Result.Defined_flag:= FALSE;
 	Result.Overflow_flag:=TRUE;
 (*
-	{$ifdef RAISE_EXCEPTIONS_ENABLED}
-	Raise EIntOverflow.create('Overflow on subtract');
-	{$endif}
+	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
+		begin
+		Raise EIntOverflow.create('Overflow on subtract');
+		end;
 *)
 	end;
 
@@ -2459,9 +2397,10 @@ then
 	Result:=0;
 	Result.Defined_flag:= v1.Defined_flag;
 	Result.Overflow_flag:= v1.Overflow_flag;
-	{$ifdef RAISE_EXCEPTIONS_ENABLED}
-	Raise EInterror.create('Uninitialised variable');
-	{$endif}
+	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
+		begin
+		Raise EInterror.create('Uninitialised variable');
+		end;
 	exit;
 	end;
 
@@ -2471,9 +2410,10 @@ then
 	Result:= 0;
 	Result.Defined_flag:= v1.Defined_flag;
 	Result.Overflow_flag:= v1.Overflow_flag;
-	{$ifdef RAISE_EXCEPTIONS_ENABLED}
+	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
+		begin
 		Raise EIntOverflow.create('Overflow on inc');
-	{$endif}
+		end;
 	exit;
 	end;
 
@@ -2501,10 +2441,11 @@ else
 		end;
 	end;
 
-{$ifdef RAISE_EXCEPTIONS_ENABLED}
-if (Result.Overflow_flag = TRUE) then
-	Raise EIntOverflow.create('Overflow on Inc');
-{$endif}
+if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
+	begin
+	if (Result.Overflow_flag = TRUE) then
+		Raise EIntOverflow.create('Overflow on Inc');
+	end;
 
 if	(Result.Negative_flag = Multi_UBool_UNDEF) then Result.Negative_flag:= Neg;
 end;
@@ -2520,9 +2461,10 @@ then
 	begin
 	Result:=0;
 	Result.Defined_flag:= FALSE;
-	{$ifdef RAISE_EXCEPTIONS_ENABLED}
-	Raise EInterror.create('Uninitialised variable');
-	{$endif}
+	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
+		begin
+		Raise EInterror.create('Uninitialised variable');
+		end;
 	exit;
 	end;
 
@@ -2532,9 +2474,10 @@ then
 	Result:= 0;
 	Result.Overflow_flag:=TRUE;
 	Result.Defined_flag:=TRUE;
-	{$ifdef RAISE_EXCEPTIONS_ENABLED}
+	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
+		begin
 		Raise EIntOverflow.create('Overflow on add');
-	{$endif}
+		end;
 	exit;
 	end;
 
@@ -2577,10 +2520,11 @@ else
 			end;
 		end;
 
-{$ifdef RAISE_EXCEPTIONS_ENABLED}
-if (Result.Overflow_flag = TRUE) then
-	Raise EIntOverflow.create('Overflow on Add');
-{$endif}
+if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
+	begin
+	if (Result.Overflow_flag = TRUE) then
+		Raise EIntOverflow.create('Overflow on Add');
+	end;
 
 if	(Result.Negative_flag = Multi_UBool_UNDEF) then Result.Negative_flag:= Neg;
 end;
@@ -2597,9 +2541,10 @@ then
 	Result:=0;
 	Result.Defined_flag:= v1.Defined_flag;
 	Result.Overflow_flag:= v1.Overflow_flag;
-	{$ifdef RAISE_EXCEPTIONS_ENABLED}
-	Raise EInterror.create('Uninitialised variable');
-	{$endif}
+	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
+		begin
+		Raise EInterror.create('Uninitialised variable');
+		end;
 	exit;
 	end;
 
@@ -2609,9 +2554,10 @@ then
 	Result:= 0;
 	Result.Defined_flag:= v1.Defined_flag;
 	Result.Overflow_flag:= v1.Overflow_flag;
-	{$ifdef RAISE_EXCEPTIONS_ENABLED}
+	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
+		begin
 		Raise EIntOverflow.create('Overflow on inc');
-	{$endif}
+		end;
 	exit;
 	end;
 
@@ -2638,10 +2584,11 @@ else (* v1 is Negative_flag *)
 	Neg:=Multi_UBool_TRUE;
 	end;
 
-{$ifdef RAISE_EXCEPTIONS_ENABLED}
-if (Result.Overflow_flag = TRUE) then
-	Raise EIntOverflow.create('Overflow on Dec');
-{$endif}
+if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
+	begin
+	if (Result.Overflow_flag = TRUE) then
+		Raise EIntOverflow.create('Overflow on Dec');
+	end;
 
 if	(Result.Negative_flag = Multi_UBool_UNDEF) then Result.Negative_flag:= Neg;
 end;
@@ -2657,9 +2604,10 @@ then
 	begin
 	Result:=0;
 	Result.Defined_flag:= FALSE;
-	{$ifdef RAISE_EXCEPTIONS_ENABLED}
-	Raise EInterror.create('Uninitialised variable');
-	{$endif}
+	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
+		begin
+		Raise EInterror.create('Uninitialised variable');
+		end;
 	exit;
 	end;
 
@@ -2669,9 +2617,10 @@ then
 	Result:= 0;
 	Result.Overflow_flag:=TRUE;
 	Result.Defined_flag:=TRUE;
-	{$ifdef RAISE_EXCEPTIONS_ENABLED}
+	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
+		begin
 		Raise EIntOverflow.create('Overflow on subtract');
-	{$endif}
+		end;
 	exit;
 	end;
 
@@ -2723,10 +2672,11 @@ else (* v1.Negative_flag <> v2.Negative_flag *)
 		end
 	end;
 
-{$ifdef RAISE_EXCEPTIONS_ENABLED}
-if (Result.Overflow_flag = TRUE) then
-	Raise EIntOverflow.create('Overflow on Subtract');
-{$endif}
+if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
+	begin
+	if (Result.Overflow_flag = TRUE) then
+		Raise EIntOverflow.create('Overflow on Subtract');
+	end;
 
 if	(Result.Negative_flag = Multi_UBool_UNDEF) then Result.Negative_flag:= Neg;
 end;
@@ -2809,9 +2759,10 @@ then
 	begin
 	Result:=0;
 	Result.Defined_flag:= FALSE;
-	{$ifdef RAISE_EXCEPTIONS_ENABLED}
+	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
+		begin
 		Raise EInterror.create('Uninitialised variable');
-	{$endif}
+		end;
 	exit;
 	end;
 
@@ -2821,9 +2772,10 @@ then
 	Result:= 0;
 	Result.Overflow_flag:=TRUE;
 	Result.Defined_flag:=TRUE;
-	{$ifdef RAISE_EXCEPTIONS_ENABLED}
+	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
+		begin
 		Raise EIntOverflow.create('Overflow on multiply');
-	{$endif}
+		end;
 	exit;
 	end;
 
@@ -2838,9 +2790,10 @@ Result:= R;
 
 if	R.Overflow_flag then
 	begin
-	{$ifdef RAISE_EXCEPTIONS_ENABLED}
+	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
+		begin
 		Raise EIntOverflow.create('Overflow on multiply');
-	{$endif}
+		end;
 	end;
 end;
 
@@ -2860,9 +2813,10 @@ then
 	VR.Defined_flag:= FALSE;
 	VREM:= 0;
 	VREM.Defined_flag:= FALSE;
-	{$ifdef RAISE_EXCEPTIONS_ENABLED}
-	Raise EInterror.create('Uninitialised variable');
-	{$endif}
+	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
+		begin
+		Raise EInterror.create('Uninitialised variable');
+		end;
 	exit;
 	end;
 
@@ -2873,9 +2827,10 @@ then
 	VR.Defined_flag:= FALSE;
 	VREM:= 0;
 	VREM.Defined_flag:= FALSE;
-	{$ifdef RAISE_EXCEPTIONS_ENABLED}
+	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
+		begin
 		Raise EIntOverflow.create('Overflow on Dec');
-	{$endif}
+		end;
 	exit;
 	end;
 
@@ -2886,9 +2841,10 @@ then
 	VR.Defined_flag:= FALSE;
 	VREM:= 0;
 	VREM.Defined_flag:= FALSE;
-	{$ifdef RAISE_EXCEPTIONS_ENABLED}
+	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
+		begin
 		Raise EIntOverflow.create('SqRoot is Negative_flag');
-	{$endif}
+		end;
 	exit;
 	end;
 
@@ -2985,9 +2941,10 @@ else
 				Result:= 0;
 				Result.Defined_flag:= FALSE;
 				Result.Overflow_flag:= TRUE;
-				{$ifdef RAISE_EXCEPTIONS_ENABLED}
+				if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
+					begin
 					Raise EIntOverflow.create('Overflow on Power');
-				{$endif}
+					end;
 				exit;
 				end;
 			if	(T.Negative_flag = Multi_UBool_UNDEF) then
@@ -3006,9 +2963,10 @@ else
 			Result:= 0;
 			Result.Defined_flag:= FALSE;
 			Result.Overflow_flag:= TRUE;
-			{$ifdef RAISE_EXCEPTIONS_ENABLED}
+			if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
+				begin
 				Raise EIntOverflow.create('Overflow on Power');
-			{$endif}
+				end;
 			exit;
 			end;
 		T.Negative_flag:= Multi_UBool_FALSE;
@@ -3024,9 +2982,10 @@ else
 		Result:= 0;
 		Result.Defined_flag:= FALSE;
 		Result.Overflow_flag:= TRUE;
-		{$ifdef RAISE_EXCEPTIONS_ENABLED}
+		if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
+			begin
 			Raise EIntOverflow.create('Overflow on Power');
-		{$endif}
+			end;
 		exit;
 		end;
 	if	(R.Negative_flag = Multi_UBool_UNDEF) then
@@ -3162,9 +3121,10 @@ then
 	begin
 	Result:=0;
 	Result.Defined_flag:= FALSE;
-	{$ifdef RAISE_EXCEPTIONS_ENABLED}
-	Raise EInterror.create('Uninitialised variable');
-	{$endif}
+	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
+		begin
+		Raise EInterror.create('Uninitialised variable');
+		end;
 	exit;
 	end;
 
@@ -3174,9 +3134,10 @@ then
 	Result:= 0;
 	Result.Overflow_flag:=TRUE;
 	Result.Defined_flag:=TRUE;
-	{$ifdef RAISE_EXCEPTIONS_ENABLED}
+	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
+		begin
 		Raise EIntOverflow.create('Overflow on divide');
-	{$endif}
+		end;
 	exit;
 	end;
 
@@ -3218,9 +3179,10 @@ then
 	begin
 	Result:=0;
 	Result.Defined_flag:= FALSE;
-	{$ifdef RAISE_EXCEPTIONS_ENABLED}
-	Raise EInterror.create('Uninitialised variable');
-	{$endif}
+	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
+		begin
+		Raise EInterror.create('Uninitialised variable');
+		end;
 	exit;
 	end;
 
@@ -3230,9 +3192,10 @@ then
 	Result:= 0;
 	Result.Overflow_flag:=TRUE;
 	Result.Defined_flag:=TRUE;
-	{$ifdef RAISE_EXCEPTIONS_ENABLED}
+	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
+		begin
 		Raise EIntOverflow.create('Overflow on modulus');
-	{$endif}
+		end;
 	exit;
 	end;
 
@@ -4202,9 +4165,10 @@ if	(length(v1) > 0) then
 				on EConvertError do
 					begin
 					mi.Defined_flag:= FALSE;
-					{$ifdef RAISE_EXCEPTIONS_ENABLED}
-					Raise;
-					{$endif}
+					if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
+						begin
+						Raise;
+						end;
 					end;
 			end;
 		if mi.Defined_flag = FALSE then goto 999;
@@ -4249,9 +4213,10 @@ if	(length(v1) > 0) then
 			begin
 			mi.Defined_flag:=FALSE;
 			mi.Overflow_flag:=TRUE;
-			{$ifdef RAISE_EXCEPTIONS_ENABLED}
-			Raise EIntOverflow.create('Overflow on string conversion');
-			{$endif}
+			if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
+				begin
+				Raise EIntOverflow.create('Overflow on string conversion');
+				end;
 			goto 999;
 			end;
 
@@ -4364,9 +4329,10 @@ Result.Negative_flag:= v1.Negative_flag;
 if	(v1.Defined_flag = FALSE)
 then
 	begin
-	{$ifdef RAISE_EXCEPTIONS_ENABLED}
-	Raise EInterror.create('Uninitialised variable');
-	{$endif}
+	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
+		begin
+		Raise EInterror.create('Uninitialised variable');
+		end;
 	Result.Defined_flag:= FALSE;
 	exit;
 	end;
@@ -4375,9 +4341,10 @@ if	(v1.Overflow_flag = TRUE)
 or	(v1 > Multi_Int_X3_MAXINT)
 then
 	begin
-	{$ifdef RAISE_EXCEPTIONS_ENABLED}
-	Raise EInterror.create('Overflow');
-	{$endif}
+	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
+		begin
+		Raise EInterror.create('Overflow');
+		end;
 	Result.Overflow_flag:= TRUE;
 	exit;
 	end;
@@ -4402,9 +4369,10 @@ Result.Negative_flag:= v1.Negative_flag;
 if	(v1.Defined_flag = FALSE)
 then
 	begin
-	{$ifdef RAISE_EXCEPTIONS_ENABLED}
-	Raise EInterror.create('Uninitialised variable');
-	{$endif}
+	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
+		begin
+		Raise EInterror.create('Uninitialised variable');
+		end;
 	Result.Defined_flag:= FALSE;
 	exit;
 	end;
@@ -4413,9 +4381,10 @@ if	(v1.Overflow_flag = TRUE)
 or	(v1 > Multi_Int_X3_MAXINT)
 then
 	begin
-	{$ifdef RAISE_EXCEPTIONS_ENABLED}
-	Raise EInterror.create('Overflow');
-	{$endif}
+	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
+		begin
+		Raise EInterror.create('Overflow');
+		end;
 	Result.Overflow_flag:= TRUE;
 	exit;
 	end;
@@ -4440,9 +4409,10 @@ Result.Negative_flag:= v1.Negative_flag;
 if	(v1.Defined_flag = FALSE)
 then
 	begin
-	{$ifdef RAISE_EXCEPTIONS_ENABLED}
-	Raise EInterror.create('Uninitialised variable');
-	{$endif}
+	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
+		begin
+		Raise EInterror.create('Uninitialised variable');
+		end;
 	Result.Defined_flag:= FALSE;
 	exit;
 	end;
@@ -4450,9 +4420,10 @@ then
 if	(v1.Overflow_flag = TRUE)
 then
 	begin
-	{$ifdef RAISE_EXCEPTIONS_ENABLED}
-	Raise EInterror.create('Overflow');
-	{$endif}
+	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
+		begin
+		Raise EInterror.create('Overflow');
+		end;
 	Result.Overflow_flag:= TRUE;
 	exit;
 	end;
@@ -4484,9 +4455,10 @@ MI.Negative_flag:= v1.Negative_flag;
 if	(v1.Defined_flag = FALSE)
 then
 	begin
-	{$ifdef RAISE_EXCEPTIONS_ENABLED}
-	Raise EInterror.create('Uninitialised variable');
-	{$endif}
+	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
+		begin
+		Raise EInterror.create('Uninitialised variable');
+		end;
 	MI.Defined_flag:= FALSE;
 	exit;
 	end;
@@ -4494,9 +4466,10 @@ then
 if	(v1.Overflow_flag = TRUE)
 then
 	begin
-	{$ifdef RAISE_EXCEPTIONS_ENABLED}
-	Raise EInterror.create('Overflow');
-	{$endif}
+	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
+		begin
+		Raise EInterror.create('Overflow');
+		end;
 	MI.Overflow_flag:= TRUE;
 	exit;
 	end;
@@ -4569,9 +4542,10 @@ if (R > 0.0) then
 	Result.Defined_flag:= FALSE;
 	Result.Negative_flag:= Multi_UBool_UNDEF;
 	Result.Overflow_flag:= TRUE;
-	{$ifdef RAISE_EXCEPTIONS_ENABLED}
-	Raise EIntOverflow.create('Overflow on real conversion');
-	{$endif}
+	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
+		begin
+		Raise EIntOverflow.create('Overflow on real conversion');
+		end;
 	end
 else
 	begin
@@ -4589,9 +4563,10 @@ if	(Not v1.Defined_flag)
 then
 	begin
 	Result:=0;
-	{$ifdef RAISE_EXCEPTIONS_ENABLED}
-	Raise EInterror.create('Uninitialised variable');
-	{$endif}
+	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
+		begin
+		Raise EInterror.create('Uninitialised variable');
+		end;
 	exit;
 	end;
 
@@ -4670,9 +4645,10 @@ if (R > 0.0) then
 	Result.Defined_flag:= FALSE;
 	Result.Negative_flag:= Multi_UBool_UNDEF;
 	Result.Overflow_flag:= TRUE;
-	{$ifdef RAISE_EXCEPTIONS_ENABLED}
-	Raise EIntOverflow.create('Overflow on Double conversion');
-	{$endif}
+	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
+		begin
+		Raise EIntOverflow.create('Overflow on Double conversion');
+		end;
 	end
 else
 	begin
@@ -4690,9 +4666,10 @@ if	(Not v1.Defined_flag)
 then
 	begin
 	Result:=0;
-	{$ifdef RAISE_EXCEPTIONS_ENABLED}
-	Raise EInterror.create('Uninitialised variable');
-	{$endif}
+	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
+		begin
+		Raise EInterror.create('Uninitialised variable');
+		end;
 	exit;
 	end;
 
@@ -4734,9 +4711,10 @@ if	(Not v1.Defined_flag)
 then
 	begin
 	Result:=0;
-	{$ifdef RAISE_EXCEPTIONS_ENABLED}
-	Raise EInterror.create('Uninitialised variable');
-	{$endif}
+	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
+		begin
+		Raise EInterror.create('Uninitialised variable');
+		end;
 	exit;
 	end;
 
@@ -4751,9 +4729,10 @@ then
 	begin
 	Result:=0;
 	Multi_Int_OVERFLOW_ERROR:= TRUE;
-	{$ifdef RAISE_EXCEPTIONS_ENABLED}
-	Raise EInterror.create('Overflow');
-	{$endif}
+	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
+		begin
+		Raise EInterror.create('Overflow');
+		end;
 	exit;
 	end;
 
@@ -4772,9 +4751,10 @@ if	(Not v1.Defined_flag)
 then
 	begin
 	Result:=0;
-	{$ifdef RAISE_EXCEPTIONS_ENABLED}
-	Raise EInterror.create('Uninitialised variable');
-	{$endif}
+	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
+		begin
+		Raise EInterror.create('Uninitialised variable');
+		end;
 	exit;
 	end;
 
@@ -4789,9 +4769,10 @@ then
 	begin
 	Result:=0;
 	Multi_Int_OVERFLOW_ERROR:= TRUE;
-	{$ifdef RAISE_EXCEPTIONS_ENABLED}
-	Raise EInterror.create('Overflow');
-	{$endif}
+	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
+		begin
+		Raise EInterror.create('Overflow');
+		end;
 	exit;
 	end;
 Result:= R;
@@ -4807,9 +4788,10 @@ if	(Not v1.Defined_flag)
 then
 	begin
 	Result:=0;
-	{$ifdef RAISE_EXCEPTIONS_ENABLED}
-	Raise EInterror.create('Uninitialised variable');
-	{$endif}
+	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
+		begin
+		Raise EInterror.create('Uninitialised variable');
+		end;
 	exit;
 	end;
 
@@ -4824,9 +4806,10 @@ then
 	begin
 	Result:=0;
 	Multi_Int_OVERFLOW_ERROR:= TRUE;
-	{$ifdef RAISE_EXCEPTIONS_ENABLED}
-	Raise EInterror.create('Overflow');
-	{$endif}
+	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
+		begin
+		Raise EInterror.create('Overflow');
+		end;
 	exit;
 	end;
 
@@ -4846,9 +4829,10 @@ or	(v1.Negative_flag = Multi_UBool_TRUE)
 then
 	begin
 	Result:=0;
-	{$ifdef RAISE_EXCEPTIONS_ENABLED}
-	Raise EInterror.create('Uninitialised variable');
-	{$endif}
+	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
+		begin
+		Raise EInterror.create('Uninitialised variable');
+		end;
 	exit;
 	end;
 
@@ -4863,9 +4847,10 @@ then
 	begin
 	Result:=0;
 	Multi_Int_OVERFLOW_ERROR:= TRUE;
-	{$ifdef RAISE_EXCEPTIONS_ENABLED}
-	Raise EInterror.create('Overflow');
-	{$endif}
+	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
+		begin
+		Raise EInterror.create('Overflow');
+		end;
 	exit;
 	end;
 
@@ -4883,9 +4868,10 @@ or	(v1.Negative_flag = Multi_UBool_TRUE)
 then
 	begin
 	Result:=0;
-	{$ifdef RAISE_EXCEPTIONS_ENABLED}
-	Raise EInterror.create('Uninitialised variable');
-	{$endif}
+	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
+		begin
+		Raise EInterror.create('Uninitialised variable');
+		end;
 	exit;
 	end;
 
@@ -4899,9 +4885,10 @@ then
 	begin
 	Multi_Int_OVERFLOW_ERROR:= TRUE;
 	Result:=0;
-	{$ifdef RAISE_EXCEPTIONS_ENABLED}
-	Raise EInterror.create('Uninitialised variable');
-	{$endif}
+	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
+		begin
+		Raise EInterror.create('Uninitialised variable');
+		end;
 	exit;
 	end;
 
@@ -4919,9 +4906,10 @@ or	(v1.Negative_flag = Multi_UBool_TRUE)
 then
 	begin
 	Result:=0;
-	{$ifdef RAISE_EXCEPTIONS_ENABLED}
-	Raise EInterror.create('Uninitialised variable');
-	{$endif}
+	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
+		begin
+		Raise EInterror.create('Uninitialised variable');
+		end;
 	exit;
 	end;
 
@@ -4934,9 +4922,10 @@ then
 	begin
 	Multi_Int_OVERFLOW_ERROR:= TRUE;
 	Result:=0;
-	{$ifdef RAISE_EXCEPTIONS_ENABLED}
-	Raise EInterror.create('Uninitialised variable');
-	{$endif}
+	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
+		begin
+		Raise EInterror.create('Uninitialised variable');
+		end;
 	exit;
 	end;
 
@@ -4955,18 +4944,20 @@ if	(Not v1.Defined_flag)
 then
 	begin
 	v2:='UNDEFINED';
-	{$ifdef RAISE_EXCEPTIONS_ENABLED}
-	Raise EInterror.create('Uninitialised variable');
-	{$endif}
+	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
+		begin
+		Raise EInterror.create('Uninitialised variable');
+		end;
 	exit;
 	end;
 if	(v1.Overflow_flag)
 then
 	begin
 	v2:='OVERFLOW';
-	{$ifdef RAISE_EXCEPTIONS_ENABLED}
-	Raise EInterror.create('Uninitialised variable');
-	{$endif}
+	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
+		begin
+		Raise EInterror.create('Uninitialised variable');
+		end;
 	exit;
 	end;
 
@@ -5035,9 +5026,10 @@ if	(length(v1) > 0) then
 				on EConvertError do
 					begin
 					mi.Defined_flag:= FALSE;
-					{$ifdef RAISE_EXCEPTIONS_ENABLED}
-					Raise;
-					{$endif}
+					if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
+						begin
+						Raise;
+						end;
 					end;
 			end;
 		if mi.Defined_flag = FALSE then goto 999;
@@ -5066,9 +5058,10 @@ if	(length(v1) > 0) then
 			begin
 			mi.Defined_flag:=FALSE;
 			mi.Overflow_flag:=TRUE;
-			{$ifdef RAISE_EXCEPTIONS_ENABLED}
-			Raise EIntOverflow.create('Overflow on string conversion');
-			{$endif}
+			if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
+				begin
+				Raise EIntOverflow.create('Overflow on string conversion');
+				end;
 			goto 999;
 			end;
 		Inc(c);
@@ -5110,18 +5103,20 @@ if	(Not v1.Defined_flag)
 then
 	begin
 	v2:='UNDEFINED';
-	{$ifdef RAISE_EXCEPTIONS_ENABLED}
-	Raise EInterror.create('Uninitialised variable');
-	{$endif}
+	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
+		begin
+		Raise EInterror.create('Uninitialised variable');
+		end;
 	exit;
 	end;
 if	(v1.Overflow_flag)
 then
 	begin
 	v2:='OVERFLOW';
-	{$ifdef RAISE_EXCEPTIONS_ENABLED}
-	Raise EInterror.create('Uninitialised variable');
-	{$endif}
+	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
+		begin
+		Raise EInterror.create('Uninitialised variable');
+		end;
 	exit;
 	end;
 
@@ -5190,9 +5185,10 @@ then
 	begin
 	Result:=0;
 	Result.Defined_flag:= FALSE;
-	{$ifdef RAISE_EXCEPTIONS_ENABLED}
-	Raise EInterror.create('Uninitialised variable');
-	{$endif}
+	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
+		begin
+		Raise EInterror.create('Uninitialised variable');
+		end;
 	exit;
 	end;
 
@@ -5280,9 +5276,10 @@ if	M_Val[5] > INT_1W_U_MAXINT then
 	Result.Defined_flag:= FALSE;
 	Result.Overflow_flag:=TRUE;
 (*
-	{$ifdef RAISE_EXCEPTIONS_ENABLED}
-	Raise EIntOverflow.create('Overflow on add');
-	{$endif}
+	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
+		begin
+		Raise EIntOverflow.create('Overflow on add');
+		end;
 *)
 	end;
 
@@ -5359,9 +5356,10 @@ if	M_Val[5] < 0 then
 	Result.Defined_flag:= FALSE;
 	Result.Overflow_flag:=TRUE;
 (*
-	{$ifdef RAISE_EXCEPTIONS_ENABLED}
-	Raise EIntOverflow.create('Overflow on subtract');
-	{$endif}
+	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
+		begin
+		Raise EIntOverflow.create('Overflow on subtract');
+		end;
 *)
 	end;
 
@@ -5394,9 +5392,10 @@ then
 	Result:=0;
 	Result.Defined_flag:= v1.Defined_flag;
 	Result.Overflow_flag:= v1.Overflow_flag;
-	{$ifdef RAISE_EXCEPTIONS_ENABLED}
-	Raise EInterror.create('Uninitialised variable');
-	{$endif}
+	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
+		begin
+		Raise EInterror.create('Uninitialised variable');
+		end;
 	exit;
 	end;
 
@@ -5406,9 +5405,10 @@ then
 	Result:= 0;
 	Result.Defined_flag:= v1.Defined_flag;
 	Result.Overflow_flag:= v1.Overflow_flag;
-	{$ifdef RAISE_EXCEPTIONS_ENABLED}
+	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
+		begin
 		Raise EIntOverflow.create('Overflow on inc');
-	{$endif}
+		end;
 	exit;
 	end;
 
@@ -5436,10 +5436,11 @@ else
 		end;
 	end;
 
-{$ifdef RAISE_EXCEPTIONS_ENABLED}
-if (Result.Overflow_flag = TRUE) then
-	Raise EIntOverflow.create('Overflow on Inc');
-{$endif}
+if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
+		begin
+		if (Result.Overflow_flag = TRUE) then
+			Raise EIntOverflow.create('Overflow on Inc');
+		end;
 
 if	(Result.Negative_flag = Multi_UBool_UNDEF) then Result.Negative_flag:= Neg;
 end;
@@ -5455,9 +5456,10 @@ then
 	begin
 	Result:=0;
 	Result.Defined_flag:= FALSE;
-	{$ifdef RAISE_EXCEPTIONS_ENABLED}
-	Raise EInterror.create('Uninitialised variable');
-	{$endif}
+	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
+		begin
+		Raise EInterror.create('Uninitialised variable');
+		end;
 	exit;
 	end;
 
@@ -5467,9 +5469,10 @@ then
 	Result:= 0;
 	Result.Overflow_flag:=TRUE;
 	Result.Defined_flag:=TRUE;
-	{$ifdef RAISE_EXCEPTIONS_ENABLED}
+	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
+		begin
 		Raise EIntOverflow.create('Overflow on add');
-	{$endif}
+		end;
 	exit;
 	end;
 
@@ -5512,10 +5515,11 @@ else
 			end;
 		end;
 
-{$ifdef RAISE_EXCEPTIONS_ENABLED}
-if (Result.Overflow_flag = TRUE) then
-	Raise EIntOverflow.create('Overflow on Add');
-{$endif}
+if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
+		begin
+		if (Result.Overflow_flag = TRUE) then
+			Raise EIntOverflow.create('Overflow on Add');
+		end;
 
 if	(Result.Negative_flag = Multi_UBool_UNDEF) then Result.Negative_flag:= Neg;
 end;
@@ -5532,9 +5536,10 @@ then
 	Result:=0;
 	Result.Defined_flag:= v1.Defined_flag;
 	Result.Overflow_flag:= v1.Overflow_flag;
-	{$ifdef RAISE_EXCEPTIONS_ENABLED}
-	Raise EInterror.create('Uninitialised variable');
-	{$endif}
+	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
+		begin
+		Raise EInterror.create('Uninitialised variable');
+		end;
 	exit;
 	end;
 
@@ -5544,9 +5549,10 @@ then
 	Result:= 0;
 	Result.Defined_flag:= v1.Defined_flag;
 	Result.Overflow_flag:= v1.Overflow_flag;
-	{$ifdef RAISE_EXCEPTIONS_ENABLED}
+	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
+		begin
 		Raise EIntOverflow.create('Overflow on inc');
-	{$endif}
+		end;
 	exit;
 	end;
 
@@ -5573,10 +5579,11 @@ else (* v1 is Negative_flag *)
 	Neg:=Multi_UBool_TRUE;
 	end;
 
-{$ifdef RAISE_EXCEPTIONS_ENABLED}
-if (Result.Overflow_flag = TRUE) then
-	Raise EIntOverflow.create('Overflow on Dec');
-{$endif}
+if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
+		begin
+		if (Result.Overflow_flag = TRUE) then
+			Raise EIntOverflow.create('Overflow on Dec');
+		end;
 
 if	(Result.Negative_flag = Multi_UBool_UNDEF) then Result.Negative_flag:= Neg;
 end;
@@ -5592,9 +5599,10 @@ then
 	begin
 	Result:=0;
 	Result.Defined_flag:= FALSE;
-	{$ifdef RAISE_EXCEPTIONS_ENABLED}
-	Raise EInterror.create('Uninitialised variable');
-	{$endif}
+	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
+		begin
+		Raise EInterror.create('Uninitialised variable');
+		end;
 	exit;
 	end;
 
@@ -5604,9 +5612,10 @@ then
 	Result:= 0;
 	Result.Overflow_flag:=TRUE;
 	Result.Defined_flag:=TRUE;
-	{$ifdef RAISE_EXCEPTIONS_ENABLED}
+	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
+		begin
 		Raise EIntOverflow.create('Overflow on subtract');
-	{$endif}
+		end;
 	exit;
 	end;
 
@@ -5658,10 +5667,11 @@ else (* v1.Negative_flag <> v2.Negative_flag *)
 		end
 	end;
 
-{$ifdef RAISE_EXCEPTIONS_ENABLED}
-if (Result.Overflow_flag = TRUE) then
-	Raise EIntOverflow.create('Overflow on Subtract');
-{$endif}
+if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
+		begin
+		if (Result.Overflow_flag = TRUE) then
+			Raise EIntOverflow.create('Overflow on Subtract');
+		end;
 
 if	(Result.Negative_flag = Multi_UBool_UNDEF) then Result.Negative_flag:= Neg;
 end;
@@ -5746,9 +5756,10 @@ then
 	begin
 	Result:=0;
 	Result.Defined_flag:= FALSE;
-	{$ifdef RAISE_EXCEPTIONS_ENABLED}
-	Raise EInterror.create('Uninitialised variable');
-	{$endif}
+	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
+		begin
+		Raise EInterror.create('Uninitialised variable');
+		end;
 	exit;
 	end;
 
@@ -5758,9 +5769,10 @@ then
 	Result:= 0;
 	Result.Overflow_flag:=TRUE;
 	Result.Defined_flag:=TRUE;
-	{$ifdef RAISE_EXCEPTIONS_ENABLED}
+	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
+		begin
 		Raise EIntOverflow.create('Overflow on multiply');
-	{$endif}
+		end;
 	exit;
 	end;
 
@@ -5775,9 +5787,10 @@ Result:= R;
 
 if	R.Overflow_flag then
 	begin
-	{$ifdef RAISE_EXCEPTIONS_ENABLED}
+	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
+		begin
 		Raise EIntOverflow.create('Overflow on multiply');
-	{$endif}
+		end;
 	end;
 end;
 
@@ -5797,9 +5810,10 @@ then
 	VR.Defined_flag:= FALSE;
 	VREM:= 0;
 	VREM.Defined_flag:= FALSE;
-	{$ifdef RAISE_EXCEPTIONS_ENABLED}
-	Raise EInterror.create('Uninitialised variable');
-	{$endif}
+	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
+		begin
+		Raise EInterror.create('Uninitialised variable');
+		end;
 	exit;
 	end;
 
@@ -5810,9 +5824,10 @@ then
 	VR.Defined_flag:= FALSE;
 	VREM:= 0;
 	VREM.Defined_flag:= FALSE;
-	{$ifdef RAISE_EXCEPTIONS_ENABLED}
+	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
+		begin
 		Raise EIntOverflow.create('Overflow on Dec');
-	{$endif}
+		end;
 	exit;
 	end;
 
@@ -5823,9 +5838,10 @@ then
 	VR.Defined_flag:= FALSE;
 	VREM:= 0;
 	VREM.Defined_flag:= FALSE;
-	{$ifdef RAISE_EXCEPTIONS_ENABLED}
+	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
+		begin
 		Raise EIntOverflow.create('SqRoot is Negative_flag');
-	{$endif}
+		end;
 	exit;
 	end;
 
@@ -5922,9 +5938,10 @@ else
 				Result:= 0;
 				Result.Defined_flag:= FALSE;
 				Result.Overflow_flag:= TRUE;
-				{$ifdef RAISE_EXCEPTIONS_ENABLED}
+				if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
+					begin
 					Raise EIntOverflow.create('Overflow on Power');
-				{$endif}
+					end;
 				exit;
 				end;
 			if	(T.Negative_flag = Multi_UBool_UNDEF) then
@@ -5943,9 +5960,10 @@ else
 			Result:= 0;
 			Result.Defined_flag:= FALSE;
 			Result.Overflow_flag:= TRUE;
-			{$ifdef RAISE_EXCEPTIONS_ENABLED}
+			if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
+				begin
 				Raise EIntOverflow.create('Overflow on Power');
-			{$endif}
+				end;
 			exit;
 			end;
 		T.Negative_flag:= Multi_UBool_FALSE;
@@ -5961,9 +5979,10 @@ else
 		Result:= 0;
 		Result.Defined_flag:= FALSE;
 		Result.Overflow_flag:= TRUE;
-		{$ifdef RAISE_EXCEPTIONS_ENABLED}
+		if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
+			begin
 			Raise EIntOverflow.create('Overflow on Power');
-		{$endif}
+			end;
 		exit;
 		end;
 	if	(R.Negative_flag = Multi_UBool_UNDEF) then
@@ -6099,9 +6118,10 @@ then
 	begin
 	Result:=0;
 	Result.Defined_flag:= FALSE;
-	{$ifdef RAISE_EXCEPTIONS_ENABLED}
-	Raise EInterror.create('Uninitialised variable');
-	{$endif}
+	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
+		begin
+		Raise EInterror.create('Uninitialised variable');
+		end;
 	exit;
 	end;
 
@@ -6111,9 +6131,10 @@ then
 	Result:= 0;
 	Result.Overflow_flag:=TRUE;
 	Result.Defined_flag:=TRUE;
-	{$ifdef RAISE_EXCEPTIONS_ENABLED}
+	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
+		begin
 		Raise EIntOverflow.create('Overflow on divide');
-	{$endif}
+		end;
 	exit;
 	end;
 
@@ -6155,9 +6176,10 @@ then
 	begin
 	Result:=0;
 	Result.Defined_flag:= FALSE;
-	{$ifdef RAISE_EXCEPTIONS_ENABLED}
-	Raise EInterror.create('Uninitialised variable');
-	{$endif}
+	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
+		begin
+		Raise EInterror.create('Uninitialised variable');
+		end;
 	exit;
 	end;
 
@@ -6167,9 +6189,10 @@ then
 	Result:= 0;
 	Result.Overflow_flag:=TRUE;
 	Result.Defined_flag:=TRUE;
-	{$ifdef RAISE_EXCEPTIONS_ENABLED}
+	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
+		begin
 		Raise EIntOverflow.create('Overflow on modulus');
-	{$endif}
+		end;
 	exit;
 	end;
 
@@ -7173,9 +7196,10 @@ Result.Negative_flag:= v1.Negative_flag;
 if	(v1.Defined_flag = FALSE)
 then
 	begin
-	{$ifdef RAISE_EXCEPTIONS_ENABLED}
-	Raise EInterror.create('Uninitialised variable');
-	{$endif}
+	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
+		begin
+		Raise EInterror.create('Uninitialised variable');
+		end;
 	Result.Defined_flag:= FALSE;
 	exit;
 	end;
@@ -7184,9 +7208,10 @@ if	(v1.Overflow_flag = TRUE)
 or	(v1 > Multi_Int_X4_MAXINT)
 then
 	begin
-	{$ifdef RAISE_EXCEPTIONS_ENABLED}
-	Raise EInterror.create('Overflow');
-	{$endif}
+	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
+		begin
+		Raise EInterror.create('Overflow');
+		end;
 	Result.Overflow_flag:= TRUE;
 	exit;
 	end;
@@ -7211,9 +7236,10 @@ Result.Negative_flag:= v1.Negative_flag;
 if	(v1.Defined_flag = FALSE)
 then
 	begin
-	{$ifdef RAISE_EXCEPTIONS_ENABLED}
-	Raise EInterror.create('Uninitialised variable');
-	{$endif}
+	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
+		begin
+		Raise EInterror.create('Uninitialised variable');
+		end;
 	Result.Defined_flag:= FALSE;
 	exit;
 	end;
@@ -7221,9 +7247,10 @@ then
 if	(v1.Overflow_flag = TRUE)
 then
 	begin
-	{$ifdef RAISE_EXCEPTIONS_ENABLED}
-	Raise EInterror.create('Overflow');
-	{$endif}
+	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
+		begin
+		Raise EInterror.create('Overflow');
+		end;
 	Result.Overflow_flag:= TRUE;
 	exit;
 	end;
@@ -7254,9 +7281,10 @@ Result.Negative_flag:= v1.Negative_flag;
 if	(v1.Defined_flag = FALSE)
 then
 	begin
-	{$ifdef RAISE_EXCEPTIONS_ENABLED}
-	Raise EInterror.create('Uninitialised variable');
-	{$endif}
+	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
+		begin
+		Raise EInterror.create('Uninitialised variable');
+		end;
 	Result.Defined_flag:= FALSE;
 	exit;
 	end;
@@ -7264,9 +7292,10 @@ then
 if	(v1.Overflow_flag = TRUE)
 then
 	begin
-	{$ifdef RAISE_EXCEPTIONS_ENABLED}
-	Raise EInterror.create('Overflow');
-	{$endif}
+	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
+		begin
+		Raise EInterror.create('Overflow');
+		end;
 	Result.Overflow_flag:= TRUE;
 	exit;
 	end;
@@ -7298,9 +7327,10 @@ MI.Negative_flag:= v1.Negative_flag;
 if	(v1.Defined_flag = FALSE)
 then
 	begin
-	{$ifdef RAISE_EXCEPTIONS_ENABLED}
-	Raise EInterror.create('Uninitialised variable');
-	{$endif}
+	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
+		begin
+		Raise EInterror.create('Uninitialised variable');
+		end;
 	MI.Defined_flag:= FALSE;
 	exit;
 	end;
@@ -7308,9 +7338,10 @@ then
 if	(v1.Overflow_flag = TRUE)
 then
 	begin
-	{$ifdef RAISE_EXCEPTIONS_ENABLED}
-	Raise EInterror.create('Overflow');
-	{$endif}
+	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
+		begin
+		Raise EInterror.create('Overflow');
+		end;
 	MI.Overflow_flag:= TRUE;
 	exit;
 	end;
@@ -7349,9 +7380,10 @@ MI.Negative_flag:= v1.Negative_flag;
 if	(v1.Defined_flag = FALSE)
 then
 	begin
-	{$ifdef RAISE_EXCEPTIONS_ENABLED}
-	Raise EInterror.create('Uninitialised variable');
-	{$endif}
+	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
+		begin
+		Raise EInterror.create('Uninitialised variable');
+		end;
 	MI.Defined_flag:= FALSE;
 	exit;
 	end;
@@ -7359,9 +7391,10 @@ then
 if	(v1.Overflow_flag = TRUE)
 then
 	begin
-	{$ifdef RAISE_EXCEPTIONS_ENABLED}
-	Raise EInterror.create('Overflow');
-	{$endif}
+	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
+		begin
+		Raise EInterror.create('Overflow');
+		end;
 	MI.Overflow_flag:= TRUE;
 	exit;
 	end;
@@ -7430,9 +7463,10 @@ if	(length(v1) > 0) then
 				on EConvertError do
 					begin
 					mi.Defined_flag:= FALSE;
-					{$ifdef RAISE_EXCEPTIONS_ENABLED}
-					Raise;
-					{$endif}
+					if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
+						begin
+						Raise;
+						end;
 					end;
 			end;
 		if mi.Defined_flag = FALSE then goto 999;
@@ -7491,9 +7525,10 @@ if	(length(v1) > 0) then
 			begin
 			mi.Defined_flag:=FALSE;
 			mi.Overflow_flag:=TRUE;
-			{$ifdef RAISE_EXCEPTIONS_ENABLED}
-			Raise EIntOverflow.create('Overflow on string conversion');
-			{$endif}
+			if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
+				begin
+				Raise EIntOverflow.create('Overflow on string conversion');
+				end;
 			goto 999;
 			end;
 		Inc(c);
@@ -7658,9 +7693,10 @@ if (R > 0.0) then
 	Result.Defined_flag:= FALSE;
 	Result.Negative_flag:= Multi_UBool_UNDEF;
 	Result.Overflow_flag:= TRUE;
-	{$ifdef RAISE_EXCEPTIONS_ENABLED}
-	Raise EIntOverflow.create('Overflow on real conversion');
-	{$endif}
+	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
+		begin
+		Raise EIntOverflow.create('Overflow on real conversion');
+		end;
 	end
 else
 	begin
@@ -7678,9 +7714,10 @@ if	(Not v1.Defined_flag)
 then
 	begin
 	Result:=0;
-	{$ifdef RAISE_EXCEPTIONS_ENABLED}
-	Raise EInterror.create('Uninitialised variable');
-	{$endif}
+	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
+		begin
+		Raise EInterror.create('Uninitialised variable');
+		end;
 	exit;
 	end;
 
@@ -7777,9 +7814,10 @@ if (R > 0.0) then
 	Result.Defined_flag:= FALSE;
 	Result.Negative_flag:= Multi_UBool_UNDEF;
 	Result.Overflow_flag:= TRUE;
-	{$ifdef RAISE_EXCEPTIONS_ENABLED}
-	Raise EIntOverflow.create('Overflow on Double conversion');
-	{$endif}
+	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
+		begin
+		Raise EIntOverflow.create('Overflow on Double conversion');
+		end;
 	end
 else
 	begin
@@ -7797,9 +7835,10 @@ if	(Not v1.Defined_flag)
 then
 	begin
 	Result:=0;
-	{$ifdef RAISE_EXCEPTIONS_ENABLED}
-	Raise EInterror.create('Uninitialised variable');
-	{$endif}
+	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
+		begin
+		Raise EInterror.create('Uninitialised variable');
+		end;
 	exit;
 	end;
 
@@ -7848,9 +7887,10 @@ if	(Not v1.Defined_flag)
 then
 	begin
 	Result:=0;
-	{$ifdef RAISE_EXCEPTIONS_ENABLED}
-	Raise EInterror.create('Uninitialised variable');
-	{$endif}
+	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
+		begin
+		Raise EInterror.create('Uninitialised variable');
+		end;
 	exit;
 	end;
 
@@ -7866,9 +7906,10 @@ or	(v1.M_Value[7] <> 0)
 then
 	begin
 	Result:=0;
-	{$ifdef RAISE_EXCEPTIONS_ENABLED}
-	Raise EInterror.create('Uninitialised variable');
-	{$endif}
+	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
+		begin
+		Raise EInterror.create('Uninitialised variable');
+		end;
 	exit;
 	end;
 
@@ -7887,9 +7928,10 @@ if	(Not v1.Defined_flag)
 then
 	begin
 	Result:=0;
-	{$ifdef RAISE_EXCEPTIONS_ENABLED}
-	Raise EInterror.create('Uninitialised variable');
-	{$endif}
+	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
+		begin
+		Raise EInterror.create('Uninitialised variable');
+		end;
 	exit;
 	end;
 
@@ -7906,9 +7948,10 @@ then
 	begin
 	Result:=0;
 	Multi_Int_OVERFLOW_ERROR:= TRUE;
-	{$ifdef RAISE_EXCEPTIONS_ENABLED}
-	Raise EInterror.create('Overflow');
-	{$endif}
+	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
+		begin
+		Raise EInterror.create('Overflow');
+		end;
 	exit;
 	end;
 
@@ -7925,9 +7968,10 @@ if	(Not v1.Defined_flag)
 then
 	begin
 	Result:=0;
-	{$ifdef RAISE_EXCEPTIONS_ENABLED}
-	Raise EInterror.create('Uninitialised variable');
-	{$endif}
+	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
+		begin
+		Raise EInterror.create('Uninitialised variable');
+		end;
 	exit;
 	end;
 
@@ -7944,9 +7988,10 @@ then
 	begin
 	Result:=0;
 	Multi_Int_OVERFLOW_ERROR:= TRUE;
-	{$ifdef RAISE_EXCEPTIONS_ENABLED}
-	Raise EInterror.create('Overflow');
-	{$endif}
+	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
+		begin
+		Raise EInterror.create('Overflow');
+		end;
 	exit;
 	end;
 
@@ -7966,9 +8011,10 @@ or	(v1.Negative_flag = Multi_UBool_TRUE)
 then
 	begin
 	Result:=0;
-	{$ifdef RAISE_EXCEPTIONS_ENABLED}
-	Raise EInterror.create('Uninitialised variable');
-	{$endif}
+	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
+		begin
+		Raise EInterror.create('Uninitialised variable');
+		end;
 	exit;
 	end;
 
@@ -7985,9 +8031,10 @@ then
 	begin
 	Result:=0;
 	Multi_Int_OVERFLOW_ERROR:= TRUE;
-	{$ifdef RAISE_EXCEPTIONS_ENABLED}
-	Raise EInterror.create('Overflow');
-	{$endif}
+	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
+		begin
+		Raise EInterror.create('Overflow');
+		end;
 	exit;
 	end;
 
@@ -8005,9 +8052,10 @@ or	(v1.Negative_flag = Multi_UBool_TRUE)
 then
 	begin
 	Result:=0;
-	{$ifdef RAISE_EXCEPTIONS_ENABLED}
-	Raise EInterror.create('Uninitialised variable');
-	{$endif}
+	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
+		begin
+		Raise EInterror.create('Uninitialised variable');
+		end;
 	exit;
 	end;
 
@@ -8023,9 +8071,10 @@ then
 	begin
 	Multi_Int_OVERFLOW_ERROR:= TRUE;
 	Result:=0;
-	{$ifdef RAISE_EXCEPTIONS_ENABLED}
-	Raise EInterror.create('Uninitialised variable');
-	{$endif}
+	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
+		begin
+		Raise EInterror.create('Uninitialised variable');
+		end;
 	exit;
 	end;
 
@@ -8043,9 +8092,10 @@ or	(v1.Negative_flag = Multi_UBool_TRUE)
 then
 	begin
 	Result:=0;
-	{$ifdef RAISE_EXCEPTIONS_ENABLED}
-	Raise EInterror.create('Uninitialised variable');
-	{$endif}
+	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
+		begin
+		Raise EInterror.create('Uninitialised variable');
+		end;
 	exit;
 	end;
 
@@ -8061,9 +8111,10 @@ then
 	begin
 	Multi_Int_OVERFLOW_ERROR:= TRUE;
 	Result:=0;
-	{$ifdef RAISE_EXCEPTIONS_ENABLED}
-	Raise EInterror.create('Uninitialised variable');
-	{$endif}
+	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
+		begin
+		Raise EInterror.create('Uninitialised variable');
+		end;
 	exit;
 	end;
 
@@ -8082,18 +8133,20 @@ if	(Not v1.Defined_flag)
 then
 	begin
 	v2:='UNDEFINED';
-	{$ifdef RAISE_EXCEPTIONS_ENABLED}
-	Raise EInterror.create('Uninitialised variable');
-	{$endif}
+	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
+		begin
+		Raise EInterror.create('Uninitialised variable');
+		end;
 	exit;
 	end;
 if	(v1.Overflow_flag)
 then
 	begin
 	v2:='OVERFLOW';
-	{$ifdef RAISE_EXCEPTIONS_ENABLED}
-	Raise EInterror.create('Overflow');
-	{$endif}
+	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
+		begin
+		Raise EInterror.create('Overflow');
+		end;
 	exit;
 	end;
 
@@ -8164,9 +8217,10 @@ if	(length(v1) > 0) then
 				on EConvertError do
 					begin
 					mi.Defined_flag:= FALSE;
-					{$ifdef RAISE_EXCEPTIONS_ENABLED}
-					Raise;
-					{$endif}
+					if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
+						begin
+						Raise;
+						end;
 					end;
 			end;
 		if mi.Defined_flag = FALSE then goto 999;
@@ -8195,9 +8249,10 @@ if	(length(v1) > 0) then
 			begin
 			mi.Defined_flag:=FALSE;
 			mi.Overflow_flag:=TRUE;
-			{$ifdef RAISE_EXCEPTIONS_ENABLED}
-			Raise EIntOverflow.create('Overflow on string conversion');
-			{$endif}
+			if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
+				begin
+				Raise EIntOverflow.create('Overflow on string conversion');
+				end;
 			goto 999;
 			end;
 		Inc(c);
@@ -8239,18 +8294,20 @@ if	(Not v1.Defined_flag)
 then
 	begin
 	v2:='UNDEFINED';
-	{$ifdef RAISE_EXCEPTIONS_ENABLED}
-	Raise EInterror.create('Uninitialised variable');
-	{$endif}
+	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
+		begin
+		Raise EInterror.create('Uninitialised variable');
+		end;
 	exit;
 	end;
 if	(v1.Overflow_flag)
 then
 	begin
 	v2:='OVERFLOW';
-	{$ifdef RAISE_EXCEPTIONS_ENABLED}
-	Raise EInterror.create('Uninitialised variable');
-	{$endif}
+	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
+		begin
+		Raise EInterror.create('Uninitialised variable');
+		end;
 	exit;
 	end;
 
@@ -8329,9 +8386,10 @@ then
 	begin
 	Result:=0;
 	Result.Defined_flag:= FALSE;
-	{$ifdef RAISE_EXCEPTIONS_ENABLED}
-	Raise EInterror.create('Uninitialised variable');
-	{$endif}
+	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
+		begin
+		Raise EInterror.create('Uninitialised variable');
+		end;
 	exit;
 	end;
 
@@ -8442,9 +8500,10 @@ if	M_Val[7] > INT_1W_U_MAXINT then
 	Result.Defined_flag:= FALSE;
 	Result.Overflow_flag:=TRUE;
 (*
-	{$ifdef RAISE_EXCEPTIONS_ENABLED}
-	Raise EIntOverflow.create('Overflow on add');
-	{$endif}
+	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
+		begin
+		Raise EIntOverflow.create('Overflow on add');
+		end;
 *)
 	end;
 
@@ -8541,9 +8600,10 @@ if	M_Val[7] < 0 then
 	Result.Defined_flag:= FALSE;
 	Result.Overflow_flag:=TRUE;
 (*
-	{$ifdef RAISE_EXCEPTIONS_ENABLED}
-	Raise EIntOverflow.create('Overflow on subtract');
-	{$endif}
+	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
+		begin
+		Raise EIntOverflow.create('Overflow on subtract');
+		end;
 *)
 	end;
 
@@ -8580,9 +8640,10 @@ then
 	Result:=0;
 	Result.Defined_flag:= v1.Defined_flag;
 	Result.Overflow_flag:= v1.Overflow_flag;
-	{$ifdef RAISE_EXCEPTIONS_ENABLED}
-	Raise EInterror.create('Uninitialised variable');
-	{$endif}
+	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
+		begin
+		Raise EInterror.create('Uninitialised variable');
+		end;
 	exit;
 	end;
 
@@ -8592,9 +8653,10 @@ then
 	Result:= 0;
 	Result.Defined_flag:= v1.Defined_flag;
 	Result.Overflow_flag:= v1.Overflow_flag;
-	{$ifdef RAISE_EXCEPTIONS_ENABLED}
+	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
+		begin
 		Raise EIntOverflow.create('Overflow on inc');
-	{$endif}
+		end;
 	exit;
 	end;
 
@@ -8622,10 +8684,11 @@ else
 		end;
 	end;
 
-{$ifdef RAISE_EXCEPTIONS_ENABLED}
-if (Result.Overflow_flag = TRUE) then
-	Raise EIntOverflow.create('Overflow on Inc');
-{$endif}
+if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
+		begin
+		if (Result.Overflow_flag = TRUE) then
+			Raise EIntOverflow.create('Overflow on Inc');
+		end;
 
 if	(Result.Negative_flag = Multi_UBool_UNDEF) then Result.Negative_flag:= Neg;
 end;
@@ -8641,9 +8704,10 @@ then
 	begin
 	Result:=0;
 	Result.Defined_flag:= FALSE;
-	{$ifdef RAISE_EXCEPTIONS_ENABLED}
-	Raise EInterror.create('Uninitialised variable');
-	{$endif}
+	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
+		begin
+		Raise EInterror.create('Uninitialised variable');
+		end;
 	exit;
 	end;
 
@@ -8653,9 +8717,10 @@ then
 	Result:= 0;
 	Result.Overflow_flag:=TRUE;
 	Result.Defined_flag:=TRUE;
-	{$ifdef RAISE_EXCEPTIONS_ENABLED}
+	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
+		begin
 		Raise EIntOverflow.create('Overflow on add');
-	{$endif}
+		end;
 	exit;
 	end;
 
@@ -8698,10 +8763,11 @@ else
 			end;
 		end;
 
-{$ifdef RAISE_EXCEPTIONS_ENABLED}
-if (Result.Overflow_flag = TRUE) then
-	Raise EIntOverflow.create('Overflow on Add');
-{$endif}
+if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
+		begin
+		if (Result.Overflow_flag = TRUE) then
+			Raise EIntOverflow.create('Overflow on Add');
+		end;
 
 if	(Result.Negative_flag = Multi_UBool_UNDEF) then Result.Negative_flag:= Neg;
 end;
@@ -8717,9 +8783,10 @@ then
 	begin
 	Result:=0;
 	Result.Defined_flag:= FALSE;
-	{$ifdef RAISE_EXCEPTIONS_ENABLED}
-	Raise EInterror.create('Uninitialised variable');
-	{$endif}
+	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
+		begin
+		Raise EInterror.create('Uninitialised variable');
+		end;
 	exit;
 	end;
 
@@ -8729,9 +8796,10 @@ then
 	Result:= 0;
 	Result.Overflow_flag:=TRUE;
 	Result.Defined_flag:=TRUE;
-	{$ifdef RAISE_EXCEPTIONS_ENABLED}
+	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
+		begin
 		Raise EIntOverflow.create('Overflow on subtract');
-	{$endif}
+		end;
 	exit;
 	end;
 
@@ -8783,10 +8851,11 @@ else (* v1.Negative_flag <> v2.Negative_flag *)
 		end
 	end;
 
-{$ifdef RAISE_EXCEPTIONS_ENABLED}
-if (Result.Overflow_flag = TRUE) then
-	Raise EIntOverflow.create('Overflow on Subtract');
-{$endif}
+if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
+		begin
+		if (Result.Overflow_flag = TRUE) then
+			Raise EIntOverflow.create('Overflow on Subtract');
+		end;
 
 if	(Result.Negative_flag = Multi_UBool_UNDEF) then Result.Negative_flag:= Neg;
 end;
@@ -8803,9 +8872,10 @@ then
 	Result:=0;
 	Result.Defined_flag:= v1.Defined_flag;
 	Result.Overflow_flag:= v1.Overflow_flag;
-	{$ifdef RAISE_EXCEPTIONS_ENABLED}
-	Raise EInterror.create('Uninitialised variable');
-	{$endif}
+	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
+		begin
+		Raise EInterror.create('Uninitialised variable');
+		end;
 	exit;
 	end;
 
@@ -8815,9 +8885,10 @@ then
 	Result:= 0;
 	Result.Defined_flag:= v1.Defined_flag;
 	Result.Overflow_flag:= v1.Overflow_flag;
-	{$ifdef RAISE_EXCEPTIONS_ENABLED}
+	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
+		begin
 		Raise EIntOverflow.create('Overflow on inc');
-	{$endif}
+		end;
 	exit;
 	end;
 
@@ -8844,10 +8915,11 @@ else (* v1 is Negative_flag *)
 	Neg:=Multi_UBool_TRUE;
 	end;
 
-{$ifdef RAISE_EXCEPTIONS_ENABLED}
-if (Result.Overflow_flag = TRUE) then
-	Raise EIntOverflow.create('Overflow on Dec');
-{$endif}
+if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
+		begin
+		if (Result.Overflow_flag = TRUE) then
+			Raise EIntOverflow.create('Overflow on Dec');
+		end;
 
 if	(Result.Negative_flag = Multi_UBool_UNDEF) then Result.Negative_flag:= Neg;
 end;
@@ -8934,9 +9006,10 @@ then
 	begin
 	Result:=0;
 	Result.Defined_flag:= FALSE;
-	{$ifdef RAISE_EXCEPTIONS_ENABLED}
-	Raise EInterror.create('Uninitialised variable');
-	{$endif}
+	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
+		begin
+		Raise EInterror.create('Uninitialised variable');
+		end;
 	exit;
 	end;
 
@@ -8946,9 +9019,10 @@ then
 	Result:= 0;
 	Result.Overflow_flag:=TRUE;
 	Result.Defined_flag:=TRUE;
-	{$ifdef RAISE_EXCEPTIONS_ENABLED}
+	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
+		begin
 		Raise EIntOverflow.create('Overflow on multiply');
-	{$endif}
+		end;
 	exit;
 	end;
 
@@ -8963,9 +9037,10 @@ Result:= R;
 
 if	R.Overflow_flag then
 	begin
-	{$ifdef RAISE_EXCEPTIONS_ENABLED}
+	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
+		begin
 		Raise EIntOverflow.create('Overflow on multiply');
-	{$endif}
+		end;
 	end;
 end;
 
@@ -8985,9 +9060,10 @@ then
 	VR.Defined_flag:= FALSE;
 	VREM:= 0;
 	VREM.Defined_flag:= FALSE;
-	{$ifdef RAISE_EXCEPTIONS_ENABLED}
-	Raise EInterror.create('Uninitialised variable');
-	{$endif}
+	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
+		begin
+		Raise EInterror.create('Uninitialised variable');
+		end;
 	exit;
 	end;
 
@@ -8998,9 +9074,10 @@ then
 	VR.Defined_flag:= FALSE;
 	VREM:= 0;
 	VREM.Defined_flag:= FALSE;
-	{$ifdef RAISE_EXCEPTIONS_ENABLED}
+	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
+		begin
 		Raise EIntOverflow.create('Overflow on Dec');
-	{$endif}
+		end;
 	exit;
 	end;
 
@@ -9011,9 +9088,10 @@ then
 	VR.Defined_flag:= FALSE;
 	VREM:= 0;
 	VREM.Defined_flag:= FALSE;
-	{$ifdef RAISE_EXCEPTIONS_ENABLED}
+	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
+		begin
 		Raise EIntOverflow.create('SqRoot is Negative_flag');
-	{$endif}
+		end;
 	exit;
 	end;
 
@@ -9110,9 +9188,10 @@ else
 				Result:= 0;
 				Result.Defined_flag:= FALSE;
 				Result.Overflow_flag:= TRUE;
-				{$ifdef RAISE_EXCEPTIONS_ENABLED}
+				if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
+					begin
 					Raise EIntOverflow.create('Overflow on Power');
-				{$endif}
+					end;
 				exit;
 				end;
 			if	(T.Negative_flag = Multi_UBool_UNDEF) then
@@ -9131,9 +9210,10 @@ else
 			Result:= 0;
 			Result.Defined_flag:= FALSE;
 			Result.Overflow_flag:= TRUE;
-			{$ifdef RAISE_EXCEPTIONS_ENABLED}
+			if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
+				begin
 				Raise EIntOverflow.create('Overflow on Power');
-			{$endif}
+				end;
 			exit;
 			end;
 		T.Negative_flag:= Multi_UBool_FALSE;
@@ -9149,9 +9229,10 @@ else
 		Result:= 0;
 		Result.Defined_flag:= FALSE;
 		Result.Overflow_flag:= TRUE;
-		{$ifdef RAISE_EXCEPTIONS_ENABLED}
+		if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
+			begin
 			Raise EIntOverflow.create('Overflow on Power');
-		{$endif}
+			end;
 		exit;
 		end;
 	if	(R.Negative_flag = Multi_UBool_UNDEF) then
@@ -9289,9 +9370,10 @@ then
 	begin
 	Result:=0;
 	Result.Defined_flag:= FALSE;
-	{$ifdef RAISE_EXCEPTIONS_ENABLED}
-	Raise EInterror.create('Uninitialised variable');
-	{$endif}
+	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
+		begin
+		Raise EInterror.create('Uninitialised variable');
+		end;
 	exit;
 	end;
 
@@ -9301,9 +9383,10 @@ then
 	Result:= 0;
 	Result.Overflow_flag:=TRUE;
 	Result.Defined_flag:=TRUE;
-	{$ifdef RAISE_EXCEPTIONS_ENABLED}
+	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
+		begin
 		Raise EIntOverflow.create('Overflow on divide');
-	{$endif}
+		end;
 	exit;
 	end;
 
@@ -9348,9 +9431,10 @@ then
 	begin
 	Result:=0;
 	Result.Defined_flag:= FALSE;
-	{$ifdef RAISE_EXCEPTIONS_ENABLED}
-	Raise EInterror.create('Uninitialised variable');
-	{$endif}
+	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
+		begin
+		Raise EInterror.create('Uninitialised variable');
+		end;
 	exit;
 	end;
 
@@ -9360,9 +9444,10 @@ then
 	Result:= 0;
 	Result.Overflow_flag:=TRUE;
 	Result.Defined_flag:=TRUE;
-	{$ifdef RAISE_EXCEPTIONS_ENABLED}
+	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
+		begin
 		Raise EIntOverflow.create('Overflow on modulus');
-	{$endif}
+		end;
 	exit;
 	end;
 
@@ -10263,9 +10348,10 @@ if	(length(v1) > 0) then
 				on EConvertError do
 					begin
 					mi.Defined_flag:= FALSE;
-					{$ifdef RAISE_EXCEPTIONS_ENABLED}
-					Raise;
-					{$endif}
+					if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
+						begin
+						Raise;
+						end;
 					end;
 			end;
 		if mi.Defined_flag = FALSE then goto 999;
@@ -10294,9 +10380,10 @@ if	(length(v1) > 0) then
 			begin
 			mi.Defined_flag:=FALSE;
 			mi.Overflow_flag:=TRUE;
-			{$ifdef RAISE_EXCEPTIONS_ENABLED}
-			Raise EIntOverflow.create('Overflow on string conversion');
-			{$endif}
+			if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
+				begin
+				Raise EIntOverflow.create('Overflow on string conversion');
+				end;
 			goto 999;
 			end;
 		Inc(c);
@@ -10350,18 +10437,20 @@ if	(Not v1.Defined_flag)
 then
 	begin
 	v2:='UNDEFINED';
-	{$ifdef RAISE_EXCEPTIONS_ENABLED}
-	Raise EInterror.create('Uninitialised variable');
-	{$endif}
+	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
+		begin
+		Raise EInterror.create('Uninitialised variable');
+		end;
 	exit;
 	end;
 if	(v1.Overflow_flag)
 then
 	begin
 	v2:='OVERFLOW';
-	{$ifdef RAISE_EXCEPTIONS_ENABLED}
-	Raise EInterror.create('Uninitialised variable');
-	{$endif}
+	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
+		begin
+		Raise EInterror.create('Uninitialised variable');
+		end;
 	exit;
 	end;
 
@@ -10447,9 +10536,10 @@ if	(length(v1) > 0) then
 				on EConvertError do
 					begin
 					mi.Defined_flag:= FALSE;
-					{$ifdef RAISE_EXCEPTIONS_ENABLED}
-					Raise;
-					{$endif}
+					if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
+						begin
+						Raise;
+						end;
 					end;
 			end;
 		if mi.Defined_flag = FALSE then goto 999;
@@ -10478,9 +10568,10 @@ if	(length(v1) > 0) then
 			begin
 			mi.Defined_flag:=FALSE;
 			mi.Overflow_flag:=TRUE;
-			{$ifdef RAISE_EXCEPTIONS_ENABLED}
-			Raise EIntOverflow.create('Overflow on string conversion');
-			{$endif}
+			if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
+				begin
+				Raise EIntOverflow.create('Overflow on string conversion');
+				end;
 			goto 999;
 			end;
 		Inc(c);
@@ -10522,18 +10613,20 @@ if	(Not v1.Defined_flag)
 then
 	begin
 	v2:='UNDEFINED';
-	{$ifdef RAISE_EXCEPTIONS_ENABLED}
-	Raise EInterror.create('Uninitialised variable');
-	{$endif}
+	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
+		begin
+		Raise EInterror.create('Uninitialised variable');
+		end;
 	exit;
 	end;
 if	(v1.Overflow_flag)
 then
 	begin
 	v2:='OVERFLOW';
-	{$ifdef RAISE_EXCEPTIONS_ENABLED}
-	Raise EInterror.create('Uninitialised variable');
-	{$endif}
+	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
+		begin
+		Raise EInterror.create('Uninitialised variable');
+		end;
 	exit;
 	end;
 
@@ -10617,9 +10710,10 @@ Result.Negative_flag:= v1.Negative_flag;
 if	(v1.Defined_flag = FALSE)
 then
 	begin
-	{$ifdef RAISE_EXCEPTIONS_ENABLED}
-	Raise EInterror.create('Uninitialised variable');
-	{$endif}
+	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
+		begin
+		Raise EInterror.create('Uninitialised variable');
+		end;
 	Result.Defined_flag:= FALSE;
 	exit;
 	end;
@@ -10627,9 +10721,10 @@ then
 if	(v1.Overflow_flag = TRUE)
 then
 	begin
-	{$ifdef RAISE_EXCEPTIONS_ENABLED}
-	Raise EInterror.create('Overflow');
-	{$endif}
+	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
+		begin
+		Raise EInterror.create('Overflow');
+		end;
 	Result.Overflow_flag:= TRUE;
 	exit;
 	end;
@@ -10660,9 +10755,10 @@ Result.Negative_flag:= v1.Negative_flag;
 if	(v1.Defined_flag = FALSE)
 then
 	begin
-	{$ifdef RAISE_EXCEPTIONS_ENABLED}
-	Raise EInterror.create('Uninitialised variable');
-	{$endif}
+	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
+		begin
+		Raise EInterror.create('Uninitialised variable');
+		end;
 	Result.Defined_flag:= FALSE;
 	exit;
 	end;
@@ -10670,9 +10766,10 @@ then
 if	(v1.Overflow_flag = TRUE)
 then
 	begin
-	{$ifdef RAISE_EXCEPTIONS_ENABLED}
-	Raise EInterror.create('Overflow');
-	{$endif}
+	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
+		begin
+		Raise EInterror.create('Overflow');
+		end;
 	Result.Overflow_flag:= TRUE;
 	exit;
 	end;
@@ -10703,9 +10800,10 @@ Result.Negative_flag:= v1.Negative_flag;
 if	(v1.Defined_flag = FALSE)
 then
 	begin
-	{$ifdef RAISE_EXCEPTIONS_ENABLED}
-	Raise EInterror.create('Uninitialised variable');
-	{$endif}
+	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
+		begin
+		Raise EInterror.create('Uninitialised variable');
+		end;
 	Result.Defined_flag:= FALSE;
 	exit;
 	end;
@@ -10713,9 +10811,10 @@ then
 if	(v1.Overflow_flag = TRUE)
 then
 	begin
-	{$ifdef RAISE_EXCEPTIONS_ENABLED}
-	Raise EInterror.create('Overflow');
-	{$endif}
+	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
+		begin
+		Raise EInterror.create('Overflow');
+		end;
 	Result.Overflow_flag:= TRUE;
 	exit;
 	end;
@@ -10747,9 +10846,10 @@ MI.Negative_flag:= v1.Negative_flag;
 if	(v1.Defined_flag = FALSE)
 then
 	begin
-	{$ifdef RAISE_EXCEPTIONS_ENABLED}
-	Raise EInterror.create('Uninitialised variable');
-	{$endif}
+	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
+		begin
+		Raise EInterror.create('Uninitialised variable');
+		end;
 	MI.Defined_flag:= FALSE;
 	exit;
 	end;
@@ -10757,9 +10857,10 @@ then
 if	(v1.Overflow_flag = TRUE)
 then
 	begin
-	{$ifdef RAISE_EXCEPTIONS_ENABLED}
-	Raise EInterror.create('Overflow');
-	{$endif}
+	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
+		begin
+		Raise EInterror.create('Overflow');
+		end;
 	MI.Overflow_flag:= TRUE;
 	exit;
 	end;
@@ -10798,9 +10899,10 @@ MI.Negative_flag:= v1.Negative_flag;
 if	(v1.Defined_flag = FALSE)
 then
 	begin
-	{$ifdef RAISE_EXCEPTIONS_ENABLED}
-	Raise EInterror.create('Uninitialised variable');
-	{$endif}
+	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
+		begin
+		Raise EInterror.create('Uninitialised variable');
+		end;
 	MI.Defined_flag:= FALSE;
 	exit;
 	end;
@@ -10808,9 +10910,10 @@ then
 if	(v1.Overflow_flag = TRUE)
 then
 	begin
-	{$ifdef RAISE_EXCEPTIONS_ENABLED}
-	Raise EInterror.create('Overflow');
-	{$endif}
+	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
+		begin
+		Raise EInterror.create('Overflow');
+		end;
 	MI.Overflow_flag:= TRUE;
 	exit;
 	end;
@@ -10850,9 +10953,10 @@ MI.Negative_flag:= v1.Negative_flag;
 if	(v1.Defined_flag = FALSE)
 then
 	begin
-	{$ifdef RAISE_EXCEPTIONS_ENABLED}
-	Raise EInterror.create('Uninitialised variable');
-	{$endif}
+	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
+		begin
+		Raise EInterror.create('Uninitialised variable');
+		end;
 	MI.Defined_flag:= FALSE;
 	exit;
 	end;
@@ -10860,9 +10964,10 @@ then
 if	(v1.Overflow_flag = TRUE)
 then
 	begin
-	{$ifdef RAISE_EXCEPTIONS_ENABLED}
-	Raise EInterror.create('Overflow');
-	{$endif}
+	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
+		begin
+		Raise EInterror.create('Overflow');
+		end;
 	MI.Overflow_flag:= TRUE;
 	exit;
 	end;
@@ -10943,9 +11048,10 @@ if (R > 0.0) then
 	Result.Defined_flag:= FALSE;
 	Result.Negative_flag:= Multi_UBool_UNDEF;
 	Result.Overflow_flag:= TRUE;
-	{$ifdef RAISE_EXCEPTIONS_ENABLED}
-	Raise EIntOverflow.create('Overflow on real conversion');
-	{$endif}
+	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
+		begin
+		Raise EIntOverflow.create('Overflow on real conversion');
+		end;
 	end
 else
 	begin
@@ -10981,9 +11087,10 @@ if (R > 0.0) then
 	Result.Defined_flag:= FALSE;
 	Result.Negative_flag:= Multi_UBool_UNDEF;
 	Result.Overflow_flag:= TRUE;
-	{$ifdef RAISE_EXCEPTIONS_ENABLED}
-	Raise EIntOverflow.create('Overflow on Double conversion');
-	{$endif}
+	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
+		begin
+		Raise EIntOverflow.create('Overflow on Double conversion');
+		end;
 	end
 else
 	begin
@@ -11005,9 +11112,10 @@ if	(Not v1.Defined_flag)
 then
 	begin
 	Result:=0;
-	{$ifdef RAISE_EXCEPTIONS_ENABLED}
-	Raise EInterror.create('Uninitialised variable');
-	{$endif}
+	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
+		begin
+		Raise EInterror.create('Uninitialised variable');
+		end;
 	exit;
 	end;
 
@@ -11029,9 +11137,10 @@ or	(not M_Val_All_Zero)
 then
 	begin
 	Result:=0;
-	{$ifdef RAISE_EXCEPTIONS_ENABLED}
-	Raise EInterror.create('Uninitialised variable');
-	{$endif}
+	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
+		begin
+		Raise EInterror.create('Uninitialised variable');
+		end;
 	exit;
 	end;
 
@@ -11053,9 +11162,10 @@ if	(Not v1.Defined_flag)
 then
 	begin
 	Result:=0;
-	{$ifdef RAISE_EXCEPTIONS_ENABLED}
-	Raise EInterror.create('Uninitialised variable');
-	{$endif}
+	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
+		begin
+		Raise EInterror.create('Uninitialised variable');
+		end;
 	exit;
 	end;
 
@@ -11078,9 +11188,10 @@ then
 	begin
 	Result:=0;
 	Multi_Int_OVERFLOW_ERROR:= TRUE;
-	{$ifdef RAISE_EXCEPTIONS_ENABLED}
-	Raise EInterror.create('Overflow');
-	{$endif}
+	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
+		begin
+		Raise EInterror.create('Overflow');
+		end;
 	exit;
 	end;
 
@@ -11100,9 +11211,10 @@ if	(Not v1.Defined_flag)
 then
 	begin
 	Result:=0;
-	{$ifdef RAISE_EXCEPTIONS_ENABLED}
-	Raise EInterror.create('Uninitialised variable');
-	{$endif}
+	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
+		begin
+		Raise EInterror.create('Uninitialised variable');
+		end;
 	exit;
 	end;
 
@@ -11125,9 +11237,10 @@ then
 	begin
 	Result:=0;
 	Multi_Int_OVERFLOW_ERROR:= TRUE;
-	{$ifdef RAISE_EXCEPTIONS_ENABLED}
-	Raise EInterror.create('Overflow');
-	{$endif}
+	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
+		begin
+		Raise EInterror.create('Overflow');
+		end;
 	exit;
 	end;
 
@@ -11150,9 +11263,10 @@ or	(v1.Negative_flag = Multi_UBool_TRUE)
 then
 	begin
 	Result:=0;
-	{$ifdef RAISE_EXCEPTIONS_ENABLED}
-	Raise EInterror.create('Uninitialised variable');
-	{$endif}
+	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
+		begin
+		Raise EInterror.create('Uninitialised variable');
+		end;
 	exit;
 	end;
 
@@ -11175,9 +11289,10 @@ then
 	begin
 	Result:=0;
 	Multi_Int_OVERFLOW_ERROR:= TRUE;
-	{$ifdef RAISE_EXCEPTIONS_ENABLED}
-	Raise EInterror.create('Overflow');
-	{$endif}
+	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
+		begin
+		Raise EInterror.create('Overflow');
+		end;
 	exit;
 	end;
 
@@ -11194,9 +11309,10 @@ or	(v1.Negative_flag = Multi_UBool_TRUE)
 then
 	begin
 	Result:=0;
-	{$ifdef RAISE_EXCEPTIONS_ENABLED}
-	Raise EInterror.create('Uninitialised variable');
-	{$endif}
+	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
+		begin
+		Raise EInterror.create('Uninitialised variable');
+		end;
 	exit;
 	end;
 
@@ -11205,9 +11321,10 @@ then
 	begin
 	Multi_Int_OVERFLOW_ERROR:= TRUE;
 	Result:=0;
-	{$ifdef RAISE_EXCEPTIONS_ENABLED}
-	Raise EInterror.create('Uninitialised variable');
-	{$endif}
+	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
+		begin
+		Raise EInterror.create('Uninitialised variable');
+		end;
 	exit;
 	end;
 
@@ -11224,9 +11341,10 @@ or	(v1.Negative_flag = Multi_UBool_TRUE)
 then
 	begin
 	Result:=0;
-	{$ifdef RAISE_EXCEPTIONS_ENABLED}
-	Raise EInterror.create('Uninitialised variable');
-	{$endif}
+	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
+		begin
+		Raise EInterror.create('Uninitialised variable');
+		end;
 	exit;
 	end;
 
@@ -11235,9 +11353,10 @@ then
 	begin
 	Multi_Int_OVERFLOW_ERROR:= TRUE;
 	Result:=0;
-	{$ifdef RAISE_EXCEPTIONS_ENABLED}
-	Raise EInterror.create('Uninitialised variable');
-	{$endif}
+	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
+		begin
+		Raise EInterror.create('Uninitialised variable');
+		end;
 	exit;
 	end;
 
@@ -11373,9 +11492,10 @@ then
 	begin
 	Result:=0;
 	Result.Defined_flag:= FALSE;
-	{$ifdef RAISE_EXCEPTIONS_ENABLED}
-	Raise EInterror.create('Uninitialised variable');
-	{$endif}
+	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
+		begin
+		Raise EInterror.create('Uninitialised variable');
+		end;
 	exit;
 	end;
 
@@ -11385,9 +11505,10 @@ then
 	Result:= 0;
 	Result.Overflow_flag:=TRUE;
 	Result.Defined_flag:=TRUE;
-	{$ifdef RAISE_EXCEPTIONS_ENABLED}
+	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
+		begin
 		Raise EIntOverflow.create('Overflow on add');
-	{$endif}
+		end;
 	exit;
 	end;
 
@@ -11430,10 +11551,11 @@ else
 			end;
 		end;
 
-{$ifdef RAISE_EXCEPTIONS_ENABLED}
-if (Result.Overflow_flag = TRUE) then
-	Raise EIntOverflow.create('Overflow on add');
-{$endif}
+if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
+		begin
+		if (Result.Overflow_flag = TRUE) then
+			Raise EIntOverflow.create('Overflow on add');
+		end;
 
 if	(Result.Negative_flag = Multi_UBool_UNDEF) then Result.Negative_flag:= Neg;
 end;
@@ -11450,9 +11572,10 @@ then
 	Result:=0;
 	Result.Defined_flag:= v1.Defined_flag;
 	Result.Overflow_flag:= v1.Overflow_flag;
-	{$ifdef RAISE_EXCEPTIONS_ENABLED}
-	Raise EInterror.create('Uninitialised variable');
-	{$endif}
+	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
+		begin
+		Raise EInterror.create('Uninitialised variable');
+		end;
 	exit;
 	end;
 
@@ -11462,9 +11585,10 @@ then
 	Result:= 0;
 	Result.Defined_flag:= v1.Defined_flag;
 	Result.Overflow_flag:= v1.Overflow_flag;
-	{$ifdef RAISE_EXCEPTIONS_ENABLED}
+	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
+		begin
 		Raise EIntOverflow.create('Overflow on inc');
-	{$endif}
+		end;
 	exit;
 	end;
 
@@ -11492,10 +11616,11 @@ else
 		end;
 	end;
 
-{$ifdef RAISE_EXCEPTIONS_ENABLED}
-if (Result.Overflow_flag = TRUE) then
-	Raise EIntOverflow.create('Overflow on Inc');
-{$endif}
+if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
+		begin
+		if (Result.Overflow_flag = TRUE) then
+			Raise EIntOverflow.create('Overflow on Inc');
+		end;
 
 if	(Result.Negative_flag = Multi_UBool_UNDEF) then Result.Negative_flag:= Neg;
 end;
@@ -11511,9 +11636,10 @@ then
 	begin
 	Result:=0;
 	Result.Defined_flag:= FALSE;
-	{$ifdef RAISE_EXCEPTIONS_ENABLED}
-	Raise EInterror.create('Uninitialised variable');
-	{$endif}
+	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
+		begin
+		Raise EInterror.create('Uninitialised variable');
+		end;
 	exit;
 	end;
 
@@ -11523,9 +11649,10 @@ then
 	Result:= 0;
 	Result.Overflow_flag:=TRUE;
 	Result.Defined_flag:=TRUE;
-	{$ifdef RAISE_EXCEPTIONS_ENABLED}
+	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
+		begin
 		Raise EIntOverflow.create('Overflow on subtract');
-	{$endif}
+		end;
 	exit;
 	end;
 
@@ -11577,10 +11704,11 @@ else (* v1.Negative_flag <> v2.Negative_flag *)
 		end
 	end;
 
-{$ifdef RAISE_EXCEPTIONS_ENABLED}
-if (Result.Overflow_flag = TRUE) then
-	Raise EIntOverflow.create('Overflow on subtract');
-{$endif}
+if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
+		begin
+		if (Result.Overflow_flag = TRUE) then
+			Raise EIntOverflow.create('Overflow on subtract');
+		end;
 
 if	(Result.Negative_flag = Multi_UBool_UNDEF) then Result.Negative_flag:= Neg;
 end;
@@ -11597,9 +11725,10 @@ then
 	Result:=0;
 	Result.Defined_flag:= v1.Defined_flag;
 	Result.Overflow_flag:= v1.Overflow_flag;
-	{$ifdef RAISE_EXCEPTIONS_ENABLED}
-	Raise EInterror.create('Uninitialised variable');
-	{$endif}
+	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
+		begin
+		Raise EInterror.create('Uninitialised variable');
+		end;
 	exit;
 	end;
 
@@ -11609,9 +11738,10 @@ then
 	Result:= 0;
 	Result.Defined_flag:= v1.Defined_flag;
 	Result.Overflow_flag:= v1.Overflow_flag;
-	{$ifdef RAISE_EXCEPTIONS_ENABLED}
+	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
+		begin
 		Raise EIntOverflow.create('Overflow on inc');
-	{$endif}
+		end;
 	exit;
 	end;
 
@@ -11638,10 +11768,11 @@ else (* v1 is Negative_flag *)
 	Neg:=Multi_UBool_TRUE;
 	end;
 
-{$ifdef RAISE_EXCEPTIONS_ENABLED}
-if (Result.Overflow_flag = TRUE) then
-	Raise EIntOverflow.create('Overflow on Dec');
-{$endif}
+if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
+		begin
+		if (Result.Overflow_flag = TRUE) then
+			Raise EIntOverflow.create('Overflow on Dec');
+		end;
 
 if	(Result.Negative_flag = Multi_UBool_UNDEF) then Result.Negative_flag:= Neg;
 end;
@@ -11669,9 +11800,10 @@ then
 	begin
 	Result:=0;
 	Result.Defined_flag:= FALSE;
-	{$ifdef RAISE_EXCEPTIONS_ENABLED}
-	Raise EInterror.create('Uninitialised variable');
-	{$endif}
+	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
+		begin
+		Raise EInterror.create('Uninitialised variable');
+		end;
 	exit;
 	end;
 
@@ -11759,9 +11891,10 @@ then
 	begin
 	Result:=0;
 	Result.Defined_flag:= FALSE;
-	{$ifdef RAISE_EXCEPTIONS_ENABLED}
-	Raise EInterror.create('Uninitialised variable');
-	{$endif}
+	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
+		begin
+		Raise EInterror.create('Uninitialised variable');
+		end;
 	exit;
 	end;
 
@@ -11771,9 +11904,10 @@ then
 	Result:= 0;
 	Result.Overflow_flag:=TRUE;
 	Result.Defined_flag:=TRUE;
-	{$ifdef RAISE_EXCEPTIONS_ENABLED}
+	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
+		begin
 		Raise EIntOverflow.create('Overflow on multiply');
-	{$endif}
+		end;
 	exit;
 	end;
 
@@ -11788,9 +11922,10 @@ Result:= R;
 
 if	R.Overflow_flag then
 	begin
-	{$ifdef RAISE_EXCEPTIONS_ENABLED}
+	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
+		begin
 		Raise EIntOverflow.create('Overflow on multiply');
-	{$endif}
+		end;
 	end;
 end;
 
@@ -11810,9 +11945,10 @@ then
 	VR.Defined_flag:= FALSE;
 	VREM:= 0;
 	VREM.Defined_flag:= FALSE;
-	{$ifdef RAISE_EXCEPTIONS_ENABLED}
-	Raise EInterror.create('Uninitialised variable');
-	{$endif}
+	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
+		begin
+		Raise EInterror.create('Uninitialised variable');
+		end;
 	exit;
 	end;
 
@@ -11823,9 +11959,10 @@ then
 	VR.Defined_flag:= FALSE;
 	VREM:= 0;
 	VREM.Defined_flag:= FALSE;
-	{$ifdef RAISE_EXCEPTIONS_ENABLED}
+	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
+		begin
 		Raise EIntOverflow.create('Overflow on Dec');
-	{$endif}
+		end;
 	exit;
 	end;
 
@@ -11836,9 +11973,10 @@ then
 	VR.Defined_flag:= FALSE;
 	VREM:= 0;
 	VREM.Defined_flag:= FALSE;
-	{$ifdef RAISE_EXCEPTIONS_ENABLED}
+	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
+		begin
 		Raise EIntOverflow.create('SqRoot is Negative_flag');
-	{$endif}
+		end;
 	exit;
 	end;
 
@@ -11935,9 +12073,10 @@ else
 				Result:= 0;
 				Result.Defined_flag:= FALSE;
 				Result.Overflow_flag:= TRUE;
-				{$ifdef RAISE_EXCEPTIONS_ENABLED}
+				if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
+					begin
 					Raise EIntOverflow.create('Overflow on Power');
-				{$endif}
+					end;
 				exit;
 				end;
 			if	(T.Negative_flag = Multi_UBool_UNDEF) then
@@ -11956,9 +12095,10 @@ else
 			Result:= 0;
 			Result.Defined_flag:= FALSE;
 			Result.Overflow_flag:= TRUE;
-			{$ifdef RAISE_EXCEPTIONS_ENABLED}
+			if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
+				begin
 				Raise EIntOverflow.create('Overflow on Power');
-			{$endif}
+				end;
 			exit;
 			end;
 		T.Negative_flag:= Multi_UBool_FALSE;
@@ -11974,9 +12114,10 @@ else
 		Result:= 0;
 		Result.Defined_flag:= FALSE;
 		Result.Overflow_flag:= TRUE;
-		{$ifdef RAISE_EXCEPTIONS_ENABLED}
+		if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
+			begin
 			Raise EIntOverflow.create('Overflow on Power');
-		{$endif}
+			end;
 		exit;
 		end;
 	if	(R.Negative_flag = Multi_UBool_UNDEF) then
@@ -12112,9 +12253,10 @@ then
 	begin
 	Result:=0;
 	Result.Defined_flag:= FALSE;
-	{$ifdef RAISE_EXCEPTIONS_ENABLED}
-	Raise EInterror.create('Uninitialised variable');
-	{$endif}
+	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
+		begin
+		Raise EInterror.create('Uninitialised variable');
+		end;
 	exit;
 	end;
 
@@ -12124,9 +12266,10 @@ then
 	Result:= 0;
 	Result.Overflow_flag:=TRUE;
 	Result.Defined_flag:=TRUE;
-	{$ifdef RAISE_EXCEPTIONS_ENABLED}
+	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
+		begin
 		Raise EIntOverflow.create('Overflow on divide');
-	{$endif}
+		end;
 	exit;
 	end;
 
@@ -12155,11 +12298,13 @@ else	// different values than last time
 	if	(Remainder.Overflow_flag or Quotient.Overflow_flag)
 	then
 		begin
-		{$ifdef RAISE_EXCEPTIONS_ENABLED}
+		if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
+			begin
 			Raise EIntOverflow.create('Overflow on divide');
-		{$endif}
+			end;
 		end;
 	end;
+
 end;
 
 
@@ -12175,9 +12320,10 @@ then
 	begin
 	Result:=0;
 	Result.Defined_flag:= FALSE;
-	{$ifdef RAISE_EXCEPTIONS_ENABLED}
-	Raise EInterror.create('Uninitialised variable');
-	{$endif}
+	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
+		begin
+		Raise EInterror.create('Uninitialised variable');
+		end;
 	exit;
 	end;
 
@@ -12187,9 +12333,10 @@ then
 	Result:= 0;
 	Result.Overflow_flag:=TRUE;
 	Result.Defined_flag:=TRUE;
-	{$ifdef RAISE_EXCEPTIONS_ENABLED}
+	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
+		begin
 		Raise EIntOverflow.create('Overflow on modulus');
-	{$endif}
+		end;
 	exit;
 	end;
 
@@ -12218,9 +12365,10 @@ else	// different values than last time
 	if	(Remainder.Overflow_flag or Quotient.Overflow_flag)
 	then
 		begin
-		{$ifdef RAISE_EXCEPTIONS_ENABLED}
+		if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
+			begin
 			Raise EIntOverflow.create('Overflow on divide');
-		{$endif}
+			end;
 		end;
 	end;
 end;
@@ -12235,6 +12383,7 @@ Multi_Init_Initialisation
 procedure Multi_Init_Initialisation;
 var	i:Multi_int32u;
 begin
+Multi_Int_RAISE_EXCEPTIONS_ENABLED:= TRUE;
 
 X3_Last_Divisor:= 0;
 X3_Last_Dividend:= 0;
@@ -12282,9 +12431,10 @@ while (i <= Multi_X4_max) do
 
 if (X48_max < 1) then
 	begin
-	{$ifdef RAISE_EXCEPTIONS_ENABLED}
-	Raise EIntOverflow.create('X48_max value must be > 0');
-	{$endif}
+	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
+		begin
+		Raise EIntOverflow.create('X48_max value must be > 0');
+		end;
 	writeln('Multi_Int Unit: X48_max defined value must be > 0');
 	halt(1);
 	end;
