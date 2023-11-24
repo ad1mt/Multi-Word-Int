@@ -16,6 +16,12 @@ v4.23B
 -	Abs functions
 -	Additional init procs
 -	Exception bug ifxes in Inc/Dec
+
+v4.23C
+
+v4.23D
+-	?
+-	sign bug fix in power
 *)
 
 (* USER OPTIONAL DEFINES *)
@@ -2986,8 +2992,8 @@ else
 				end;
 			if	(T.Negative_flag = Multi_UBool_UNDEF) then
 				if	(TV.Negative_flag = Y.Negative_flag)
-				then R.Negative_flag:= Multi_UBool_FALSE
-				else R.Negative_flag:= Multi_UBool_TRUE;
+				then T.Negative_flag:= Multi_UBool_FALSE
+				else T.Negative_flag:= Multi_UBool_TRUE;
 
 			Y:= T;
 			PT := PT - 1;
@@ -3005,8 +3011,7 @@ else
 			{$endif}
 			exit;
 			end;
-		if	(T.Negative_flag = Multi_UBool_UNDEF) then
-			T.Negative_flag:= Multi_UBool_FALSE;
+		T.Negative_flag:= Multi_UBool_FALSE;
 
 		TV:= T;
 		PT := (PT div 2);
@@ -5924,8 +5929,8 @@ else
 				end;
 			if	(T.Negative_flag = Multi_UBool_UNDEF) then
 				if	(TV.Negative_flag = Y.Negative_flag)
-				then R.Negative_flag:= Multi_UBool_FALSE
-				else R.Negative_flag:= Multi_UBool_TRUE;
+				then T.Negative_flag:= Multi_UBool_FALSE
+				else T.Negative_flag:= Multi_UBool_TRUE;
 
 			Y:= T;
 			PT := PT - 1;
@@ -5943,8 +5948,7 @@ else
 			{$endif}
 			exit;
 			end;
-		if	(T.Negative_flag = Multi_UBool_UNDEF) then
-			T.Negative_flag:= Multi_UBool_FALSE;
+		T.Negative_flag:= Multi_UBool_FALSE;
 
 		TV:= T;
 		PT := (PT div 2);
@@ -9113,8 +9117,8 @@ else
 				end;
 			if	(T.Negative_flag = Multi_UBool_UNDEF) then
 				if	(TV.Negative_flag = Y.Negative_flag)
-				then R.Negative_flag:= Multi_UBool_FALSE
-				else R.Negative_flag:= Multi_UBool_TRUE;
+				then T.Negative_flag:= Multi_UBool_FALSE
+				else T.Negative_flag:= Multi_UBool_TRUE;
 
 			Y:= T;
 			PT := PT - 1;
@@ -9132,8 +9136,7 @@ else
 			{$endif}
 			exit;
 			end;
-		if	(T.Negative_flag = Multi_UBool_UNDEF) then
-			T.Negative_flag:= Multi_UBool_FALSE;
+		T.Negative_flag:= Multi_UBool_FALSE;
 
 		TV:= T;
 		PT := (PT div 2);
@@ -11939,8 +11942,8 @@ else
 				end;
 			if	(T.Negative_flag = Multi_UBool_UNDEF) then
 				if	(TV.Negative_flag = Y.Negative_flag)
-				then R.Negative_flag:= Multi_UBool_FALSE
-				else R.Negative_flag:= Multi_UBool_TRUE;
+				then T.Negative_flag:= Multi_UBool_FALSE
+				else T.Negative_flag:= Multi_UBool_TRUE;
 
 			Y:= T;
 			PT := PT - 1;
@@ -11958,8 +11961,7 @@ else
 			{$endif}
 			exit;
 			end;
-		if	(T.Negative_flag = Multi_UBool_UNDEF) then
-			T.Negative_flag:= Multi_UBool_FALSE;
+		T.Negative_flag:= Multi_UBool_FALSE;
 
 		TV:= T;
 		PT := (PT div 2);
