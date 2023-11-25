@@ -13,11 +13,11 @@ const
 M2_DIV_ITERATIONS	= 1000000;
 M2_MUL_ITERATIONS	= 1000000;
 M2_SUB_ITERATIONS	= 10000000;
-M4_DIV_ITERATIONS	= 100000;
-M4_MUL_ITERATIONS	= 100000;
+M4_DIV_ITERATIONS	= 1000000;
+M4_MUL_ITERATIONS	= 1000000;
 M4_SUB_ITERATIONS	= 1000000;
 M48_DIV_ITERATIONS	= 100;
-M48_MUL_ITERATIONS	= 1000;
+M48_MUL_ITERATIONS	= 10000;
 M48_SUB_ITERATIONS	= 100000;
 
 var
@@ -37,11 +37,14 @@ M2_k		:Multi_Int_X2;
 begin
 start_time:= GetTickCount64;
 
-M2_i:= Multi_Int_X2_MAXINT;
-ShiftDown(M2_i, 1);
+// M2_i:= Multi_Int_X2_MAXINT;
+// ShiftDown(M2_i, 1);
 
-M2_j:= Multi_Int_X2_MAXINT;
-ShiftDown(M2_j, 47);
+// M2_j:= Multi_Int_X2_MAXINT;
+// ShiftDown(M2_j, 47);
+
+M2_i:= 1000000000000000003;
+M2_j:= 100000000000000003;
 
 i:=0;
 while (i < (M2_DIV_ITERATIONS div 2)) do
@@ -65,11 +68,8 @@ writeln(Format('time elapsed is %f seconds for %d iterations of divide with %d b
 
 start_time:= GetTickCount64;
 
-M2_i:= Multi_Int_X2_MAXINT;
-ShiftDown(M2_i, 47);
-
-M2_j:= Multi_Int_X2_MAXINT;
-ShiftDown(M2_j, 83);
+M2_i:= 1000000000000000003;
+M2_j:= 100000000000000003;
 
 i:=0;
 while (i < (M2_MUL_ITERATIONS div 2)) do
@@ -93,11 +93,8 @@ writeln(Format('time elapsed is %f seconds for %d iterations of multiply with %d
 
 start_time:= GetTickCount64;
 
-M2_i:= Multi_Int_X2_MAXINT;
-ShiftDown(M2_i, 1);
-
-M2_j:= Multi_Int_X2_MAXINT;
-ShiftDown(M2_j, 7);
+M2_i:= 1000000000000000003;
+M2_j:= 100000000000000003;
 
 i:=0;
 while (i < (M2_SUB_ITERATIONS div 2)) do
@@ -132,14 +129,15 @@ M4_k		:Multi_Int_X4;
 
 begin
 start_time:= GetTickCount64;
-M4_i:= Multi_Int_X4_MAXINT;
-M4_j:= (To_Multi_Int_X4(Multi_Int_X2_MAXINT) * 7);
 
-M4_i:= Multi_Int_X4_MAXINT;
-ShiftDown(M4_i, 1);
+// M2_i:= Multi_Int_X2_MAXINT;
+// ShiftDown(M2_i, 1);
 
-M4_j:= Multi_Int_X3_MAXINT;
-ShiftUp(M4_j, 3);
+// M2_j:= Multi_Int_X2_MAXINT;
+// ShiftDown(M2_j, 47);
+
+M4_i:= 1000000000000000003;
+M4_j:= 100000000000000003;
 
 i:=0;
 while (i < (M4_DIV_ITERATIONS div 2)) do
@@ -162,11 +160,8 @@ writeln(Format('time elapsed is %f seconds for %d iterations of divide with %d b
 
 start_time:= GetTickCount64;
 
-M4_i:= Multi_Int_X4_MAXINT;
-ShiftDown(M4_i, 101);
-
-M4_j:= Multi_Int_X3_MAXINT;
-ShiftDown(M4_j, 101);
+M4_i:= 1000000000000000003;
+M4_j:= 100000000000000003;
 
 i:=0;
 while (i < (M4_MUL_ITERATIONS div 2)) do
@@ -190,11 +185,8 @@ writeln(Format('time elapsed is %f seconds for %d iterations of multiply with %d
 
 start_time:= GetTickCount64;
 
-M4_i:= Multi_Int_X4_MAXINT;
-ShiftDown(M4_i, 7);
-
-M4_j:= Multi_Int_X4_MAXINT;
-ShiftDown(M4_j, 19);
+M4_i:= 1000000000000000003;
+M4_j:= 100000000000000003;
 
 i:=0;
 while (i < (M4_SUB_ITERATIONS div 2)) do
@@ -234,8 +226,7 @@ start_time:= GetTickCount64;
 M48_i:= Multi_Int_X48_MAXINT;
 ShiftDown(M48_i, 7);
 
-M48_j:= Multi_Int_X4_MAXINT;
-ShiftUp(M48_j, 61);
+M48_j:= '1000000000011100000000041070000000050653';
 
 i:=0;
 while (i < (M48_DIV_ITERATIONS div 2)) do
