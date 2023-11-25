@@ -1,4 +1,4 @@
-// {$MODE DELPHI}
+{$MODE DELPHI}
 {$MODESWITCH NESTEDCOMMENTS+}
 
 program calc;
@@ -24,7 +24,7 @@ if (ParamCount = 0) then
 	begin
 	writeln('usage: calc  number  operator  number');
 	writeln('where: operator can be one of:');
-	writeln(' + - * div (/) mod (%) sqr pow (^ or **) xor shu shd');
+	writeln(' + - * div (/) mod (%) xor sqr pow (^ or **) shu shd');
 	writeln('where shu/shd means shift bits and sqr means square root');
 	writeln('and number can be up to +/- ',Multi_Int_X48_MAXINT.tostr);
 	end
