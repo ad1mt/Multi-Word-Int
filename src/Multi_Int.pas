@@ -4,11 +4,49 @@ UNIT Multi_Int;
 
 {$MODESWITCH NESTEDCOMMENTS+}
 
+(*
+v4.23B
+-	bug fixes in divide
+-	divide v4 working
+-	sign bug fixes in power
+-	sign bug fixes in sqroot
+
+v4.23B
+-	Negative functions
+-	Abs functions
+-	Additional init procs
+-	Exception bug ifxes in Inc/Dec
+
+v4.23C
+
+v4.23D
+-	?
+-	sign bug fix in power v4.24
+-	move UBool into separate unit.
+
+v4.25
+-	rename RAISE_EXCEPTIONS_ENABLED to Multi_Int_RAISE_EXCEPTIONS_ENABLED
+-	make Multi_Int_RAISE_EXCEPTIONS_ENABLED a var instead of a define to allow
+	better control of exceptions
+-	Multi_Int_RAISE_EXCEPTIONS_ENABLED defaults to TRUE
+
+v4.26
+-	automagically detect and set {$define 64bit} or {$define 32bit}
+*)
+
 (* USER OPTIONAL DEFINES *)
 
-// This should be changed to 32bit for 32 bit CPUs
+// This should be changed to 32bit if you wish to override the default/detected setting
+// E.g. if your compiler is 64bit but you want to generate code for 32bit integers,
+// you would remove the "{$define 64bit}" and replace it with "{$define 32bit}"
+// In 99.9% of cases, you should leave this to default, unless you have problems
+// running the code in a 32bit environment.
 
-{$define 64bit}
+{$IFDEF CPU64}
+  {$define 64bit}
+{$ELSE}
+  {$define 32bit}
+{$ENDIF}
 
 (* END OF USER OPTIONAL DEFINES *)
 	
@@ -137,6 +175,8 @@ type
 type
 
 T_Multi_Leading_Zeros	=	(Multi_Keep_Leading_Zeros, Multi_Trim_Leading_Zeros);
+
+T_Multi_32bit_or_64bit	=	(Multi_undef, Multi_32bit, Multi_64bit);
 
 Multi_Int_X2	=	record
 					private
@@ -353,6 +393,8 @@ Multi_Int_X2_MAXINT			:Multi_Int_X2;
 Multi_Int_X3_MAXINT			:Multi_Int_X3;
 Multi_Int_X4_MAXINT			:Multi_Int_X4;
 Multi_Int_X48_MAXINT		:Multi_Int_X48;
+Multi_32bit_or_64bit		:T_Multi_32bit_or_64bit;
+
 
 function Odd(const v1:Multi_Int_X48):boolean; overload;
 function Odd(const v1:Multi_Int_X4):boolean; overload;
@@ -12446,6 +12488,17 @@ while (i <= X48_max) do
 	Multi_Int_X48_MAXINT.M_Value[i]:= INT_1W_U_MAXINT;
 	Inc(i);
 	end;
+
+Multi_32bit_or_64bit:= Multi_undef;
+
+{$ifdef 64bit}
+Multi_32bit_or_64bit:= Multi_64bit;
+{$endif}
+
+{$ifdef 32bit}
+Multi_32bit_or_64bit:= Multi_32bit;
+{$endif}
+
 end;
 
 
