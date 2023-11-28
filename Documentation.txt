@@ -57,11 +57,11 @@ Technical Notes
 ---------------
 The code will only compile & work correctly in Delphi mode. The "advancedrecords" mode will not work correctly.
 
-The code will compile in both 32bit and 64bit environments. In the Multi_Int.pas file you must set a define "{$define 64bit}" or "{$define 32bit}" depending on the environment, i.e. whether standard integers are 32bit or 64bit.
+The code will compile in both 32bit and 64bit environments. In the Multi_Int.pas file you can set a define "{$define 64bit}" or "{$define 32bit}" depending on the environment, i.e. whether standard integers are 32bit or 64bit. This is set by default to match the compiler you are using, but can be overidden.
 
 The Multi_Int unit exports a variable Multi_Int_RAISE_EXCEPTIONS_ENABLED, if set to TRUE, enables run-time exceptions to be generated. If set to FALSE, run-time exceptions will not be generated, but the Defined and Overload attributes will still be set and can be checked explicitly in the calling code.
 
-In the Multi_Int.pas file you can set/change a define called "X48_max". This is the size in half-words of the Multi_Int_X48 type (zero base). So, if you specify 127, that means the size is 128 half-words, which equals 64 whole words, which equals 4096 bits. Set this size to be the maximum you need for your application (with a small margin of error). The larger the size, the slower the calculations become.
+In the Multi_Int.pas file you can set/change a define called "Multi_X48_max". This is the size in half-words of the Multi_Int_X48 type (zero base). So, if you specify 127, that means the size is 128 half-words, which equals 64 whole words, which equals 4096 bits. Set this size to be the maximum you need for your application (with a small margin of error). The larger the size, the slower the calculations become.
 
 The name "Multi_Int_X48" should be better, its a hangover from earlier days, and I'm a bit scared to do a global search and replace in the code. Suggestions for a new name are welcome.
 
