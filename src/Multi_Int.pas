@@ -32,6 +32,9 @@ v4.25
 
 v4.26
 -	automagically detect and set {$define 64bit} or {$define 32bit}
+
+v4.27
+-	single word divisor optimisation from Warren/Knuth
 *)
 
 (* USER OPTIONAL DEFINES *)
@@ -62,23 +65,23 @@ uses	sysutils
 const
 
 (*
-Notes about X48_max
-X48_max is the number of half-words (minus 1) in the Multi-word integer type named Multi_Int_X48,
+Notes about Multi_X48_max
+Multi_X48_max is the number of half-words (minus 1) in the Multi-word integer type named Multi_Int_X48,
 using zero-base, therefore 1 means 2.
 The value must be 1 or greater (i.e. 2 half-words minimum), but
 there is no point in having less than 7, because the type named Multi_Int_X4 uses 8 (7).
 The number is half-words, so if you specify 127 that is 128 half-words, which equals
 64 words, which equals 512 bits (in 64bit environment).
 *)
-	X48_max		= 127;
+	Multi_X48_max		= 127;
 
 (*
-X48_max is the only thing you should change in here.
+Multi_X48_max is the only thing you should change in here.
 Do not change anything below.
 *)
 
-	X48_max_x2	= (((X48_max+1)*2)-1);
-	X48_size	= X48_max + 1;
+	Multi_X48_max_x2	= (((Multi_X48_max+1)*2)-1);
+	Multi_X48_size		= Multi_X48_max + 1;
 
 const
 	Multi_INT8_MAXINT = 127;
@@ -336,7 +339,7 @@ Multi_Int_X4	=	record
 
 Multi_Int_X48	=	record
 					private
-						M_Value			:array[0..X48_max] of INT_1W_U;
+						M_Value			:array[0..Multi_X48_max] of INT_1W_U;
 						Negative_flag		:T_Multi_UBool;
 						Overflow_flag	:boolean;
 						Defined_flag	:boolean;
@@ -3042,7 +3045,7 @@ end;
 
 (******************************************)
 procedure intdivide_Shift_And_Sub_X2(const P_dividend,P_divisor:Multi_Int_X2;var P_quotient,P_remainder:Multi_Int_X2);
-label	1000,9999;
+label	1000,9000,9999;
 var
 dividend,
 divisor,
@@ -3050,6 +3053,9 @@ quotient,
 quotient_factor,
 prev_dividend,
 ZERO				:Multi_Int_X2;
+T					:INT_1W_U;
+z,k					:INT_2W_U;
+i,
 nlz_bits_dividend,
 nlz_bits_divisor,
 nlz_bits_P_divisor,
@@ -3074,17 +3080,44 @@ else if	(P_divisor = P_dividend) then
     end
 else
 	begin
-	dividend:= P_dividend;
+    dividend:= 0;
+	divisor:= 0;
+	z:= 0;
+    i:= Multi_X2_max;
+	while (i >= 0) do
+		begin
+		dividend.M_Value[i]:= P_dividend.M_Value[i];
+		T:= P_divisor.M_Value[i];
+		divisor.M_Value[i]:= T;
+		if	(T <> 0) then Inc(z);
+		Dec(i);
+		end;
 	dividend.Negative_flag:= FALSE;
-	divisor:= P_divisor;
 	divisor.Negative_flag:= FALSE;
 
 	if	(divisor > dividend) then
 		begin
 		P_quotient:= ZERO;
 	 	P_remainder:= P_dividend;
-		goto 9999;
+		goto 9000;
 	    end;
+
+	// single digit divisor
+	if	(z = 1) then
+		begin
+		P_remainder:= 0;
+		P_quotient:= 0;
+		k:= 0;
+		i:= Multi_X4_max;
+		while (i >= 0) do
+			begin
+			P_quotient.M_Value[i]:= (((k * INT_1W_U_MAXINT_1) + dividend.M_Value[i]) div divisor.M_Value[0]);
+			k:= (((k * INT_1W_U_MAXINT_1) + dividend.M_Value[i]) - (P_quotient.M_Value[i] * divisor.M_Value[0]));
+			Dec(i);
+			end;
+		P_remainder.M_Value[0]:= k;
+		goto 9000;
+		end;
 
 	quotient:= ZERO;
 	P_remainder:= ZERO;
@@ -3138,6 +3171,7 @@ else
 	P_quotient:= quotient;
 	P_remainder:= dividend;
 
+9000:
 	if	(P_dividend.Negative_flag = TRUE) and (P_remainder > 0)
 	then
 		P_remainder.Negative_flag:= TRUE;
@@ -6039,7 +6073,7 @@ end;
 
 (******************************************)
 procedure intdivide_Shift_And_Sub_X3(const P_dividend,P_divisor:Multi_Int_X3;var P_quotient,P_remainder:Multi_Int_X3);
-label	1000,9999;
+label	1000,9000,9999;
 var
 dividend,
 divisor,
@@ -6047,6 +6081,9 @@ quotient,
 quotient_factor,
 prev_dividend,
 ZERO				:Multi_Int_X3;
+T					:INT_1W_U;
+z,k					:INT_2W_U;
+i,
 nlz_bits_dividend,
 nlz_bits_divisor,
 nlz_bits_P_divisor,
@@ -6071,17 +6108,44 @@ else if	(P_divisor = P_dividend) then
     end
 else
 	begin
-	dividend:= P_dividend;
+    dividend:= 0;
+	divisor:= 0;
+	z:= 0;
+    i:= Multi_X3_max;
+	while (i >= 0) do
+		begin
+		dividend.M_Value[i]:= P_dividend.M_Value[i];
+		T:= P_divisor.M_Value[i];
+		divisor.M_Value[i]:= T;
+		if	(T <> 0) then Inc(z);
+		Dec(i);
+		end;
 	dividend.Negative_flag:= FALSE;
-	divisor:= P_divisor;
 	divisor.Negative_flag:= FALSE;
 
 	if	(divisor > dividend) then
 		begin
 		P_quotient:= ZERO;
 	 	P_remainder:= P_dividend;
-		goto 9999;
+		goto 9000;
 	    end;
+
+	// single digit divisor
+	if	(z = 1) then
+		begin
+		P_remainder:= 0;
+		P_quotient:= 0;
+		k:= 0;
+		i:= Multi_X4_max;
+		while (i >= 0) do
+			begin
+			P_quotient.M_Value[i]:= (((k * INT_1W_U_MAXINT_1) + dividend.M_Value[i]) div divisor.M_Value[0]);
+			k:= (((k * Multi_X4_max) + dividend.M_Value[i]) - (P_quotient.M_Value[i] * divisor.M_Value[0]));
+			Dec(i);
+			end;
+		P_remainder.M_Value[0]:= k;
+		goto 9000;
+		end;
 
 	quotient:= ZERO;
 	P_remainder:= ZERO;
@@ -6132,6 +6196,7 @@ else
 	or		(divisor = ZERO)
 	;
 
+9000:
 	P_quotient:= quotient;
 	P_remainder:= dividend;
 
@@ -9289,7 +9354,7 @@ end;
 
 (******************************************)
 procedure intdivide_Shift_And_Sub_X4(const P_dividend,P_divisor:Multi_Int_X4;var P_quotient,P_remainder:Multi_Int_X4);
-label	1000,9999;
+label	1000,9000,9999;
 var
 dividend,
 divisor,
@@ -9297,6 +9362,9 @@ quotient,
 quotient_factor,
 prev_dividend,
 ZERO				:Multi_Int_X4;
+T					:INT_1W_U;
+z,k					:INT_2W_U;
+i,
 nlz_bits_dividend,
 nlz_bits_divisor,
 nlz_bits_P_divisor,
@@ -9321,17 +9389,44 @@ else if	(P_divisor = P_dividend) then
     end
 else
 	begin
-	dividend:= P_dividend;
+    dividend:= 0;
+	divisor:= 0;
+	z:= 0;
+    i:= Multi_X4_max;
+	while (i >= 0) do
+		begin
+		dividend.M_Value[i]:= P_dividend.M_Value[i];
+		T:= P_divisor.M_Value[i];
+		divisor.M_Value[i]:= T;
+		if	(T <> 0) then Inc(z);
+		Dec(i);
+		end;
 	dividend.Negative_flag:= FALSE;
-	divisor:= P_divisor;
 	divisor.Negative_flag:= FALSE;
 
 	if	(divisor > dividend) then
 		begin
 		P_quotient:= ZERO;
 	 	P_remainder:= P_dividend;
-		goto 9999;
+		goto 9000;
 	    end;
+
+	// single digit divisor
+	if	(z = 1) then
+		begin
+		P_remainder:= 0;
+		P_quotient:= 0;
+		k:= 0;
+		i:= Multi_X4_max;
+		while (i >= 0) do
+			begin
+			P_quotient.M_Value[i]:= (((k * INT_1W_U_MAXINT_1) + dividend.M_Value[i]) div divisor.M_Value[0]);
+			k:= (((k * Multi_X4_max) + dividend.M_Value[i]) - (P_quotient.M_Value[i] * divisor.M_Value[0]));
+			Dec(i);
+			end;
+		P_remainder.M_Value[0]:= k;
+		goto 9000;
+		end;
 
 	quotient:= ZERO;
 	P_remainder:= ZERO;
@@ -9385,6 +9480,7 @@ else
 	P_quotient:= quotient;
 	P_remainder:= dividend;
 
+9000:
 	if	(P_dividend.Negative_flag = TRUE) and (P_remainder > 0)
 	then
 		P_remainder.Negative_flag:= TRUE;
@@ -9530,7 +9626,7 @@ function ABS_greaterthan_Multi_Int_X48(const v1,v2:Multi_Int_X48):Boolean;
 var
 	i	:INT_2W_U;
 begin
-i:= X48_max;
+i:= Multi_X48_max;
 while (i > 0) do
 	begin
 	if	(v1.M_Value[i] > v2.M_Value[i])
@@ -9552,7 +9648,7 @@ function ABS_lessthan_Multi_Int_X48(const v1,v2:Multi_Int_X48):Boolean;
 var
 	i	:INT_2W_U;
 begin
-i:= X48_max;
+i:= Multi_X48_max;
 while (i > 0) do
 	begin
 	if	(v1.M_Value[i] < v2.M_Value[i])
@@ -9575,7 +9671,7 @@ i,n		:Multi_int32;
 fini	:boolean;
 begin
 n:= 0;
-i:= X48_max;
+i:= Multi_X48_max;
 fini:= false;
 repeat
 	if	(i < 0) then fini:= true
@@ -9595,8 +9691,8 @@ function nlz_MultiBits_X48(const m:Multi_Int_X48):INT_1W_U;
 var	w,b	:INT_1W_U;
 begin
 w:= nlz_words_X48(m);
-if (w <= X48_max)
-then Result:= nlz_bits(m.M_Value[X48_max-w]) + (w * INT_1W_SIZE)
+if (w <= Multi_X48_max)
+then Result:= nlz_bits(m.M_Value[Multi_X48_max-w]) + (w * INT_1W_SIZE)
 else Result:= (w * INT_1W_SIZE);
 end;
 
@@ -9757,7 +9853,7 @@ if NBits <= NBits_max then
 	v1.M_Value[0]:= (v1.M_Value[0] << NBits);
 
 	n:=1;
-	while (n < X48_max) do
+	while (n < Multi_X48_max) do
 		begin
 		carry_bits_2:= ((v1.M_Value[n] and carry_bits_mask) >> NBits_carry);
 		v1.M_Value[n]:= ((v1.M_Value[n] << NBits) OR carry_bits_1);
@@ -9783,12 +9879,12 @@ procedure ShiftUp_NWords_Multi_Int_X48(var v1:Multi_Int_X48; NWords:INT_1W_U);
 var	n,i	:INT_1W_U;
 begin
 if		(NWords > 0)
-and		(NWords <= X48_max) then
+and		(NWords <= Multi_X48_max) then
 	begin
 	n:= NWords;
 	while (n > 0) do
 		begin
-		i:=X48_max;
+		i:=Multi_X48_max;
 		while (i > 0) do
 			begin
 			v1.M_Value[i]:= v1.M_Value[i-1];
@@ -9870,7 +9966,7 @@ if NBits <= NBits_max then
 	v1.M_Value[0]:= (v1.M_Value[0] << NBits);
 
 	n:=1;
-	while (n <= X48_max) do
+	while (n <= Multi_X48_max) do
 		begin
 		carry_bits_2:= ((v1.M_Value[n] and carry_bits_mask) >> NBits_carry);
 		v1.M_Value[n]:= ((v1.M_Value[n] << NBits) OR carry_bits_1);
@@ -9895,12 +9991,12 @@ procedure RotateUp_NWords_Multi_Int_X48(var v1:Multi_Int_X48; NWords:INT_1W_U);
 var	i,n,t	:INT_1W_U;
 begin
 if		(NWords > 0)
-and		(NWords <= X48_max) then
+and		(NWords <= Multi_X48_max) then
 	begin
 	n:= NWords;
 	while (n > 0) do
 		begin
-		i:=X48_max;
+		i:=Multi_X48_max;
 		t:= v1.M_Value[i];
 		while (i > 0) do
 			begin
@@ -9979,7 +10075,7 @@ carry_bits_mask:= (carry_bits_mask >> NBits_carry);
 
 if NBits <= NBits_max then
 	begin
-	n:=X48_max;
+	n:=Multi_X48_max;
 	carry_bits_1:= ((v1.M_Value[n] and carry_bits_mask) << NBits_carry);
 	v1.M_Value[n]:= (v1.M_Value[n] >> NBits);
 
@@ -10009,13 +10105,13 @@ procedure ShiftDown_NWords_Multi_Int_X48(var v1:Multi_Int_X48; NWords:INT_1W_U);
 var	n,i	:INT_1W_U;
 begin
 if		(NWords > 0)
-and		(NWords <= X48_max) then
+and		(NWords <= Multi_X48_max) then
 	begin
 	n:= NWords;
 	while (n > 0) do
 		begin
 		i:=0;
-		while (i < X48_max) do
+		while (i < Multi_X48_max) do
 			begin
 			v1.M_Value[i]:= v1.M_Value[i+1];
 			inc(i);
@@ -10091,7 +10187,7 @@ carry_bits_mask:= (carry_bits_mask >> NBits_carry);
 
 if NBits <= NBits_max then
 	begin
-	n:=X48_max;
+	n:=Multi_X48_max;
 	carry_bits_1:= ((v1.M_Value[n] and carry_bits_mask) << NBits_carry);
 	v1.M_Value[n]:= (v1.M_Value[n] >> NBits);
 
@@ -10104,7 +10200,7 @@ if NBits <= NBits_max then
 		dec(n);
 		end;
 
-	v1.M_Value[X48_max]:= (v1.M_Value[X48_max] OR carry_bits_1);
+	v1.M_Value[Multi_X48_max]:= (v1.M_Value[Multi_X48_max] OR carry_bits_1);
 
 	end;
 end;
@@ -10122,14 +10218,14 @@ procedure RotateDown_NWords_Multi_Int_X48(var v1:Multi_Int_X48; NWords:INT_1W_U)
 var	i,n,t	:INT_1W_U;
 begin
 if		(NWords > 0)
-and		(NWords <= X48_max) then
+and		(NWords <= Multi_X48_max) then
 	begin
 	n:= NWords;
 	while (n > 0) do
 		begin
 		i:=0;
 		t:= v1.M_Value[i];
-		while (i < X48_max) do
+		while (i < Multi_X48_max) do
 			begin
 			v1.M_Value[i]:= v1.M_Value[i+1];
 			inc(i);
@@ -10236,7 +10332,7 @@ var
 begin
 Result:=TRUE;
 i:=0;
-while (i <= X48_max) do
+while (i <= Multi_X48_max) do
 	begin
 	if	(v1.M_Value[i] <> v2.M_Value[i]) then
 		begin
@@ -10357,7 +10453,7 @@ label 999;
 var
 	n,i,b,c,e
 				:INT_2W_U;
-	M_Val		:array[0..X48_max] of INT_2W_U;
+	M_Val		:array[0..Multi_X48_max] of INT_2W_U;
 	Signeg,
 	Zeroneg,
 	M_Val_All_Zero		:boolean;
@@ -10369,7 +10465,7 @@ Signeg:= FALSE;
 Zeroneg:= FALSE;
 
 n:=0;
-while (n <= X48_max)
+while (n <= Multi_X48_max)
 do begin M_Val[n]:= 0; inc(n); end;
 
 if	(length(v1) > 0) then
@@ -10400,14 +10496,14 @@ if	(length(v1) > 0) then
 
 		M_Val[0]:=(M_Val[0] * 10) + i;
 		n:=1;
-		while (n <= X48_max) do
+		while (n <= Multi_X48_max) do
 			begin
 			M_Val[n]:=(M_Val[n] * 10);
 			inc(n);
 			end;
 
 		n:=0;
-		while (n < X48_max) do
+		while (n < Multi_X48_max) do
 			begin
 			if	M_Val[n] > INT_1W_U_MAXINT then
 				begin
@@ -10434,7 +10530,7 @@ if	(length(v1) > 0) then
 
 M_Val_All_Zero:= TRUE;
 n:=0;
-while (n <= X48_max) do
+while (n <= Multi_X48_max) do
 	begin
 	mi.M_Value[n]:= M_Val[n];
 	if M_Val[n] > 0 then M_Val_All_Zero:= FALSE;
@@ -10471,7 +10567,7 @@ end;
 procedure Multi_Int_X48_to_string(const v1:Multi_Int_X48; var v2:string);
 var
 	s				:string = '';
-	M_Val			:array[0..X48_max] of INT_2W_U;
+	M_Val			:array[0..Multi_X48_max] of INT_2W_U;
 	n				:INT_2W_U;
 	M_Val_All_Zero	:boolean;
 begin
@@ -10497,14 +10593,14 @@ then
 	end;
 
 n:=0;
-while (n <= X48_max) do
+while (n <= Multi_X48_max) do
 	begin
 	M_Val[n]:= v1.M_Value[n];
 	inc(n);
 	end;
 
 repeat
-	n:= X48_max;
+	n:= Multi_X48_max;
 	M_Val_All_Zero:= TRUE;
 	repeat
 		M_Val[n-1]:= M_Val[n-1] + (INT_1W_U_MAXINT_1 * (M_Val[n] MOD 10));
@@ -10544,7 +10640,7 @@ label 999;
 var
 	n,i,b,c,e
 				:INT_2W_U;
-	M_Val		:array[0..X48_max] of INT_2W_U;
+	M_Val		:array[0..Multi_X48_max] of INT_2W_U;
 	Signeg,
 	Zeroneg,
 	M_Val_All_Zero		:boolean;
@@ -10556,7 +10652,7 @@ Signeg:= FALSE;
 Zeroneg:= FALSE;
 
 n:=0;
-while (n <= X48_max)
+while (n <= Multi_X48_max)
 do begin M_Val[n]:= 0; inc(n); end;
 
 if	(length(v1) > 0) then
@@ -10588,14 +10684,14 @@ if	(length(v1) > 0) then
 
 		M_Val[0]:=(M_Val[0] * 16) + i;
 		n:=1;
-		while (n <= X48_max) do
+		while (n <= Multi_X48_max) do
 			begin
 			M_Val[n]:=(M_Val[n] * 16);
 			inc(n);
 			end;
 
 		n:=0;
-		while (n < X48_max) do
+		while (n < Multi_X48_max) do
 			begin
 			if	M_Val[n] > INT_1W_U_MAXINT then
 				begin
@@ -10622,7 +10718,7 @@ if	(length(v1) > 0) then
 
 M_Val_All_Zero:= TRUE;
 n:=0;
-while (n <= X48_max) do
+while (n <= Multi_X48_max) do
 	begin
 	mi.M_Value[n]:= M_Val[n];
 	if M_Val[n] > 0 then M_Val_All_Zero:= FALSE;
@@ -10675,7 +10771,7 @@ then
 n:= (INT_1W_SIZE div 4);
 s:= '';
 
-i:=X48_max;
+i:=Multi_X48_max;
 while (i >= 0) do
 	begin
 	s:= s + IntToHex(v1.M_Value[i],n);
@@ -10704,7 +10800,7 @@ mi.Overflow_flag:=FALSE;
 mi.Defined_flag:=TRUE;
 
 n:=2;
-while (n <= X48_max) do
+while (n <= Multi_X48_max) do
 	begin
 	mi.M_Value[n]:= 0;
 	inc(n);
@@ -10778,7 +10874,7 @@ while (n <= Multi_X4_max) do
 	inc(n);
 	end;
 
-while (n <= X48_max) do
+while (n <= Multi_X48_max) do
 	begin
 	Result.M_Value[n]:= 0;
 	inc(n);
@@ -10823,7 +10919,7 @@ while (n <= Multi_X3_max) do
 	inc(n);
 	end;
 
-while (n <= X48_max) do
+while (n <= Multi_X48_max) do
 	begin
 	Result.M_Value[n]:= 0;
 	inc(n);
@@ -10868,7 +10964,7 @@ while (n <= Multi_X2_max) do
 	inc(n);
 	end;
 
-while (n <= X48_max) do
+while (n <= Multi_X48_max) do
 	begin
 	Result.M_Value[n]:= 0;
 	inc(n);
@@ -10914,7 +11010,7 @@ while (n <= Multi_X4_max) do
 	inc(n);
 	end;
 
-while (n <= X48_max) do
+while (n <= Multi_X48_max) do
 	begin
 	MI.M_Value[n]:= 0;
 	inc(n);
@@ -10968,7 +11064,7 @@ while (n <= Multi_X3_max) do
 	inc(n);
 	end;
 
-while (n <= X48_max) do
+while (n <= Multi_X48_max) do
 	begin
 	MI.M_Value[n]:= 0;
 	inc(n);
@@ -11021,7 +11117,7 @@ while (n <= Multi_X2_max) do
 	inc(n);
 	end;
 
-while (n <= X48_max) do
+while (n <= Multi_X48_max) do
 	begin
 	MI.M_Value[n]:= 0;
 	inc(n);
@@ -11049,7 +11145,7 @@ mi.M_Value[0]:= (v1 MOD INT_1W_U_MAXINT_1);
 mi.M_Value[1]:= (v1 DIV INT_1W_U_MAXINT_1);
 
 n:=2;
-while (n <= X48_max) do
+while (n <= Multi_X48_max) do
 	begin
 	mi.M_Value[n]:= 0;
 	inc(n);
@@ -11076,7 +11172,7 @@ M:= 0;
 RMAX:= INT_1W_U_MAXINT_1;
 
 n:=0;
-while (n <= X48_max) do
+while (n <= Multi_X48_max) do
 	begin
 	RT:= Trunc(R / RMAX);
 	RM:= (R - (RT * RMAX));
@@ -11115,7 +11211,7 @@ M:= 0;
 RMAX:= INT_1W_U_MAXINT_1;
 
 n:=0;
-while (n <= X48_max) do
+while (n <= Multi_X48_max) do
 	begin
 	RT:= Trunc(R / RMAX);
 	RM:= (R - (RT * RMAX));
@@ -11165,7 +11261,7 @@ R:= (INT_2W_U(v1.M_Value[0]) + (INT_2W_U(v1.M_Value[1]) * INT_1W_U_MAXINT_1));
 
 M_Val_All_Zero:= TRUE;
 n:=2;
-while	(n <= X48_max)
+while	(n <= Multi_X48_max)
 and		M_Val_All_Zero
 do
 	begin
@@ -11216,7 +11312,7 @@ R:= (R OR INT_2W_U(v1.M_Value[0]));
 
 M_Val_All_Zero:= TRUE;
 n:=2;
-while	(n <= X48_max)
+while	(n <= Multi_X48_max)
 and		M_Val_All_Zero
 do
 	begin
@@ -11264,7 +11360,7 @@ R:= (INT_2W_U(v1.M_Value[0]) + (INT_2W_U(v1.M_Value[1]) * INT_1W_U_MAXINT_1));
 
 M_Val_All_Zero:= TRUE;
 n:=2;
-while	(n <= X48_max)
+while	(n <= Multi_X48_max)
 and		M_Val_All_Zero
 do
 	begin
@@ -11316,7 +11412,7 @@ R:= (INT_2W_U(v1.M_Value[0]) + (INT_2W_U(v1.M_Value[1]) * INT_1W_U_MAXINT_1));
 
 M_Val_All_Zero:= TRUE;
 n:=2;
-while	(n <= X48_max)
+while	(n <= Multi_X48_max)
 and		M_Val_All_Zero
 do
 	begin
@@ -11412,7 +11508,7 @@ var
 	tv1,
 	tv2,
 	n		:INT_2W_U;
-	M_Val	:array[0..X48_max] of INT_2W_U;
+	M_Val	:array[0..Multi_X48_max] of INT_2W_U;
 	M_Val_All_Zero	:boolean;
 begin
 Result.Overflow_flag:=FALSE;
@@ -11430,7 +11526,7 @@ if	M_Val[0] > INT_1W_U_MAXINT then
 else M_Val[1]:= 0;
 
 n:=1;
-while (n < X48_max) do
+while (n < Multi_X48_max) do
 	begin
 	tv1:= v1.M_Value[n];
 	tv2:= v2.M_Value[n];
@@ -11457,7 +11553,7 @@ if	M_Val[n] > INT_1W_U_MAXINT then
 
 M_Val_All_Zero:= TRUE;
 n:=0;
-while (n <= X48_max) do
+while (n <= Multi_X48_max) do
 	begin
 	Result.M_Value[n]:= M_Val[n];
 	if M_Val[n] <> 0 then M_Val_All_Zero:= FALSE;
@@ -11473,7 +11569,7 @@ end;
 (******************************************)
 function subtract_Multi_Int_X48(const v1,v2:Multi_Int_X48):Multi_Int_X48;
 var
-	M_Val	:array[0..X48_max] of INT_2W_S;
+	M_Val	:array[0..Multi_X48_max] of INT_2W_S;
 	n		:INT_2W_U;
 	M_Val_All_Zero	:boolean;
 begin
@@ -11490,7 +11586,7 @@ if	M_Val[0] < 0 then
 else M_Val[1]:= 0;
 
 n:=1;
-while (n < X48_max) do
+while (n < Multi_X48_max) do
 	begin
 	M_Val[n]:=((v1.M_Value[n] - v2.M_Value[n]) + M_Val[n]);
 	if	M_Val[n] < 0 then
@@ -11512,7 +11608,7 @@ if	M_Val[n] < 0 then
 
 M_Val_All_Zero:=TRUE;
 n:=0;
-while (n <= X48_max) do
+while (n <= Multi_X48_max) do
 	begin
 	Result.M_Value[n]:= M_Val[n];
 	if M_Val[n] > 0 then M_Val_All_Zero:= FALSE;
@@ -11850,7 +11946,7 @@ then
 	end;
 
 n:=0;
-while (n <= X48_max) do
+while (n <= Multi_X48_max) do
 	begin
 	Result.M_Value[n]:=(v1.M_Value[n] xor v2.M_Value[n]);
 	inc(n);
@@ -11867,7 +11963,7 @@ end;
 (******************************************)
 procedure multiply_Multi_Int_X48(const v1,v2:Multi_Int_X48;var Result:Multi_Int_X48);
 var
-	M_Val	:array[0..X48_max_x2] of INT_2W_U;
+	M_Val	:array[0..Multi_X48_max_x2] of INT_2W_U;
 	tv1,tv2	:INT_2W_U;
 	i,j,k,n	:INT_1W_U;
 begin
@@ -11876,7 +11972,7 @@ Result.Defined_flag:=TRUE;
 Result.Negative_flag:=Multi_UBool_UNDEF;
 
 i:=0;
-repeat M_Val[i]:= 0; INC(i); until (i > X48_max_x2);
+repeat M_Val[i]:= 0; INC(i); until (i > Multi_X48_max_x2);
 
 i:=0;
 j:=0;
@@ -11887,16 +11983,16 @@ repeat
 		M_Val[i+j+1]:= (M_Val[i+j+1] + ((tv1 * tv2) DIV INT_1W_U_MAXINT_1));
 		M_Val[i+j]:= (M_Val[i+j] + ((tv1 * tv2) MOD INT_1W_U_MAXINT_1));
 		INC(i);
-	until (i > X48_max);
+	until (i > Multi_X48_max);
 	k:=0;
 	repeat
 		M_Val[k+1]:= M_Val[k+1] + (M_Val[k] DIV INT_1W_U_MAXINT_1);
 		M_Val[k]:= (M_Val[k] MOD INT_1W_U_MAXINT_1);
 		INC(k);
-	until (k > X48_max);
+	until (k > Multi_X48_max);
 	INC(j);
 	i:=0;
-until (j > X48_max);
+until (j > Multi_X48_max);
 
 Result.Negative_flag:=Multi_UBool_FALSE;
 i:=0;
@@ -11904,17 +12000,17 @@ repeat
 	if (M_Val[i] <> 0) then
 		begin
 		Result.Negative_flag:= Multi_UBool_UNDEF;
-		if (i > X48_max) then
+		if (i > Multi_X48_max) then
 			begin
 			Result.Overflow_flag:=TRUE;
 			end;
 		end;
 	INC(i);
-until (i > X48_max_x2)
+until (i > Multi_X48_max_x2)
 or (Result.Overflow_flag);
 
 n:=0;
-while (n <= X48_max) do
+while (n <= Multi_X48_max) do
 	begin
 	Result.M_Value[n]:= M_Val[n];
 	inc(n);
@@ -12174,7 +12270,7 @@ end;
 
 (********************v4********************)
 procedure intdivide_Shift_And_Sub_X48(const P_dividend,P_divisor:Multi_Int_X48;var P_quotient,P_remainder:Multi_Int_X48);
-label	1000,9999;
+label	1000,9000,9999;
 var
 dividend,
 divisor,
@@ -12182,6 +12278,9 @@ quotient,
 quotient_factor,
 prev_dividend,
 ZERO				:Multi_Int_X48;
+T					:INT_1W_U;
+z,k					:INT_2W_U;
+i,
 nlz_bits_dividend,
 nlz_bits_divisor,
 nlz_bits_P_divisor,
@@ -12206,17 +12305,44 @@ else if	(P_divisor = P_dividend) then
     end
 else
 	begin
-	dividend:= P_dividend;
+    dividend:= 0;
+	divisor:= 0;
+	z:= 0;
+    i:= Multi_X48_max;
+	while (i >= 0) do
+		begin
+		dividend.M_Value[i]:= P_dividend.M_Value[i];
+		T:= P_divisor.M_Value[i];
+		divisor.M_Value[i]:= T;
+		if	(T <> 0) then Inc(z);
+		Dec(i);
+		end;
 	dividend.Negative_flag:= FALSE;
-	divisor:= P_divisor;
 	divisor.Negative_flag:= FALSE;
 
 	if	(divisor > dividend) then
 		begin
 		P_quotient:= ZERO;
 	 	P_remainder:= P_dividend;
-		goto 9999;
+		goto 9000;
 	    end;
+
+	// single digit divisor
+	if	(z = 1) then
+		begin
+		P_remainder:= 0;
+		P_quotient:= 0;
+		k:= 0;
+		i:= Multi_X4_max;
+		while (i >= 0) do
+			begin
+			P_quotient.M_Value[i]:= (((k * INT_1W_U_MAXINT_1) + dividend.M_Value[i]) div divisor.M_Value[0]);
+			k:= (((k * Multi_X4_max) + dividend.M_Value[i]) - (P_quotient.M_Value[i] * divisor.M_Value[0]));
+			Dec(i);
+			end;
+		P_remainder.M_Value[0]:= k;
+		goto 9000;
+		end;
 
 	quotient:= ZERO;
 	P_remainder:= ZERO;
@@ -12267,6 +12393,7 @@ else
 	or		(divisor = ZERO)
 	;
 
+9000:
 	P_quotient:= quotient;
 	P_remainder:= dividend;
 
@@ -12471,19 +12598,19 @@ while (i <= Multi_X4_max) do
 	Inc(i);
 	end;
 
-if (X48_max < 1) then
+if (Multi_X48_max < 1) then
 	begin
 	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
 		begin
-		Raise EIntOverflow.create('X48_max value must be > 0');
+		Raise EIntOverflow.create('Multi_X48_max value must be > 0');
 		end;
-	writeln('Multi_Int Unit: X48_max defined value must be > 0');
+	writeln('Multi_Int Unit: Multi_X48_max defined value must be > 0');
 	halt(1);
 	end;
 
 Multi_Int_X48_MAXINT:= 0;
 i:=0;
-while (i <= X48_max) do
+while (i <= Multi_X48_max) do
 	begin
 	Multi_Int_X48_MAXINT.M_Value[i]:= INT_1W_U_MAXINT;
 	Inc(i);
