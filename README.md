@@ -1,4 +1,4 @@
-# Multi-Word-Int v4.26
+# Multi-Word-Int v4.27
 Library to provide multi-word (large) integers for the Free Pascal compiler.
 Designed to be reasonably fast, and requiring minimal changes to existing code.
 Provides basic arithmetic operations add, subtract, multiply, divide, exclusive-or, power, odd, even, bit shift.
@@ -7,5 +7,5 @@ Will compile and run on 32bit and 64bit environments.
 Written purely in Pascal to be portable and reliable (no assembly or C language code).
 This should be considered a beta development version.
 
-Version 4.26 has:
-- automatic detection of 64bit vs 32bit target executable
+Version 4.27 has:
+- an optimisation in the divide algorithm, taken from Knuth/Warren.
