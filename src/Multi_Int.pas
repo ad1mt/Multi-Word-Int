@@ -4,39 +4,6 @@ UNIT Multi_Int;
 
 {$MODESWITCH NESTEDCOMMENTS+}
 
-(*
-v4.23B
--	bug fixes in divide
--	divide v4 working
--	sign bug fixes in power
--	sign bug fixes in sqroot
-
-v4.23B
--	Negative functions
--	Abs functions
--	Additional init procs
--	Exception bug ifxes in Inc/Dec
-
-v4.23C
-
-v4.23D
--	?
--	sign bug fix in power v4.24
--	move UBool into separate unit.
-
-v4.25
--	rename RAISE_EXCEPTIONS_ENABLED to Multi_Int_RAISE_EXCEPTIONS_ENABLED
--	make Multi_Int_RAISE_EXCEPTIONS_ENABLED a var instead of a define to allow
-	better control of exceptions
--	Multi_Int_RAISE_EXCEPTIONS_ENABLED defaults to TRUE
-
-v4.26
--	automagically detect and set {$define 64bit} or {$define 32bit}
-
-v4.27
--	single word divisor optimisation from Warren/Knuth
-*)
-
 (* USER OPTIONAL DEFINES *)
 
 // This should be changed to 32bit if you wish to override the default/detected setting
