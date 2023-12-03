@@ -11389,6 +11389,7 @@ then
 		Raise EInterror.create('Overflow');
 		end;
 	MI.Overflow_flag:= TRUE;
+	Multi_Int_OVERFLOW_ERROR:= TRUE;
 	exit;
 	end;
 
@@ -11472,6 +11473,7 @@ then
 		Raise EInterror.create('Overflow');
 		end;
 	MI.Overflow_flag:= TRUE;
+	Multi_Int_OVERFLOW_ERROR:= TRUE;
 	exit;
 	end;
 
@@ -11555,6 +11557,7 @@ then
 		Raise EInterror.create('Overflow');
 		end;
 	MI.Overflow_flag:= TRUE;
+	Multi_Int_OVERFLOW_ERROR:= TRUE;
 	exit;
 	end;
 
