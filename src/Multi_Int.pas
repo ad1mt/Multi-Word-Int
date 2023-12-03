@@ -4,6 +4,44 @@ UNIT Multi_Int;
 
 {$MODESWITCH NESTEDCOMMENTS+}
 
+(*
+v4.23B
+-	bug fixes in divide
+-	divide v4 working
+-	sign bug fixes in power
+-	sign bug fixes in sqroot
+
+v4.23B
+-	Negative functions
+-	Abs functions
+-	Additional init procs
+-	Exception bug ifxes in Inc/Dec
+
+v4.23C
+
+v4.23D
+-	?
+-	sign bug fix in power v4.24
+-	move UBool into separate unit.
+
+v4.25
+-	rename RAISE_EXCEPTIONS_ENABLED to Multi_Int_RAISE_EXCEPTIONS_ENABLED
+-	make Multi_Int_RAISE_EXCEPTIONS_ENABLED a var instead of a define to allow
+	better control of exceptions
+-	Multi_Int_RAISE_EXCEPTIONS_ENABLED defaults to TRUE
+
+v4.26
+-	automagically detect and set {$define 64bit} or {$define 32bit}
+
+v4.27
+-	single word divisor optimisation from Warren/Knuth
+-	inc(v1,increment), dec(v1, decrement)
+
+v4.27C
+-	bug fixes in Multi_Int_X2_to_Multi_Int_X48,
+	Multi_Int_X3_to_Multi_Int_X48 & Multi_Int_X4_to_Multi_Int_X48
+*)
+
 (* USER OPTIONAL DEFINES *)
 
 // This should be changed to 32bit if you wish to override the default/detected setting
@@ -40,7 +78,7 @@ there is no point in having less than 7, because the type named Multi_Int_X4 use
 The number is half-words, so if you specify 127 that is 128 half-words, which equals
 64 words, which equals 512 bits (in 64bit environment).
 *)
-	Multi_X48_max		= 127;
+	Multi_X48_max		= 5;
 
 (*
 Multi_X48_max is the only thing you should change in here.
@@ -82,17 +120,17 @@ const
 
 (* Do not change these values *)
 
-	Multi_X2_max = 3;
-	Multi_X2_max_x2 = 7;
-	Multi_X2_size = Multi_X2_max + 1;
+	Multi_X2_size = 4;
+	Multi_X2_max = Multi_X2_size - 1;
+	Multi_X2_max_x2 = ((Multi_X2_size * 2) - 1);
 
-	Multi_X3_max = 5;
-	Multi_X3_max_x2 = 11;
-	Multi_X3_size = Multi_X3_max + 1;
+	Multi_X3_size = 6;
+	Multi_X3_max = (Multi_X3_size - 1);
+	Multi_X3_max_x2 = ((Multi_X3_size * 2) - 1);
 
-	Multi_X4_max = 7;
-	Multi_X4_max_x2 = 15;
-	Multi_X4_size = Multi_X4_max + 1;
+	Multi_X4_size = 8;
+	Multi_X4_max = (Multi_X4_size - 1);
+	Multi_X4_max_x2 = ((Multi_X4_size * 2) - 1);
 
 {$ifdef 32bit}
 const
@@ -184,6 +222,8 @@ Multi_Int_X2	=	record
 						class operator subtract(const v1,v2:Multi_Int_X2):Multi_Int_X2; inline;
 						class operator inc(const v1:Multi_Int_X2):Multi_Int_X2; inline;
 						class operator dec(const v1:Multi_Int_X2):Multi_Int_X2; inline;
+						class operator inc(const v1:Multi_Int_X2; const v2:Multi_Int_X2):Multi_Int_X2; inline;
+						class operator dec(const v1:Multi_Int_X2; const v2:Multi_Int_X2):Multi_Int_X2; inline;
 						class operator greaterthan(const v1,v2:Multi_Int_X2):Boolean; inline;
 						class operator lessthan(const v1,v2:Multi_Int_X2):Boolean; inline;
 						class operator equal(const v1,v2:Multi_Int_X2):Boolean; inline;
@@ -236,6 +276,8 @@ Multi_Int_X3	=	record
 						class operator subtract(const v1,v2:Multi_Int_X3):Multi_Int_X3; inline;
 						class operator inc(const v1:Multi_Int_X3):Multi_Int_X3; inline;
 						class operator dec(const v1:Multi_Int_X3):Multi_Int_X3; inline;
+						class operator inc(const v1:Multi_Int_X3; const v2:Multi_Int_X3):Multi_Int_X3; inline;
+						class operator dec(const v1:Multi_Int_X3; const v2:Multi_Int_X3):Multi_Int_X3; inline;
 						class operator greaterthan(const v1,v2:Multi_Int_X3):Boolean; inline;
 						class operator lessthan(const v1,v2:Multi_Int_X3):Boolean; inline;
 						class operator equal(const v1,v2:Multi_Int_X3):Boolean; inline;
@@ -289,6 +331,8 @@ Multi_Int_X4	=	record
 						class operator subtract(const v1,v2:Multi_Int_X4):Multi_Int_X4; inline;
 						class operator inc(const v1:Multi_Int_X4):Multi_Int_X4; inline;
 						class operator dec(const v1:Multi_Int_X4):Multi_Int_X4; inline;
+						class operator inc(const v1:Multi_Int_X4; const v2:Multi_Int_X4):Multi_Int_X4; inline;
+						class operator dec(const v1:Multi_Int_X4; const v2:Multi_Int_X4):Multi_Int_X4; inline;
 						class operator greaterthan(const v1,v2:Multi_Int_X4):Boolean; inline;
 						class operator lessthan(const v1,v2:Multi_Int_X4):Boolean; inline;
 						class operator equal(const v1,v2:Multi_Int_X4):Boolean; inline;
@@ -346,6 +390,8 @@ Multi_Int_X48	=	record
 						class operator subtract(const v1,v2:Multi_Int_X48):Multi_Int_X48; inline;
 						class operator inc(const v1:Multi_Int_X48):Multi_Int_X48; inline;
 						class operator dec(const v1:Multi_Int_X48):Multi_Int_X48; inline;
+						class operator inc(const v1:Multi_Int_X48; const v2:Multi_Int_X48):Multi_Int_X48; inline;
+						class operator dec(const v1:Multi_Int_X48; const v2:Multi_Int_X48):Multi_Int_X48; inline;
 						class operator xor(const v1,v2:Multi_Int_X48):Multi_Int_X48; inline;
 						class operator multiply(const v1,v2:Multi_Int_X48):Multi_Int_X48; inline;
 						class operator intdivide(const v1,v2:Multi_Int_X48):Multi_Int_X48; inline;
@@ -2464,6 +2510,69 @@ end;
 
 
 (******************************************)
+class operator Multi_Int_X2.inc(const v1:Multi_Int_X2; const v2:Multi_Int_X2):Multi_Int_X2;
+Var	Neg	:Multi_UBool_Values;
+begin
+if	(Not v1.Defined_flag)
+then
+	begin
+	Result:=0;
+	Result.Defined_flag:= v1.Defined_flag;
+	Result.Overflow_flag:= v1.Overflow_flag;
+	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
+		begin
+		Raise EInterror.create('Uninitialised variable');
+		end;
+	exit;
+	end;
+
+if	(v1.Overflow_flag)
+then
+	begin
+	Result:= 0;
+	Result.Defined_flag:= v1.Defined_flag;
+	Result.Overflow_flag:= v1.Overflow_flag;
+	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
+		begin
+		Raise EIntOverflow.create('Overflow on inc');
+		end;
+	exit;
+	end;
+
+Neg:=Multi_UBool_UNDEF;
+
+if	(v1.Negative_flag = FALSE)
+then
+	begin
+	Result:=add_Multi_Int_X2(v1,v2);
+	Neg:= v1.Negative_flag;
+	end
+else
+	begin
+	if	ABS_greaterthan_Multi_Int_X2(v1,v2)
+	then
+		begin
+		Result:=subtract_Multi_Int_X2(v1,v2);
+		Neg:= Multi_UBool_TRUE;
+		end
+	else
+		begin
+		Result:=subtract_Multi_Int_X2(v2,v1);
+		Neg:= Multi_UBool_FALSE;
+		end;
+	end;
+
+if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
+	begin
+	if (Result.Overflow_flag = TRUE) then
+		Raise EIntOverflow.create('Overflow on Inc');
+	end;
+
+if	(Result.Negative_flag = Multi_UBool_UNDEF) then Result.Negative_flag:= Neg;
+end;
+
+
+(******************************************)
 class operator Multi_Int_X2.add(const v1,v2:Multi_Int_X2):Multi_Int_X2;
 Var	Neg:T_Multi_UBool;
 begin
@@ -2575,6 +2684,68 @@ then
 
 Neg:=Multi_UBool_UNDEF;
 v2:= 1;
+
+if	(v1.Negative_flag = FALSE) then
+	begin
+	if	ABS_greaterthan_Multi_Int_X2(v2,v1)
+	then
+		begin
+		Result:=subtract_Multi_Int_X2(v2,v1);
+		Neg:=Multi_UBool_TRUE;
+		end
+	else
+		begin
+		Result:=subtract_Multi_Int_X2(v1,v2);
+		Neg:=Multi_UBool_FALSE;
+		end
+	end
+else (* v1 is Negative_flag *)
+	begin
+	Result:=add_Multi_Int_X2(v1,v2);
+	Neg:=Multi_UBool_TRUE;
+	end;
+
+if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
+	begin
+	if (Result.Overflow_flag = TRUE) then
+		Raise EIntOverflow.create('Overflow on Dec');
+	end;
+
+if	(Result.Negative_flag = Multi_UBool_UNDEF) then Result.Negative_flag:= Neg;
+end;
+
+
+(******************************************)
+class operator Multi_Int_X2.dec(const v1:Multi_Int_X2; const v2:Multi_Int_X2):Multi_Int_X2;
+Var	Neg	:Multi_UBool_Values;
+begin
+if	(Not v1.Defined_flag)
+then
+	begin
+	Result:=0;
+	Result.Defined_flag:= v1.Defined_flag;
+	Result.Overflow_flag:= v1.Overflow_flag;
+	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
+		begin
+		Raise EInterror.create('Uninitialised variable');
+		end;
+	exit;
+	end;
+
+if	(v1.Overflow_flag)
+then
+	begin
+	Result:= 0;
+	Result.Defined_flag:= v1.Defined_flag;
+	Result.Overflow_flag:= v1.Overflow_flag;
+	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
+		begin
+		Raise EIntOverflow.create('Overflow on inc');
+		end;
+	exit;
+	end;
+
+Neg:=Multi_UBool_UNDEF;
 
 if	(v1.Negative_flag = FALSE) then
 	begin
@@ -5490,6 +5661,69 @@ end;
 
 
 (******************************************)
+class operator Multi_Int_X3.inc(const v1:Multi_Int_X3; const v2:Multi_Int_X3):Multi_Int_X3;
+Var	Neg	:Multi_UBool_Values;
+begin
+if	(Not v1.Defined_flag)
+then
+	begin
+	Result:=0;
+	Result.Defined_flag:= v1.Defined_flag;
+	Result.Overflow_flag:= v1.Overflow_flag;
+	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
+		begin
+		Raise EInterror.create('Uninitialised variable');
+		end;
+	exit;
+	end;
+
+if	(v1.Overflow_flag)
+then
+	begin
+	Result:= 0;
+	Result.Defined_flag:= v1.Defined_flag;
+	Result.Overflow_flag:= v1.Overflow_flag;
+	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
+		begin
+		Raise EIntOverflow.create('Overflow on inc');
+		end;
+	exit;
+	end;
+
+Neg:=Multi_UBool_UNDEF;
+
+if	(v1.Negative_flag = FALSE)
+then
+	begin
+	Result:=add_Multi_Int_X3(v1,v2);
+	Neg:= v1.Negative_flag;
+	end
+else
+	begin
+	if	ABS_greaterthan_Multi_Int_X3(v1,v2)
+	then
+		begin
+		Result:=subtract_Multi_Int_X3(v1,v2);
+		Neg:= Multi_UBool_TRUE;
+		end
+	else
+		begin
+		Result:=subtract_Multi_Int_X3(v2,v1);
+		Neg:= Multi_UBool_FALSE;
+		end;
+	end;
+
+if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
+		begin
+		if (Result.Overflow_flag = TRUE) then
+			Raise EIntOverflow.create('Overflow on Inc');
+		end;
+
+if	(Result.Negative_flag = Multi_UBool_UNDEF) then Result.Negative_flag:= Neg;
+end;
+
+
+(******************************************)
 class operator Multi_Int_X3.add(const v1,v2:Multi_Int_X3):Multi_Int_X3;
 Var	Neg:T_Multi_UBool;
 begin
@@ -5601,6 +5835,68 @@ then
 
 Neg:=Multi_UBool_UNDEF;
 v2:= 1;
+
+if	(v1.Negative_flag = FALSE) then
+	begin
+	if	ABS_greaterthan_Multi_Int_X3(v2,v1)
+	then
+		begin
+		Result:=subtract_Multi_Int_X3(v2,v1);
+		Neg:=Multi_UBool_TRUE;
+		end
+	else
+		begin
+		Result:=subtract_Multi_Int_X3(v1,v2);
+		Neg:=Multi_UBool_FALSE;
+		end
+	end
+else (* v1 is Negative_flag *)
+	begin
+	Result:=add_Multi_Int_X3(v1,v2);
+	Neg:=Multi_UBool_TRUE;
+	end;
+
+if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
+		begin
+		if (Result.Overflow_flag = TRUE) then
+			Raise EIntOverflow.create('Overflow on Dec');
+		end;
+
+if	(Result.Negative_flag = Multi_UBool_UNDEF) then Result.Negative_flag:= Neg;
+end;
+
+
+(******************************************)
+class operator Multi_Int_X3.dec(const v1:Multi_Int_X3; const v2:Multi_Int_X3):Multi_Int_X3;
+Var	Neg	:Multi_UBool_Values;
+begin
+if	(Not v1.Defined_flag)
+then
+	begin
+	Result:=0;
+	Result.Defined_flag:= v1.Defined_flag;
+	Result.Overflow_flag:= v1.Overflow_flag;
+	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
+		begin
+		Raise EInterror.create('Uninitialised variable');
+		end;
+	exit;
+	end;
+
+if	(v1.Overflow_flag)
+then
+	begin
+	Result:= 0;
+	Result.Defined_flag:= v1.Defined_flag;
+	Result.Overflow_flag:= v1.Overflow_flag;
+	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
+		begin
+		Raise EIntOverflow.create('Overflow on inc');
+		end;
+	exit;
+	end;
+
+Neg:=Multi_UBool_UNDEF;
 
 if	(v1.Negative_flag = FALSE) then
 	begin
@@ -8769,6 +9065,69 @@ end;
 
 
 (******************************************)
+class operator Multi_Int_X4.inc(const v1:Multi_Int_X4; const v2:Multi_Int_X4):Multi_Int_X4;
+Var	Neg	:Multi_UBool_Values;
+begin
+if	(Not v1.Defined_flag)
+then
+	begin
+	Result:=0;
+	Result.Defined_flag:= v1.Defined_flag;
+	Result.Overflow_flag:= v1.Overflow_flag;
+	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
+		begin
+		Raise EInterror.create('Uninitialised variable');
+		end;
+	exit;
+	end;
+
+if	(v1.Overflow_flag)
+then
+	begin
+	Result:= 0;
+	Result.Defined_flag:= v1.Defined_flag;
+	Result.Overflow_flag:= v1.Overflow_flag;
+	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
+		begin
+		Raise EIntOverflow.create('Overflow on inc');
+		end;
+	exit;
+	end;
+
+Neg:=Multi_UBool_UNDEF;
+
+if	(v1.Negative_flag = FALSE)
+then
+	begin
+	Result:=add_Multi_Int_X4(v1,v2);
+	Neg:= v1.Negative_flag;
+	end
+else
+	begin
+	if	ABS_greaterthan_Multi_Int_X4(v1,v2)
+	then
+		begin
+		Result:=subtract_Multi_Int_X4(v1,v2);
+		Neg:= Multi_UBool_TRUE;
+		end
+	else
+		begin
+		Result:=subtract_Multi_Int_X4(v2,v1);
+		Neg:= Multi_UBool_FALSE;
+		end;
+	end;
+
+if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
+		begin
+		if (Result.Overflow_flag = TRUE) then
+			Raise EIntOverflow.create('Overflow on Inc');
+		end;
+
+if	(Result.Negative_flag = Multi_UBool_UNDEF) then Result.Negative_flag:= Neg;
+end;
+
+
+(******************************************)
 class operator Multi_Int_X4.add(const v1,v2:Multi_Int_X4):Multi_Int_X4;
 Var	Neg:T_Multi_UBool;
 begin
@@ -8968,6 +9327,68 @@ then
 
 Neg:=Multi_UBool_UNDEF;
 v2:= 1;
+
+if	(v1.Negative_flag = FALSE) then
+	begin
+	if	ABS_greaterthan_Multi_Int_X4(v2,v1)
+	then
+		begin
+		Result:=subtract_Multi_Int_X4(v2,v1);
+		Neg:=Multi_UBool_TRUE;
+		end
+	else
+		begin
+		Result:=subtract_Multi_Int_X4(v1,v2);
+		Neg:=Multi_UBool_FALSE;
+		end
+	end
+else (* v1 is Negative_flag *)
+	begin
+	Result:=add_Multi_Int_X4(v1,v2);
+	Neg:=Multi_UBool_TRUE;
+	end;
+
+if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
+		begin
+		if (Result.Overflow_flag = TRUE) then
+			Raise EIntOverflow.create('Overflow on Dec');
+		end;
+
+if	(Result.Negative_flag = Multi_UBool_UNDEF) then Result.Negative_flag:= Neg;
+end;
+
+
+(******************************************)
+class operator Multi_Int_X4.dec(const v1:Multi_Int_X4; const v2:Multi_Int_X4):Multi_Int_X4;
+Var	Neg	:Multi_UBool_Values;
+begin
+if	(Not v1.Defined_flag)
+then
+	begin
+	Result:=0;
+	Result.Defined_flag:= v1.Defined_flag;
+	Result.Overflow_flag:= v1.Overflow_flag;
+	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
+		begin
+		Raise EInterror.create('Uninitialised variable');
+		end;
+	exit;
+	end;
+
+if	(v1.Overflow_flag)
+then
+	begin
+	Result:= 0;
+	Result.Defined_flag:= v1.Defined_flag;
+	Result.Overflow_flag:= v1.Overflow_flag;
+	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
+		begin
+		Raise EIntOverflow.create('Overflow on inc');
+		end;
+	exit;
+	end;
+
+Neg:=Multi_UBool_UNDEF;
 
 if	(v1.Negative_flag = FALSE) then
 	begin
@@ -10942,7 +11363,8 @@ end;
 (******************************************)
 procedure Multi_Int_X4_to_Multi_Int_X48(const v1:Multi_Int_X4; var MI:Multi_Int_X48);
 var
-	n				:INT_1W_U;
+n				:INT_1W_U;
+
 begin
 MI.Overflow_flag:= v1.Overflow_flag;
 MI.Defined_flag:= v1.Defined_flag;
@@ -10970,17 +11392,46 @@ then
 	exit;
 	end;
 
-n:= 0;
-while (n <= Multi_X4_max) do
+if	(Multi_X48_max < Multi_X4_max) then
 	begin
-	MI.M_Value[n]:= v1.M_Value[n];
-	inc(n);
-	end;
+	n:= 0;
+	while (n <= Multi_X48_max) do
+		begin
+		MI.M_Value[n]:= v1.M_Value[n];
+		inc(n);
+		end;
+	while	(n <= Multi_X4_max)
+	and		(not MI.Overflow_flag)
+	do
+		begin
+		if	(v1.M_Value[n] > 0) then
+			begin
+			MI.Defined_flag:= FALSE;
+			MI.Overflow_flag:= TRUE;
+			Multi_Int_OVERFLOW_ERROR:= TRUE;
+			if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
+				begin
+				Raise EIntOverflow.create('Overflow on Multi_Int_X4 conversion');
+				end;
+			break;
+			end;
+		inc(n);
+		end;
+	end
+else
+	begin
+	n:= 0;
+	while (n <= Multi_X4_max) do
+		begin
+		MI.M_Value[n]:= v1.M_Value[n];
+		inc(n);
+		end;
 
-while (n <= Multi_X48_max) do
-	begin
-	MI.M_Value[n]:= 0;
-	inc(n);
+	while (n <= Multi_X48_max) do
+		begin
+		MI.M_Value[n]:= 0;
+		inc(n);
+		end;
 	end;
 end;
 
@@ -10995,7 +11446,8 @@ end;
 (******************************************)
 procedure Multi_Int_X3_to_Multi_Int_X48(const v1:Multi_Int_X3; var MI:Multi_Int_X48);
 var
-	n				:INT_1W_U;
+n				:INT_1W_U;
+
 begin
 MI.Overflow_flag:= v1.Overflow_flag;
 MI.Defined_flag:= v1.Defined_flag;
@@ -11023,18 +11475,46 @@ then
 	exit;
 	end;
 
-n:= 0;
-
-while (n <= Multi_X3_max) do
+if	(Multi_X48_max < Multi_X3_max) then
 	begin
-	MI.M_Value[n]:= v1.M_Value[n];
-	inc(n);
-	end;
-
-while (n <= Multi_X48_max) do
+	n:= 0;
+	while (n <= Multi_X48_max) do
+		begin
+		MI.M_Value[n]:= v1.M_Value[n];
+		inc(n);
+		end;
+	while	(n <= Multi_X3_max)
+	and		(not MI.Overflow_flag)
+	do
+		begin
+		if	(v1.M_Value[n] > 0) then
+			begin
+			MI.Defined_flag:= FALSE;
+			MI.Overflow_flag:= TRUE;
+			Multi_Int_OVERFLOW_ERROR:= TRUE;
+			if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
+				begin
+				Raise EIntOverflow.create('Overflow on Multi_Int_X3 conversion');
+				end;
+			break;
+			end;
+		inc(n);
+		end;
+	end
+else
 	begin
-	MI.M_Value[n]:= 0;
-	inc(n);
+	n:= 0;
+	while (n <= Multi_X3_max) do
+		begin
+		MI.M_Value[n]:= v1.M_Value[n];
+		inc(n);
+		end;
+
+	while (n <= Multi_X48_max) do
+		begin
+		MI.M_Value[n]:= 0;
+		inc(n);
+		end;
 	end;
 end;
 
@@ -11049,7 +11529,8 @@ end;
 (******************************************)
 procedure Multi_Int_X2_to_Multi_Int_X48(const v1:Multi_Int_X2; var MI:Multi_Int_X48);
 var
-	n				:INT_1W_U;
+n				:INT_1W_U;
+
 begin
 MI.Overflow_flag:= v1.Overflow_flag;
 MI.Defined_flag:= v1.Defined_flag;
@@ -11077,17 +11558,46 @@ then
 	exit;
 	end;
 
-n:= 0;
-while (n <= Multi_X2_max) do
+if	(Multi_X48_max < Multi_X2_max) then
 	begin
-	MI.M_Value[n]:= v1.M_Value[n];
-	inc(n);
-	end;
+	n:= 0;
+	while (n <= Multi_X48_max) do
+		begin
+		MI.M_Value[n]:= v1.M_Value[n];
+		inc(n);
+		end;
+	while	(n <= Multi_X2_max)
+	and		(not MI.Overflow_flag)
+	do
+		begin
+		if	(v1.M_Value[n] > 0) then
+			begin
+			MI.Defined_flag:= FALSE;
+			MI.Overflow_flag:= TRUE;
+			Multi_Int_OVERFLOW_ERROR:= TRUE;
+			if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
+				begin
+				Raise EIntOverflow.create('Overflow on Multi_Int_X2 conversion');
+				end;
+			break;
+			end;
+		inc(n);
+		end;
+	end
+else
+	begin
+	n:= 0;
+	while (n <= Multi_X2_max) do
+		begin
+		MI.M_Value[n]:= v1.M_Value[n];
+		inc(n);
+		end;
 
-while (n <= Multi_X48_max) do
-	begin
-	MI.M_Value[n]:= 0;
-	inc(n);
+	while (n <= Multi_X48_max) do
+		begin
+		MI.M_Value[n]:= 0;
+		inc(n);
+		end;
 	end;
 end;
 
@@ -11732,6 +12242,69 @@ end;
 
 
 (******************************************)
+class operator Multi_Int_X48.inc(const v1:Multi_Int_X48; const v2:Multi_Int_X48):Multi_Int_X48;
+Var	Neg	:Multi_UBool_Values;
+begin
+if	(Not v1.Defined_flag)
+then
+	begin
+	Result:=0;
+	Result.Defined_flag:= v1.Defined_flag;
+	Result.Overflow_flag:= v1.Overflow_flag;
+	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
+		begin
+		Raise EInterror.create('Uninitialised variable');
+		end;
+	exit;
+	end;
+
+if	(v1.Overflow_flag)
+then
+	begin
+	Result:= 0;
+	Result.Defined_flag:= v1.Defined_flag;
+	Result.Overflow_flag:= v1.Overflow_flag;
+	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
+		begin
+		Raise EIntOverflow.create('Overflow on inc');
+		end;
+	exit;
+	end;
+
+Neg:=Multi_UBool_UNDEF;
+
+if	(v1.Negative_flag = FALSE)
+then
+	begin
+	Result:=add_Multi_Int_X48(v1,v2);
+	Neg:= v1.Negative_flag;
+	end
+else
+	begin
+	if	ABS_greaterthan_Multi_Int_X48(v1,v2)
+	then
+		begin
+		Result:=subtract_Multi_Int_X48(v1,v2);
+		Neg:= Multi_UBool_TRUE;
+		end
+	else
+		begin
+		Result:=subtract_Multi_Int_X48(v2,v1);
+		Neg:= Multi_UBool_FALSE;
+		end;
+	end;
+
+if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
+		begin
+		if (Result.Overflow_flag = TRUE) then
+			Raise EIntOverflow.create('Overflow on Inc');
+		end;
+
+if	(Result.Negative_flag = Multi_UBool_UNDEF) then Result.Negative_flag:= Neg;
+end;
+
+
+(******************************************)
 class operator Multi_Int_X48.subtract(const v1,v2:Multi_Int_X48):Multi_Int_X48;
 Var	Neg:Multi_UBool_Values;
 begin
@@ -11882,6 +12455,67 @@ if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
 if	(Result.Negative_flag = Multi_UBool_UNDEF) then Result.Negative_flag:= Neg;
 end;
 
+
+(******************************************)
+class operator Multi_Int_X48.dec(const v1:Multi_Int_X48; const v2:Multi_Int_X48):Multi_Int_X48;
+Var	Neg	:Multi_UBool_Values;
+begin
+if	(Not v1.Defined_flag)
+then
+	begin
+	Result:=0;
+	Result.Defined_flag:= v1.Defined_flag;
+	Result.Overflow_flag:= v1.Overflow_flag;
+	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
+		begin
+		Raise EInterror.create('Uninitialised variable');
+		end;
+	exit;
+	end;
+
+if	(v1.Overflow_flag)
+then
+	begin
+	Result:= 0;
+	Result.Defined_flag:= v1.Defined_flag;
+	Result.Overflow_flag:= v1.Overflow_flag;
+	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
+		begin
+		Raise EIntOverflow.create('Overflow on inc');
+		end;
+	exit;
+	end;
+
+Neg:=Multi_UBool_UNDEF;
+
+if	(v1.Negative_flag = FALSE) then
+	begin
+	if	ABS_greaterthan_Multi_Int_X48(v2,v1)
+	then
+		begin
+		Result:=subtract_Multi_Int_X48(v2,v1);
+		Neg:=Multi_UBool_TRUE;
+		end
+	else
+		begin
+		Result:=subtract_Multi_Int_X48(v1,v2);
+		Neg:=Multi_UBool_FALSE;
+		end
+	end
+else (* v1 is Negative_flag *)
+	begin
+	Result:=add_Multi_Int_X48(v1,v2);
+	Neg:=Multi_UBool_TRUE;
+	end;
+
+if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
+		begin
+		if (Result.Overflow_flag = TRUE) then
+			Raise EIntOverflow.create('Overflow on Dec');
+		end;
+
+if	(Result.Negative_flag = Multi_UBool_UNDEF) then Result.Negative_flag:= Neg;
+end;
 
 
 (******************************************)
@@ -12360,10 +12994,10 @@ else
 	or		(divisor = ZERO)
 	;
 
-9000:
 	P_quotient:= quotient;
 	P_remainder:= dividend;
 
+9000:
 	if	(P_dividend.Negative_flag = TRUE) and (P_remainder > ZERO)
 	then
 		P_remainder.Negative_flag:= TRUE;
@@ -12520,6 +13154,7 @@ procedure Multi_Init_Initialisation;
 var	i:Multi_int32u;
 begin
 Multi_Int_RAISE_EXCEPTIONS_ENABLED:= TRUE;
+Multi_Int_OVERFLOW_ERROR:= FALSE;
 
 X3_Last_Divisor:= 0;
 X3_Last_Dividend:= 0;
