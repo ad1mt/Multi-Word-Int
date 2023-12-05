@@ -40,6 +40,7 @@ v4.27
 v4.27C
 -	bug fixes in Multi_Int_X2_to_Multi_Int_X48,
 	Multi_Int_X3_to_Multi_Int_X48 & Multi_Int_X4_to_Multi_Int_X48
+-	bug fix in division routine
 *)
 
 (* USER OPTIONAL DEFINES *)
@@ -3189,7 +3190,7 @@ dividend,
 divisor,
 quotient,
 quotient_factor,
-prev_dividend,
+next_dividend,
 ZERO				:Multi_Int_X2;
 T					:INT_1W_U;
 z,k					:INT_2W_U;
@@ -3246,7 +3247,7 @@ else
 		P_remainder:= 0;
 		P_quotient:= 0;
 		k:= 0;
-		i:= Multi_X4_max;
+		i:= Multi_X2_max;
 		while (i >= 0) do
 			begin
 			P_quotient.M_Value[i]:= (((k * INT_1W_U_MAXINT_1) + dividend.M_Value[i]) div divisor.M_Value[0]);
@@ -3277,17 +3278,18 @@ else
 	{ Round X }
 	repeat
 	1000:
-		prev_dividend:= dividend;
-		dividend:= (dividend - divisor);
-		if (dividend > ZERO) then
+		next_dividend:= (dividend - divisor);
+		if (next_dividend >= ZERO) then
 			begin
 			quotient:= (quotient + quotient_factor);
+			dividend:= next_dividend;
 			goto 1000;
 			end;
-		if (dividend = ZERO) then
+		if (next_dividend = ZERO) then
+			begin
 			quotient:= (quotient + quotient_factor);
-		if (dividend < ZERO) then
-			dividend:= prev_dividend;
+			dividend:= next_dividend;
+			end;
 
 		nlz_bits_divisor:= nlz_MultiBits_X2(divisor);
 		if (nlz_bits_divisor < nlz_bits_P_divisor) then
@@ -6342,7 +6344,7 @@ dividend,
 divisor,
 quotient,
 quotient_factor,
-prev_dividend,
+next_dividend,
 ZERO				:Multi_Int_X3;
 T					:INT_1W_U;
 z,k					:INT_2W_U;
@@ -6399,11 +6401,11 @@ else
 		P_remainder:= 0;
 		P_quotient:= 0;
 		k:= 0;
-		i:= Multi_X4_max;
+		i:= Multi_X3_max;
 		while (i >= 0) do
 			begin
 			P_quotient.M_Value[i]:= (((k * INT_1W_U_MAXINT_1) + dividend.M_Value[i]) div divisor.M_Value[0]);
-			k:= (((k * Multi_X4_max) + dividend.M_Value[i]) - (P_quotient.M_Value[i] * divisor.M_Value[0]));
+			k:= (((k * INT_1W_U_MAXINT_1) + dividend.M_Value[i]) - (P_quotient.M_Value[i] * divisor.M_Value[0]));
 			Dec(i);
 			end;
 		P_remainder.M_Value[0]:= k;
@@ -6430,17 +6432,18 @@ else
 	{ Round X }
 	repeat
 	1000:
-		prev_dividend:= dividend;
-		dividend:= (dividend - divisor);
-		if (dividend > ZERO) then
+		next_dividend:= (dividend - divisor);
+		if (next_dividend >= ZERO) then
 			begin
 			quotient:= (quotient + quotient_factor);
+			dividend:= next_dividend;
 			goto 1000;
 			end;
-		if (dividend = ZERO) then
+		if (next_dividend = ZERO) then
+			begin
 			quotient:= (quotient + quotient_factor);
-		if (dividend < ZERO) then
-			dividend:= prev_dividend;
+			dividend:= next_dividend;
+			end;
 
 		nlz_bits_divisor:= nlz_MultiBits_X3(divisor);
 		if (nlz_bits_divisor < nlz_bits_P_divisor) then
@@ -6458,11 +6461,10 @@ else
 	or		(nlz_bits_divisor >= nlz_bits_P_divisor)
 	or		(divisor = ZERO)
 	;
-
-9000:
 	P_quotient:= quotient;
 	P_remainder:= dividend;
 
+9000:
 	if	(P_dividend.Negative_flag = TRUE) and (P_remainder > 0)
 	then
 		P_remainder.Negative_flag:= TRUE;
@@ -9748,7 +9750,7 @@ dividend,
 divisor,
 quotient,
 quotient_factor,
-prev_dividend,
+next_dividend,
 ZERO				:Multi_Int_X4;
 T					:INT_1W_U;
 z,k					:INT_2W_U;
@@ -9809,7 +9811,7 @@ else
 		while (i >= 0) do
 			begin
 			P_quotient.M_Value[i]:= (((k * INT_1W_U_MAXINT_1) + dividend.M_Value[i]) div divisor.M_Value[0]);
-			k:= (((k * Multi_X4_max) + dividend.M_Value[i]) - (P_quotient.M_Value[i] * divisor.M_Value[0]));
+			k:= (((k * INT_1W_U_MAXINT_1) + dividend.M_Value[i]) - (P_quotient.M_Value[i] * divisor.M_Value[0]));
 			Dec(i);
 			end;
 		P_remainder.M_Value[0]:= k;
@@ -9836,17 +9838,18 @@ else
 	{ Round X }
 	repeat
 	1000:
-		prev_dividend:= dividend;
-		dividend:= (dividend - divisor);
-		if (dividend > ZERO) then
+		next_dividend:= (dividend - divisor);
+		if (next_dividend >= ZERO) then
 			begin
 			quotient:= (quotient + quotient_factor);
+			dividend:= next_dividend;
 			goto 1000;
 			end;
-		if (dividend = ZERO) then
+		if (next_dividend = ZERO) then
+			begin
 			quotient:= (quotient + quotient_factor);
-		if (dividend < ZERO) then
-			dividend:= prev_dividend;
+			dividend:= next_dividend;
+			end;
 
 		nlz_bits_divisor:= nlz_MultiBits_X4(divisor);
 		if (nlz_bits_divisor < nlz_bits_P_divisor) then
@@ -12880,7 +12883,7 @@ dividend,
 divisor,
 quotient,
 quotient_factor,
-prev_dividend,
+next_dividend,
 ZERO				:Multi_Int_X48;
 T					:INT_1W_U;
 z,k					:INT_2W_U;
@@ -12937,11 +12940,11 @@ else
 		P_remainder:= 0;
 		P_quotient:= 0;
 		k:= 0;
-		i:= Multi_X4_max;
+		i:= Multi_X48_max;
 		while (i >= 0) do
 			begin
 			P_quotient.M_Value[i]:= (((k * INT_1W_U_MAXINT_1) + dividend.M_Value[i]) div divisor.M_Value[0]);
-			k:= (((k * Multi_X4_max) + dividend.M_Value[i]) - (P_quotient.M_Value[i] * divisor.M_Value[0]));
+			k:= (((k * INT_1W_U_MAXINT_1) + dividend.M_Value[i]) - (P_quotient.M_Value[i] * divisor.M_Value[0]));
 			Dec(i);
 			end;
 		P_remainder.M_Value[0]:= k;
@@ -12968,17 +12971,18 @@ else
 	{ Round X }
 	repeat
 	1000:
-		prev_dividend:= dividend;
-		dividend:= (dividend - divisor);
-		if (dividend > ZERO) then
+		next_dividend:= (dividend - divisor);
+		if (next_dividend >= ZERO) then
 			begin
 			quotient:= (quotient + quotient_factor);
+			dividend:= next_dividend;
 			goto 1000;
 			end;
-		if (dividend = ZERO) then
+		if (next_dividend = ZERO) then
+			begin
 			quotient:= (quotient + quotient_factor);
-		if (dividend < ZERO) then
-			dividend:= prev_dividend;
+			dividend:= next_dividend;
+			end;
 
 		nlz_bits_divisor:= nlz_MultiBits_X48(divisor);
 		if (nlz_bits_divisor < nlz_bits_P_divisor) then
