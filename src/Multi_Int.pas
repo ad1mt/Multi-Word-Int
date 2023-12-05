@@ -40,6 +40,8 @@ v4.27
 v4.27C
 -	bug fixes in Multi_Int_X2_to_Multi_Int_X48,
 	Multi_Int_X3_to_Multi_Int_X48 & Multi_Int_X4_to_Multi_Int_X48
+
+v4.27D
 -	bug fix in division routine
 *)
 
