@@ -11,4 +11,5 @@ Version 4.27 has:
 - an optimisation in the divide algorithm, taken from Knuth/Warren.
 - bug fixes in Multi_Int_X2_to_Multi_Int_X48, Multi_Int_X3_to_Multi_Int_X48 and Multi_Int_X4_to_Multi_Int_X48 conversion routines.
 - bug fix in division routine
-- note that Real/Float to Multi-Int conversion is currently buggy with large exponents; I'm working on a fix
+- bug fix in unary minus routine
+- note that Real/Float to Multi-Int conversion has unfixed bugs; I'm working on a fix
