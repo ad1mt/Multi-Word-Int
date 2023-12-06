@@ -43,6 +43,8 @@ v4.27C
 
 v4.27D
 -	bug fix in division routine
+-	bug fix in unary minus routine
+-	real/float to Multi_Int conversion has unfixed bugs
 *)
 
 (* USER OPTIONAL DEFINES *)
@@ -2872,9 +2874,8 @@ end;
 class operator Multi_Int_X2.-(const v1:Multi_Int_X2):Multi_Int_X2;
 begin
 Result:= v1;
-Result.Negative_flag:= Multi_UBool_FALSE;
-if	(v1.Negative_flag) then
-	Result.Negative_flag:= Multi_UBool_TRUE;
+if	(v1.Negative_flag = Multi_UBool_TRUE) then Result.Negative_flag:= Multi_UBool_FALSE;
+if	(v1.Negative_flag = Multi_UBool_FALSE) then Result.Negative_flag:= Multi_UBool_TRUE;
 end;
 
 
@@ -6024,9 +6025,8 @@ end;
 class operator Multi_Int_X3.-(const v1:Multi_Int_X3):Multi_Int_X3;
 begin
 Result:= v1;
-Result.Negative_flag:= Multi_UBool_FALSE;
-if	(v1.Negative_flag) then
-	Result.Negative_flag:= Multi_UBool_TRUE;
+if	(v1.Negative_flag = Multi_UBool_TRUE) then Result.Negative_flag:= Multi_UBool_FALSE;
+if	(v1.Negative_flag = Multi_UBool_FALSE) then Result.Negative_flag:= Multi_UBool_TRUE;
 end;
 
 
@@ -9428,9 +9428,8 @@ end;
 class operator Multi_Int_X4.-(const v1:Multi_Int_X4):Multi_Int_X4;
 begin
 Result:= v1;
-Result.Negative_flag:= Multi_UBool_FALSE;
-if	(v1.Negative_flag) then
-	Result.Negative_flag:= Multi_UBool_TRUE;
+if	(v1.Negative_flag = Multi_UBool_TRUE) then Result.Negative_flag:= Multi_UBool_FALSE;
+if	(v1.Negative_flag = Multi_UBool_FALSE) then Result.Negative_flag:= Multi_UBool_TRUE;
 end;
 
 
@@ -12530,9 +12529,8 @@ end;
 class operator Multi_Int_X48.-(const v1:Multi_Int_X48):Multi_Int_X48;
 begin
 Result:= v1;
-Result.Negative_flag:= Multi_UBool_FALSE;
-if	(not v1.Negative) then
-	Result.Negative_flag:= Multi_UBool_TRUE;
+if	(v1.Negative_flag = Multi_UBool_TRUE) then Result.Negative_flag:= Multi_UBool_FALSE;
+if	(v1.Negative_flag = Multi_UBool_FALSE) then Result.Negative_flag:= Multi_UBool_TRUE;
 end;
 
 
