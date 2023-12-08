@@ -13,3 +13,4 @@ Version 4.27 has:
 - bug fix in division routine
 - bug fix in unary minus routine
 - note that Real/Float to Multi-Int conversion has unfixed bugs; I'm working on a fix
+- single-digit bug fix in division routine
