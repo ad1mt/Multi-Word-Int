@@ -45,6 +45,7 @@ v4.27D
 -	bug fix in division routine
 -	bug fix in unary minus routine
 -	real/float to Multi_Int conversion has unfixed bugs
+-	single digit divisor bug in divide routine
 *)
 
 (* USER OPTIONAL DEFINES *)
@@ -3231,7 +3232,7 @@ else
 		dividend.M_Value[i]:= P_dividend.M_Value[i];
 		T:= P_divisor.M_Value[i];
 		divisor.M_Value[i]:= T;
-		if	(T <> 0) then Inc(z);
+		if	(T <> 0) then z:= (z + i);
 		Dec(i);
 		end;
 	dividend.Negative_flag:= FALSE;
@@ -3245,7 +3246,7 @@ else
 	    end;
 
 	// single digit divisor
-	if	(z = 1) then
+	if	(z = 0) then
 		begin
 		P_remainder:= 0;
 		P_quotient:= 0;
@@ -6384,7 +6385,7 @@ else
 		dividend.M_Value[i]:= P_dividend.M_Value[i];
 		T:= P_divisor.M_Value[i];
 		divisor.M_Value[i]:= T;
-		if	(T <> 0) then Inc(z);
+		if	(T <> 0) then z:= (z + i);
 		Dec(i);
 		end;
 	dividend.Negative_flag:= FALSE;
@@ -6398,7 +6399,7 @@ else
 	    end;
 
 	// single digit divisor
-	if	(z = 1) then
+	if	(z = 0) then
 		begin
 		P_remainder:= 0;
 		P_quotient:= 0;
@@ -9789,7 +9790,7 @@ else
 		dividend.M_Value[i]:= P_dividend.M_Value[i];
 		T:= P_divisor.M_Value[i];
 		divisor.M_Value[i]:= T;
-		if	(T <> 0) then Inc(z);
+		if	(T <> 0) then z:= (z + i);
 		Dec(i);
 		end;
 	dividend.Negative_flag:= FALSE;
@@ -9803,7 +9804,7 @@ else
 	    end;
 
 	// single digit divisor
-	if	(z = 1) then
+	if	(z = 0) then
 		begin
 		P_remainder:= 0;
 		P_quotient:= 0;
@@ -12921,7 +12922,7 @@ else
 		dividend.M_Value[i]:= P_dividend.M_Value[i];
 		T:= P_divisor.M_Value[i];
 		divisor.M_Value[i]:= T;
-		if	(T <> 0) then Inc(z);
+		if	(T <> 0) then z:= (z + i);
 		Dec(i);
 		end;
 	dividend.Negative_flag:= FALSE;
@@ -12935,7 +12936,7 @@ else
 	    end;
 
 	// single digit divisor
-	if	(z = 1) then
+	if	(z = 0) then
 		begin
 		P_remainder:= 0;
 		P_quotient:= 0;
