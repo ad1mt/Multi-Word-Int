@@ -64,7 +64,7 @@ The Multi_Int unit exports a variable Multi_Int_RAISE_EXCEPTIONS_ENABLED, if set
 
 By calling Multi_Init_Initialisation, you can set/change the size of the Multi_Int_XV type; this is the size in half-words. So, if you specify 128 half-words, which equals 64 whole words, which equals 4096 bits. Set this size to be the maximum you need for your application (with a small margin of error). The larger the size, the slower the calculations become.
 
-The name old name for Multi_Int_XV was Multi_Int_X48; it was a hangover from earlier days.
+The previous name for Multi_Int_XV was Multi_Int_X48; it was a hangover from earlier days.
 
 The standard integer types have been aliased as follows, to make the coding easier in both 32bit and 64bit environments. Do not change these:
 	Multi_int8u = byte;
@@ -96,9 +96,10 @@ function To_Multi_Int_X4(const v1:Multi_Int_XV):Multi_Int_X4
 function To_Multi_Int_X3(const v1:Multi_Int_X2):Multi_Int_X3
 function To_Multi_Int_X2(const v1:Multi_Int_XV):Multi_Int_X2
 
-
 The library code imports a unit named UBool to provide an exotic boolean types:
 UBool = (UBool_UNDEF,UBool_FALSE,UBool_TRUE)
 and T_UBool.
 The main feature of the T_UBool and UBool types are to provide boolean variables that can have an additional value of "undefined".
 These types implement methods and implicit conversion to/from standard boolean values.
+
+There is a define called {$define extended_inc_operator} this enables the two-parameter version of the Inc operator. Version 3.2.2 of the compiler does not allow the two-parameter version of the Inc operator. If you are using Version 3.2.2 of the compiler, and get an "Impossible operator overload" error, unset/comment {$define extended_inc_operator} and this will disable the code for the two-parameter version of the Inc operator.
