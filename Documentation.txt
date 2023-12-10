@@ -102,4 +102,4 @@ and T_UBool.
 The main feature of the T_UBool and UBool types are to provide boolean variables that can have an additional value of "undefined".
 These types implement methods and implicit conversion to/from standard boolean values.
 
-There is a define called {$define extended_inc_operator} this enables the two-parameter version of the Inc operator. Version 3.2.2 of the compiler does not allow the two-parameter version of the Inc operator. If you are using Version 3.2.2 of the compiler, and get an "Impossible operator overload" error, unset/comment {$define extended_inc_operator} and this will disable the code for the two-parameter version of the Inc operator.
+There is a define called {$define extended_inc_operator} this enables the two-parameter version of the Inc operator in the code. Version 3.2.2 of the compiler does not allow the two-parameter version of the Inc operator. If you are using Version 3.2.2 of the compiler, and get an "Impossible operator overload" error, unset/comment {$define extended_inc_operator} and this will disable the code for the two-parameter version of the Inc operator, and allow the code to compile.
