@@ -4,6 +4,59 @@ UNIT Multi_Int;
 
 {$MODESWITCH NESTEDCOMMENTS+}
 
+(*
+v4.23B
+-	bug fixes in divide
+-	divide v4 working
+-	sign bug fixes in power
+-	sign bug fixes in sqroot
+
+v4.23B
+-	Negative functions
+-	Abs functions
+-	Additional init procs
+-	Exception bug ifxes in Inc/Dec
+
+v4.23C
+
+v4.23D
+-	?
+-	sign bug fix in power v4.24
+-	move UBool into separate unit.
+
+v4.25
+-	rename RAISE_EXCEPTIONS_ENABLED to Multi_Int_RAISE_EXCEPTIONS_ENABLED
+-	make Multi_Int_RAISE_EXCEPTIONS_ENABLED a var instead of a define to allow
+	better control of exceptions
+-	Multi_Int_RAISE_EXCEPTIONS_ENABLED defaults to TRUE
+
+v4.26
+-	automagically detect and set {$define 64bit} or {$define 32bit}
+
+v4.27
+-	single word divisor optimisation from Warren/Knuth
+-	inc(v1,increment), dec(v1, decrement)
+
+v4.30
+-	dynamic array inside Multi_Int_X48 record
+-	Multi_Int_X48 size is now set at runtime
+-	deal with Multi_Init_Initialisation not called or called more than once
+-	Multi_Int to real overflow bug fixes (need replicating to all floats)
+-	real-to-Multi-Int finished
+-	single-to-Multi-Int finished
+-	double-to-Multi-Int finished
+-	bug fix in sqroot
+-	bug fix in procedure ansistring_to_Multi_Int_X2
+-	single-digit divisor bug fix in division routine
+-	speed up Multi_Int_X48 multiply routine
+
+v4.31
+-	Rename Multi_Int_X48 to Multi_Int_XV
+-	Rename assorted X48 stuff to XV
+-	Make call Multi_Init_Initialisation optional with default value of 16
+-	overflow bug fix in division routine
+*)
+
 (* USER OPTIONAL DEFINES *)
 
 // This should be changed to 32bit if you wish to override the default/detected setting
@@ -17,6 +70,8 @@ UNIT Multi_Int;
 {$ELSE}
   {$define 32bit}
 {$ENDIF}
+
+// {$define Overflow_Checks}
 
 // {$define extended_inc_operator}
 
@@ -435,9 +490,6 @@ function To_Multi_Int_X2(const v1:Multi_Int_X3):Multi_Int_X2; overload;
 
 
 IMPLEMENTATION
-
-
-// {$define Overflow_Checks}
 
 {$ifdef Overflow_Checks}
 {$Q+}
@@ -3323,8 +3375,8 @@ else
 		i:= Multi_X2_max;
 		while (i >= 0) do
 			begin
-			P_quotient.M_Value[i]:= (((k * INT_1W_U_MAXINT_1) + dividend.M_Value[i]) div divisor.M_Value[0]);
-			k:= (((k * INT_1W_U_MAXINT_1) + dividend.M_Value[i]) - (P_quotient.M_Value[i] * divisor.M_Value[0]));
+			P_quotient.M_Value[i]:= (((k * INT_2W_U(INT_1W_U_MAXINT_1)) + INT_2W_U(dividend.M_Value[i])) div INT_2W_U(divisor.M_Value[0]));
+			k:= (((k * INT_2W_U(INT_1W_U_MAXINT_1)) + INT_2W_U(dividend.M_Value[i])) - (INT_2W_U(P_quotient.M_Value[i]) * INT_2W_U(divisor.M_Value[0])));
 			Dec(i);
 			end;
 		P_remainder.M_Value[0]:= k;
@@ -6549,8 +6601,8 @@ else
 		i:= Multi_X3_max;
 		while (i >= 0) do
 			begin
-			P_quotient.M_Value[i]:= (((k * INT_1W_U_MAXINT_1) + dividend.M_Value[i]) div divisor.M_Value[0]);
-			k:= (((k * INT_1W_U_MAXINT_1) + dividend.M_Value[i]) - (P_quotient.M_Value[i] * divisor.M_Value[0]));
+			P_quotient.M_Value[i]:= (((k * INT_2W_U(INT_1W_U_MAXINT_1)) + INT_2W_U(dividend.M_Value[i])) div INT_2W_U(divisor.M_Value[0]));
+			k:= (((k * INT_2W_U(INT_1W_U_MAXINT_1)) + INT_2W_U(dividend.M_Value[i])) - (INT_2W_U(P_quotient.M_Value[i]) * INT_2W_U(divisor.M_Value[0])));
 			Dec(i);
 			end;
 		P_remainder.M_Value[0]:= k;
@@ -9991,8 +10043,8 @@ else
 		i:= Multi_X4_max;
 		while (i >= 0) do
 			begin
-			P_quotient.M_Value[i]:= (((k * INT_1W_U_MAXINT_1) + dividend.M_Value[i]) div divisor.M_Value[0]);
-			k:= (((k * INT_1W_U_MAXINT_1) + dividend.M_Value[i]) - (P_quotient.M_Value[i] * divisor.M_Value[0]));
+			P_quotient.M_Value[i]:= (((k * INT_2W_U(INT_1W_U_MAXINT_1)) + INT_2W_U(dividend.M_Value[i])) div INT_2W_U(divisor.M_Value[0]));
+			k:= (((k * INT_2W_U(INT_1W_U_MAXINT_1)) + INT_2W_U(dividend.M_Value[i])) - (INT_2W_U(P_quotient.M_Value[i]) * INT_2W_U(divisor.M_Value[0])));
 			Dec(i);
 			end;
 		P_remainder.M_Value[0]:= k;
@@ -13553,8 +13605,8 @@ else
 		i:= Multi_XV_max;
 		while (i >= 0) do
 			begin
-			P_quotient.M_Value[i]:= (((k * INT_1W_U_MAXINT_1) + dividend.M_Value[i]) div divisor.M_Value[0]);
-			k:= (((k * INT_1W_U_MAXINT_1) + dividend.M_Value[i]) - (P_quotient.M_Value[i] * divisor.M_Value[0]));
+			P_quotient.M_Value[i]:= (((k * INT_2W_U(INT_1W_U_MAXINT_1)) + INT_2W_U(dividend.M_Value[i])) div INT_2W_U(divisor.M_Value[0]));
+			k:= (((k * INT_2W_U(INT_1W_U_MAXINT_1)) + INT_2W_U(dividend.M_Value[i])) - (INT_2W_U(P_quotient.M_Value[i]) * INT_2W_U(divisor.M_Value[0])));
 			Dec(i);
 			end;
 		P_remainder.M_Value[0]:= k;
