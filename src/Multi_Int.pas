@@ -55,6 +55,7 @@ v4.31
 -	Rename assorted X48 stuff to XV
 -	Make call Multi_Init_Initialisation optional with default value of 16
 -	overflow bug fix in division routine
+-	overflow bug in Multi_Int to single/double/real
 *)
 
 (* USER OPTIONAL DEFINES *)
@@ -419,8 +420,8 @@ Multi_Int_XV	=	record
 
 var
 Multi_Init_Initialisation_count	:INT_1W_S = 0;
-Multi_Int_RAISE_EXCEPTIONS_ENABLED,
-Multi_Int_OVERFLOW_ERROR		:boolean;
+Multi_Int_RAISE_EXCEPTIONS_ENABLED	:boolean;
+Multi_Int_OVERFLOW_ERROR		:boolean = FALSE;
 Multi_Int_X2_MAXINT			:Multi_Int_X2;
 Multi_Int_X3_MAXINT			:Multi_Int_X3;
 Multi_Int_X4_MAXINT			:Multi_Int_X4;
