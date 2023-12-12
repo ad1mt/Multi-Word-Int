@@ -13,3 +13,5 @@ Version 4.31 has:
 - the multiplication routine has been speeded-up
 - bug fixes to Real/Float to Multi-Int conversion
 - many other bug fixes
+
+Unfortunately, the current version of the library can not be reliably used with the 32bit version of the Free Pascal compiler. Multi_Int to float type conversion does not work reliably. I am working on a fix.
