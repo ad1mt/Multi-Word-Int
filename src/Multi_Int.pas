@@ -2,8 +2,28 @@ UNIT Multi_Int;
 
 {$MODE DELPHI}
 
+(* USER OPTIONAL DEFINES *)
+
+// This should be changed to 32bit if you wish to override the default/detected setting
+// E.g. if your compiler is 64bit but you want to generate code for 32bit integers,
+// you would remove the "{$define 64bit}" and replace it with "{$define 32bit}"
+// In 99.9% of cases, you should leave this to default, unless you have problems
+// running the code in a 32bit environment.
+
+{$IFDEF CPU64}
+	{$define 64bit}
+{$ELSE}
+  	{$define 32bit}
+{$ENDIF}
+
+{$ifdef 32bit}
+	{$FPUTYPE SSE2}
+{$endif}
+
+
 {$MODESWITCH NESTEDCOMMENTS+}
 
+(******************************************************************************)
 (*
 v4.23B
 -	bug fixes in divide
@@ -58,21 +78,14 @@ v4.31
 -	overflow bug in Multi_Int to single/double/real
 -	overflow bug in 32bit Multi_Int to double/real
 -	disable Multi_Int to single in 32bit environment
+-	bug fix in hex to Multi_Int
+
+v4.32
+-	missing implicit conversion int64 to Multi_Int in 32bit environment
+-	in all cases of overflow set Multi_Int_OVERFLOW_ERROR:=TRUE
+-	set {$FPUTYPE SSE2} in 32bit environments
+-	restore Multi_int to single conversion in 32bit environment
 *)
-
-(* USER OPTIONAL DEFINES *)
-
-// This should be changed to 32bit if you wish to override the default/detected setting
-// E.g. if your compiler is 64bit but you want to generate code for 32bit integers,
-// you would remove the "{$define 64bit}" and replace it with "{$define 32bit}"
-// In 99.9% of cases, you should leave this to default, unless you have problems
-// running the code in a 32bit environment.
-
-{$IFDEF CPU64}
-  {$define 64bit}
-{$ELSE}
-  {$define 32bit}
-{$ENDIF}
 
 // {$define Overflow_Checks}
 
@@ -137,6 +150,7 @@ const
 const
 	INT_1W_SIZE		= 16;
 	INT_2W_SIZE		= 32;
+	INT_4W_SIZE		= 32;
 
 	INT_1W_S_MAXINT		= Multi_INT16_MAXINT;
 	INT_1W_S_MAXINT_1	= Multi_INT16_MAXINT_1;
@@ -148,12 +162,19 @@ const
 	INT_2W_U_MAXINT		= Multi_INT32U_MAXINT;
 	INT_2W_U_MAXINT_1	= Multi_INT32U_MAXINT_1;
 
+	INT_4W_S_MAXINT		= Multi_INT64_MAXINT;
+	INT_4W_S_MAXINT_1	= Multi_INT64_MAXINT_1;
+	INT_4W_U_MAXINT		= Multi_INT64U_MAXINT;
+	INT_4W_U_MAXINT_1	= Multi_INT64U_MAXINT_1;
+
 type
 
 	INT_1W_S		= Multi_int16;
 	INT_1W_U		= Multi_int16u;
 	INT_2W_S		= Multi_int32;
 	INT_2W_U		= Multi_int32u;
+	INT_4W_S		= Multi_int64;
+	INT_4W_U		= Multi_int64u;
 
 {$endif} // 32-bit
 
@@ -213,14 +234,16 @@ Multi_Int_X2	=	record
 						class operator implicit(const v1:Multi_Int_X2):INT_2W_S;
 						class operator implicit(const v1:INT_2W_S):Multi_Int_X2;
 						class operator implicit(const v1:INT_2W_U):Multi_Int_X2;
+					{$ifdef 32bit}
+						class operator implicit(const v1:INT_4W_S):Multi_Int_X2;
+						class operator implicit(const v1:INT_4W_U):Multi_Int_X2;
+					{$endif}
 						class operator implicit(const v1:ansistring):Multi_Int_X2;
 						class operator implicit(const v1:Multi_Int_X2):ansistring;
 						class operator implicit(const v1:Single):Multi_Int_X2;
 						class operator implicit(const v1:Real):Multi_Int_X2;
 						class operator implicit(const v1:Double):Multi_Int_X2;
-					{$ifdef 64bit}
 						class operator implicit(const v1:Multi_Int_X2):Single;
-					{$endif}
 						class operator implicit(const v1:Multi_Int_X2):Real;
 						class operator implicit(const v1:Multi_Int_X2):Double;
 						class operator add(const v1,v2:Multi_Int_X2):Multi_Int_X2;
@@ -272,6 +295,10 @@ Multi_Int_X3	=	record
 						class operator implicit(const v1:Multi_Int_X3):INT_2W_S;
 						class operator implicit(const v1:INT_2W_S):Multi_Int_X3;
 						class operator implicit(const v1:INT_2W_U):Multi_Int_X3;
+					{$ifdef 32bit}
+						class operator implicit(const v1:INT_4W_S):Multi_Int_X3;
+						class operator implicit(const v1:INT_4W_U):Multi_Int_X3;
+					{$endif}
 						class operator implicit(const v1:Multi_Int_X2):Multi_Int_X3;
 						class operator implicit(const v1:ansistring):Multi_Int_X3;
 						class operator implicit(const v1:Multi_Int_X3):ansistring;
@@ -279,9 +306,7 @@ Multi_Int_X3	=	record
 						class operator implicit(const v1:Real):Multi_Int_X3;
 						class operator implicit(const v1:Double):Multi_Int_X3;
 						class operator implicit(const v1:Multi_Int_X3):Real;
-					{$ifdef 64bit}
 						class operator implicit(const v1:Multi_Int_X3):Single;
-					{$endif}
 						class operator implicit(const v1:Multi_Int_X3):Double;
 						class operator add(const v1,v2:Multi_Int_X3):Multi_Int_X3;
 						class operator subtract(const v1,v2:Multi_Int_X3):Multi_Int_X3;
@@ -332,6 +357,10 @@ Multi_Int_X4	=	record
 						class operator implicit(const v1:Multi_Int_X4):INT_2W_S;
 						class operator implicit(const v1:INT_2W_S):Multi_Int_X4;
 						class operator implicit(const v1:INT_2W_U):Multi_Int_X4;
+					{$ifdef 32bit}
+						class operator implicit(const v1:INT_4W_S):Multi_Int_X4;
+						class operator implicit(const v1:INT_4W_U):Multi_Int_X4;
+					{$endif}
 						class operator implicit(const v1:Multi_Int_X2):Multi_Int_X4;
 						class operator implicit(const v1:Multi_Int_X3):Multi_Int_X4;
 						class operator implicit(const v1:ansistring):Multi_Int_X4;
@@ -339,9 +368,7 @@ Multi_Int_X4	=	record
 						class operator implicit(const v1:Single):Multi_Int_X4;
 						class operator implicit(const v1:Real):Multi_Int_X4;
 						class operator implicit(const v1:Double):Multi_Int_X4;
-					{$ifdef 64bit}
 						class operator implicit(const v1:Multi_Int_X4):Single;
-					{$endif}
 						class operator implicit(const v1:Multi_Int_X4):Real;
 						class operator implicit(const v1:Multi_Int_X4):Double;
 						class operator add(const v1,v2:Multi_Int_X4):Multi_Int_X4;
@@ -396,12 +423,14 @@ Multi_Int_XV	=	record
 						class operator implicit(const v1:Multi_Int_X4):Multi_Int_XV;
 						class operator implicit(const v1:INT_2W_S):Multi_Int_XV;
 						class operator implicit(const v1:INT_2W_U):Multi_Int_XV;
+					{$ifdef 32bit}
+						class operator implicit(const v1:INT_4W_S):Multi_Int_XV;
+						class operator implicit(const v1:INT_4W_U):Multi_Int_XV;
+					{$endif}
 						class operator implicit(const v1:ansistring):Multi_Int_XV;
 						class operator implicit(const v1:Multi_Int_XV):ansistring;
 						class operator implicit(const v1:Single):Multi_Int_XV;
-					{$ifdef 64bit}
 						class operator implicit(const v1:Multi_Int_XV):Single;
-					{$endif}
 						class operator implicit(const v1:Real):Multi_Int_XV;
 						class operator implicit(const v1:Multi_Int_XV):Real;
 						class operator implicit(const v1:Double):Multi_Int_XV;
@@ -1444,6 +1473,7 @@ if	(length(v1) > 0) then
 			except
 				on EConvertError do
 					begin
+					Multi_Int_OVERFLOW_ERROR:= TRUE;
 					mi.Defined_flag:= FALSE;
 					if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
 						begin
@@ -1477,6 +1507,7 @@ if	(length(v1) > 0) then
 
 		if	M_Val[3] > INT_1W_U_MAXINT then
 			begin
+			Multi_Int_OVERFLOW_ERROR:= TRUE;
 			mi.Defined_flag:=FALSE;
 			mi.Overflow_flag:=TRUE;
 			if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
@@ -1524,6 +1555,7 @@ then
 		begin
 		Raise EInterror.create('Uninitialised variable');
 		end;
+		Multi_Int_OVERFLOW_ERROR:= TRUE;
 	Result.Defined_flag:= FALSE;
 	exit;
 	end;
@@ -1532,11 +1564,13 @@ if	(v1.Overflow_flag = TRUE)
 or	(v1 > Multi_Int_X2_MAXINT)
 then
 	begin
+	Multi_Int_OVERFLOW_ERROR:= TRUE;
+	Result.Overflow_flag:= TRUE;
 	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
 		begin
 		Raise EInterror.create('Overflow');
 		end;
-	Result.Overflow_flag:= TRUE;
+		Multi_Int_OVERFLOW_ERROR:= TRUE;
 	exit;
 	end;
 
@@ -1560,11 +1594,12 @@ Result.Negative_flag:= v1.Negative_flag;
 if	(v1.Defined_flag = FALSE)
 then
 	begin
+	Multi_Int_OVERFLOW_ERROR:= TRUE;
+	Result.Defined_flag:= FALSE;
 	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
 		begin
 		Raise EInterror.create('Uninitialised variable');
 		end;
-	Result.Defined_flag:= FALSE;
 	exit;
 	end;
 
@@ -1572,11 +1607,12 @@ if	(v1.Overflow_flag = TRUE)
 or	(v1 > Multi_Int_X2_MAXINT)
 then
 	begin
+	Multi_Int_OVERFLOW_ERROR:= TRUE;
+	Result.Overflow_flag:= TRUE;
 	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
 		begin
 		Raise EInterror.create('Overflow');
 		end;
-	Result.Overflow_flag:= TRUE;
 	exit;
 	end;
 
@@ -1600,11 +1636,12 @@ Result.Negative_flag:= v1.Negative_flag;
 if	(v1.Defined_flag = FALSE)
 then
 	begin
+	Multi_Int_OVERFLOW_ERROR:= TRUE;
+	Result.Defined_flag:= FALSE;
 	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
 		begin
 		Raise EInterror.create('Uninitialised variable');
 		end;
-	Result.Defined_flag:= FALSE;
 	exit;
 	end;
 
@@ -1612,11 +1649,12 @@ if	(v1.Overflow_flag = TRUE)
 or	(v1 > Multi_Int_X2_MAXINT)
 then
 	begin
+	Multi_Int_OVERFLOW_ERROR:= TRUE;
+	Result.Overflow_flag:= TRUE;
 	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
 		begin
 		Raise EInterror.create('Overflow');
 		end;
-	Result.Overflow_flag:= TRUE;
 	exit;
 	end;
 
@@ -1643,6 +1681,69 @@ class operator Multi_Int_X2.implicit(const v1:ansistring):Multi_Int_X2;
 begin
 ansistring_to_Multi_Int_X2(v1,Result);
 end;
+
+
+{$ifdef 32bit}
+(******************************************)
+procedure INT_4W_S_to_Multi_Int_X2(const v1:INT_4W_S; var mi:Multi_Int_X2);
+var
+v	:INT_4W_U;
+n	:INT_2W_U;
+begin
+mi.Overflow_flag:=FALSE;
+mi.Defined_flag:=TRUE;
+v:= Abs(v1);
+
+v:= v1;
+mi.M_Value[0]:= INT_1W_U(v MOD INT_1W_U_MAXINT_1);
+v:= (v div INT_1W_U_MAXINT_1);
+mi.M_Value[1]:= INT_1W_U(v MOD INT_1W_U_MAXINT_1);
+v:= (v div INT_1W_U_MAXINT_1);
+mi.M_Value[2]:= INT_1W_U(v MOD INT_1W_U_MAXINT_1);
+v:= (v div INT_1W_U_MAXINT_1);
+mi.M_Value[3]:= v;
+
+if (v1 < 0) then mi.Negative_flag:= Multi_UBool_TRUE
+else mi.Negative_flag:= Multi_UBool_FALSE;
+
+end;
+
+
+(******************************************)
+class operator Multi_Int_X2.implicit(const v1:INT_4W_S):Multi_Int_X2;
+begin
+INT_4W_S_to_Multi_Int_X2(v1,Result);
+end;
+
+
+(******************************************)
+procedure INT_4W_U_to_Multi_Int_X2(const v1:INT_4W_U; var mi:Multi_Int_X2);
+var
+v	:INT_4W_U;
+n	:INT_2W_U;
+begin
+mi.Overflow_flag:=FALSE;
+mi.Defined_flag:=TRUE;
+mi.Negative_flag:= Multi_UBool_FALSE;
+
+v:= v1;
+mi.M_Value[0]:= INT_1W_U(v MOD INT_1W_U_MAXINT_1);
+v:= (v div INT_1W_U_MAXINT_1);
+mi.M_Value[1]:= INT_1W_U(v MOD INT_1W_U_MAXINT_1);
+v:= (v div INT_1W_U_MAXINT_1);
+mi.M_Value[2]:= INT_1W_U(v MOD INT_1W_U_MAXINT_1);
+v:= (v div INT_1W_U_MAXINT_1);
+mi.M_Value[3]:= v;
+
+end;
+
+
+(******************************************)
+class operator Multi_Int_X2.implicit(const v1:INT_4W_U):Multi_Int_X2;
+begin
+INT_4W_U_to_Multi_Int_X2(v1,Result);
+end;
+{$endif}
 
 
 (******************************************)
@@ -1781,8 +1882,6 @@ Result:= R;
 end;
 
 
-
-{$ifdef 64bit}
 (******************************************)
 class operator Multi_Int_X2.implicit(const v1:Multi_Int_X2):Single;
 var
@@ -1851,7 +1950,6 @@ do
 if v1.Negative_flag then R:= (- R);
 Result:= R;
 end;
-{$endif}
 
 
 (******************************************)
@@ -1910,7 +2008,6 @@ do
 		if	(v1.M_Value[i] > 0) then
 			begin
 			Multi_Int_OVERFLOW_ERROR:= TRUE;
-			writeln('Overflow on Multi_Int to Real conversion');
 			if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
 				begin
 				Raise EIntOverflow.create('Overflow on Multi_Int to Real conversion');
@@ -2042,6 +2139,7 @@ if	(Not v1.Defined_flag)
 then
 	begin
 	Result:=0;
+	Multi_Int_OVERFLOW_ERROR:= TRUE;
 	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
 		begin
 		Raise EInterror.create('Uninitialised variable');
@@ -2169,7 +2267,7 @@ then
 	Result:=0;
 	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
 		begin
-		Raise EInterror.create('Uninitialised variable');
+		Raise EInterror.create('Overflow');
 		end;
 	exit;
 	end;
@@ -2205,7 +2303,7 @@ then
 	Result:=0;
 	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
 		begin
-		Raise EInterror.create('Uninitialised variable');
+		Raise EInterror.create('Overflow');
 		end;
 	exit;
 	end;
@@ -2235,9 +2333,10 @@ if	(v1.Overflow_flag)
 then
 	begin
 	v2:='OVERFLOW';
+	Multi_Int_OVERFLOW_ERROR:= TRUE;
 	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
 		begin
-		Raise EInterror.create('Uninitialised variable');
+		Raise EInterror.create('Overflow');
 		end;
 	exit;
 	end;
@@ -2304,6 +2403,7 @@ if	(length(v1) > 0) then
 			except
 				on EConvertError do
 					begin
+					Multi_Int_OVERFLOW_ERROR:= TRUE;
 					mi.Defined_flag:= FALSE;
 					if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
 						begin
@@ -2335,6 +2435,7 @@ if	(length(v1) > 0) then
 
 		if	M_Val[n] > INT_1W_U_MAXINT then
 			begin
+			Multi_Int_OVERFLOW_ERROR:= TRUE;
 			mi.Defined_flag:=FALSE;
 			mi.Overflow_flag:=TRUE;
 			if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
@@ -2392,9 +2493,10 @@ if	(v1.Overflow_flag)
 then
 	begin
 	v2:='OVERFLOW';
+	Multi_Int_OVERFLOW_ERROR:= TRUE;
 	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
 		begin
-		Raise EInterror.create('Uninitialised variable');
+		Raise EInterror.create('Overflow');
 		end;
 	exit;
 	end;
@@ -2522,12 +2624,6 @@ if	M_Val[3] > INT_1W_U_MAXINT then
 	M_Val[3]:= (M_Val[3] MOD INT_1W_U_MAXINT_1);
 	Result.Defined_flag:= FALSE;
 	Result.Overflow_flag:=TRUE;
-(*
-	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
-		begin
-		Raise EIntOverflow.create('Overflow on add');
-		end;
-*)
 	end;
 
 Result.M_Value[0]:= M_Val[0];
@@ -2582,12 +2678,6 @@ if	M_Val[3] < 0 then
 	begin
 	Result.Defined_flag:= FALSE;
 	Result.Overflow_flag:=TRUE;
-(*
-	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
-		begin
-		Raise EIntOverflow.create('Overflow on subtract');
-		end;
-*)
 	end;
 
 Result.M_Value[0]:= M_Val[0];
@@ -2625,6 +2715,7 @@ if	(v1.Overflow_flag)
 then
 	begin
 	Result:= 0;
+	Multi_Int_OVERFLOW_ERROR:= TRUE;
 	Result.Defined_flag:= v1.Defined_flag;
 	Result.Overflow_flag:= v1.Overflow_flag;
 	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
@@ -2658,10 +2749,11 @@ else
 		end;
 	end;
 
-if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
+if (Result.Overflow_flag = TRUE) then
 	begin
-	if (Result.Overflow_flag = TRUE) then
-		Raise EIntOverflow.create('Overflow on Inc');
+	Multi_Int_OVERFLOW_ERROR:= TRUE;
+	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
+		Raise EIntOverflow.create('Overflow');
 	end;
 
 if	(Result.Negative_flag = Multi_UBool_UNDEF) then Result.Negative_flag:= Neg;
@@ -2817,6 +2909,7 @@ then
 if	(v1.Overflow_flag or v2.Overflow_flag)
 then
 	begin
+	Multi_Int_OVERFLOW_ERROR:= TRUE;
 	Result:= 0;
 	Result.Overflow_flag:=TRUE;
 	Result.Defined_flag:=TRUE;
@@ -2866,10 +2959,11 @@ else
 			end;
 		end;
 
-if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
+if (Result.Overflow_flag = TRUE) then
 	begin
-	if (Result.Overflow_flag = TRUE) then
-		Raise EIntOverflow.create('Overflow on Add');
+	Multi_Int_OVERFLOW_ERROR:= TRUE;
+	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
+		Raise EIntOverflow.create('Overflow');
 	end;
 
 if	(Result.Negative_flag = Multi_UBool_UNDEF) then Result.Negative_flag:= Neg;
@@ -2897,6 +2991,7 @@ then
 if	(v1.Overflow_flag)
 then
 	begin
+	Multi_Int_OVERFLOW_ERROR:= TRUE;
 	Result:= 0;
 	Result.Defined_flag:= v1.Defined_flag;
 	Result.Overflow_flag:= v1.Overflow_flag;
@@ -2930,10 +3025,11 @@ else (* v1 is Negative_flag *)
 	Neg:=Multi_UBool_TRUE;
 	end;
 
-if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
+if (Result.Overflow_flag = TRUE) then
 	begin
-	if (Result.Overflow_flag = TRUE) then
-		Raise EIntOverflow.create('Overflow on Dec');
+	Multi_Int_OVERFLOW_ERROR:= TRUE;
+	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
+		Raise EIntOverflow.create('Overflow');
 	end;
 
 if	(Result.Negative_flag = Multi_UBool_UNDEF) then Result.Negative_flag:= Neg;
@@ -2960,6 +3056,7 @@ then
 if	(v1.Overflow_flag or v2.Overflow_flag)
 then
 	begin
+	Multi_Int_OVERFLOW_ERROR:= TRUE;
 	Result:= 0;
 	Result.Overflow_flag:=TRUE;
 	Result.Defined_flag:=TRUE;
@@ -3018,10 +3115,11 @@ else (* v1.Negative_flag <> v2.Negative_flag *)
 		end
 	end;
 
-if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
+if (Result.Overflow_flag = TRUE) then
 	begin
-	if (Result.Overflow_flag = TRUE) then
-		Raise EIntOverflow.create('Overflow on Subtract');
+	Multi_Int_OVERFLOW_ERROR:= TRUE;
+	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
+		Raise EIntOverflow.create('Overflow');
 	end;
 
 if	(Result.Negative_flag = Multi_UBool_UNDEF) then Result.Negative_flag:= Neg;
@@ -3135,6 +3233,7 @@ Result:= R;
 
 if	R.Overflow_flag then
 	begin
+	Multi_Int_OVERFLOW_ERROR:= TRUE;
 	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
 		begin
 		Raise EIntOverflow.create('Overflow on multiply');
@@ -3169,6 +3268,7 @@ then
 if	(v1.Overflow_flag)
 then
 	begin
+	Multi_Int_OVERFLOW_ERROR:= TRUE;
 	VR:= 0;
 	VR.Defined_flag:= FALSE;
 	VREM:= 0;
@@ -3183,13 +3283,14 @@ then
 if	(v1.Negative_flag = Multi_UBool_TRUE)
 then
 	begin
+	Multi_Int_OVERFLOW_ERROR:= TRUE;
 	VR:= 0;
 	VR.Defined_flag:= FALSE;
 	VREM:= 0;
 	VREM.Defined_flag:= FALSE;
 	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
 		begin
-		Raise EIntOverflow.create('SqRoot is Negative_flag');
+		Raise EIntOverflow.create('SqRoot is Negative');
 		end;
 	exit;
 	end;
@@ -3288,6 +3389,7 @@ else
 			if	(T.Overflow_flag)
 			then
 				begin
+				Multi_Int_OVERFLOW_ERROR:= TRUE;
 				Result:= 0;
 				Result.Defined_flag:= FALSE;
 				Result.Overflow_flag:= TRUE;
@@ -3310,6 +3412,7 @@ else
 		if	(T.Overflow_flag)
 		then
 			begin
+			Multi_Int_OVERFLOW_ERROR:= TRUE;
 			Result:= 0;
 			Result.Defined_flag:= FALSE;
 			Result.Overflow_flag:= TRUE;
@@ -3329,6 +3432,7 @@ else
 	if	(R.Overflow_flag)
 	then
 		begin
+		Multi_Int_OVERFLOW_ERROR:= TRUE;
 		Result:= 0;
 		Result.Defined_flag:= FALSE;
 		Result.Overflow_flag:= TRUE;
@@ -3513,6 +3617,7 @@ then
 if	(v1.Overflow_flag or v2.Overflow_flag)
 then
 	begin
+	Multi_Int_OVERFLOW_ERROR:= TRUE;
 	Result:= 0;
 	Result.Overflow_flag:=TRUE;
 	Result.Defined_flag:=TRUE;
@@ -3571,6 +3676,7 @@ then
 if	(v1.Overflow_flag or v2.Overflow_flag)
 then
 	begin
+	Multi_Int_OVERFLOW_ERROR:= TRUE;
 	Result:= 0;
 	Result.Overflow_flag:=TRUE;
 	Result.Defined_flag:=TRUE;
@@ -4548,6 +4654,7 @@ if	(length(v1) > 0) then
 			except
 				on EConvertError do
 					begin
+					Multi_Int_OVERFLOW_ERROR:= TRUE;
 					mi.Defined_flag:= FALSE;
 					if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
 						begin
@@ -4595,6 +4702,7 @@ if	(length(v1) > 0) then
 
 		if	M_Val[5] > INT_1W_U_MAXINT then
 			begin
+			Multi_Int_OVERFLOW_ERROR:= TRUE;
 			mi.Defined_flag:=FALSE;
 			mi.Overflow_flag:=TRUE;
 			if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
@@ -4645,6 +4753,75 @@ class operator Multi_Int_X3.implicit(const v1:ansistring):Multi_Int_X3;
 begin
 ansistring_to_Multi_Int_X3(v1,Result);
 end;
+
+
+{$ifdef 32bit}
+(******************************************)
+procedure INT_4W_S_to_Multi_Int_X3(const v1:INT_4W_S; var mi:Multi_Int_X3);
+var
+v	:INT_4W_U;
+n	:INT_2W_U;
+begin
+mi.Overflow_flag:=FALSE;
+mi.Defined_flag:=TRUE;
+v:= Abs(v1);
+
+v:= v1;
+mi.M_Value[0]:= INT_1W_U(v MOD INT_1W_U_MAXINT_1);
+v:= (v div INT_1W_U_MAXINT_1);
+mi.M_Value[1]:= INT_1W_U(v MOD INT_1W_U_MAXINT_1);
+v:= (v div INT_1W_U_MAXINT_1);
+mi.M_Value[2]:= INT_1W_U(v MOD INT_1W_U_MAXINT_1);
+v:= (v div INT_1W_U_MAXINT_1);
+mi.M_Value[3]:= v;
+
+mi.M_Value[4]:= 0;
+mi.M_Value[5]:= 0;
+
+if (v1 < 0) then mi.Negative_flag:= Multi_UBool_TRUE
+else mi.Negative_flag:= Multi_UBool_FALSE;
+
+end;
+
+
+(******************************************)
+class operator Multi_Int_X3.implicit(const v1:INT_4W_S):Multi_Int_X3;
+begin
+INT_4W_S_to_Multi_Int_X3(v1,Result);
+end;
+
+
+(******************************************)
+procedure INT_4W_U_to_Multi_Int_X3(const v1:INT_4W_U; var mi:Multi_Int_X3);
+var
+v	:INT_4W_U;
+n	:INT_2W_U;
+begin
+mi.Overflow_flag:=FALSE;
+mi.Defined_flag:=TRUE;
+mi.Negative_flag:= Multi_UBool_FALSE;
+
+v:= v1;
+mi.M_Value[0]:= INT_1W_U(v MOD INT_1W_U_MAXINT_1);
+v:= (v div INT_1W_U_MAXINT_1);
+mi.M_Value[1]:= INT_1W_U(v MOD INT_1W_U_MAXINT_1);
+v:= (v div INT_1W_U_MAXINT_1);
+mi.M_Value[2]:= INT_1W_U(v MOD INT_1W_U_MAXINT_1);
+v:= (v div INT_1W_U_MAXINT_1);
+mi.M_Value[3]:= v;
+
+mi.M_Value[4]:= 0;
+mi.M_Value[5]:= 0;
+
+end;
+
+
+(******************************************)
+class operator Multi_Int_X3.implicit(const v1:INT_4W_U):Multi_Int_X3;
+begin
+INT_4W_U_to_Multi_Int_X3(v1,Result);
+end;
+{$endif}
 
 
 (******************************************)
@@ -4725,11 +4902,12 @@ if	(v1.Overflow_flag = TRUE)
 or	(v1 > Multi_Int_X3_MAXINT)
 then
 	begin
+	Multi_Int_OVERFLOW_ERROR:= TRUE;
+	Result.Overflow_flag:= TRUE;
 	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
 		begin
 		Raise EInterror.create('Overflow');
 		end;
-	Result.Overflow_flag:= TRUE;
 	exit;
 	end;
 
@@ -4753,11 +4931,11 @@ Result.Negative_flag:= v1.Negative_flag;
 if	(v1.Defined_flag = FALSE)
 then
 	begin
+	Result.Defined_flag:= FALSE;
 	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
 		begin
 		Raise EInterror.create('Uninitialised variable');
 		end;
-	Result.Defined_flag:= FALSE;
 	exit;
 	end;
 
@@ -4765,11 +4943,12 @@ if	(v1.Overflow_flag = TRUE)
 or	(v1 > Multi_Int_X3_MAXINT)
 then
 	begin
+	Multi_Int_OVERFLOW_ERROR:= TRUE;
+	Result.Overflow_flag:= TRUE;
 	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
 		begin
 		Raise EInterror.create('Overflow');
 		end;
-	Result.Overflow_flag:= TRUE;
 	exit;
 	end;
 
@@ -4804,11 +4983,12 @@ then
 if	(v1.Overflow_flag = TRUE)
 then
 	begin
+	Multi_Int_OVERFLOW_ERROR:= TRUE;
+	Result.Overflow_flag:= TRUE;
 	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
 		begin
 		Raise EInterror.create('Overflow');
 		end;
-	Result.Overflow_flag:= TRUE;
 	exit;
 	end;
 
@@ -4850,11 +5030,12 @@ then
 if	(v1.Overflow_flag = TRUE)
 then
 	begin
+	Multi_Int_OVERFLOW_ERROR:= TRUE;
+	MI.Overflow_flag:= TRUE;
 	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
 		begin
 		Raise EInterror.create('Overflow');
 		end;
-	MI.Overflow_flag:= TRUE;
 	exit;
 	end;
 
@@ -4964,7 +5145,6 @@ Result:= R;
 end;
 
 
-{$ifdef 64bit}
 (******************************************)
 class operator Multi_Int_X3.implicit(const v1:Multi_Int_X3):Single;
 var
@@ -5033,7 +5213,6 @@ do
 if v1.Negative_flag then R:= (- R);
 Result:= R;
 end;
-{$endif}
 
 
 (******************************************)
@@ -5361,7 +5540,7 @@ then
 	Result:=0;
 	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
 		begin
-		Raise EInterror.create('Uninitialised variable');
+		Raise EInterror.create('Overflow');
 		end;
 	exit;
 	end;
@@ -5427,6 +5606,7 @@ then
 if	(v1.Overflow_flag)
 then
 	begin
+	Multi_Int_OVERFLOW_ERROR:= TRUE;
 	v2:='OVERFLOW';
 	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
 		begin
@@ -5499,6 +5679,7 @@ if	(length(v1) > 0) then
 			except
 				on EConvertError do
 					begin
+					Multi_Int_OVERFLOW_ERROR:= TRUE;
 					mi.Defined_flag:= FALSE;
 					if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
 						begin
@@ -5530,6 +5711,7 @@ if	(length(v1) > 0) then
 
 		if	M_Val[n] > INT_1W_U_MAXINT then
 			begin
+			Multi_Int_OVERFLOW_ERROR:= TRUE;
 			mi.Defined_flag:=FALSE;
 			mi.Overflow_flag:=TRUE;
 			if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
@@ -5586,10 +5768,11 @@ then
 if	(v1.Overflow_flag)
 then
 	begin
+	Multi_Int_OVERFLOW_ERROR:= TRUE;
 	v2:='OVERFLOW';
 	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
 		begin
-		Raise EInterror.create('Uninitialised variable');
+		Raise EInterror.create('Overflow');
 		end;
 	exit;
 	end;
@@ -5749,12 +5932,6 @@ if	M_Val[5] > INT_1W_U_MAXINT then
 	M_Val[5]:= (M_Val[5] MOD INT_1W_U_MAXINT_1);
 	Result.Defined_flag:= FALSE;
 	Result.Overflow_flag:=TRUE;
-(*
-	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
-		begin
-		Raise EIntOverflow.create('Overflow on add');
-		end;
-*)
 	end;
 
 Result.M_Value[0]:= M_Val[0];
@@ -5829,12 +6006,6 @@ if	M_Val[5] < 0 then
 	begin
 	Result.Defined_flag:= FALSE;
 	Result.Overflow_flag:=TRUE;
-(*
-	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
-		begin
-		Raise EIntOverflow.create('Overflow on subtract');
-		end;
-*)
 	end;
 
 Result.M_Value[0]:= M_Val[0];
@@ -5876,6 +6047,7 @@ then
 if	(v1.Overflow_flag)
 then
 	begin
+	Multi_Int_OVERFLOW_ERROR:= TRUE;
 	Result:= 0;
 	Result.Defined_flag:= v1.Defined_flag;
 	Result.Overflow_flag:= v1.Overflow_flag;
@@ -5910,10 +6082,11 @@ else
 		end;
 	end;
 
-if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
+if (Result.Overflow_flag = TRUE) then
 		begin
-		if (Result.Overflow_flag = TRUE) then
-			Raise EIntOverflow.create('Overflow on Inc');
+		Multi_Int_OVERFLOW_ERROR:= TRUE;
+		if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
+			Raise EIntOverflow.create('Overflow');
 		end;
 
 if	(Result.Negative_flag = Multi_UBool_UNDEF) then Result.Negative_flag:= Neg;
@@ -6069,6 +6242,7 @@ then
 if	(v1.Overflow_flag or v2.Overflow_flag)
 then
 	begin
+	Multi_Int_OVERFLOW_ERROR:= TRUE;
 	Result:= 0;
 	Result.Overflow_flag:=TRUE;
 	Result.Defined_flag:=TRUE;
@@ -6118,10 +6292,11 @@ else
 			end;
 		end;
 
-if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
+if (Result.Overflow_flag = TRUE) then
 		begin
-		if (Result.Overflow_flag = TRUE) then
-			Raise EIntOverflow.create('Overflow on Add');
+		Multi_Int_OVERFLOW_ERROR:= TRUE;
+		if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
+			Raise EIntOverflow.create('Overflow');
 		end;
 
 if	(Result.Negative_flag = Multi_UBool_UNDEF) then Result.Negative_flag:= Neg;
@@ -6152,6 +6327,7 @@ then
 	Result:= 0;
 	Result.Defined_flag:= v1.Defined_flag;
 	Result.Overflow_flag:= v1.Overflow_flag;
+	Multi_Int_OVERFLOW_ERROR:= TRUE;
 	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
 		begin
 		Raise EIntOverflow.create('Overflow on inc');
@@ -6182,11 +6358,12 @@ else (* v1 is Negative_flag *)
 	Neg:=Multi_UBool_TRUE;
 	end;
 
-if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
-		begin
-		if (Result.Overflow_flag = TRUE) then
-			Raise EIntOverflow.create('Overflow on Dec');
-		end;
+if (Result.Overflow_flag = TRUE) then
+	begin
+	Multi_Int_OVERFLOW_ERROR:= TRUE;
+	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
+		Raise EIntOverflow.create('Overflow');
+	end;
 
 if	(Result.Negative_flag = Multi_UBool_UNDEF) then Result.Negative_flag:= Neg;
 end;
@@ -6215,6 +6392,7 @@ then
 	Result:= 0;
 	Result.Overflow_flag:=TRUE;
 	Result.Defined_flag:=TRUE;
+	Multi_Int_OVERFLOW_ERROR:= TRUE;
 	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
 		begin
 		Raise EIntOverflow.create('Overflow on subtract');
@@ -6270,11 +6448,12 @@ else (* v1.Negative_flag <> v2.Negative_flag *)
 		end
 	end;
 
-if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
-		begin
-		if (Result.Overflow_flag = TRUE) then
-			Raise EIntOverflow.create('Overflow on Subtract');
-		end;
+if (Result.Overflow_flag = TRUE) then
+	begin
+	Multi_Int_OVERFLOW_ERROR:= TRUE;
+	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
+		Raise EIntOverflow.create('Overflow');
+	end;
 
 if	(Result.Negative_flag = Multi_UBool_UNDEF) then Result.Negative_flag:= Neg;
 end;
@@ -6371,6 +6550,7 @@ then
 	Result:= 0;
 	Result.Overflow_flag:=TRUE;
 	Result.Defined_flag:=TRUE;
+	Multi_Int_OVERFLOW_ERROR:= TRUE;
 	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
 		begin
 		Raise EIntOverflow.create('Overflow on multiply');
@@ -6387,12 +6567,11 @@ if	(R.Negative_flag = Multi_UBool_UNDEF) then
 
 Result:= R;
 
-if	R.Overflow_flag then
+if (Result.Overflow_flag = TRUE) then
 	begin
+	Multi_Int_OVERFLOW_ERROR:= TRUE;
 	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
-		begin
-		Raise EIntOverflow.create('Overflow on multiply');
-		end;
+		Raise EIntOverflow.create('Overflow');
 	end;
 end;
 
@@ -6427,6 +6606,7 @@ then
 	VR.Defined_flag:= FALSE;
 	VREM:= 0;
 	VREM.Defined_flag:= FALSE;
+	Multi_Int_OVERFLOW_ERROR:= TRUE;
 	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
 		begin
 		Raise EIntOverflow.create('Overflow on Dec');
@@ -6441,6 +6621,7 @@ then
 	VR.Defined_flag:= FALSE;
 	VREM:= 0;
 	VREM.Defined_flag:= FALSE;
+	Multi_Int_OVERFLOW_ERROR:= TRUE;
 	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
 		begin
 		Raise EIntOverflow.create('SqRoot is Negative_flag');
@@ -6545,6 +6726,7 @@ else
 				Result:= 0;
 				Result.Defined_flag:= FALSE;
 				Result.Overflow_flag:= TRUE;
+				Multi_Int_OVERFLOW_ERROR:= TRUE;
 				if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
 					begin
 					Raise EIntOverflow.create('Overflow on Power');
@@ -6567,6 +6749,7 @@ else
 			Result:= 0;
 			Result.Defined_flag:= FALSE;
 			Result.Overflow_flag:= TRUE;
+			Multi_Int_OVERFLOW_ERROR:= TRUE;
 			if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
 				begin
 				Raise EIntOverflow.create('Overflow on Power');
@@ -6586,6 +6769,7 @@ else
 		Result:= 0;
 		Result.Defined_flag:= FALSE;
 		Result.Overflow_flag:= TRUE;
+		Multi_Int_OVERFLOW_ERROR:= TRUE;
 		if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
 			begin
 			Raise EIntOverflow.create('Overflow on Power');
@@ -6769,6 +6953,7 @@ then
 	Result:= 0;
 	Result.Overflow_flag:=TRUE;
 	Result.Defined_flag:=TRUE;
+	Multi_Int_OVERFLOW_ERROR:= TRUE;
 	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
 		begin
 		Raise EIntOverflow.create('Overflow on divide');
@@ -6827,6 +7012,7 @@ then
 	Result:= 0;
 	Result.Overflow_flag:=TRUE;
 	Result.Defined_flag:=TRUE;
+	Multi_Int_OVERFLOW_ERROR:= TRUE;
 	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
 		begin
 		Raise EIntOverflow.create('Overflow on modulus');
@@ -7846,11 +8032,12 @@ if	(v1.Overflow_flag = TRUE)
 or	(v1 > Multi_Int_X4_MAXINT)
 then
 	begin
+	Result.Overflow_flag:= TRUE;
+	Multi_Int_OVERFLOW_ERROR:= TRUE;
 	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
 		begin
 		Raise EInterror.create('Overflow');
 		end;
-	Result.Overflow_flag:= TRUE;
 	exit;
 	end;
 
@@ -8165,6 +8352,7 @@ if	(length(v1) > 0) then
 			begin
 			mi.Defined_flag:=FALSE;
 			mi.Overflow_flag:=TRUE;
+			Multi_Int_OVERFLOW_ERROR:= TRUE;
 			if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
 				begin
 				Raise EIntOverflow.create('Overflow on string conversion');
@@ -8216,6 +8404,78 @@ class operator Multi_Int_X4.implicit(const v1:ansistring):Multi_Int_X4;
 begin
 ansistring_to_Multi_Int_X4(v1,Result);
 end;
+
+
+{$ifdef 32bit}
+(******************************************)
+procedure INT_4W_S_to_Multi_Int_X4(const v1:INT_4W_S; var mi:Multi_Int_X4);
+var
+v	:INT_4W_U;
+n	:INT_2W_U;
+begin
+mi.Overflow_flag:=FALSE;
+mi.Defined_flag:=TRUE;
+v:= Abs(v1);
+
+v:= v1;
+mi.M_Value[0]:= INT_1W_U(v MOD INT_1W_U_MAXINT_1);
+v:= (v div INT_1W_U_MAXINT_1);
+mi.M_Value[1]:= INT_1W_U(v MOD INT_1W_U_MAXINT_1);
+v:= (v div INT_1W_U_MAXINT_1);
+mi.M_Value[2]:= INT_1W_U(v MOD INT_1W_U_MAXINT_1);
+v:= (v div INT_1W_U_MAXINT_1);
+mi.M_Value[3]:= v;
+
+mi.M_Value[4]:= 0;
+mi.M_Value[5]:= 0;
+mi.M_Value[6]:= 0;
+mi.M_Value[7]:= 0;
+
+if (v1 < 0) then mi.Negative_flag:= Multi_UBool_TRUE
+else mi.Negative_flag:= Multi_UBool_FALSE;
+
+end;
+
+
+(******************************************)
+class operator Multi_Int_X4.implicit(const v1:INT_4W_S):Multi_Int_X4;
+begin
+INT_4W_S_to_Multi_Int_X4(v1,Result);
+end;
+
+
+(******************************************)
+procedure INT_4W_U_to_Multi_Int_X4(const v1:INT_4W_U; var mi:Multi_Int_X4);
+var
+v	:INT_4W_U;
+n	:INT_2W_U;
+begin
+mi.Overflow_flag:=FALSE;
+mi.Defined_flag:=TRUE;
+mi.Negative_flag:= Multi_UBool_FALSE;
+
+v:= v1;
+mi.M_Value[0]:= INT_1W_U(v MOD INT_1W_U_MAXINT_1);
+v:= (v div INT_1W_U_MAXINT_1);
+mi.M_Value[1]:= INT_1W_U(v MOD INT_1W_U_MAXINT_1);
+v:= (v div INT_1W_U_MAXINT_1);
+mi.M_Value[2]:= INT_1W_U(v MOD INT_1W_U_MAXINT_1);
+v:= (v div INT_1W_U_MAXINT_1);
+mi.M_Value[3]:= v;
+
+mi.M_Value[4]:= 0;
+mi.M_Value[5]:= 0;
+mi.M_Value[6]:= 0;
+mi.M_Value[7]:= 0;
+end;
+
+
+(******************************************)
+class operator Multi_Int_X4.implicit(const v1:INT_4W_U):Multi_Int_X4;
+begin
+INT_4W_U_to_Multi_Int_X4(v1,Result);
+end;
+{$endif}
 
 
 (******************************************)
@@ -8361,7 +8621,6 @@ Result:= R;
 end;
 
 
-{$ifdef 64bit}
 (******************************************)
 class operator Multi_Int_X4.implicit(const v1:Multi_Int_X4):Single;
 var
@@ -8430,7 +8689,6 @@ do
 if v1.Negative_flag then R:= (- R);
 Result:= R;
 end;
-{$endif}
 
 
 (******************************************)
@@ -8943,6 +9201,7 @@ if	(length(v1) > 0) then
 			begin
 			mi.Defined_flag:=FALSE;
 			mi.Overflow_flag:=TRUE;
+			Multi_Int_OVERFLOW_ERROR:= TRUE;
 			if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
 				begin
 				Raise EIntOverflow.create('Overflow on string conversion');
@@ -9193,12 +9452,6 @@ if	M_Val[7] > INT_1W_U_MAXINT then
 	M_Val[7]:= (M_Val[7] MOD INT_1W_U_MAXINT_1);
 	Result.Defined_flag:= FALSE;
 	Result.Overflow_flag:=TRUE;
-(*
-	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
-		begin
-		Raise EIntOverflow.create('Overflow on add');
-		end;
-*)
 	end;
 
 Result.M_Value[0]:= M_Val[0];
@@ -9293,12 +9546,6 @@ if	M_Val[7] < 0 then
 	begin
 	Result.Defined_flag:= FALSE;
 	Result.Overflow_flag:=TRUE;
-(*
-	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
-		begin
-		Raise EIntOverflow.create('Overflow on subtract');
-		end;
-*)
 	end;
 
 Result.M_Value[0]:= M_Val[0];
@@ -9347,6 +9594,7 @@ then
 	Result:= 0;
 	Result.Defined_flag:= v1.Defined_flag;
 	Result.Overflow_flag:= v1.Overflow_flag;
+	Multi_Int_OVERFLOW_ERROR:= TRUE;
 	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
 		begin
 		Raise EIntOverflow.create('Overflow on inc');
@@ -9378,11 +9626,12 @@ else
 		end;
 	end;
 
-if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
-		begin
-		if (Result.Overflow_flag = TRUE) then
-			Raise EIntOverflow.create('Overflow on Inc');
-		end;
+if (Result.Overflow_flag = TRUE) then
+	begin
+	Multi_Int_OVERFLOW_ERROR:= TRUE;
+	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
+		Raise EIntOverflow.create('Overflow');
+	end;
 
 if	(Result.Negative_flag = Multi_UBool_UNDEF) then Result.Negative_flag:= Neg;
 end;
@@ -9540,6 +9789,7 @@ then
 	Result:= 0;
 	Result.Overflow_flag:=TRUE;
 	Result.Defined_flag:=TRUE;
+	Multi_Int_OVERFLOW_ERROR:= TRUE;
 	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
 		begin
 		Raise EIntOverflow.create('Overflow on add');
@@ -9586,11 +9836,12 @@ else
 			end;
 		end;
 
-if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
-		begin
-		if (Result.Overflow_flag = TRUE) then
-			Raise EIntOverflow.create('Overflow on Add');
-		end;
+if (Result.Overflow_flag = TRUE) then
+	begin
+	Multi_Int_OVERFLOW_ERROR:= TRUE;
+	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
+		Raise EIntOverflow.create('Overflow');
+	end;
 
 if	(Result.Negative_flag = Multi_UBool_UNDEF) then Result.Negative_flag:= Neg;
 end;
@@ -9619,6 +9870,7 @@ then
 	Result:= 0;
 	Result.Overflow_flag:=TRUE;
 	Result.Defined_flag:=TRUE;
+	Multi_Int_OVERFLOW_ERROR:= TRUE;
 	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
 		begin
 		Raise EIntOverflow.create('Overflow on subtract');
@@ -9674,11 +9926,12 @@ else (* v1.Negative_flag <> v2.Negative_flag *)
 		end
 	end;
 
-if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
-		begin
-		if (Result.Overflow_flag = TRUE) then
-			Raise EIntOverflow.create('Overflow on Subtract');
-		end;
+if (Result.Overflow_flag = TRUE) then
+	begin
+	Multi_Int_OVERFLOW_ERROR:= TRUE;
+	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
+		Raise EIntOverflow.create('Overflow');
+	end;
 
 if	(Result.Negative_flag = Multi_UBool_UNDEF) then Result.Negative_flag:= Neg;
 end;
@@ -9708,6 +9961,7 @@ then
 	Result:= 0;
 	Result.Defined_flag:= v1.Defined_flag;
 	Result.Overflow_flag:= v1.Overflow_flag;
+	Multi_Int_OVERFLOW_ERROR:= TRUE;
 	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
 		begin
 		Raise EIntOverflow.create('Overflow on inc');
@@ -9738,11 +9992,12 @@ else (* v1 is Negative_flag *)
 	Neg:=Multi_UBool_TRUE;
 	end;
 
-if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
-		begin
-		if (Result.Overflow_flag = TRUE) then
-			Raise EIntOverflow.create('Overflow on Dec');
-		end;
+if (Result.Overflow_flag = TRUE) then
+	begin
+	Multi_Int_OVERFLOW_ERROR:= TRUE;
+	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
+		Raise EIntOverflow.create('Overflow');
+	end;
 
 if	(Result.Negative_flag = Multi_UBool_UNDEF) then Result.Negative_flag:= Neg;
 end;
@@ -9841,6 +10096,7 @@ then
 	Result:= 0;
 	Result.Overflow_flag:=TRUE;
 	Result.Defined_flag:=TRUE;
+	Multi_Int_OVERFLOW_ERROR:= TRUE;
 	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
 		begin
 		Raise EIntOverflow.create('Overflow on multiply');
@@ -9857,13 +10113,13 @@ if	(R.Negative_flag = Multi_UBool_UNDEF) then
 
 Result:= R;
 
-if	R.Overflow_flag then
+if (Result.Overflow_flag = TRUE) then
 	begin
+	Multi_Int_OVERFLOW_ERROR:= TRUE;
 	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
-		begin
-		Raise EIntOverflow.create('Overflow on multiply');
-		end;
+		Raise EIntOverflow.create('Overflow');
 	end;
+
 end;
 
 
@@ -9897,6 +10153,7 @@ then
 	VR.Defined_flag:= FALSE;
 	VREM:= 0;
 	VREM.Defined_flag:= FALSE;
+	Multi_Int_OVERFLOW_ERROR:= TRUE;
 	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
 		begin
 		Raise EIntOverflow.create('Overflow on Dec');
@@ -9911,6 +10168,7 @@ then
 	VR.Defined_flag:= FALSE;
 	VREM:= 0;
 	VREM.Defined_flag:= FALSE;
+	Multi_Int_OVERFLOW_ERROR:= TRUE;
 	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
 		begin
 		Raise EIntOverflow.create('SqRoot is Negative_flag');
@@ -10015,6 +10273,7 @@ else
 				Result:= 0;
 				Result.Defined_flag:= FALSE;
 				Result.Overflow_flag:= TRUE;
+				Multi_Int_OVERFLOW_ERROR:= TRUE;
 				if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
 					begin
 					Raise EIntOverflow.create('Overflow on Power');
@@ -10037,6 +10296,7 @@ else
 			Result:= 0;
 			Result.Defined_flag:= FALSE;
 			Result.Overflow_flag:= TRUE;
+			Multi_Int_OVERFLOW_ERROR:= TRUE;
 			if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
 				begin
 				Raise EIntOverflow.create('Overflow on Power');
@@ -10056,6 +10316,7 @@ else
 		Result:= 0;
 		Result.Defined_flag:= FALSE;
 		Result.Overflow_flag:= TRUE;
+		Multi_Int_OVERFLOW_ERROR:= TRUE;
 		if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
 			begin
 			Raise EIntOverflow.create('Overflow on Power');
@@ -10242,6 +10503,7 @@ then
 	Result:= 0;
 	Result.Overflow_flag:=TRUE;
 	Result.Defined_flag:=TRUE;
+	Multi_Int_OVERFLOW_ERROR:= TRUE;
 	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
 		begin
 		Raise EIntOverflow.create('Overflow on divide');
@@ -10303,6 +10565,7 @@ then
 	Result:= 0;
 	Result.Overflow_flag:=TRUE;
 	Result.Defined_flag:=TRUE;
+	Multi_Int_OVERFLOW_ERROR:= TRUE;
 	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
 		begin
 		Raise EIntOverflow.create('Overflow on modulus');
@@ -11263,6 +11526,7 @@ if	(length(v1) > 0) then
 			begin
 			mi.Defined_flag:=FALSE;
 			mi.Overflow_flag:=TRUE;
+			Multi_Int_OVERFLOW_ERROR:= TRUE;
 			if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
 				begin
 				Raise EIntOverflow.create('Overflow on string conversion');
@@ -11393,7 +11657,9 @@ var
 	Zeroneg,
 	M_Val_All_Zero		:boolean;
 begin
+Multi_Int_OVERFLOW_ERROR:= FALSE;
 setlength(M_Val, Multi_XV_size);
+mi.init;
 
 mi.Overflow_flag:=FALSE;
 mi.Defined_flag:= TRUE;
@@ -11456,6 +11722,7 @@ if	(length(v1) > 0) then
 			begin
 			mi.Defined_flag:=FALSE;
 			mi.Overflow_flag:=TRUE;
+			Multi_Int_OVERFLOW_ERROR:= TRUE;
 			if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
 				begin
 				Raise EIntOverflow.create('Overflow on string conversion');
@@ -11573,19 +11840,117 @@ end;
 
 
 (******************************************)
-{
-procedure Multi_Int_XV.Init(const v1:INT_2W_S); overload;
-begin
-INT_2W_S_to_Multi_Int_XV(v1,self);
-end;
-}
-
-
-(******************************************)
 class operator Multi_Int_XV.implicit(const v1:INT_2W_S):Multi_Int_XV;
 begin
 INT_2W_S_to_Multi_Int_XV(v1,Result);
 end;
+
+
+(******************************************)
+procedure INT_2W_U_to_Multi_Int_XV(const v1:INT_2W_U; var mi:Multi_Int_XV);
+var
+	n				:INT_2W_U;
+begin
+mi.init;
+mi.Overflow_flag:=FALSE;
+mi.Defined_flag:=TRUE;
+mi.Negative_flag:= Multi_UBool_FALSE;
+
+mi.M_Value[0]:= (v1 MOD INT_1W_U_MAXINT_1);
+mi.M_Value[1]:= (v1 DIV INT_1W_U_MAXINT_1);
+
+n:=2;
+while (n <= Multi_XV_max) do
+	begin
+	mi.M_Value[n]:= 0;
+	inc(n);
+	end;
+end;
+
+
+(******************************************)
+class operator Multi_Int_XV.implicit(const v1:INT_2W_U):Multi_Int_XV;
+begin
+INT_2W_U_to_Multi_Int_XV(v1,Result);
+end;
+
+
+{$ifdef 32bit}
+(******************************************)
+procedure INT_4W_S_to_Multi_Int_XV(const v1:INT_4W_S; var mi:Multi_Int_XV);
+var
+v	:INT_4W_U;
+n	:INT_2W_U;
+begin
+mi.init;
+mi.Overflow_flag:=FALSE;
+mi.Defined_flag:=TRUE;
+v:= Abs(v1);
+
+v:= v1;
+mi.M_Value[0]:= INT_1W_U(v MOD INT_1W_U_MAXINT_1);
+v:= (v div INT_1W_U_MAXINT_1);
+mi.M_Value[1]:= INT_1W_U(v MOD INT_1W_U_MAXINT_1);
+v:= (v div INT_1W_U_MAXINT_1);
+mi.M_Value[2]:= INT_1W_U(v MOD INT_1W_U_MAXINT_1);
+v:= (v div INT_1W_U_MAXINT_1);
+mi.M_Value[3]:= v;
+
+n:=4;
+while (n <= Multi_XV_max) do
+	begin
+	mi.M_Value[n]:= 0;
+	inc(n);
+	end;
+
+if (v1 < 0) then mi.Negative_flag:= Multi_UBool_TRUE
+else mi.Negative_flag:= Multi_UBool_FALSE;
+
+end;
+
+
+(******************************************)
+class operator Multi_Int_XV.implicit(const v1:INT_4W_S):Multi_Int_XV;
+begin
+INT_4W_S_to_Multi_Int_XV(v1,Result);
+end;
+
+
+(******************************************)
+procedure INT_4W_U_to_Multi_Int_XV(const v1:INT_4W_U; var mi:Multi_Int_XV);
+var
+v	:INT_4W_U;
+n	:INT_2W_U;
+begin
+mi.init;
+mi.Overflow_flag:=FALSE;
+mi.Defined_flag:=TRUE;
+mi.Negative_flag:= Multi_UBool_FALSE;
+
+v:= v1;
+mi.M_Value[0]:= INT_1W_U(v MOD INT_1W_U_MAXINT_1);
+v:= (v div INT_1W_U_MAXINT_1);
+mi.M_Value[1]:= INT_1W_U(v MOD INT_1W_U_MAXINT_1);
+v:= (v div INT_1W_U_MAXINT_1);
+mi.M_Value[2]:= INT_1W_U(v MOD INT_1W_U_MAXINT_1);
+v:= (v div INT_1W_U_MAXINT_1);
+mi.M_Value[3]:= v;
+
+n:=4;
+while (n <= Multi_XV_max) do
+	begin
+	mi.M_Value[n]:= 0;
+	inc(n);
+	end;
+end;
+
+
+(******************************************)
+class operator Multi_Int_XV.implicit(const v1:INT_4W_U):Multi_Int_XV;
+begin
+INT_4W_U_to_Multi_Int_XV(v1,Result);
+end;
+{$endif}
 
 
 (******************************************)
@@ -11976,36 +12341,6 @@ end;
 
 
 (******************************************)
-procedure INT_2W_U_to_Multi_Int_XV(const v1:INT_2W_U; var mi:Multi_Int_XV);
-var
-	n				:INT_2W_U;
-begin
-mi.init;
-mi.Overflow_flag:=FALSE;
-mi.Defined_flag:=TRUE;
-mi.Negative_flag:= Multi_UBool_FALSE;
-
-mi.M_Value[0]:= (v1 MOD INT_1W_U_MAXINT_1);
-mi.M_Value[1]:= (v1 DIV INT_1W_U_MAXINT_1);
-
-n:=2;
-while (n <= Multi_XV_max) do
-	begin
-	mi.M_Value[n]:= 0;
-	inc(n);
-	end;
-end;
-
-
-(******************************************)
-class operator Multi_Int_XV.implicit(const v1:INT_2W_U):Multi_Int_XV;
-begin
-INT_2W_U_to_Multi_Int_XV(v1,Result);
-end;
-
-
-{$ifdef 64bit}
-(******************************************)
 class operator Multi_Int_XV.implicit(const v1:Multi_Int_XV):Single;
 var
 R,V,M		:Single;
@@ -12073,7 +12408,6 @@ do
 if v1.Negative_flag then R:= (- R);
 Result:= R;
 end;
-{$endif}
 
 
 (******************************************)
@@ -12230,9 +12564,9 @@ ansistring_to_Multi_Int_XV(AddCharR('0',R_FLOATREC.digits,R_FLOATREC.Exponent), 
 
 if (R.Overflow) then
 	begin
-	Multi_Int_OVERFLOW_ERROR:= TRUE;
 	Result.Defined_flag:= FALSE;
 	Result.Negative_flag:= Multi_UBool_UNDEF;
+	Multi_Int_OVERFLOW_ERROR:= TRUE;
 	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
 		begin
 		Raise EIntOverflow.create('Overflow on single to Multi_Int conversion');
@@ -12713,6 +13047,7 @@ then
 	Result:= 0;
 	Result.Overflow_flag:=TRUE;
 	Result.Defined_flag:=TRUE;
+	Multi_Int_OVERFLOW_ERROR:= TRUE;
 	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
 		begin
 		Raise EIntOverflow.create('Overflow on add');
@@ -12759,11 +13094,12 @@ else
 			end;
 		end;
 
-if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
-		begin
-		if (Result.Overflow_flag = TRUE) then
-			Raise EIntOverflow.create('Overflow on add');
-		end;
+if (Result.Overflow_flag = TRUE) then
+	begin
+	Multi_Int_OVERFLOW_ERROR:= TRUE;
+	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
+		Raise EIntOverflow.create('Overflow');
+	end;
 
 if	(Result.Negative_flag = Multi_UBool_UNDEF) then Result.Negative_flag:= Neg;
 end;
@@ -12793,6 +13129,7 @@ then
 	Result:= 0;
 	Result.Defined_flag:= v1.Defined_flag;
 	Result.Overflow_flag:= v1.Overflow_flag;
+	Multi_Int_OVERFLOW_ERROR:= TRUE;
 	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
 		begin
 		Raise EIntOverflow.create('Overflow on inc');
@@ -12824,11 +13161,12 @@ else
 		end;
 	end;
 
-if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
-		begin
-		if (Result.Overflow_flag = TRUE) then
-			Raise EIntOverflow.create('Overflow on Inc');
-		end;
+if (Result.Overflow_flag = TRUE) then
+	begin
+	Multi_Int_OVERFLOW_ERROR:= TRUE;
+	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
+		Raise EIntOverflow.create('Overflow');
+	end;
 
 if	(Result.Negative_flag = Multi_UBool_UNDEF) then Result.Negative_flag:= Neg;
 end;
@@ -12986,6 +13324,7 @@ then
 	Result:= 0;
 	Result.Overflow_flag:=TRUE;
 	Result.Defined_flag:=TRUE;
+	Multi_Int_OVERFLOW_ERROR:= TRUE;
 	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
 		begin
 		Raise EIntOverflow.create('Overflow on subtract');
@@ -13041,11 +13380,12 @@ else (* v1.Negative_flag <> v2.Negative_flag *)
 		end
 	end;
 
-if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
-		begin
-		if (Result.Overflow_flag = TRUE) then
-			Raise EIntOverflow.create('Overflow on subtract');
-		end;
+if (Result.Overflow_flag = TRUE) then
+	begin
+	Multi_Int_OVERFLOW_ERROR:= TRUE;
+	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
+		Raise EIntOverflow.create('Overflow');
+	end;
 
 if	(Result.Negative_flag = Multi_UBool_UNDEF) then Result.Negative_flag:= Neg;
 end;
@@ -13075,6 +13415,7 @@ then
 	Result:= 0;
 	Result.Defined_flag:= v1.Defined_flag;
 	Result.Overflow_flag:= v1.Overflow_flag;
+	Multi_Int_OVERFLOW_ERROR:= TRUE;
 	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
 		begin
 		Raise EIntOverflow.create('Overflow on inc');
@@ -13105,11 +13446,12 @@ else (* v1 is Negative_flag *)
 	Neg:=Multi_UBool_TRUE;
 	end;
 
-if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
-		begin
-		if (Result.Overflow_flag = TRUE) then
-			Raise EIntOverflow.create('Overflow on Dec');
-		end;
+if (Result.Overflow_flag = TRUE) then
+	begin
+	Multi_Int_OVERFLOW_ERROR:= TRUE;
+	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
+		Raise EIntOverflow.create('Overflow');
+	end;
 
 if	(Result.Negative_flag = Multi_UBool_UNDEF) then Result.Negative_flag:= Neg;
 end;
@@ -13431,6 +13773,7 @@ then
 	Result:= 0;
 	Result.Overflow_flag:=TRUE;
 	Result.Defined_flag:=TRUE;
+	Multi_Int_OVERFLOW_ERROR:= TRUE;
 	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
 		begin
 		Raise EIntOverflow.create('Overflow on multiply');
@@ -13447,13 +13790,13 @@ if	(R.Negative_flag = Multi_UBool_UNDEF) then
 
 Result:= R;
 
-if	R.Overflow_flag then
+if (Result.Overflow_flag = TRUE) then
 	begin
+	Multi_Int_OVERFLOW_ERROR:= TRUE;
 	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
-		begin
-		Raise EIntOverflow.create('Overflow on multiply');
-		end;
+		Raise EIntOverflow.create('Overflow');
 	end;
+
 end;
 
 
@@ -13487,6 +13830,7 @@ then
 	VR.Defined_flag:= FALSE;
 	VREM:= 0;
 	VREM.Defined_flag:= FALSE;
+	Multi_Int_OVERFLOW_ERROR:= TRUE;
 	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
 		begin
 		Raise EIntOverflow.create('Overflow on Dec');
@@ -13501,6 +13845,7 @@ then
 	VR.Defined_flag:= FALSE;
 	VREM:= 0;
 	VREM.Defined_flag:= FALSE;
+	Multi_Int_OVERFLOW_ERROR:= TRUE;
 	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
 		begin
 		Raise EIntOverflow.create('SqRoot is Negative_flag');
@@ -13605,6 +13950,7 @@ else
 				Result:= 0;
 				Result.Defined_flag:= FALSE;
 				Result.Overflow_flag:= TRUE;
+				Multi_Int_OVERFLOW_ERROR:= TRUE;
 				if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
 					begin
 					Raise EIntOverflow.create('Overflow on Power');
@@ -13627,6 +13973,7 @@ else
 			Result:= 0;
 			Result.Defined_flag:= FALSE;
 			Result.Overflow_flag:= TRUE;
+			Multi_Int_OVERFLOW_ERROR:= TRUE;
 			if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
 				begin
 				Raise EIntOverflow.create('Overflow on Power');
@@ -13646,6 +13993,7 @@ else
 		Result:= 0;
 		Result.Defined_flag:= FALSE;
 		Result.Overflow_flag:= TRUE;
+		Multi_Int_OVERFLOW_ERROR:= TRUE;
 		if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
 			begin
 			Raise EIntOverflow.create('Overflow on Power');
@@ -13830,6 +14178,7 @@ then
 	Result:= 0;
 	Result.Overflow_flag:=TRUE;
 	Result.Defined_flag:=TRUE;
+	Multi_Int_OVERFLOW_ERROR:= TRUE;
 	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
 		begin
 		Raise EIntOverflow.create('Overflow on divide');
@@ -13862,6 +14211,7 @@ else	// different values than last time
 	if	(Remainder.Overflow_flag or Quotient.Overflow_flag)
 	then
 		begin
+		Multi_Int_OVERFLOW_ERROR:= TRUE;
 		if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
 			begin
 			Raise EIntOverflow.create('Overflow on divide');
@@ -13897,6 +14247,7 @@ then
 	Result:= 0;
 	Result.Overflow_flag:=TRUE;
 	Result.Defined_flag:=TRUE;
+	Multi_Int_OVERFLOW_ERROR:= TRUE;
 	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
 		begin
 		Raise EIntOverflow.create('Overflow on modulus');
@@ -13929,6 +14280,7 @@ else	// different values than last time
 	if	(Remainder.Overflow_flag or Quotient.Overflow_flag)
 	then
 		begin
+		Multi_Int_OVERFLOW_ERROR:= TRUE;
 		if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
 			begin
 			Raise EIntOverflow.create('Overflow on divide');
@@ -13960,7 +14312,7 @@ Multi_Int_OVERFLOW_ERROR:= FALSE;
 
 Multi_XV_size:=	P_Multi_XV_size;
 
-if (Multi_XV_size = 0) then
+if (Multi_XV_size < 1) then
 	begin
 	Raise EInterror.create('Multi_XV_size must be > 1');
 	exit;
@@ -14018,9 +14370,8 @@ if (Multi_XV_max < 1) then
 	begin
 	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
 		begin
-		Raise EIntOverflow.create('Multi_XV_max value must be > 0');
+		Raise EInterror.create('Multi_XV_max value must be > 0');
 		end;
-	writeln('Multi_Int Unit: Multi_XV_max defined value must be > 0');
 	halt(1);
 	end;
 
