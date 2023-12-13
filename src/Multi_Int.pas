@@ -56,6 +56,8 @@ v4.31
 -	Make call Multi_Init_Initialisation optional with default value of 16
 -	overflow bug fix in division routine
 -	overflow bug in Multi_Int to single/double/real
+-	overflow bug in 32bit Multi_Int to double/real
+-	disable Multi_Int to single in 32bit environment
 *)
 
 (* USER OPTIONAL DEFINES *)
@@ -216,7 +218,9 @@ Multi_Int_X2	=	record
 						class operator implicit(const v1:Single):Multi_Int_X2;
 						class operator implicit(const v1:Real):Multi_Int_X2;
 						class operator implicit(const v1:Double):Multi_Int_X2;
+					{$ifdef 64bit}
 						class operator implicit(const v1:Multi_Int_X2):Single;
+					{$endif}
 						class operator implicit(const v1:Multi_Int_X2):Real;
 						class operator implicit(const v1:Multi_Int_X2):Double;
 						class operator add(const v1,v2:Multi_Int_X2):Multi_Int_X2;
@@ -275,7 +279,9 @@ Multi_Int_X3	=	record
 						class operator implicit(const v1:Real):Multi_Int_X3;
 						class operator implicit(const v1:Double):Multi_Int_X3;
 						class operator implicit(const v1:Multi_Int_X3):Real;
+					{$ifdef 64bit}
 						class operator implicit(const v1:Multi_Int_X3):Single;
+					{$endif}
 						class operator implicit(const v1:Multi_Int_X3):Double;
 						class operator add(const v1,v2:Multi_Int_X3):Multi_Int_X3;
 						class operator subtract(const v1,v2:Multi_Int_X3):Multi_Int_X3;
@@ -333,7 +339,9 @@ Multi_Int_X4	=	record
 						class operator implicit(const v1:Single):Multi_Int_X4;
 						class operator implicit(const v1:Real):Multi_Int_X4;
 						class operator implicit(const v1:Double):Multi_Int_X4;
+					{$ifdef 64bit}
 						class operator implicit(const v1:Multi_Int_X4):Single;
+					{$endif}
 						class operator implicit(const v1:Multi_Int_X4):Real;
 						class operator implicit(const v1:Multi_Int_X4):Double;
 						class operator add(const v1,v2:Multi_Int_X4):Multi_Int_X4;
@@ -391,7 +399,9 @@ Multi_Int_XV	=	record
 						class operator implicit(const v1:ansistring):Multi_Int_XV;
 						class operator implicit(const v1:Multi_Int_XV):ansistring;
 						class operator implicit(const v1:Single):Multi_Int_XV;
+					{$ifdef 64bit}
 						class operator implicit(const v1:Multi_Int_XV):Single;
+					{$endif}
 						class operator implicit(const v1:Real):Multi_Int_XV;
 						class operator implicit(const v1:Multi_Int_XV):Real;
 						class operator implicit(const v1:Double):Multi_Int_XV;
@@ -420,8 +430,8 @@ Multi_Int_XV	=	record
 
 var
 Multi_Init_Initialisation_count	:INT_1W_S = 0;
-Multi_Int_RAISE_EXCEPTIONS_ENABLED	:boolean;
-Multi_Int_OVERFLOW_ERROR		:boolean = FALSE;
+Multi_Int_RAISE_EXCEPTIONS_ENABLED,
+Multi_Int_OVERFLOW_ERROR		:boolean;
 Multi_Int_X2_MAXINT			:Multi_Int_X2;
 Multi_Int_X3_MAXINT			:Multi_Int_X3;
 Multi_Int_X4_MAXINT			:Multi_Int_X4;
@@ -1404,6 +1414,8 @@ var
 	Signeg,
 	Zeroneg		:boolean;
 begin
+Multi_Int_OVERFLOW_ERROR:= FALSE;
+
 mi.Overflow_flag:=FALSE;
 mi.Defined_flag:= TRUE;
 mi.Negative_flag:= FALSE;
@@ -1691,6 +1703,8 @@ var
 R			:Multi_Int_X2;
 R_FLOATREC	:TFloatRec;
 begin
+Multi_Int_OVERFLOW_ERROR:= FALSE;
+
 FloatToDecimal(R_FLOATREC, v1, 7, 0);
 ansistring_to_Multi_Int_X2(AddCharR('0',R_FLOATREC.digits,R_FLOATREC.Exponent), R);
 
@@ -1717,6 +1731,8 @@ var
 R			:Multi_Int_X2;
 R_FLOATREC	:TFloatRec;
 begin
+Multi_Int_OVERFLOW_ERROR:= FALSE;
+
 FloatToDecimal(R_FLOATREC, v1, 15, 0);
 ansistring_to_Multi_Int_X2(AddCharR('0',R_FLOATREC.digits,R_FLOATREC.Exponent), R);
 
@@ -1743,6 +1759,8 @@ var
 R			:Multi_Int_X2;
 R_FLOATREC	:TFloatRec;
 begin
+Multi_Int_OVERFLOW_ERROR:= FALSE;
+
 FloatToDecimal(R_FLOATREC, v1, 15, 0);
 ansistring_to_Multi_Int_X2(AddCharR('0',R_FLOATREC.digits,R_FLOATREC.Exponent), R);
 
@@ -1763,6 +1781,8 @@ Result:= R;
 end;
 
 
+
+{$ifdef 64bit}
 (******************************************)
 class operator Multi_Int_X2.implicit(const v1:Multi_Int_X2):Single;
 var
@@ -1794,7 +1814,12 @@ do
 	if	(not finished)
 	then
 		begin
-			try R:= R + (v1.M_Value[i] * M)
+			V:= v1.M_Value[i];
+			try
+				begin
+				V:= (V * M);
+				R:= R + V;
+				end
             except
 				begin
 				Multi_Int_OVERFLOW_ERROR:= TRUE;
@@ -1804,7 +1829,8 @@ do
 					end;
 				end;
 			end;
-			try M:= (M * INT_1W_U_MAXINT_1)
+			V:= INT_1W_U_MAXINT_1;
+			try M:= (M * V);
 			except finished:= TRUE;
 			end;
 		end
@@ -1825,6 +1851,7 @@ do
 if v1.Negative_flag then R:= (- R);
 Result:= R;
 end;
+{$endif}
 
 
 (******************************************)
@@ -1858,7 +1885,12 @@ do
 	if	(not finished)
 	then
 		begin
-			try R:= R + (v1.M_Value[i] * M)
+			V:= v1.M_Value[i];
+			try
+				begin
+				V:= (V * M);
+				R:= R + V;
+				end
             except
 				begin
 				Multi_Int_OVERFLOW_ERROR:= TRUE;
@@ -1868,7 +1900,8 @@ do
 					end;
 				end;
 			end;
-			try M:= (M * INT_1W_U_MAXINT_1)
+			V:= INT_1W_U_MAXINT_1;
+			try M:= (M * V);
 			except finished:= TRUE;
 			end;
 		end
@@ -1877,6 +1910,7 @@ do
 		if	(v1.M_Value[i] > 0) then
 			begin
 			Multi_Int_OVERFLOW_ERROR:= TRUE;
+			writeln('Overflow on Multi_Int to Real conversion');
 			if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
 				begin
 				Raise EIntOverflow.create('Overflow on Multi_Int to Real conversion');
@@ -1922,7 +1956,12 @@ do
 	if	(not finished)
 	then
 		begin
-			try R:= R + (v1.M_Value[i] * M)
+			V:= v1.M_Value[i];
+			try
+				begin
+				V:= (V * M);
+				R:= R + V;
+				end
             except
 				begin
 				Multi_Int_OVERFLOW_ERROR:= TRUE;
@@ -1932,7 +1971,8 @@ do
 					end;
 				end;
 			end;
-			try M:= (M * INT_1W_U_MAXINT_1)
+			V:= INT_1W_U_MAXINT_1;
+			try M:= (M * V);
 			except finished:= TRUE;
 			end;
 		end
@@ -4476,6 +4516,8 @@ var
 	Signeg,
 	Zeroneg		:boolean;
 begin
+Multi_Int_OVERFLOW_ERROR:= FALSE;
+
 mi.Overflow_flag:=FALSE;
 mi.Defined_flag:= TRUE;
 mi.Negative_flag:= FALSE;
@@ -4844,6 +4886,8 @@ var
 R			:Multi_Int_X3;
 R_FLOATREC	:TFloatRec;
 begin
+Multi_Int_OVERFLOW_ERROR:= FALSE;
+
 FloatToDecimal(R_FLOATREC, v1, 7, 0);
 ansistring_to_Multi_Int_X3(AddCharR('0',R_FLOATREC.digits,R_FLOATREC.Exponent), R);
 
@@ -4870,6 +4914,8 @@ var
 R			:Multi_Int_X3;
 R_FLOATREC	:TFloatRec;
 begin
+Multi_Int_OVERFLOW_ERROR:= FALSE;
+
 FloatToDecimal(R_FLOATREC, v1, 15, 0);
 ansistring_to_Multi_Int_X3(AddCharR('0',R_FLOATREC.digits,R_FLOATREC.Exponent), R);
 
@@ -4896,6 +4942,8 @@ var
 R			:Multi_Int_X3;
 R_FLOATREC	:TFloatRec;
 begin
+Multi_Int_OVERFLOW_ERROR:= FALSE;
+
 FloatToDecimal(R_FLOATREC, v1, 15, 0);
 ansistring_to_Multi_Int_X3(AddCharR('0',R_FLOATREC.digits,R_FLOATREC.Exponent), R);
 
@@ -4916,6 +4964,7 @@ Result:= R;
 end;
 
 
+{$ifdef 64bit}
 (******************************************)
 class operator Multi_Int_X3.implicit(const v1:Multi_Int_X3):Single;
 var
@@ -4947,7 +4996,12 @@ do
 	if	(not finished)
 	then
 		begin
-			try R:= R + (v1.M_Value[i] * M)
+			V:= v1.M_Value[i];
+			try
+				begin
+				V:= (V * M);
+				R:= R + V;
+				end
             except
 				begin
 				Multi_Int_OVERFLOW_ERROR:= TRUE;
@@ -4957,7 +5011,8 @@ do
 					end;
 				end;
 			end;
-			try M:= (M * INT_1W_U_MAXINT_1)
+			V:= INT_1W_U_MAXINT_1;
+			try M:= (M * V);
 			except finished:= TRUE;
 			end;
 		end
@@ -4978,6 +5033,7 @@ do
 if v1.Negative_flag then R:= (- R);
 Result:= R;
 end;
+{$endif}
 
 
 (******************************************)
@@ -5011,7 +5067,12 @@ do
 	if	(not finished)
 	then
 		begin
-			try R:= R + (v1.M_Value[i] * M)
+			V:= v1.M_Value[i];
+			try
+				begin
+				V:= (V * M);
+				R:= R + V;
+				end
             except
 				begin
 				Multi_Int_OVERFLOW_ERROR:= TRUE;
@@ -5021,7 +5082,8 @@ do
 					end;
 				end;
 			end;
-			try M:= (M * INT_1W_U_MAXINT_1)
+			V:= INT_1W_U_MAXINT_1;
+			try M:= (M * V);
 			except finished:= TRUE;
 			end;
 		end
@@ -5075,7 +5137,12 @@ do
 	if	(not finished)
 	then
 		begin
-			try R:= R + (v1.M_Value[i] * M)
+			V:= v1.M_Value[i];
+			try
+				begin
+				V:= (V * M);
+				R:= R + V;
+				end
             except
 				begin
 				Multi_Int_OVERFLOW_ERROR:= TRUE;
@@ -5085,7 +5152,8 @@ do
 					end;
 				end;
 			end;
-			try M:= (M * INT_1W_U_MAXINT_1)
+			V:= INT_1W_U_MAXINT_1;
+			try M:= (M * V);
 			except finished:= TRUE;
 			end;
 		end
@@ -8000,6 +8068,8 @@ var
 	Signeg,
 	Zeroneg		:boolean;
 begin
+Multi_Int_OVERFLOW_ERROR:= FALSE;
+
 mi.Overflow_flag:=FALSE;
 mi.Defined_flag:= TRUE;
 mi.Negative_flag:= FALSE;
@@ -8213,6 +8283,8 @@ var
 R			:Multi_Int_X4;
 R_FLOATREC	:TFloatRec;
 begin
+Multi_Int_OVERFLOW_ERROR:= FALSE;
+
 FloatToDecimal(R_FLOATREC, v1, 7, 0);
 ansistring_to_Multi_Int_X4(AddCharR('0',R_FLOATREC.digits,R_FLOATREC.Exponent), R);
 
@@ -8239,6 +8311,8 @@ var
 R			:Multi_Int_X4;
 R_FLOATREC	:TFloatRec;
 begin
+Multi_Int_OVERFLOW_ERROR:= FALSE;
+
 FloatToDecimal(R_FLOATREC, v1, 15, 0);
 ansistring_to_Multi_Int_X4(AddCharR('0',R_FLOATREC.digits,R_FLOATREC.Exponent), R);
 
@@ -8265,6 +8339,8 @@ var
 R			:Multi_Int_X4;
 R_FLOATREC	:TFloatRec;
 begin
+Multi_Int_OVERFLOW_ERROR:= FALSE;
+
 FloatToDecimal(R_FLOATREC, v1, 15, 0);
 ansistring_to_Multi_Int_X4(AddCharR('0',R_FLOATREC.digits,R_FLOATREC.Exponent), R);
 
@@ -8285,6 +8361,7 @@ Result:= R;
 end;
 
 
+{$ifdef 64bit}
 (******************************************)
 class operator Multi_Int_X4.implicit(const v1:Multi_Int_X4):Single;
 var
@@ -8316,7 +8393,12 @@ do
 	if	(not finished)
 	then
 		begin
-			try R:= R + (v1.M_Value[i] * M)
+			V:= v1.M_Value[i];
+			try
+				begin
+				V:= (V * M);
+				R:= R + V;
+				end
             except
 				begin
 				Multi_Int_OVERFLOW_ERROR:= TRUE;
@@ -8326,7 +8408,8 @@ do
 					end;
 				end;
 			end;
-			try M:= (M * INT_1W_U_MAXINT_1)
+			V:= INT_1W_U_MAXINT_1;
+			try M:= (M * V);
 			except finished:= TRUE;
 			end;
 		end
@@ -8347,6 +8430,7 @@ do
 if v1.Negative_flag then R:= (- R);
 Result:= R;
 end;
+{$endif}
 
 
 (******************************************)
@@ -8380,7 +8464,12 @@ do
 	if	(not finished)
 	then
 		begin
-			try R:= R + (v1.M_Value[i] * M)
+			V:= v1.M_Value[i];
+			try
+				begin
+				V:= (V * M);
+				R:= R + V;
+				end
             except
 				begin
 				Multi_Int_OVERFLOW_ERROR:= TRUE;
@@ -8390,7 +8479,8 @@ do
 					end;
 				end;
 			end;
-			try M:= (M * INT_1W_U_MAXINT_1)
+			V:= INT_1W_U_MAXINT_1;
+			try M:= (M * V);
 			except finished:= TRUE;
 			end;
 		end
@@ -8444,7 +8534,12 @@ do
 	if	(not finished)
 	then
 		begin
-			try R:= R + (v1.M_Value[i] * M)
+			V:= v1.M_Value[i];
+			try
+				begin
+				V:= (V * M);
+				R:= R + V;
+				end
             except
 				begin
 				Multi_Int_OVERFLOW_ERROR:= TRUE;
@@ -8454,7 +8549,8 @@ do
 					end;
 				end;
 			end;
-			try M:= (M * INT_1W_U_MAXINT_1)
+			V:= INT_1W_U_MAXINT_1;
+			try M:= (M * V);
 			except finished:= TRUE;
 			end;
 		end
@@ -11103,6 +11199,8 @@ var
 	Zeroneg,
 	M_Val_All_Zero		:boolean;
 begin
+Multi_Int_OVERFLOW_ERROR:= FALSE;
+
 setlength(M_Val, Multi_XV_size);
 mi.init;
 mi.Overflow_flag:=FALSE;
@@ -11906,6 +12004,7 @@ INT_2W_U_to_Multi_Int_XV(v1,Result);
 end;
 
 
+{$ifdef 64bit}
 (******************************************)
 class operator Multi_Int_XV.implicit(const v1:Multi_Int_XV):Single;
 var
@@ -11937,7 +12036,12 @@ do
 	if	(not finished)
 	then
 		begin
-			try R:= R + (v1.M_Value[i] * M)
+			V:= v1.M_Value[i];
+			try
+				begin
+				V:= (V * M);
+				R:= R + V;
+				end
             except
 				begin
 				Multi_Int_OVERFLOW_ERROR:= TRUE;
@@ -11947,7 +12051,8 @@ do
 					end;
 				end;
 			end;
-			try M:= (M * INT_1W_U_MAXINT_1)
+			V:= INT_1W_U_MAXINT_1;
+			try M:= (M * V);
 			except finished:= TRUE;
 			end;
 		end
@@ -11968,6 +12073,7 @@ do
 if v1.Negative_flag then R:= (- R);
 Result:= R;
 end;
+{$endif}
 
 
 (******************************************)
@@ -12001,7 +12107,12 @@ do
 	if	(not finished)
 	then
 		begin
-			try R:= R + (v1.M_Value[i] * M)
+			V:= v1.M_Value[i];
+			try
+				begin
+				V:= (V * M);
+				R:= R + V;
+				end
             except
 				begin
 				Multi_Int_OVERFLOW_ERROR:= TRUE;
@@ -12011,7 +12122,8 @@ do
 					end;
 				end;
 			end;
-			try M:= (M * INT_1W_U_MAXINT_1)
+			V:= INT_1W_U_MAXINT_1;
+			try M:= (M * V);
 			except finished:= TRUE;
 			end;
 		end
@@ -12065,7 +12177,12 @@ do
 	if	(not finished)
 	then
 		begin
-			try R:= R + (v1.M_Value[i] * M)
+			V:= v1.M_Value[i];
+			try
+				begin
+				V:= (V * M);
+				R:= R + V;
+				end
             except
 				begin
 				Multi_Int_OVERFLOW_ERROR:= TRUE;
@@ -12075,7 +12192,8 @@ do
 					end;
 				end;
 			end;
-			try M:= (M * INT_1W_U_MAXINT_1)
+			V:= INT_1W_U_MAXINT_1;
+			try M:= (M * V);
 			except finished:= TRUE;
 			end;
 		end
@@ -12104,6 +12222,8 @@ var
 R			:Multi_Int_XV;
 R_FLOATREC	:TFloatRec;
 begin
+Multi_Int_OVERFLOW_ERROR:= FALSE;
+
 Result.init;
 FloatToDecimal(R_FLOATREC, v1, 7, 0);
 ansistring_to_Multi_Int_XV(AddCharR('0',R_FLOATREC.digits,R_FLOATREC.Exponent), R);
@@ -12131,6 +12251,8 @@ var
 R			:Multi_Int_XV;
 R_FLOATREC	:TFloatRec;
 begin
+Multi_Int_OVERFLOW_ERROR:= FALSE;
+
 Result.init;
 FloatToDecimal(R_FLOATREC, v1, 15, 0);
 ansistring_to_Multi_Int_XV(AddCharR('0',R_FLOATREC.digits,R_FLOATREC.Exponent), R);
@@ -12158,6 +12280,8 @@ var
 R			:Multi_Int_XV;
 R_FLOATREC	:TFloatRec;
 begin
+Multi_Int_OVERFLOW_ERROR:= FALSE;
+
 Result.init;
 FloatToDecimal(R_FLOATREC, v1, 15, 0);
 ansistring_to_Multi_Int_XV(AddCharR('0',R_FLOATREC.digits,R_FLOATREC.Exponent), R);
@@ -13832,6 +13956,7 @@ then
 
 Inc(Multi_Init_Initialisation_count);
 Multi_Int_RAISE_EXCEPTIONS_ENABLED:= TRUE;
+Multi_Int_OVERFLOW_ERROR:= FALSE;
 
 Multi_XV_size:=	P_Multi_XV_size;
 
@@ -13923,5 +14048,4 @@ end;
 begin
 Multi_Init_Initialisation;
 end.
-
 
