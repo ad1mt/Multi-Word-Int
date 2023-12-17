@@ -16,9 +16,12 @@ UNIT Multi_Int;
   	{$define 32bit}
 {$ENDIF}
 
+
 {$ifdef 32bit}
-	{$FPUTYPE SSE2}
+	{$SAFEFPUEXCEPTIONS ON}
 {$endif}
+
+//{$FPUTYPE SSE2}
 
 
 {$MODESWITCH NESTEDCOMMENTS+}
@@ -80,11 +83,23 @@ v4.31
 -	disable Multi_Int to single in 32bit environment
 -	bug fix in hex to Multi_Int
 
-v4.32
+v4.32.01
 -	missing implicit conversion int64 to Multi_Int in 32bit environment
 -	in all cases of overflow set Multi_Int_OVERFLOW_ERROR:=TRUE
--	set {$FPUTYPE SSE2} in 32bit environments
--	restore Multi_int to single conversion in 32bit environment
+-	set {$SAFEFPUEXCEPTIONS ON} in 32bit environments
+-	re-instate Multi_int to single conversion in 32bit environment
+
+v4.32.02
+-	display compiler warning about lossy float to Multi_int conversion
+-	add tests for hex conversion
+-	Multi_Int_X3 hex conversion bug
+-	Multi_Init_Initialisation improvements to make it easier to build test suites
+
+v4.32.03
+-	SINGLE_TYPE_PRECISION_DIGITS	= 7;
+-	REAL_TYPE_PRECISION_DIGITS		= 15;
+-	DOUBLE_TYPE_PRECISION_DIGITS	= 15;
+
 *)
 
 // {$define Overflow_Checks}
@@ -119,6 +134,10 @@ const
 	Multi_INT64_MAXINT_1 = 9223372036854775808;
 	Multi_INT64U_MAXINT = 18446744073709551615;
 	Multi_INT64U_MAXINT_1 = 18446744073709551616;
+
+	SINGLE_TYPE_PRECISION_DIGITS	= 7;
+	REAL_TYPE_PRECISION_DIGITS		= 15;
+	DOUBLE_TYPE_PRECISION_DIGITS	= 15;
 
 type
 	Multi_int8u = byte;
@@ -215,10 +234,8 @@ Multi_Int_X2	=	record
 						Overflow_flag	:boolean;
 						Defined_flag	:boolean;
 					public
-						// procedure Init(const v1:ansistring);
 						function ToStr:ansistring;
 						function ToHex(const LZ:T_Multi_Leading_Zeros=Multi_Trim_Leading_Zeros):ansistring;
-						function FromHex(const v1:ansistring):Multi_Int_X2;
 						function Overflow:boolean;
 						function Negative:boolean;
 						function Defined:boolean;
@@ -276,10 +293,8 @@ Multi_Int_X3	=	record
 						Overflow_flag	:boolean;
 						Defined_flag	:boolean;
 					public
-						// procedure Init(const v1:ansistring);
 						function ToStr:ansistring;
 						function ToHex(const LZ:T_Multi_Leading_Zeros=Multi_Trim_Leading_Zeros):ansistring;
-						function FromHex(const v1:ansistring):Multi_Int_X3;
 						function Overflow:boolean;
 						function Negative:boolean;
 						function Defined:boolean;
@@ -338,10 +353,8 @@ Multi_Int_X4	=	record
 						Overflow_flag	:boolean;
 						Defined_flag	:boolean;
 					public
-						// procedure Init(const v1:ansistring);
 						function ToStr:ansistring;
 						function ToHex(const LZ:T_Multi_Leading_Zeros=Multi_Trim_Leading_Zeros):ansistring;
-						function FromHex(const v1:ansistring):Multi_Int_X4;
 						function Overflow:boolean;
 						function Negative:boolean;
 						function Defined:boolean;
@@ -404,7 +417,6 @@ Multi_Int_XV	=	record
 						procedure init;
 						function ToStr:ansistring;
 						function ToHex(const LZ:T_Multi_Leading_Zeros=Multi_Trim_Leading_Zeros):ansistring;
-						function FromHex(const v1:ansistring):Multi_Int_XV;
 						function Overflow:boolean;
 						function Negative:boolean;
 						function Defined:boolean;
@@ -458,9 +470,11 @@ Multi_Int_XV	=	record
 					end;
 
 var
-Multi_Init_Initialisation_count	:INT_1W_S = 0;
-Multi_Int_RAISE_EXCEPTIONS_ENABLED,
-Multi_Int_OVERFLOW_ERROR		:boolean;
+Multi_Int_ALLOW_UNLIMITED_INITIALISATIONS	:boolean = FALSE;
+Multi_Init_Initialisation_count				:INT_1W_S = 0;
+Multi_Int_RAISE_EXCEPTIONS_ENABLED			:boolean = TRUE;
+Multi_Int_OVERFLOW_ERROR					:boolean = FALSE;
+
 Multi_Int_X2_MAXINT			:Multi_Int_X2;
 Multi_Int_X3_MAXINT			:Multi_Int_X3;
 Multi_Int_X4_MAXINT			:Multi_Int_X4;
@@ -472,7 +486,7 @@ Multi_XV_max		:INT_1W_U;
 Multi_XV_size_x2	:INT_1W_U;
 Multi_XV_max_x2		:INT_1W_U;
 
-procedure Multi_Init_Initialisation(const P_Multi_XV_size:Multi_int32u = 16);
+procedure Multi_Init_Initialisation(const P_Multi_XV_size:Multi_int32u = 32);
 
 function Odd(const v1:Multi_Int_XV):boolean; overload;
 function Odd(const v1:Multi_Int_X4):boolean; overload;
@@ -511,6 +525,11 @@ procedure RotateUp(Var v1:Multi_Int_X4; NBits:INT_1W_U); overload;
 procedure RotateDown(Var v1:Multi_Int_X4; NBits:INT_1W_U); overload;
 procedure RotateUp(Var v1:Multi_Int_XV; NBits:INT_1W_U); overload;
 procedure RotateDown(Var v1:Multi_Int_XV; NBits:INT_1W_U); overload;
+
+procedure FromHex(const v1:ansistring; var v2:Multi_Int_X2); overload;
+procedure FromHex(const v1:ansistring; var v2:Multi_Int_X3); overload;
+procedure FromHex(const v1:ansistring; var v2:Multi_Int_X4); overload;
+procedure FromHex(const v1:ansistring; var v2:Multi_Int_XV); overload;
 
 function To_Multi_Int_XV(const v1:Multi_Int_X4):Multi_Int_XV; overload;
 function To_Multi_Int_XV(const v1:Multi_Int_X3):Multi_Int_XV; overload;
@@ -1803,10 +1822,14 @@ class operator Multi_Int_X2.implicit(const v1:Single):Multi_Int_X2;
 var
 R			:Multi_Int_X2;
 R_FLOATREC	:TFloatRec;
+var operation_str	:ansistring;
 begin
+operation_str:= 'Multi_Int_X2.implicit';
+{$WARNING Float to Multi_Int type conversion loses some precision }
+
 Multi_Int_OVERFLOW_ERROR:= FALSE;
 
-FloatToDecimal(R_FLOATREC, v1, 7, 0);
+FloatToDecimal(R_FLOATREC, v1, SINGLE_TYPE_PRECISION_DIGITS, 0);
 ansistring_to_Multi_Int_X2(AddCharR('0',R_FLOATREC.digits,R_FLOATREC.Exponent), R);
 
 if (R.Overflow) then
@@ -1816,7 +1839,7 @@ if (R.Overflow) then
 	Result.Negative_flag:= Multi_UBool_UNDEF;
 	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
 		begin
-		Raise EIntOverflow.create('Overflow on Single to Multi_Int conversion');
+		Raise EIntOverflow.create('Overflow on Single to Multi_Int conversion on ' + operation_str);
 		end;
 	exit;
 	end;
@@ -1831,10 +1854,14 @@ class operator Multi_Int_X2.implicit(const v1:Real):Multi_Int_X2;
 var
 R			:Multi_Int_X2;
 R_FLOATREC	:TFloatRec;
+	operation_str	:ansistring;
 begin
+operation_str:= 'Multi_Int_X2.implicit';
+{$WARNING Float to Multi_Int type conversion loses some precision }
+
 Multi_Int_OVERFLOW_ERROR:= FALSE;
 
-FloatToDecimal(R_FLOATREC, v1, 15, 0);
+FloatToDecimal(R_FLOATREC, v1, REAL_TYPE_PRECISION_DIGITS, 0);
 ansistring_to_Multi_Int_X2(AddCharR('0',R_FLOATREC.digits,R_FLOATREC.Exponent), R);
 
 if (R.Overflow) then
@@ -1844,7 +1871,7 @@ if (R.Overflow) then
 	Result.Negative_flag:= Multi_UBool_UNDEF;
 	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
 		begin
-		Raise EIntOverflow.create('Overflow on Real to Multi_Int conversion');
+		Raise EIntOverflow.create('Overflow on Real to Multi_Int conversion on ' + operation_str);
 		end;
 	exit;
 	end;
@@ -1859,10 +1886,14 @@ class operator Multi_Int_X2.implicit(const v1:Double):Multi_Int_X2;
 var
 R			:Multi_Int_X2;
 R_FLOATREC	:TFloatRec;
+	operation_str	:ansistring;
 begin
+operation_str:= 'Multi_Int_X2.implicit';
+{$WARNING Float to Multi_Int type conversion loses some precision }
+
 Multi_Int_OVERFLOW_ERROR:= FALSE;
 
-FloatToDecimal(R_FLOATREC, v1, 15, 0);
+FloatToDecimal(R_FLOATREC, v1, DOUBLE_TYPE_PRECISION_DIGITS, 0);
 ansistring_to_Multi_Int_X2(AddCharR('0',R_FLOATREC.digits,R_FLOATREC.Exponent), R);
 
 if (R.Overflow) then
@@ -1872,7 +1903,7 @@ if (R.Overflow) then
 	Result.Negative_flag:= Multi_UBool_UNDEF;
 	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
 		begin
-		Raise EIntOverflow.create('Overflow on Double to Multi_Int conversion');
+		Raise EIntOverflow.create('Overflow on Double to Multi_Int conversion on ' + operation_str);
 		end;
 	exit;
 	end;
@@ -2375,6 +2406,8 @@ var
 	Zeroneg,
 	M_Val_All_Zero		:boolean;
 begin
+Multi_Int_OVERFLOW_ERROR:= FALSE;
+
 mi.Overflow_flag:=FALSE;
 mi.Defined_flag:= TRUE;
 mi.Negative_flag:= FALSE;
@@ -2467,9 +2500,9 @@ end;
 
 
 (******************************************)
-function Multi_Int_X2.FromHex(const v1:ansistring):Multi_Int_X2;
+procedure FromHex(const v1:ansistring; var v2:Multi_Int_X2); overload;
 begin
-hex_to_Multi_Int_X2(v1,Result);
+hex_to_Multi_Int_X2(v1,v2);
 end;
 
 
@@ -5066,10 +5099,13 @@ class operator Multi_Int_X3.implicit(const v1:Single):Multi_Int_X3;
 var
 R			:Multi_Int_X3;
 R_FLOATREC	:TFloatRec;
+var operation_str	:ansistring;
 begin
+{$WARNING Float to Multi_Int type conversion loses some precision }
+
 Multi_Int_OVERFLOW_ERROR:= FALSE;
 
-FloatToDecimal(R_FLOATREC, v1, 7, 0);
+FloatToDecimal(R_FLOATREC, v1, SINGLE_TYPE_PRECISION_DIGITS, 0);
 ansistring_to_Multi_Int_X3(AddCharR('0',R_FLOATREC.digits,R_FLOATREC.Exponent), R);
 
 if (R.Overflow) then
@@ -5079,7 +5115,7 @@ if (R.Overflow) then
 	Result.Negative_flag:= Multi_UBool_UNDEF;
 	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
 		begin
-		Raise EIntOverflow.create('Overflow on Single to Multi_Int conversion');
+		Raise EIntOverflow.create('Overflow on Single to Multi_Int conversion on ' + operation_str);
 		end;
 	exit;
 	end;
@@ -5094,10 +5130,13 @@ class operator Multi_Int_X3.implicit(const v1:Real):Multi_Int_X3;
 var
 R			:Multi_Int_X3;
 R_FLOATREC	:TFloatRec;
+var operation_str	:ansistring;
 begin
+{$WARNING Float to Multi_Int type conversion loses some precision }
+
 Multi_Int_OVERFLOW_ERROR:= FALSE;
 
-FloatToDecimal(R_FLOATREC, v1, 15, 0);
+FloatToDecimal(R_FLOATREC, v1, REAL_TYPE_PRECISION_DIGITS, 0);
 ansistring_to_Multi_Int_X3(AddCharR('0',R_FLOATREC.digits,R_FLOATREC.Exponent), R);
 
 if (R.Overflow) then
@@ -5107,7 +5146,7 @@ if (R.Overflow) then
 	Result.Negative_flag:= Multi_UBool_UNDEF;
 	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
 		begin
-		Raise EIntOverflow.create('Overflow on Real to Multi_Int conversion');
+		Raise EIntOverflow.create('Overflow on Real to Multi_Int conversion on ' + operation_str);
 		end;
 	exit;
 	end;
@@ -5122,10 +5161,13 @@ class operator Multi_Int_X3.implicit(const v1:Double):Multi_Int_X3;
 var
 R			:Multi_Int_X3;
 R_FLOATREC	:TFloatRec;
+var operation_str	:ansistring;
 begin
+{$WARNING Float to Multi_Int type conversion loses some precision }
+
 Multi_Int_OVERFLOW_ERROR:= FALSE;
 
-FloatToDecimal(R_FLOATREC, v1, 15, 0);
+FloatToDecimal(R_FLOATREC, v1, DOUBLE_TYPE_PRECISION_DIGITS, 0);
 ansistring_to_Multi_Int_X3(AddCharR('0',R_FLOATREC.digits,R_FLOATREC.Exponent), R);
 
 if (R.Overflow) then
@@ -5135,7 +5177,7 @@ if (R.Overflow) then
 	Result.Negative_flag:= Multi_UBool_UNDEF;
 	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
 		begin
-		Raise EIntOverflow.create('Overflow on Double to Multi_Int conversion');
+		Raise EIntOverflow.create('Overflow on Double to Multi_Int conversion on ' + operation_str);
 		end;
 	exit;
 	end;
@@ -5651,6 +5693,8 @@ var
 	Zeroneg,
 	M_Val_All_Zero		:boolean;
 begin
+Multi_Int_OVERFLOW_ERROR:= FALSE;
+
 mi.Overflow_flag:=FALSE;
 mi.Defined_flag:= TRUE;
 mi.Negative_flag:= FALSE;
@@ -5716,7 +5760,7 @@ if	(length(v1) > 0) then
 			mi.Overflow_flag:=TRUE;
 			if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
 				begin
-				Raise EIntOverflow.create('Overflow on string conversion');
+				Raise EIntOverflow.create('Overflow on hex string conversion');
 				end;
 			goto 999;
 			end;
@@ -5743,9 +5787,9 @@ end;
 
 
 (******************************************)
-function Multi_Int_X3.FromHex(const v1:ansistring):Multi_Int_X3;
+procedure FromHex(const v1:ansistring; var v2:Multi_Int_X3); overload;
 begin
-hex_to_Multi_Int_X3(v1,Result);
+hex_to_Multi_Int_X3(v1,v2);
 end;
 
 
@@ -8542,10 +8586,13 @@ class operator Multi_Int_X4.implicit(const v1:Single):Multi_Int_X4;
 var
 R			:Multi_Int_X4;
 R_FLOATREC	:TFloatRec;
+var operation_str	:ansistring;
 begin
+{$WARNING Float to Multi_Int type conversion loses some precision }
+
 Multi_Int_OVERFLOW_ERROR:= FALSE;
 
-FloatToDecimal(R_FLOATREC, v1, 7, 0);
+FloatToDecimal(R_FLOATREC, v1, SINGLE_TYPE_PRECISION_DIGITS, 0);
 ansistring_to_Multi_Int_X4(AddCharR('0',R_FLOATREC.digits,R_FLOATREC.Exponent), R);
 
 if (R.Overflow) then
@@ -8555,7 +8602,7 @@ if (R.Overflow) then
 	Result.Negative_flag:= Multi_UBool_UNDEF;
 	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
 		begin
-		Raise EIntOverflow.create('Overflow on Single to Multi_Int conversion');
+		Raise EIntOverflow.create('Overflow on Single to Multi_Int conversion on ' + operation_str);
 		end;
 	exit;
 	end;
@@ -8570,10 +8617,13 @@ class operator Multi_Int_X4.implicit(const v1:Real):Multi_Int_X4;
 var
 R			:Multi_Int_X4;
 R_FLOATREC	:TFloatRec;
+var operation_str	:ansistring;
 begin
+{$WARNING Float to Multi_Int type conversion loses some precision }
+
 Multi_Int_OVERFLOW_ERROR:= FALSE;
 
-FloatToDecimal(R_FLOATREC, v1, 15, 0);
+FloatToDecimal(R_FLOATREC, v1, REAL_TYPE_PRECISION_DIGITS, 0);
 ansistring_to_Multi_Int_X4(AddCharR('0',R_FLOATREC.digits,R_FLOATREC.Exponent), R);
 
 if (R.Overflow) then
@@ -8583,7 +8633,7 @@ if (R.Overflow) then
 	Result.Negative_flag:= Multi_UBool_UNDEF;
 	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
 		begin
-		Raise EIntOverflow.create('Overflow on Real to Multi_Int conversion');
+		Raise EIntOverflow.create('Overflow on Real to Multi_Int conversion on ' + operation_str);
 		end;
 	exit;
 	end;
@@ -8598,10 +8648,13 @@ class operator Multi_Int_X4.implicit(const v1:Double):Multi_Int_X4;
 var
 R			:Multi_Int_X4;
 R_FLOATREC	:TFloatRec;
+var operation_str	:ansistring;
 begin
+{$WARNING Float to Multi_Int type conversion loses some precision }
+
 Multi_Int_OVERFLOW_ERROR:= FALSE;
 
-FloatToDecimal(R_FLOATREC, v1, 15, 0);
+FloatToDecimal(R_FLOATREC, v1, DOUBLE_TYPE_PRECISION_DIGITS, 0);
 ansistring_to_Multi_Int_X4(AddCharR('0',R_FLOATREC.digits,R_FLOATREC.Exponent), R);
 
 if (R.Overflow) then
@@ -8611,7 +8664,7 @@ if (R.Overflow) then
 	Result.Negative_flag:= Multi_UBool_UNDEF;
 	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
 		begin
-		Raise EIntOverflow.create('Overflow on Double to Multi_Int conversion');
+		Raise EIntOverflow.create('Overflow on Double to Multi_Int conversion on ' + operation_str);
 		end;
 	exit;
 	end;
@@ -8628,6 +8681,8 @@ R,V,M		:Single;
 i			:INT_1W_U;
 finished	:boolean;
 begin
+{$WARNING Float to Multi_Int type conversion loses some precision }
+
 if	(Not v1.Defined_flag)
 then
 	begin
@@ -9140,6 +9195,8 @@ var
 	Zeroneg,
 	M_Val_All_Zero		:boolean;
 begin
+Multi_Int_OVERFLOW_ERROR:= FALSE;
+
 mi.Overflow_flag:=FALSE;
 mi.Defined_flag:= TRUE;
 mi.Negative_flag:= FALSE;
@@ -9231,9 +9288,9 @@ end;
 
 
 (******************************************)
-function Multi_Int_X4.FromHex(const v1:ansistring):Multi_Int_X4;
+procedure FromHex(const v1:ansistring; var v2:Multi_Int_X4); overload;
 begin
-hex_to_Multi_Int_X4(v1,Result);
+hex_to_Multi_Int_X4(v1,v2);
 end;
 
 
@@ -11658,6 +11715,7 @@ var
 	M_Val_All_Zero		:boolean;
 begin
 Multi_Int_OVERFLOW_ERROR:= FALSE;
+
 setlength(M_Val, Multi_XV_size);
 mi.init;
 
@@ -11752,9 +11810,9 @@ end;
 
 
 (******************************************)
-function Multi_Int_XV.FromHex(const v1:ansistring):Multi_Int_XV;
+procedure FromHex(const v1:ansistring; var v2:Multi_Int_XV); overload;
 begin
-hex_to_Multi_Int_XV(v1,Result);
+hex_to_Multi_Int_XV(v1,v2);
 end;
 
 
@@ -12555,11 +12613,14 @@ class operator Multi_Int_XV.implicit(const v1:Single):Multi_Int_XV;
 var
 R			:Multi_Int_XV;
 R_FLOATREC	:TFloatRec;
+var operation_str	:ansistring;
 begin
+{$WARNING Float to Multi_Int type conversion loses some precision }
+
 Multi_Int_OVERFLOW_ERROR:= FALSE;
 
 Result.init;
-FloatToDecimal(R_FLOATREC, v1, 7, 0);
+FloatToDecimal(R_FLOATREC, v1, SINGLE_TYPE_PRECISION_DIGITS, 0);
 ansistring_to_Multi_Int_XV(AddCharR('0',R_FLOATREC.digits,R_FLOATREC.Exponent), R);
 
 if (R.Overflow) then
@@ -12569,7 +12630,7 @@ if (R.Overflow) then
 	Multi_Int_OVERFLOW_ERROR:= TRUE;
 	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
 		begin
-		Raise EIntOverflow.create('Overflow on single to Multi_Int conversion');
+		Raise EIntOverflow.create('Overflow on single to Multi_Int conversion on ' + operation_str);
 		end;
 	exit;
 	end;
@@ -12584,11 +12645,14 @@ class operator Multi_Int_XV.implicit(const v1:Real):Multi_Int_XV;
 var
 R			:Multi_Int_XV;
 R_FLOATREC	:TFloatRec;
+var operation_str	:ansistring;
 begin
+{$WARNING Float to Multi_Int type conversion loses some precision }
+
 Multi_Int_OVERFLOW_ERROR:= FALSE;
 
 Result.init;
-FloatToDecimal(R_FLOATREC, v1, 15, 0);
+FloatToDecimal(R_FLOATREC, v1, REAL_TYPE_PRECISION_DIGITS, 0);
 ansistring_to_Multi_Int_XV(AddCharR('0',R_FLOATREC.digits,R_FLOATREC.Exponent), R);
 
 if (R.Overflow) then
@@ -12598,7 +12662,7 @@ if (R.Overflow) then
 	Result.Negative_flag:= Multi_UBool_UNDEF;
 	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
 		begin
-		Raise EIntOverflow.create('Overflow on Real to Multi_Int conversion');
+		Raise EIntOverflow.create('Overflow on Real to Multi_Int conversion on ' + operation_str);
 		end;
 	exit;
 	end;
@@ -12613,11 +12677,14 @@ class operator Multi_Int_XV.implicit(const v1:Double):Multi_Int_XV;
 var
 R			:Multi_Int_XV;
 R_FLOATREC	:TFloatRec;
+var operation_str	:ansistring;
 begin
+{$WARNING Float to Multi_Int type conversion loses some precision }
+
 Multi_Int_OVERFLOW_ERROR:= FALSE;
 
 Result.init;
-FloatToDecimal(R_FLOATREC, v1, 15, 0);
+FloatToDecimal(R_FLOATREC, v1, DOUBLE_TYPE_PRECISION_DIGITS, 0);
 ansistring_to_Multi_Int_XV(AddCharR('0',R_FLOATREC.digits,R_FLOATREC.Exponent), R);
 
 if (R.Overflow) then
@@ -12627,7 +12694,7 @@ if (R.Overflow) then
 	Result.Negative_flag:= Multi_UBool_UNDEF;
 	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
 		begin
-		Raise EIntOverflow.create('Overflow on Double to Multi_Int conversion');
+		Raise EIntOverflow.create('Overflow on Double to Multi_Int conversion on ' + operation_str);
 		end;
 	exit;
 	end;
@@ -14296,19 +14363,19 @@ Multi_Init_Initialisation
 ******************************************
 }
 
-procedure Multi_Init_Initialisation(const P_Multi_XV_size:Multi_int32u = 16);
+procedure Multi_Init_Initialisation(const P_Multi_XV_size:Multi_int32u = 32);
 var	i:Multi_int32u;
+
 begin
-if	(Multi_Init_Initialisation_count > 1)
-then
-	begin
-	Raise EInterror.create('Multi_Init_Initialisation has already been called');
-	exit;
-	end;
+if	(not Multi_Int_ALLOW_UNLIMITED_INITIALISATIONS) then
+	if	(Multi_Init_Initialisation_count > 2)
+	then
+		begin
+		Raise EInterror.create('Multi_Init_Initialisation has already been called');
+		exit;
+		end;
 
 Inc(Multi_Init_Initialisation_count);
-Multi_Int_RAISE_EXCEPTIONS_ENABLED:= TRUE;
-Multi_Int_OVERFLOW_ERROR:= FALSE;
 
 Multi_XV_size:=	P_Multi_XV_size;
 
