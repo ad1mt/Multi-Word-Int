@@ -11,3 +11,5 @@ Version 4.32 has:
 - major bug fixes in Real/Float type to Multi-Int conversion for 32bit environment
 - created missing int64 to Multi-Int conversion for 32bit environment
 - bug fixes in Overflow detection
+- bug fix in Multi_Int_X3 hex conversion
+- Multi_Init_Initialisation improvements to make it easier to build test suites
