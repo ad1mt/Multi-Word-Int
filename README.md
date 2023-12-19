@@ -13,3 +13,4 @@ Version 4.32 has:
 - bug fixes in Overflow detection
 - bug fix in Multi_Int_X3 hex conversion
 - Multi_Init_Initialisation improvements to make it easier to build test suites
+- exception bug fixes in division routines
