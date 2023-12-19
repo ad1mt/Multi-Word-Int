@@ -29,7 +29,7 @@ All the usual comparison operators are available:
 Conversion to/from other types is automatic/implicit, for the following types:
 to/from integers
 to/from real
-from string is automatic
+from string is automatic (decimal is assumed)
 to string with "ToStr" method
 to/from string in hex notation with ToHex and FromHex methods
 to/from different large integer types with typecast functions To_Multi_Int_XV, To_Multi_Int_X4, To_Multi_Int_X3 and To_Multi_Int_X2
