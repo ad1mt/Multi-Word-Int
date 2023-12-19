@@ -10,15 +10,15 @@ uses	sysutils
 ;
 	
 const
-M2_DIV_ITERATIONS	= 1000000;
+M2_DIV_ITERATIONS	= 100000;
 M2_MUL_ITERATIONS	= 1000000;
 M2_SUB_ITERATIONS	= 10000000;
-M4_DIV_ITERATIONS	= 1000000;
+M4_DIV_ITERATIONS	= 100000;
 M4_MUL_ITERATIONS	= 1000000;
 M4_SUB_ITERATIONS	= 1000000;
-M48_DIV_ITERATIONS	= 100;
-M48_MUL_ITERATIONS	= 10000;
-M48_SUB_ITERATIONS	= 100000;
+MV_DIV_ITERATIONS	= 1000;
+MV_MUL_ITERATIONS	= 100000;
+MV_SUB_ITERATIONS	= 100000;
 
 var
 op		:string;
@@ -44,7 +44,7 @@ start_time:= GetTickCount64;
 // ShiftDown(M2_j, 47);
 
 M2_i:= 1000000000000000003;
-M2_j:= 100000000000000003;
+M2_j:= 1000000000000037;
 
 i:=0;
 while (i < (M2_DIV_ITERATIONS div 2)) do
@@ -69,7 +69,7 @@ writeln(Format('time elapsed is %f seconds for %d iterations of divide with %d b
 start_time:= GetTickCount64;
 
 M2_i:= 1000000000000000003;
-M2_j:= 100000000000000003;
+M2_j:= 1000000000000037;
 
 i:=0;
 while (i < (M2_MUL_ITERATIONS div 2)) do
@@ -94,7 +94,7 @@ writeln(Format('time elapsed is %f seconds for %d iterations of multiply with %d
 start_time:= GetTickCount64;
 
 M2_i:= 1000000000000000003;
-M2_j:= 100000000000000003;
+M2_j:= 1000000000000037;
 
 i:=0;
 while (i < (M2_SUB_ITERATIONS div 2)) do
@@ -137,7 +137,7 @@ start_time:= GetTickCount64;
 // ShiftDown(M2_j, 47);
 
 M4_i:= 1000000000000000003;
-M4_j:= 100000000000000003;
+M4_j:= 1000000000000037;
 
 i:=0;
 while (i < (M4_DIV_ITERATIONS div 2)) do
@@ -161,7 +161,7 @@ writeln(Format('time elapsed is %f seconds for %d iterations of divide with %d b
 start_time:= GetTickCount64;
 
 M4_i:= 1000000000000000003;
-M4_j:= 100000000000000003;
+M4_j:= 1000000000000037;
 
 i:=0;
 while (i < (M4_MUL_ITERATIONS div 2)) do
@@ -186,7 +186,7 @@ writeln(Format('time elapsed is %f seconds for %d iterations of multiply with %d
 start_time:= GetTickCount64;
 
 M4_i:= 1000000000000000003;
-M4_j:= 100000000000000003;
+M4_j:= 1000000000000037;
 
 i:=0;
 while (i < (M4_SUB_ITERATIONS div 2)) do
@@ -213,105 +213,107 @@ end;
 
 
 (********************************)
-procedure test_Multi_Int_X48;
+procedure test_Multi_Int_XV;
 var
-M48_i,
-M48_j,
-M48_k		:Multi_Int_X48;
+MV_i,
+MV_j,
+MV_k		:Multi_Int_XV;
 
 begin
 
 start_time:= GetTickCount64;
 
-M48_i:= Multi_Int_X48_MAXINT;
-ShiftDown(M48_i, 7);
+MV_i:= Multi_Int_XV_MAXINT;
+ShiftDown(MV_i, 7);
 
-M48_j:= '1000000000011100000000041070000000050653';
+MV_j:= '1000000000011100000000041070000000050653';
 
 i:=0;
-while (i < (M48_DIV_ITERATIONS div 2)) do
+while (i < (MV_DIV_ITERATIONS div 2)) do
 	begin
-	M48_k:= M48_i div M48_j;
-	Dec(M48_i);
-	Dec(M48_j);
-	M48_k:= M48_i div M48_j;
-	Inc(M48_i);
-	Inc(M48_j);
+	MV_k:= MV_i div MV_j;
+	Dec(MV_i);
+	Dec(MV_j);
+	MV_k:= MV_i div MV_j;
+	Inc(MV_i);
+	Inc(MV_j);
 
 	Inc(i)
 	end;
 
-if	M48_k.overflow
+if	MV_k.overflow
 then writeln(' Overflow!');
 
 end_time:= GetTickCount64;
 delta:= (end_time - start_time) / 1000;
-writeln(Format('time elapsed is %f seconds for %d iterations of divide with %d bit integers', [delta,M48_DIV_ITERATIONS,(((X48_size + 1) div 2) * 64)]));
+writeln(Format('time elapsed is %f seconds for %d iterations of divide with %d bit integers', [delta,MV_DIV_ITERATIONS,((Multi_XV_size div 2) * 64)]));
 
 (*----*)
 start_time:= GetTickCount64;
 
-M48_i:= Multi_Int_X48_MAXINT;
-ShiftDown(M48_i, 131);
+MV_i:= Multi_Int_XV_MAXINT;
+ShiftDown(MV_i, 131);
 
-M48_j:= Multi_Int_X4_MAXINT;
-ShiftDown(M48_j, 131);
+MV_j:= Multi_Int_X4_MAXINT;
+ShiftDown(MV_j, 131);
 
 i:=0;
-while (i < (M48_MUL_ITERATIONS div 2)) do
+while (i < (MV_MUL_ITERATIONS div 2)) do
 	begin
-	M48_k:= M48_i * M48_j;
-	Dec(M48_i);
-	Dec(M48_j);
-	M48_k:= M48_i * M48_j;
-	Inc(M48_i);
-	Inc(M48_j);
+	MV_k:= MV_i * MV_j;
+	Dec(MV_i);
+	Dec(MV_j);
+	MV_k:= MV_i * MV_j;
+	Inc(MV_i);
+	Inc(MV_j);
 
 	Inc(i)
 	end;
 
-if	M48_k.overflow
+if	MV_k.overflow
 then writeln(' Overflow!');
 
 end_time:= GetTickCount64;
 delta:= (end_time - start_time) / 1000;
-writeln(Format('time elapsed is %f seconds for %d iterations of multiply with %d bit integers', [delta,M48_MUL_ITERATIONS,(((X48_size + 1) div 2) * 64)]));
+writeln(Format('time elapsed is %f seconds for %d iterations of multiply with %d bit integers', [delta, MV_MUL_ITERATIONS, ((Multi_XV_size div 2) * 64)]));
 
 (*----*)
 start_time:= GetTickCount64;
 
-M48_i:= Multi_Int_X48_MAXINT;
-ShiftDown(M48_i, 7);
+MV_i:= Multi_Int_XV_MAXINT;
+ShiftDown(MV_i, 7);
 
-M48_j:= Multi_Int_X48_MAXINT;
-ShiftDown(M48_j, 11);
+MV_j:= Multi_Int_XV_MAXINT;
+ShiftDown(MV_j, 11);
 
 i:=0;
-while (i < (M48_SUB_ITERATIONS div 2)) do
+while (i < (MV_SUB_ITERATIONS div 2)) do
 	begin
-	M48_k:= M48_i - M48_j;
-	Dec(M48_i);
-	Dec(M48_j);
-	M48_k:= M48_i - M48_j;
-	Inc(M48_i);
-	Inc(M48_j);
+	MV_k:= MV_i - MV_j;
+	Dec(MV_i);
+	Dec(MV_j);
+	MV_k:= MV_i - MV_j;
+	Inc(MV_i);
+	Inc(MV_j);
 
 	Inc(i)
 	end;
 
-if	M48_k.overflow
+if	MV_k.overflow
 then writeln(' Overflow!');
 
 end_time:= GetTickCount64;
 delta:= (end_time - start_time) / 1000;
-writeln(Format('time elapsed is %f seconds for %d iterations of subtract with %d bit integers', [delta,M48_SUB_ITERATIONS,(((X48_size + 1) div 2) * 64)]));
+writeln(Format('time elapsed is %f seconds for %d iterations of subtract with %d bit integers', [delta, MV_SUB_ITERATIONS,((Multi_XV_size div 2) * 64)]));
 writeln;
 end;
 
 
 begin
+// Multi_Init_Initialisation(128);
+
 test_Multi_Int_X2;
 test_Multi_Int_X4;
-test_Multi_Int_X48;
+test_Multi_Int_XV;
 end.
 

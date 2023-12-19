@@ -13,20 +13,22 @@ var
 op		:string;
 Mi,
 Mj,
-Mk		:Multi_Int_X48;
+Mk		:Multi_Int_XV;
 i,
 start_time,
 end_time		:int32;
 delta			:double;
 
 BEGIN
+Multi_Init_Initialisation(16);
+
 if (ParamCount = 0) then
 	begin
 	writeln('usage: calc  number  operator  number');
 	writeln('where: operator can be one of:');
-	writeln(' + - * div (/) mod (%) xor sqr pow (^ or **) shu shd');
+	writeln(' + - * div (/) mod (%) xor shu shd sqr pow (^ or **)');
 	writeln('where shu/shd means shift bits and sqr means square root');
-	writeln('and number can be up to +/- ',Multi_Int_X48_MAXINT.tostr);
+	writeln('and number can be up to +/- ',Multi_Int_XV_MAXINT.tostr);
 	end
 else
 	begin
@@ -37,7 +39,7 @@ else
 	or	(not Mj.defined) then
 		begin
 		writeln('input number error: maximum is');
-		writeln(Multi_Int_X48_MAXINT.tostr);
+		writeln(Multi_Int_XV_MAXINT.tostr);
 		end
 	else
 		begin
@@ -71,16 +73,16 @@ else
 			begin MK:= Mi Xor Mj; op:= 'XOR'; end
 
 		else if	(ParamStr(2) = 'rotu') then
-			begin Mk:=Mi; Mk.RotateUp_MultiBits(Mk, INT_1W_U(Mj)); op:= 'ROTU'; end
+			begin Mk:=Mi; RotateUp(Mk, MULTI_INT_1W_U(Mj)); op:= 'ROTU'; end
 
 		else if	(ParamStr(2) = 'rotd') then
-			begin Mk:=Mi; Mk.RotateDown_MultiBits(Mk, INT_1W_U(Mj)); op:= 'ROTD'; end
+			begin Mk:=Mi; RotateDown(Mk, MULTI_INT_1W_U(Mj)); op:= 'ROTD'; end
 
 		else if	(ParamStr(2) = 'shu') then
-			begin Mk:=Mi; Mk.ShiftUp_MultiBits(Mk, INT_1W_U(Mj)); op:= 'SHU'; end
+			begin Mk:=Mi; ShiftUp(Mk, MULTI_INT_1W_U(Mj)); op:= 'SHU'; end
 
 		else if	(ParamStr(2) = 'shd') then
-			begin Mk:=Mi; Mk.ShiftDown_MultiBits(Mk, INT_1W_U(Mj)); op:= 'SHD'; end
+			begin Mk:=Mi; ShiftDown(Mk, MULTI_INT_1W_U(Mj)); op:= 'SHD'; end
 
 		else if	(ParamStr(2) = 'sqr') then
 			begin
