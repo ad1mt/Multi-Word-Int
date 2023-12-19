@@ -100,6 +100,12 @@ v4.32.03
 -	REAL_TYPE_PRECISION_DIGITS		= 15;
 -	DOUBLE_TYPE_PRECISION_DIGITS	= 15;
 
+v4.32.04
+-	rename all INT_1W_S (etc) to MULTI_INT_1W_S (etc)
+-	remove redundant Shift & Rotate procedures from record types
+
+v4.32.05
+-	exception not raised when div values same as last time
 *)
 
 // {$define Overflow_Checks}
@@ -116,6 +122,22 @@ uses	sysutils
 ,		math
 ,		UBool
 ;
+
+const
+
+(* Do not change these values *)
+
+	Multi_X2_max = 3;
+	Multi_X2_max_x2 = 7;
+	Multi_X2_size = Multi_X2_max + 1;
+
+	Multi_X3_max = 5;
+	Multi_X3_max_x2 = 11;
+	Multi_X3_size = Multi_X3_max + 1;
+
+	Multi_X4_max = 7;
+	Multi_X4_max_x2 = 15;
+	Multi_X4_size = Multi_X4_max + 1;
 
 const
 	Multi_INT8_MAXINT = 127;
@@ -135,9 +157,13 @@ const
 	Multi_INT64U_MAXINT = 18446744073709551615;
 	Multi_INT64U_MAXINT_1 = 18446744073709551616;
 
-	SINGLE_TYPE_PRECISION_DIGITS	= 7;
-	REAL_TYPE_PRECISION_DIGITS		= 15;
-	DOUBLE_TYPE_PRECISION_DIGITS	= 15;
+	MULTI_SINGLE_TYPE_MAXVAL	= '9999999999999999999999999999';
+	MULTI_REAL_TYPE_MAXVAL		= '99999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999';
+	MULTI_DOUBLE_TYPE_MAXVAL	= '99999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999';
+
+	MULTI_SINGLE_TYPE_PRECISION_DIGITS	= 7;
+	MULTI_REAL_TYPE_PRECISION_DIGITS	= 15;
+	MULTI_DOUBLE_TYPE_PRECISION_DIGITS	= 15;
 
 type
 	Multi_int8u = byte;
@@ -149,75 +175,59 @@ type
 	Multi_int64u = QWord;
 	Multi_int64 = int64;
 
-const
-
-(* Do not change these values *)
-
-	Multi_X2_max = 3;
-	Multi_X2_max_x2 = 7;
-	Multi_X2_size = Multi_X2_max + 1;
-
-	Multi_X3_max = 5;
-	Multi_X3_max_x2 = 11;
-	Multi_X3_size = Multi_X3_max + 1;
-
-	Multi_X4_max = 7;
-	Multi_X4_max_x2 = 15;
-	Multi_X4_size = Multi_X4_max + 1;
-
 {$ifdef 32bit}
 const
-	INT_1W_SIZE		= 16;
-	INT_2W_SIZE		= 32;
-	INT_4W_SIZE		= 32;
+	MULTI_INT_1W_SIZE		= 16;
+	MULTI_INT_2W_SIZE		= 32;
+	MULTI_INT_4W_SIZE		= 64;
 
-	INT_1W_S_MAXINT		= Multi_INT16_MAXINT;
-	INT_1W_S_MAXINT_1	= Multi_INT16_MAXINT_1;
-	INT_1W_U_MAXINT		= Multi_INT16U_MAXINT;
-	INT_1W_U_MAXINT_1	= Multi_INT16U_MAXINT_1;
+	MULTI_INT_1W_S_MAXINT	= Multi_INT16_MAXINT;
+	MULTI_INT_1W_S_MAXINT_1	= Multi_INT16_MAXINT_1;
+	MULTI_INT_1W_U_MAXINT	= Multi_INT16U_MAXINT;
+	MULTI_INT_1W_U_MAXINT_1	= Multi_INT16U_MAXINT_1;
 
-	INT_2W_S_MAXINT		= Multi_INT32_MAXINT;
-	INT_2W_S_MAXINT_1	= Multi_INT32_MAXINT_1;
-	INT_2W_U_MAXINT		= Multi_INT32U_MAXINT;
-	INT_2W_U_MAXINT_1	= Multi_INT32U_MAXINT_1;
+	MULTI_INT_2W_S_MAXINT	= Multi_INT32_MAXINT;
+	MULTI_INT_2W_S_MAXINT_1	= Multi_INT32_MAXINT_1;
+	MULTI_INT_2W_U_MAXINT	= Multi_INT32U_MAXINT;
+	MULTI_INT_2W_U_MAXINT_1	= Multi_INT32U_MAXINT_1;
 
-	INT_4W_S_MAXINT		= Multi_INT64_MAXINT;
-	INT_4W_S_MAXINT_1	= Multi_INT64_MAXINT_1;
-	INT_4W_U_MAXINT		= Multi_INT64U_MAXINT;
-	INT_4W_U_MAXINT_1	= Multi_INT64U_MAXINT_1;
+	MULTI_INT_4W_S_MAXINT	= Multi_INT64_MAXINT;
+	MULTI_INT_4W_S_MAXINT_1	= Multi_INT64_MAXINT_1;
+	MULTI_INT_4W_U_MAXINT	= Multi_INT64U_MAXINT;
+	MULTI_INT_4W_U_MAXINT_1	= Multi_INT64U_MAXINT_1;
 
 type
 
-	INT_1W_S		= Multi_int16;
-	INT_1W_U		= Multi_int16u;
-	INT_2W_S		= Multi_int32;
-	INT_2W_U		= Multi_int32u;
-	INT_4W_S		= Multi_int64;
-	INT_4W_U		= Multi_int64u;
+	MULTI_INT_1W_S		= Multi_int16;
+	MULTI_INT_1W_U		= Multi_int16u;
+	MULTI_INT_2W_S		= Multi_int32;
+	MULTI_INT_2W_U		= Multi_int32u;
+	MULTI_INT_4W_S		= Multi_int64;
+	MULTI_INT_4W_U		= Multi_int64u;
 
 {$endif} // 32-bit
 
 {$ifdef 64bit}
 const
-	INT_1W_SIZE		= 32;
-	INT_2W_SIZE		= 64;
+	MULTI_INT_1W_SIZE		= 32;
+	MULTI_INT_2W_SIZE		= 64;
 
-	INT_1W_S_MAXINT		= Multi_INT32_MAXINT;
-	INT_1W_S_MAXINT_1	= Multi_INT32_MAXINT_1;
-	INT_1W_U_MAXINT		= Multi_INT32U_MAXINT;
-	INT_1W_U_MAXINT_1	= Multi_INT32U_MAXINT_1;
+	MULTI_INT_1W_S_MAXINT	= Multi_INT32_MAXINT;
+	MULTI_INT_1W_S_MAXINT_1	= Multi_INT32_MAXINT_1;
+	MULTI_INT_1W_U_MAXINT	= Multi_INT32U_MAXINT;
+	MULTI_INT_1W_U_MAXINT_1	= Multi_INT32U_MAXINT_1;
 
-	INT_2W_S_MAXINT		= Multi_INT64_MAXINT;
-	INT_2W_S_MAXINT_1	= Multi_INT64_MAXINT_1;
-	INT_2W_U_MAXINT		= Multi_INT64U_MAXINT;
-	INT_2W_U_MAXINT_1	= Multi_INT64U_MAXINT_1;
+	MULTI_INT_2W_S_MAXINT	= Multi_INT64_MAXINT;
+	MULTI_INT_2W_S_MAXINT_1	= Multi_INT64_MAXINT_1;
+	MULTI_INT_2W_U_MAXINT	= Multi_INT64U_MAXINT;
+	MULTI_INT_2W_U_MAXINT_1	= Multi_INT64U_MAXINT_1;
 
 type
 
-	INT_1W_S		= Multi_int32;
-	INT_1W_U		= Multi_int32u;
-	INT_2W_S		= Multi_int64;
-	INT_2W_U		= Multi_int64u;
+	MULTI_INT_1W_S		= Multi_int32;
+	MULTI_INT_1W_U		= Multi_int32u;
+	MULTI_INT_2W_S		= Multi_int64;
+	MULTI_INT_2W_U		= Multi_int64u;
 
 {$endif} // 64-bit
 
@@ -229,7 +239,7 @@ T_Multi_32bit_or_64bit	=	(Multi_undef, Multi_32bit, Multi_64bit);
 
 Multi_Int_X2	=	record
 					private
-						M_Value			:array[0..Multi_X2_max] of INT_1W_U;
+						M_Value			:array[0..Multi_X2_max] of MULTI_INT_1W_U;
 						Negative_flag	:T_Multi_UBool;
 						Overflow_flag	:boolean;
 						Defined_flag	:boolean;
@@ -239,21 +249,23 @@ Multi_Int_X2	=	record
 						function Overflow:boolean;
 						function Negative:boolean;
 						function Defined:boolean;
-						procedure ShiftUp_MultiBits(Var v1:Multi_Int_X2; NBits:INT_1W_U);
-						procedure ShiftDown_MultiBits(Var v1:Multi_Int_X2; NBits:INT_1W_U);
-						procedure RotateUp_MultiBits(Var v1:Multi_Int_X2; NBits:INT_1W_U);
-						procedure RotateDown_MultiBits(Var v1:Multi_Int_X2; NBits:INT_1W_U);
+						{
+						procedure ShiftUp_MultiBits(Var v1:Multi_Int_X2; NBits:MULTI_INT_1W_U);
+						procedure ShiftDown_MultiBits(Var v1:Multi_Int_X2; NBits:MULTI_INT_1W_U);
+						procedure RotateUp_MultiBits(Var v1:Multi_Int_X2; NBits:MULTI_INT_1W_U);
+						procedure RotateDown_MultiBits(Var v1:Multi_Int_X2; NBits:MULTI_INT_1W_U);
+						}
 						class operator implicit(const v1:Multi_Int_X2):Multi_int8u;
 						class operator implicit(const v1:Multi_Int_X2):Multi_int8;
-						class operator implicit(const v1:Multi_Int_X2):INT_1W_U;
-						class operator implicit(const v1:Multi_Int_X2):INT_1W_S;
-						class operator implicit(const v1:Multi_Int_X2):INT_2W_U;
-						class operator implicit(const v1:Multi_Int_X2):INT_2W_S;
-						class operator implicit(const v1:INT_2W_S):Multi_Int_X2;
-						class operator implicit(const v1:INT_2W_U):Multi_Int_X2;
+						class operator implicit(const v1:Multi_Int_X2):MULTI_INT_1W_U;
+						class operator implicit(const v1:Multi_Int_X2):MULTI_INT_1W_S;
+						class operator implicit(const v1:Multi_Int_X2):MULTI_INT_2W_U;
+						class operator implicit(const v1:Multi_Int_X2):MULTI_INT_2W_S;
+						class operator implicit(const v1:MULTI_INT_2W_S):Multi_Int_X2;
+						class operator implicit(const v1:MULTI_INT_2W_U):Multi_Int_X2;
 					{$ifdef 32bit}
-						class operator implicit(const v1:INT_4W_S):Multi_Int_X2;
-						class operator implicit(const v1:INT_4W_U):Multi_Int_X2;
+						class operator implicit(const v1:MULTI_INT_4W_S):Multi_Int_X2;
+						class operator implicit(const v1:MULTI_INT_4W_U):Multi_Int_X2;
 					{$endif}
 						class operator implicit(const v1:ansistring):Multi_Int_X2;
 						class operator implicit(const v1:Multi_Int_X2):ansistring;
@@ -282,13 +294,13 @@ Multi_Int_X2	=	record
 						class operator -(const v1:Multi_Int_X2):Multi_Int_X2;
 						class operator >=(const v1,v2:Multi_Int_X2):Boolean;
 						class operator <=(const v1,v2:Multi_Int_X2):Boolean;
-						class operator **(const v1:Multi_Int_X2; const P:INT_2W_S):Multi_Int_X2;
+						class operator **(const v1:Multi_Int_X2; const P:MULTI_INT_2W_S):Multi_Int_X2;
 					end;
 
 
 Multi_Int_X3	=	record
 					private
-						M_Value			:array[0..Multi_X3_max] of INT_1W_U;
+						M_Value			:array[0..Multi_X3_max] of MULTI_INT_1W_U;
 						Negative_flag		:T_Multi_UBool;
 						Overflow_flag	:boolean;
 						Defined_flag	:boolean;
@@ -298,21 +310,23 @@ Multi_Int_X3	=	record
 						function Overflow:boolean;
 						function Negative:boolean;
 						function Defined:boolean;
-						procedure ShiftUp_MultiBits(Var v1:Multi_Int_X3; NBits:INT_1W_U);
-						procedure ShiftDown_MultiBits(Var v1:Multi_Int_X3; NBits:INT_1W_U);
-						procedure RotateUp_MultiBits(Var v1:Multi_Int_X3; NBits:INT_1W_U);
-						procedure RotateDown_MultiBits(Var v1:Multi_Int_X3; NBits:INT_1W_U);
+						{
+						procedure ShiftUp_MultiBits(Var v1:Multi_Int_X3; NBits:MULTI_INT_1W_U);
+						procedure ShiftDown_MultiBits(Var v1:Multi_Int_X3; NBits:MULTI_INT_1W_U);
+						procedure RotateUp_MultiBits(Var v1:Multi_Int_X3; NBits:MULTI_INT_1W_U);
+						procedure RotateDown_MultiBits(Var v1:Multi_Int_X3; NBits:MULTI_INT_1W_U);
+						}
 						class operator implicit(const v1:Multi_Int_X3):Multi_int8u;
 						class operator implicit(const v1:Multi_Int_X3):Multi_int8;
-						class operator implicit(const v1:Multi_Int_X3):INT_1W_U;
-						class operator implicit(const v1:Multi_Int_X3):INT_1W_S;
-						class operator implicit(const v1:Multi_Int_X3):INT_2W_U;
-						class operator implicit(const v1:Multi_Int_X3):INT_2W_S;
-						class operator implicit(const v1:INT_2W_S):Multi_Int_X3;
-						class operator implicit(const v1:INT_2W_U):Multi_Int_X3;
+						class operator implicit(const v1:Multi_Int_X3):MULTI_INT_1W_U;
+						class operator implicit(const v1:Multi_Int_X3):MULTI_INT_1W_S;
+						class operator implicit(const v1:Multi_Int_X3):MULTI_INT_2W_U;
+						class operator implicit(const v1:Multi_Int_X3):MULTI_INT_2W_S;
+						class operator implicit(const v1:MULTI_INT_2W_S):Multi_Int_X3;
+						class operator implicit(const v1:MULTI_INT_2W_U):Multi_Int_X3;
 					{$ifdef 32bit}
-						class operator implicit(const v1:INT_4W_S):Multi_Int_X3;
-						class operator implicit(const v1:INT_4W_U):Multi_Int_X3;
+						class operator implicit(const v1:MULTI_INT_4W_S):Multi_Int_X3;
+						class operator implicit(const v1:MULTI_INT_4W_U):Multi_Int_X3;
 					{$endif}
 						class operator implicit(const v1:Multi_Int_X2):Multi_Int_X3;
 						class operator implicit(const v1:ansistring):Multi_Int_X3;
@@ -342,13 +356,13 @@ Multi_Int_X3	=	record
 						class operator -(const v1:Multi_Int_X3):Multi_Int_X3;
 						class operator >=(const v1,v2:Multi_Int_X3):Boolean;
 						class operator <=(const v1,v2:Multi_Int_X3):Boolean;
-						class operator **(const v1:Multi_Int_X3; const P:INT_2W_S):Multi_Int_X3;
+						class operator **(const v1:Multi_Int_X3; const P:MULTI_INT_2W_S):Multi_Int_X3;
 					end;
 
 
 Multi_Int_X4	=	record
 					private
-						M_Value			:array[0..Multi_X4_max] of INT_1W_U;
+						M_Value			:array[0..Multi_X4_max] of MULTI_INT_1W_U;
 						Negative_flag		:T_Multi_UBool;
 						Overflow_flag	:boolean;
 						Defined_flag	:boolean;
@@ -358,21 +372,23 @@ Multi_Int_X4	=	record
 						function Overflow:boolean;
 						function Negative:boolean;
 						function Defined:boolean;
-						procedure ShiftUp_MultiBits(Var v1:Multi_Int_X4; NBits:INT_1W_U);
-						procedure ShiftDown_MultiBits(Var v1:Multi_Int_X4; NBits:INT_1W_U);
-						procedure RotateUp_MultiBits(Var v1:Multi_Int_X4; NBits:INT_1W_U);
-						procedure RotateDown_MultiBits(Var v1:Multi_Int_X4; NBits:INT_1W_U);
+						{
+						procedure ShiftUp_MultiBits(Var v1:Multi_Int_X4; NBits:MULTI_INT_1W_U);
+						procedure ShiftDown_MultiBits(Var v1:Multi_Int_X4; NBits:MULTI_INT_1W_U);
+						procedure RotateUp_MultiBits(Var v1:Multi_Int_X4; NBits:MULTI_INT_1W_U);
+						procedure RotateDown_MultiBits(Var v1:Multi_Int_X4; NBits:MULTI_INT_1W_U);
+						}
 						class operator implicit(const v1:Multi_Int_X4):Multi_int8u;
 						class operator implicit(const v1:Multi_Int_X4):Multi_int8;
-						class operator implicit(const v1:Multi_Int_X4):INT_1W_U;
-						class operator implicit(const v1:Multi_Int_X4):INT_1W_S;
-						class operator implicit(const v1:Multi_Int_X4):INT_2W_U;
-						class operator implicit(const v1:Multi_Int_X4):INT_2W_S;
-						class operator implicit(const v1:INT_2W_S):Multi_Int_X4;
-						class operator implicit(const v1:INT_2W_U):Multi_Int_X4;
+						class operator implicit(const v1:Multi_Int_X4):MULTI_INT_1W_U;
+						class operator implicit(const v1:Multi_Int_X4):MULTI_INT_1W_S;
+						class operator implicit(const v1:Multi_Int_X4):MULTI_INT_2W_U;
+						class operator implicit(const v1:Multi_Int_X4):MULTI_INT_2W_S;
+						class operator implicit(const v1:MULTI_INT_2W_S):Multi_Int_X4;
+						class operator implicit(const v1:MULTI_INT_2W_U):Multi_Int_X4;
 					{$ifdef 32bit}
-						class operator implicit(const v1:INT_4W_S):Multi_Int_X4;
-						class operator implicit(const v1:INT_4W_U):Multi_Int_X4;
+						class operator implicit(const v1:MULTI_INT_4W_S):Multi_Int_X4;
+						class operator implicit(const v1:MULTI_INT_4W_U):Multi_Int_X4;
 					{$endif}
 						class operator implicit(const v1:Multi_Int_X2):Multi_Int_X4;
 						class operator implicit(const v1:Multi_Int_X3):Multi_Int_X4;
@@ -403,13 +419,13 @@ Multi_Int_X4	=	record
 						class operator -(const v1:Multi_Int_X4):Multi_Int_X4;
 						class operator >=(const v1,v2:Multi_Int_X4):Boolean;
 						class operator <=(const v1,v2:Multi_Int_X4):Boolean;
-						class operator **(const v1:Multi_Int_X4; const P:INT_2W_S):Multi_Int_X4;
+						class operator **(const v1:Multi_Int_X4; const P:MULTI_INT_2W_S):Multi_Int_X4;
 					end;
 
 
 Multi_Int_XV	=	record
 					private
-						M_Value			:array of INT_1W_U;
+						M_Value			:array of MULTI_INT_1W_U;
 						Negative_flag		:T_Multi_UBool;
 						Overflow_flag	:boolean;
 						Defined_flag	:boolean;
@@ -420,24 +436,26 @@ Multi_Int_XV	=	record
 						function Overflow:boolean;
 						function Negative:boolean;
 						function Defined:boolean;
-						procedure ShiftUp_MultiBits(var v1:Multi_Int_XV; NBits:INT_1W_U);
-						procedure ShiftDown_MultiBits(var v1:Multi_Int_XV; NBits:INT_1W_U);
-						procedure RotateUp_MultiBits(var v1:Multi_Int_XV; NBits:INT_1W_U);
-						procedure RotateDown_MultiBits(var v1:Multi_Int_XV; NBits:INT_1W_U);
+						{
+						procedure ShiftUp_MultiBits(var v1:Multi_Int_XV; NBits:MULTI_INT_1W_U);
+						procedure ShiftDown_MultiBits(var v1:Multi_Int_XV; NBits:MULTI_INT_1W_U);
+						procedure RotateUp_MultiBits(var v1:Multi_Int_XV; NBits:MULTI_INT_1W_U);
+						procedure RotateDown_MultiBits(var v1:Multi_Int_XV; NBits:MULTI_INT_1W_U);
+						}
 						class operator implicit(const v1:Multi_Int_XV):Multi_int8u;
 						class operator implicit(const v1:Multi_Int_XV):Multi_int8;
-						class operator implicit(const v1:Multi_Int_XV):INT_1W_U;
-						class operator implicit(const v1:Multi_Int_XV):INT_1W_S;
-						class operator implicit(const v1:Multi_Int_XV):INT_2W_U;
-						class operator implicit(const v1:Multi_Int_XV):INT_2W_S;
+						class operator implicit(const v1:Multi_Int_XV):MULTI_INT_1W_U;
+						class operator implicit(const v1:Multi_Int_XV):MULTI_INT_1W_S;
+						class operator implicit(const v1:Multi_Int_XV):MULTI_INT_2W_U;
+						class operator implicit(const v1:Multi_Int_XV):MULTI_INT_2W_S;
 						class operator implicit(const v1:Multi_Int_X2):Multi_Int_XV;
 						class operator implicit(const v1:Multi_Int_X3):Multi_Int_XV;
 						class operator implicit(const v1:Multi_Int_X4):Multi_Int_XV;
-						class operator implicit(const v1:INT_2W_S):Multi_Int_XV;
-						class operator implicit(const v1:INT_2W_U):Multi_Int_XV;
+						class operator implicit(const v1:MULTI_INT_2W_S):Multi_Int_XV;
+						class operator implicit(const v1:MULTI_INT_2W_U):Multi_Int_XV;
 					{$ifdef 32bit}
-						class operator implicit(const v1:INT_4W_S):Multi_Int_XV;
-						class operator implicit(const v1:INT_4W_U):Multi_Int_XV;
+						class operator implicit(const v1:MULTI_INT_4W_S):Multi_Int_XV;
+						class operator implicit(const v1:MULTI_INT_4W_U):Multi_Int_XV;
 					{$endif}
 						class operator implicit(const v1:ansistring):Multi_Int_XV;
 						class operator implicit(const v1:Multi_Int_XV):ansistring;
@@ -466,12 +484,12 @@ Multi_Int_XV	=	record
 						class operator -(const v1:Multi_Int_XV):Multi_Int_XV;
 						class operator >=(const v1,v2:Multi_Int_XV):Boolean;
 						class operator <=(const v1,v2:Multi_Int_XV):Boolean;
-						class operator **(const v1:Multi_Int_XV; const P:INT_2W_S):Multi_Int_XV;
+						class operator **(const v1:Multi_Int_XV; const P:MULTI_INT_2W_S):Multi_Int_XV;
 					end;
 
 var
 Multi_Int_ALLOW_UNLIMITED_INITIALISATIONS	:boolean = FALSE;
-Multi_Init_Initialisation_count				:INT_1W_S = 0;
+Multi_Init_Initialisation_count				:MULTI_INT_1W_S = 0;
 Multi_Int_RAISE_EXCEPTIONS_ENABLED			:boolean = TRUE;
 Multi_Int_OVERFLOW_ERROR					:boolean = FALSE;
 
@@ -481,10 +499,10 @@ Multi_Int_X4_MAXINT			:Multi_Int_X4;
 Multi_Int_XV_MAXINT			:Multi_Int_XV;
 Multi_32bit_or_64bit		:T_Multi_32bit_or_64bit;
 
-Multi_XV_size		:INT_1W_U = 0;
-Multi_XV_max		:INT_1W_U;
-Multi_XV_size_x2	:INT_1W_U;
-Multi_XV_max_x2		:INT_1W_U;
+Multi_XV_size		:MULTI_INT_1W_U = 0;
+Multi_XV_max		:MULTI_INT_1W_U;
+Multi_XV_size_x2	:MULTI_INT_1W_U;
+Multi_XV_max_x2		:MULTI_INT_1W_U;
 
 procedure Multi_Init_Initialisation(const P_Multi_XV_size:Multi_int32u = 32);
 
@@ -508,23 +526,23 @@ procedure SqRoot(const v1:Multi_Int_X4;var VR,VREM:Multi_Int_X4); overload;
 procedure SqRoot(const v1:Multi_Int_X3;var VR,VREM:Multi_Int_X3); overload;
 procedure SqRoot(const v1:Multi_Int_X2;var VR,VREM:Multi_Int_X2); overload;
 
-procedure ShiftUp(var v1:Multi_Int_X2; NBits:INT_1W_U); overload;
-procedure ShiftDown(var v1:Multi_Int_X2; NBits:INT_1W_U); overload;
-procedure ShiftUp(var v1:Multi_Int_X3; NBits:INT_1W_U); overload;
-procedure ShiftDown(var v1:Multi_Int_X3; NBits:INT_1W_U); overload;
-procedure ShiftUp(var v1:Multi_Int_X4; NBits:INT_1W_U); overload;
-procedure ShiftDown(var v1:Multi_Int_X4; NBits:INT_1W_U); overload;
-procedure ShiftUp(var v1:Multi_Int_XV; NBits:INT_1W_U); overload;
-procedure ShiftDown(var v1:Multi_Int_XV; NBits:INT_1W_U); overload;
+procedure ShiftUp(var v1:Multi_Int_X2; NBits:MULTI_INT_1W_U); overload;
+procedure ShiftDown(var v1:Multi_Int_X2; NBits:MULTI_INT_1W_U); overload;
+procedure ShiftUp(var v1:Multi_Int_X3; NBits:MULTI_INT_1W_U); overload;
+procedure ShiftDown(var v1:Multi_Int_X3; NBits:MULTI_INT_1W_U); overload;
+procedure ShiftUp(var v1:Multi_Int_X4; NBits:MULTI_INT_1W_U); overload;
+procedure ShiftDown(var v1:Multi_Int_X4; NBits:MULTI_INT_1W_U); overload;
+procedure ShiftUp(var v1:Multi_Int_XV; NBits:MULTI_INT_1W_U); overload;
+procedure ShiftDown(var v1:Multi_Int_XV; NBits:MULTI_INT_1W_U); overload;
 
-procedure RotateUp(Var v1:Multi_Int_X2; NBits:INT_1W_U); overload;
-procedure RotateDown(Var v1:Multi_Int_X2; NBits:INT_1W_U); overload;
-procedure RotateUp(Var v1:Multi_Int_X3; NBits:INT_1W_U); overload;
-procedure RotateDown(Var v1:Multi_Int_X3; NBits:INT_1W_U); overload;
-procedure RotateUp(Var v1:Multi_Int_X4; NBits:INT_1W_U); overload;
-procedure RotateDown(Var v1:Multi_Int_X4; NBits:INT_1W_U); overload;
-procedure RotateUp(Var v1:Multi_Int_XV; NBits:INT_1W_U); overload;
-procedure RotateDown(Var v1:Multi_Int_XV; NBits:INT_1W_U); overload;
+procedure RotateUp(Var v1:Multi_Int_X2; NBits:MULTI_INT_1W_U); overload;
+procedure RotateDown(Var v1:Multi_Int_X2; NBits:MULTI_INT_1W_U); overload;
+procedure RotateUp(Var v1:Multi_Int_X3; NBits:MULTI_INT_1W_U); overload;
+procedure RotateDown(Var v1:Multi_Int_X3; NBits:MULTI_INT_1W_U); overload;
+procedure RotateUp(Var v1:Multi_Int_X4; NBits:MULTI_INT_1W_U); overload;
+procedure RotateDown(Var v1:Multi_Int_X4; NBits:MULTI_INT_1W_U); overload;
+procedure RotateUp(Var v1:Multi_Int_XV; NBits:MULTI_INT_1W_U); overload;
+procedure RotateDown(Var v1:Multi_Int_XV; NBits:MULTI_INT_1W_U); overload;
 
 procedure FromHex(const v1:ansistring; var v2:Multi_Int_X2); overload;
 procedure FromHex(const v1:ansistring; var v2:Multi_Int_X3); overload;
@@ -580,26 +598,26 @@ XV_Last_Remainder	:Multi_Int_XV;
 
 {$ifdef 32bit}
 (******************************************)
-function nlz_bits(P_x:INT_1W_U):INT_1W_U;
+function nlz_bits(P_x:MULTI_INT_1W_U):MULTI_INT_1W_U;
 var
 n		:Multi_int32;
-x,t		:INT_1W_U;
+x,t		:MULTI_INT_1W_U;
 begin
 if (P_x = 0) then Result:= 16
 else
 	begin
 	x:= P_x;
 	n:= 0;
-	t:=(x and INT_1W_U(65280));
+	t:=(x and MULTI_INT_1W_U(65280));
 	if	(t = 0) then begin n:=(n + 8); x:=(x << 8); end;
 
-	t:=(x and INT_1W_U(61440));
+	t:=(x and MULTI_INT_1W_U(61440));
 	if	(t = 0) then begin n:=(n + 4); x:=(x << 4); end;
 
-	t:=(x and INT_1W_U(49152));
+	t:=(x and MULTI_INT_1W_U(49152));
 	if	(t = 0) then begin n:=(n + 2); x:=(x << 2); end;
 
-	t:=(x and INT_1W_U(32768));
+	t:=(x and MULTI_INT_1W_U(32768));
 	if	(t = 0) then begin n:=(n + 1); end;
 	Result:= n;
 	end;
@@ -610,7 +628,7 @@ end;
 
 {$ifdef 64bit}
 (******************************************)
-function nlz_bits(x:INT_1W_U):INT_1W_U;
+function nlz_bits(x:MULTI_INT_1W_U):MULTI_INT_1W_U;
 var	n	:Multi_int32;
 begin
 if (x = 0) then Result:= 32
@@ -713,7 +731,7 @@ end;
 
 
 (******************************************)
-function nlz_words_X2(m:Multi_Int_X2):INT_1W_U;
+function nlz_words_X2(m:Multi_Int_X2):MULTI_INT_1W_U;
 var
 i,n		:Multi_int32;
 fini	:boolean;
@@ -736,13 +754,13 @@ end;
 
 
 (******************************************)
-function nlz_MultiBits_X2(m:Multi_Int_X2):INT_1W_U;
-var	w	:INT_1W_U;
+function nlz_MultiBits_X2(m:Multi_Int_X2):MULTI_INT_1W_U;
+var	w	:MULTI_INT_1W_U;
 begin
 w:= nlz_words_X2(m);
 if (w <= Multi_X2_max)
-then Result:= nlz_bits(m.M_Value[Multi_X2_max-w]) + (w * INT_1W_SIZE)
-else Result:= (w * INT_1W_SIZE);
+then Result:= nlz_bits(m.M_Value[Multi_X2_max-w]) + (w * MULTI_INT_1W_SIZE)
+else Result:= (w * MULTI_INT_1W_SIZE);
 end;
 
 
@@ -798,7 +816,7 @@ end;
 
 (******************************************)
 function Multi_Int_X2_Odd(const v1:Multi_Int_X2):boolean;
-var	bit1_mask	:INT_1W_U;
+var	bit1_mask	:MULTI_INT_1W_U;
 begin
 
 {$ifdef Overflow_Checks}
@@ -834,7 +852,7 @@ end;
 
 (******************************************)
 function Multi_Int_X2_Even(const v1:Multi_Int_X2):boolean; overload;
-var	bit1_mask	:INT_1W_U;
+var	bit1_mask	:MULTI_INT_1W_U;
 begin
 
 {$ifdef Overflow_Checks}
@@ -869,14 +887,14 @@ end;
 
 
 (******************************************)
-procedure RotateUp_NBits_Multi_Int_X2(Var v1:Multi_Int_X2; NBits:INT_1W_U);
+procedure RotateUp_NBits_Multi_Int_X2(Var v1:Multi_Int_X2; NBits:MULTI_INT_1W_U);
 var	carry_bits_1,
 	carry_bits_2,
 	carry_bits_3,
 	carry_bits_4,
 	carry_bits_mask,
 	NBits_max,
-	NBits_carry	:INT_1W_U;
+	NBits_carry	:MULTI_INT_1W_U;
 begin
 if NBits > 0 then
 begin
@@ -893,7 +911,7 @@ carry_bits_mask:= $FFFF;
 carry_bits_mask:= $FFFFFFFF;
 {$endif}
 
-NBits_max:= INT_1W_SIZE;
+NBits_max:= MULTI_INT_1W_SIZE;
 
 NBits_carry:= (NBits_max - NBits);
 carry_bits_mask:= (carry_bits_mask << NBits_carry);
@@ -925,8 +943,8 @@ end;
 
 
 (******************************************)
-procedure RotateUp_NWords_Multi_Int_X2(Var v1:Multi_Int_X2; NWords:INT_1W_U);
-var	n,t	:INT_1W_U;
+procedure RotateUp_NWords_Multi_Int_X2(Var v1:Multi_Int_X2; NWords:MULTI_INT_1W_U);
+var	n,t	:MULTI_INT_1W_U;
 begin
 if		(NWords > 0)
 and		(NWords <= Multi_X2_max) then
@@ -946,18 +964,18 @@ end;
 
 
 {******************************************}
-procedure RotateUp_MultiBits_Multi_Int_X2(Var v1:Multi_Int_X2; NBits:INT_1W_U);
+procedure RotateUp_MultiBits_Multi_Int_X2(Var v1:Multi_Int_X2; NBits:MULTI_INT_1W_U);
 var
 NWords_count,
-NBits_count		:INT_1W_U;
+NBits_count		:MULTI_INT_1W_U;
 
 begin
 if (NBits > 0) then
 	begin
-	if (NBits >= INT_1W_SIZE) then
+	if (NBits >= MULTI_INT_1W_SIZE) then
 		begin
-		NWords_count:= (NBits DIV INT_1W_SIZE);
-		NBits_count:= (NBits MOD INT_1W_SIZE);
+		NWords_count:= (NBits DIV MULTI_INT_1W_SIZE);
+		NBits_count:= (NBits MOD MULTI_INT_1W_SIZE);
 		RotateUp_NWords_Multi_Int_X2(v1, NWords_count);
 		end
 	else NBits_count:= NBits;
@@ -967,28 +985,29 @@ end;
 
 
 (******************************************)
-procedure Multi_Int_X2.RotateUp_MultiBits(Var v1:Multi_Int_X2; NBits:INT_1W_U);
+{
+procedure Multi_Int_X2.RotateUp_MultiBits(Var v1:Multi_Int_X2; NBits:MULTI_INT_1W_U);
+begin
+RotateUp_MultiBits_Multi_Int_X2(v1, NBits);
+end;
+}
+
+(******************************************)
+procedure RotateUp(Var v1:Multi_Int_X2; NBits:MULTI_INT_1W_U); overload;
 begin
 RotateUp_MultiBits_Multi_Int_X2(v1, NBits);
 end;
 
 
 (******************************************)
-procedure RotateUp(Var v1:Multi_Int_X2; NBits:INT_1W_U); overload;
-begin
-RotateUp_MultiBits_Multi_Int_X2(v1, NBits);
-end;
-
-
-(******************************************)
-procedure RotateDown_NBits_Multi_Int_X2(Var v1:Multi_Int_X2; NBits:INT_1W_U);
+procedure RotateDown_NBits_Multi_Int_X2(Var v1:Multi_Int_X2; NBits:MULTI_INT_1W_U);
 var	carry_bits_1,
 	carry_bits_2,
 	carry_bits_3,
 	carry_bits_4,
 	carry_bits_mask,
 	NBits_max,
-	NBits_carry	:INT_1W_U;
+	NBits_carry	:MULTI_INT_1W_U;
 begin
 if NBits > 0 then
 begin
@@ -1005,7 +1024,7 @@ carry_bits_mask:= $FFFF;
 carry_bits_mask:= $FFFFFFFF;
 {$endif}
 
-NBits_max:= INT_1W_SIZE;
+NBits_max:= MULTI_INT_1W_SIZE;
 NBits_carry:= (NBits_max - NBits);
 carry_bits_mask:= (carry_bits_mask >> NBits_carry);
 
@@ -1036,8 +1055,8 @@ end;
 
 
 (******************************************)
-procedure RotateDown_NWords_Multi_Int_X2(Var v1:Multi_Int_X2; NWords:INT_1W_U);
-var	n,t	:INT_1W_U;
+procedure RotateDown_NWords_Multi_Int_X2(Var v1:Multi_Int_X2; NWords:MULTI_INT_1W_U);
+var	n,t	:MULTI_INT_1W_U;
 begin
 if		(NWords > 0)
 and		(NWords <= Multi_X2_max) then
@@ -1057,17 +1076,17 @@ end;
 
 
 {******************************************}
-procedure RotateDown_MultiBits_Multi_Int_X2(Var v1:Multi_Int_X2; NBits:INT_1W_U);
+procedure RotateDown_MultiBits_Multi_Int_X2(Var v1:Multi_Int_X2; NBits:MULTI_INT_1W_U);
 var
 NWords_count,
-NBits_count		:INT_1W_U;
+NBits_count		:MULTI_INT_1W_U;
 
 begin
 
-if (NBits >= INT_1W_SIZE) then
+if (NBits >= MULTI_INT_1W_SIZE) then
 	begin
-	NWords_count:= (NBits DIV INT_1W_SIZE);
-	NBits_count:= (NBits MOD INT_1W_SIZE);
+	NWords_count:= (NBits DIV MULTI_INT_1W_SIZE);
+	NBits_count:= (NBits MOD MULTI_INT_1W_SIZE);
 	RotateDown_NWords_Multi_Int_X2(v1, NWords_count);
 	end
 else NBits_count:= NBits;
@@ -1077,26 +1096,28 @@ end;
 
 
 (******************************************)
-procedure Multi_Int_X2.RotateDown_MultiBits(Var v1:Multi_Int_X2; NBits:INT_1W_U);
+{
+procedure Multi_Int_X2.RotateDown_MultiBits(Var v1:Multi_Int_X2; NBits:MULTI_INT_1W_U);
+begin
+RotateDown_MultiBits_Multi_Int_X2(v1, NBits);
+end;
+}
+
+
+(******************************************)
+procedure RotateDown(Var v1:Multi_Int_X2; NBits:MULTI_INT_1W_U); overload;
 begin
 RotateDown_MultiBits_Multi_Int_X2(v1, NBits);
 end;
 
 
 (******************************************)
-procedure RotateDown(Var v1:Multi_Int_X2; NBits:INT_1W_U); overload;
-begin
-RotateDown_MultiBits_Multi_Int_X2(v1, NBits);
-end;
-
-
-(******************************************)
-procedure ShiftUp_NBits_Multi_Int_X2(Var v1:Multi_Int_X2; NBits:INT_1W_U);
+procedure ShiftUp_NBits_Multi_Int_X2(Var v1:Multi_Int_X2; NBits:MULTI_INT_1W_U);
 var	carry_bits_1,
 	carry_bits_2,
 	carry_bits_mask,
 	NBits_max,
-	NBits_carry	:INT_1W_U;
+	NBits_carry	:MULTI_INT_1W_U;
 begin
 if NBits > 0 then
 begin
@@ -1113,7 +1134,7 @@ carry_bits_mask:= $FFFF;
 carry_bits_mask:= $FFFFFFFF;
 {$endif}
 
-NBits_max:= INT_1W_SIZE;
+NBits_max:= MULTI_INT_1W_SIZE;
 
 NBits_carry:= (NBits_max - NBits);
 carry_bits_mask:= (carry_bits_mask << NBits_carry);
@@ -1144,8 +1165,8 @@ end;
 
 
 (******************************************)
-procedure ShiftUp_NWords_Multi_Int_X2(Var v1:Multi_Int_X2; NWords:INT_1W_U);
-var	n	:INT_1W_U;
+procedure ShiftUp_NWords_Multi_Int_X2(Var v1:Multi_Int_X2; NWords:MULTI_INT_1W_U);
+var	n	:MULTI_INT_1W_U;
 begin
 if		(NWords > 0)
 and		(NWords <= Multi_X2_max) then
@@ -1164,18 +1185,18 @@ end;
 
 
 {******************************************}
-procedure ShiftUp_MultiBits_Multi_Int_X2(Var v1:Multi_Int_X2; NBits:INT_1W_U);
+procedure ShiftUp_MultiBits_Multi_Int_X2(Var v1:Multi_Int_X2; NBits:MULTI_INT_1W_U);
 var
 NWords_count,
-NBits_count		:INT_1W_U;
+NBits_count		:MULTI_INT_1W_U;
 
 begin
 if (NBits > 0) then
 	begin
-	if (NBits >= INT_1W_SIZE) then
+	if (NBits >= MULTI_INT_1W_SIZE) then
 		begin
-		NWords_count:= (NBits DIV INT_1W_SIZE);
-		NBits_count:= (NBits MOD INT_1W_SIZE);
+		NWords_count:= (NBits DIV MULTI_INT_1W_SIZE);
+		NBits_count:= (NBits MOD MULTI_INT_1W_SIZE);
 		ShiftUp_NWords_Multi_Int_X2(v1, NWords_count);
 		end
 	else NBits_count:= NBits;
@@ -1185,26 +1206,28 @@ end;
 
 
 {******************************************}
-procedure Multi_Int_X2.ShiftUp_MultiBits(Var v1:Multi_Int_X2; NBits:INT_1W_U);
+{
+procedure Multi_Int_X2.ShiftUp_MultiBits(Var v1:Multi_Int_X2; NBits:MULTI_INT_1W_U);
 begin
 ShiftUp_MultiBits_Multi_Int_X2(v1, NBits);
 end;
+}
 
 
 {******************************************}
-procedure ShiftUp(var v1:Multi_Int_X2; NBits:INT_1W_U); overload;
+procedure ShiftUp(var v1:Multi_Int_X2; NBits:MULTI_INT_1W_U); overload;
 begin
 ShiftUp_MultiBits_Multi_Int_X2(v1, NBits);
 end;
 
 
 (******************************************)
-procedure ShiftDown_NBits_Multi_Int_X2(Var v1:Multi_Int_X2; NBits:INT_1W_U);
+procedure ShiftDown_NBits_Multi_Int_X2(Var v1:Multi_Int_X2; NBits:MULTI_INT_1W_U);
 var	carry_bits_1,
 	carry_bits_2,
 	carry_bits_mask,
 	NBits_max,
-	NBits_carry	:INT_1W_U;
+	NBits_carry	:MULTI_INT_1W_U;
 begin
 if NBits > 0 then
 begin
@@ -1221,7 +1244,7 @@ carry_bits_mask:= $FFFF;
 carry_bits_mask:= $FFFFFFFF;
 {$endif}
 
-NBits_max:= INT_1W_SIZE;
+NBits_max:= MULTI_INT_1W_SIZE;
 NBits_carry:= (NBits_max - NBits);
 carry_bits_mask:= (carry_bits_mask >> NBits_carry);
 
@@ -1251,8 +1274,8 @@ end;
 
 
 (******************************************)
-procedure ShiftDown_NWords_Multi_Int_X2(Var v1:Multi_Int_X2; NWords:INT_1W_U);
-var	n	:INT_1W_U;
+procedure ShiftDown_NWords_Multi_Int_X2(Var v1:Multi_Int_X2; NWords:MULTI_INT_1W_U);
+var	n	:MULTI_INT_1W_U;
 begin
 if		(NWords > 0)
 and		(NWords <= Multi_X2_max) then
@@ -1271,17 +1294,17 @@ end;
 
 
 {******************************************}
-procedure ShiftDown_MultiBits_Multi_Int_X2(Var v1:Multi_Int_X2; NBits:INT_1W_U);
+procedure ShiftDown_MultiBits_Multi_Int_X2(Var v1:Multi_Int_X2; NBits:MULTI_INT_1W_U);
 var
 NWords_count,
-NBits_count		:INT_1W_U;
+NBits_count		:MULTI_INT_1W_U;
 
 begin
 
-if (NBits >= INT_1W_SIZE) then
+if (NBits >= MULTI_INT_1W_SIZE) then
 	begin
-	NWords_count:= (NBits DIV INT_1W_SIZE);
-	NBits_count:= (NBits MOD INT_1W_SIZE);
+	NWords_count:= (NBits DIV MULTI_INT_1W_SIZE);
+	NBits_count:= (NBits MOD MULTI_INT_1W_SIZE);
 	ShiftDown_NWords_Multi_Int_X2(v1, NWords_count);
 	end
 else NBits_count:= NBits;
@@ -1291,14 +1314,16 @@ end;
 
 
 {******************************************}
-procedure Multi_Int_X2.ShiftDown_MultiBits(Var v1:Multi_Int_X2; NBits:INT_1W_U);
+{
+procedure Multi_Int_X2.ShiftDown_MultiBits(Var v1:Multi_Int_X2; NBits:MULTI_INT_1W_U);
 begin
 ShiftDown_MultiBits_Multi_Int_X2(v1, NBits);
 end;
+}
 
 
 {******************************************}
-procedure ShiftDown(Var v1:Multi_Int_X2; NBits:INT_1W_U); overload;
+procedure ShiftDown(Var v1:Multi_Int_X2; NBits:MULTI_INT_1W_U); overload;
 begin
 ShiftDown_MultiBits_Multi_Int_X2(v1, NBits);
 end;
@@ -1457,8 +1482,8 @@ end;
 procedure ansistring_to_Multi_Int_X2(const v1:ansistring; var mi:Multi_Int_X2);
 label 999;
 var
-	i,b,c,e		:INT_2W_U;
-	M_Val		:array[0..Multi_X2_max] of INT_2W_U;
+	i,b,c,e		:MULTI_INT_2W_U;
+	M_Val		:array[0..Multi_X2_max] of MULTI_INT_2W_U;
 	Signeg,
 	Zeroneg		:boolean;
 begin
@@ -1478,7 +1503,7 @@ M_Val[3]:= 0;
 if	(length(v1) > 0) then
 	begin
 	b:=low(ansistring);
-	e:=b + INT_2W_U(length(v1)) - 1;
+	e:=b + MULTI_INT_2W_U(length(v1)) - 1;
 	if	(v1[b] = '-') then
 		begin
 		Signeg:= TRUE;
@@ -1506,25 +1531,25 @@ if	(length(v1) > 0) then
 		M_Val[2]:=(M_Val[2] * 10);
 		M_Val[3]:=(M_Val[3] * 10);
 
-		if	M_Val[0] > INT_1W_U_MAXINT then
+		if	M_Val[0] > MULTI_INT_1W_U_MAXINT then
 			begin
-			M_Val[1]:=M_Val[1] + (M_Val[0] DIV INT_1W_U_MAXINT_1);
-			M_Val[0]:=(M_Val[0] MOD INT_1W_U_MAXINT_1);
+			M_Val[1]:=M_Val[1] + (M_Val[0] DIV MULTI_INT_1W_U_MAXINT_1);
+			M_Val[0]:=(M_Val[0] MOD MULTI_INT_1W_U_MAXINT_1);
 			end;
 
-		if	M_Val[1] > INT_1W_U_MAXINT then
+		if	M_Val[1] > MULTI_INT_1W_U_MAXINT then
 			begin
-			M_Val[2]:=M_Val[2] + (M_Val[1] DIV INT_1W_U_MAXINT_1);
-			M_Val[1]:=(M_Val[1] MOD INT_1W_U_MAXINT_1);
+			M_Val[2]:=M_Val[2] + (M_Val[1] DIV MULTI_INT_1W_U_MAXINT_1);
+			M_Val[1]:=(M_Val[1] MOD MULTI_INT_1W_U_MAXINT_1);
 			end;
 
-		if	M_Val[2] > INT_1W_U_MAXINT then
+		if	M_Val[2] > MULTI_INT_1W_U_MAXINT then
 			begin
-			M_Val[3]:=M_Val[3] + (M_Val[2] DIV INT_1W_U_MAXINT_1);
-			M_Val[2]:=(M_Val[2] MOD INT_1W_U_MAXINT_1);
+			M_Val[3]:=M_Val[3] + (M_Val[2] DIV MULTI_INT_1W_U_MAXINT_1);
+			M_Val[2]:=(M_Val[2] MOD MULTI_INT_1W_U_MAXINT_1);
 			end;
 
-		if	M_Val[3] > INT_1W_U_MAXINT then
+		if	M_Val[3] > MULTI_INT_1W_U_MAXINT then
 			begin
 			Multi_Int_OVERFLOW_ERROR:= TRUE;
 			mi.Defined_flag:=FALSE;
@@ -1561,7 +1586,7 @@ end;
 
 (******************************************)
 function To_Multi_Int_X2(const v1:Multi_Int_X3):Multi_Int_X2;
-var n :INT_1W_U;
+var n :MULTI_INT_1W_U;
 begin
 Result.Overflow_flag:= v1.Overflow_flag;
 Result.Defined_flag:= v1.Defined_flag;
@@ -1604,7 +1629,7 @@ end;
 
 (******************************************)
 function To_Multi_Int_X2(const v1:Multi_Int_X4):Multi_Int_X2;
-var n :INT_1W_U;
+var n :MULTI_INT_1W_U;
 begin
 Result.Overflow_flag:= v1.Overflow_flag;
 Result.Defined_flag:= v1.Defined_flag;
@@ -1646,7 +1671,7 @@ end;
 
 (******************************************)
 function To_Multi_Int_X2(const v1:Multi_Int_XV):Multi_Int_X2;
-var n :INT_1W_U;
+var n :MULTI_INT_1W_U;
 begin
 Result.Overflow_flag:= v1.Overflow_flag;
 Result.Defined_flag:= v1.Defined_flag;
@@ -1704,22 +1729,22 @@ end;
 
 {$ifdef 32bit}
 (******************************************)
-procedure INT_4W_S_to_Multi_Int_X2(const v1:INT_4W_S; var mi:Multi_Int_X2);
+procedure MULTI_INT_4W_S_to_Multi_Int_X2(const v1:MULTI_INT_4W_S; var mi:Multi_Int_X2);
 var
-v	:INT_4W_U;
-n	:INT_2W_U;
+v	:MULTI_INT_4W_U;
+n	:MULTI_INT_2W_U;
 begin
 mi.Overflow_flag:=FALSE;
 mi.Defined_flag:=TRUE;
 v:= Abs(v1);
 
 v:= v1;
-mi.M_Value[0]:= INT_1W_U(v MOD INT_1W_U_MAXINT_1);
-v:= (v div INT_1W_U_MAXINT_1);
-mi.M_Value[1]:= INT_1W_U(v MOD INT_1W_U_MAXINT_1);
-v:= (v div INT_1W_U_MAXINT_1);
-mi.M_Value[2]:= INT_1W_U(v MOD INT_1W_U_MAXINT_1);
-v:= (v div INT_1W_U_MAXINT_1);
+mi.M_Value[0]:= MULTI_INT_1W_U(v MOD MULTI_INT_1W_U_MAXINT_1);
+v:= (v div MULTI_INT_1W_U_MAXINT_1);
+mi.M_Value[1]:= MULTI_INT_1W_U(v MOD MULTI_INT_1W_U_MAXINT_1);
+v:= (v div MULTI_INT_1W_U_MAXINT_1);
+mi.M_Value[2]:= MULTI_INT_1W_U(v MOD MULTI_INT_1W_U_MAXINT_1);
+v:= (v div MULTI_INT_1W_U_MAXINT_1);
 mi.M_Value[3]:= v;
 
 if (v1 < 0) then mi.Negative_flag:= Multi_UBool_TRUE
@@ -1729,44 +1754,44 @@ end;
 
 
 (******************************************)
-class operator Multi_Int_X2.implicit(const v1:INT_4W_S):Multi_Int_X2;
+class operator Multi_Int_X2.implicit(const v1:MULTI_INT_4W_S):Multi_Int_X2;
 begin
-INT_4W_S_to_Multi_Int_X2(v1,Result);
+MULTI_INT_4W_S_to_Multi_Int_X2(v1,Result);
 end;
 
 
 (******************************************)
-procedure INT_4W_U_to_Multi_Int_X2(const v1:INT_4W_U; var mi:Multi_Int_X2);
+procedure MULTI_INT_4W_U_to_Multi_Int_X2(const v1:MULTI_INT_4W_U; var mi:Multi_Int_X2);
 var
-v	:INT_4W_U;
-n	:INT_2W_U;
+v	:MULTI_INT_4W_U;
+n	:MULTI_INT_2W_U;
 begin
 mi.Overflow_flag:=FALSE;
 mi.Defined_flag:=TRUE;
 mi.Negative_flag:= Multi_UBool_FALSE;
 
 v:= v1;
-mi.M_Value[0]:= INT_1W_U(v MOD INT_1W_U_MAXINT_1);
-v:= (v div INT_1W_U_MAXINT_1);
-mi.M_Value[1]:= INT_1W_U(v MOD INT_1W_U_MAXINT_1);
-v:= (v div INT_1W_U_MAXINT_1);
-mi.M_Value[2]:= INT_1W_U(v MOD INT_1W_U_MAXINT_1);
-v:= (v div INT_1W_U_MAXINT_1);
+mi.M_Value[0]:= MULTI_INT_1W_U(v MOD MULTI_INT_1W_U_MAXINT_1);
+v:= (v div MULTI_INT_1W_U_MAXINT_1);
+mi.M_Value[1]:= MULTI_INT_1W_U(v MOD MULTI_INT_1W_U_MAXINT_1);
+v:= (v div MULTI_INT_1W_U_MAXINT_1);
+mi.M_Value[2]:= MULTI_INT_1W_U(v MOD MULTI_INT_1W_U_MAXINT_1);
+v:= (v div MULTI_INT_1W_U_MAXINT_1);
 mi.M_Value[3]:= v;
 
 end;
 
 
 (******************************************)
-class operator Multi_Int_X2.implicit(const v1:INT_4W_U):Multi_Int_X2;
+class operator Multi_Int_X2.implicit(const v1:MULTI_INT_4W_U):Multi_Int_X2;
 begin
-INT_4W_U_to_Multi_Int_X2(v1,Result);
+MULTI_INT_4W_U_to_Multi_Int_X2(v1,Result);
 end;
 {$endif}
 
 
 (******************************************)
-procedure INT_2W_S_to_Multi_Int_X2(const v1:INT_2W_S; var mi:Multi_Int_X2);
+procedure MULTI_INT_2W_S_to_Multi_Int_X2(const v1:MULTI_INT_2W_S; var mi:Multi_Int_X2);
 begin
 mi.Overflow_flag:=FALSE;
 mi.Defined_flag:=TRUE;
@@ -1776,44 +1801,44 @@ mi.M_Value[3]:= 0;
 if (v1 < 0) then
 	begin
 	mi.Negative_flag:= Multi_UBool_TRUE;
-	mi.M_Value[0]:= (ABS(v1) MOD INT_1W_U_MAXINT_1);
-	mi.M_Value[1]:= (ABS(v1) DIV INT_1W_U_MAXINT_1);
+	mi.M_Value[0]:= (ABS(v1) MOD MULTI_INT_1W_U_MAXINT_1);
+	mi.M_Value[1]:= (ABS(v1) DIV MULTI_INT_1W_U_MAXINT_1);
 	end
 else
 	begin
 	mi.Negative_flag:= Multi_UBool_FALSE;
-	mi.M_Value[0]:= (v1 MOD INT_1W_U_MAXINT_1);
-	mi.M_Value[1]:= (v1 DIV INT_1W_U_MAXINT_1);
+	mi.M_Value[0]:= (v1 MOD MULTI_INT_1W_U_MAXINT_1);
+	mi.M_Value[1]:= (v1 DIV MULTI_INT_1W_U_MAXINT_1);
 	end;
 
 end;
 
 
 (******************************************)
-class operator Multi_Int_X2.implicit(const v1:INT_2W_S):Multi_Int_X2;
+class operator Multi_Int_X2.implicit(const v1:MULTI_INT_2W_S):Multi_Int_X2;
 begin
-INT_2W_S_to_Multi_Int_X2(v1,Result);
+MULTI_INT_2W_S_to_Multi_Int_X2(v1,Result);
 end;
 
 
 (******************************************)
-procedure INT_2W_U_to_Multi_Int_X2(const v1:INT_2W_U; var mi:Multi_Int_X2);
+procedure MULTI_INT_2W_U_to_Multi_Int_X2(const v1:MULTI_INT_2W_U; var mi:Multi_Int_X2);
 begin
 mi.Overflow_flag:=FALSE;
 mi.Defined_flag:=TRUE;
 mi.Negative_flag:= Multi_UBool_FALSE;
 
-mi.M_Value[0]:= (v1 MOD INT_1W_U_MAXINT_1);
-mi.M_Value[1]:= (v1 DIV INT_1W_U_MAXINT_1);
+mi.M_Value[0]:= (v1 MOD MULTI_INT_1W_U_MAXINT_1);
+mi.M_Value[1]:= (v1 DIV MULTI_INT_1W_U_MAXINT_1);
 mi.M_Value[2]:= 0;
 mi.M_Value[3]:= 0;
 end;
 
 
 (******************************************)
-class operator Multi_Int_X2.implicit(const v1:INT_2W_U):Multi_Int_X2;
+class operator Multi_Int_X2.implicit(const v1:MULTI_INT_2W_U):Multi_Int_X2;
 begin
-INT_2W_U_to_Multi_Int_X2(v1,Result);
+MULTI_INT_2W_U_to_Multi_Int_X2(v1,Result);
 end;
 
 
@@ -1829,7 +1854,7 @@ operation_str:= 'Multi_Int_X2.implicit';
 
 Multi_Int_OVERFLOW_ERROR:= FALSE;
 
-FloatToDecimal(R_FLOATREC, v1, SINGLE_TYPE_PRECISION_DIGITS, 0);
+FloatToDecimal(R_FLOATREC, v1, MULTI_SINGLE_TYPE_PRECISION_DIGITS, 0);
 ansistring_to_Multi_Int_X2(AddCharR('0',R_FLOATREC.digits,R_FLOATREC.Exponent), R);
 
 if (R.Overflow) then
@@ -1861,7 +1886,7 @@ operation_str:= 'Multi_Int_X2.implicit';
 
 Multi_Int_OVERFLOW_ERROR:= FALSE;
 
-FloatToDecimal(R_FLOATREC, v1, REAL_TYPE_PRECISION_DIGITS, 0);
+FloatToDecimal(R_FLOATREC, v1, MULTI_REAL_TYPE_PRECISION_DIGITS, 0);
 ansistring_to_Multi_Int_X2(AddCharR('0',R_FLOATREC.digits,R_FLOATREC.Exponent), R);
 
 if (R.Overflow) then
@@ -1893,7 +1918,7 @@ operation_str:= 'Multi_Int_X2.implicit';
 
 Multi_Int_OVERFLOW_ERROR:= FALSE;
 
-FloatToDecimal(R_FLOATREC, v1, DOUBLE_TYPE_PRECISION_DIGITS, 0);
+FloatToDecimal(R_FLOATREC, v1, MULTI_DOUBLE_TYPE_PRECISION_DIGITS, 0);
 ansistring_to_Multi_Int_X2(AddCharR('0',R_FLOATREC.digits,R_FLOATREC.Exponent), R);
 
 if (R.Overflow) then
@@ -1917,7 +1942,7 @@ end;
 class operator Multi_Int_X2.implicit(const v1:Multi_Int_X2):Single;
 var
 R,V,M		:Single;
-i			:INT_1W_U;
+i			:MULTI_INT_1W_U;
 finished	:boolean;
 begin
 if	(Not v1.Defined_flag)
@@ -1933,7 +1958,7 @@ then
 
 Multi_Int_OVERFLOW_ERROR:= FALSE;
 finished:= FALSE;
-M:= INT_1W_U_MAXINT_1;
+M:= MULTI_INT_1W_U_MAXINT_1;
 
 R:=	v1.M_Value[0];
 i:= 1;
@@ -1959,7 +1984,7 @@ do
 					end;
 				end;
 			end;
-			V:= INT_1W_U_MAXINT_1;
+			V:= MULTI_INT_1W_U_MAXINT_1;
 			try M:= (M * V);
 			except finished:= TRUE;
 			end;
@@ -1987,7 +2012,7 @@ end;
 class operator Multi_Int_X2.implicit(const v1:Multi_Int_X2):Real;
 var
 	R,V,M	:Real;
-	i		:INT_1W_U;
+	i		:MULTI_INT_1W_U;
 finished	:boolean;
 begin
 if	(Not v1.Defined_flag)
@@ -2003,7 +2028,7 @@ then
 
 Multi_Int_OVERFLOW_ERROR:= FALSE;
 finished:= FALSE;
-M:= INT_1W_U_MAXINT_1;
+M:= MULTI_INT_1W_U_MAXINT_1;
 
 R:=	v1.M_Value[0];
 i:= 1;
@@ -2029,7 +2054,7 @@ do
 					end;
 				end;
 			end;
-			V:= INT_1W_U_MAXINT_1;
+			V:= MULTI_INT_1W_U_MAXINT_1;
 			try M:= (M * V);
 			except finished:= TRUE;
 			end;
@@ -2057,7 +2082,7 @@ end;
 class operator Multi_Int_X2.implicit(const v1:Multi_Int_X2):Double;
 var
 	R,V,M	:Double;
-	i		:INT_1W_U;
+	i		:MULTI_INT_1W_U;
 finished	:boolean;
 begin
 if	(Not v1.Defined_flag)
@@ -2073,7 +2098,7 @@ then
 
 Multi_Int_OVERFLOW_ERROR:= FALSE;
 finished:= FALSE;
-M:= INT_1W_U_MAXINT_1;
+M:= MULTI_INT_1W_U_MAXINT_1;
 
 R:=	v1.M_Value[0];
 i:= 1;
@@ -2099,7 +2124,7 @@ do
 					end;
 				end;
 			end;
-			V:= INT_1W_U_MAXINT_1;
+			V:= MULTI_INT_1W_U_MAXINT_1;
 			try M:= (M * V);
 			except finished:= TRUE;
 			end;
@@ -2124,8 +2149,8 @@ end;
 
 
 {******************************************}
-class operator Multi_Int_X2.implicit(const v1:Multi_Int_X2):INT_2W_S;
-var	R	:INT_2W_U;
+class operator Multi_Int_X2.implicit(const v1:Multi_Int_X2):MULTI_INT_2W_S;
+var	R	:MULTI_INT_2W_U;
 begin
 Multi_Int_OVERFLOW_ERROR:= FALSE;
 if	(Not v1.Defined_flag)
@@ -2139,9 +2164,9 @@ then
 	exit;
 	end;
 
-R:= (INT_2W_U(v1.M_Value[0]) + (INT_2W_U(v1.M_Value[1]) * INT_1W_U_MAXINT_1));
+R:= (MULTI_INT_2W_U(v1.M_Value[0]) + (MULTI_INT_2W_U(v1.M_Value[1]) * MULTI_INT_1W_U_MAXINT_1));
 
-if	(R > INT_2W_S_MAXINT)
+if	(R > MULTI_INT_2W_S_MAXINT)
 or	(v1.M_Value[2] <> 0)
 or	(v1.M_Value[3] <> 0)
 then
@@ -2156,14 +2181,14 @@ then
 	end;
 
 if v1.Negative_flag
-then Result:= INT_2W_S(-R)
-else Result:= INT_2W_S(R);
+then Result:= MULTI_INT_2W_S(-R)
+else Result:= MULTI_INT_2W_S(R);
 end;
 
 
 {******************************************}
-class operator Multi_Int_X2.implicit(const v1:Multi_Int_X2):INT_2W_U;
-var	R	:INT_2W_U;
+class operator Multi_Int_X2.implicit(const v1:Multi_Int_X2):MULTI_INT_2W_U;
+var	R	:MULTI_INT_2W_U;
 begin
 Multi_Int_OVERFLOW_ERROR:= FALSE;
 if	(Not v1.Defined_flag)
@@ -2178,8 +2203,8 @@ then
 	exit;
 	end;
 
-R:= (INT_2W_U(v1.M_Value[1]) << INT_1W_SIZE);
-R:= (R OR INT_2W_U(v1.M_Value[0]));
+R:= (MULTI_INT_2W_U(v1.M_Value[1]) << MULTI_INT_1W_SIZE);
+R:= (R OR MULTI_INT_2W_U(v1.M_Value[0]));
 
 if	(v1.M_Value[2] <> 0)
 or	(v1.M_Value[3] <> 0)
@@ -2198,8 +2223,8 @@ end;
 
 
 {******************************************}
-class operator Multi_Int_X2.implicit(const v1:Multi_Int_X2):INT_1W_S;
-var	R	:INT_2W_U;
+class operator Multi_Int_X2.implicit(const v1:Multi_Int_X2):MULTI_INT_1W_S;
+var	R	:MULTI_INT_2W_U;
 begin
 Multi_Int_OVERFLOW_ERROR:= FALSE;
 if	(Not v1.Defined_flag)
@@ -2213,9 +2238,9 @@ then
 	exit;
 	end;
 
-R:= (INT_2W_U(v1.M_Value[0]) + (INT_2W_U(v1.M_Value[1]) * INT_1W_U_MAXINT_1));
+R:= (MULTI_INT_2W_U(v1.M_Value[0]) + (MULTI_INT_2W_U(v1.M_Value[1]) * MULTI_INT_1W_U_MAXINT_1));
 
-if	(R > INT_1W_S_MAXINT)
+if	(R > MULTI_INT_1W_S_MAXINT)
 or	(v1.M_Value[2] <> 0)
 or	(v1.M_Value[3] <> 0)
 then
@@ -2230,14 +2255,14 @@ then
 	end;
 
 if v1.Negative_flag
-then Result:= INT_1W_S(-R)
-else Result:= INT_1W_S(R);
+then Result:= MULTI_INT_1W_S(-R)
+else Result:= MULTI_INT_1W_S(R);
 end;
 
 
 {******************************************}
-class operator Multi_Int_X2.implicit(const v1:Multi_Int_X2):INT_1W_U;
-var	R	:INT_2W_U;
+class operator Multi_Int_X2.implicit(const v1:Multi_Int_X2):MULTI_INT_1W_U;
+var	R	:MULTI_INT_2W_U;
 begin
 Multi_Int_OVERFLOW_ERROR:= FALSE;
 if	(Not v1.Defined_flag)
@@ -2252,8 +2277,8 @@ then
 	exit;
 	end;
 
-R:= (v1.M_Value[0] + (v1.M_Value[1] * INT_1W_U_MAXINT_1));
-if	(R > INT_1W_U_MAXINT)
+R:= (v1.M_Value[0] + (v1.M_Value[1] * MULTI_INT_1W_U_MAXINT_1));
+if	(R > MULTI_INT_1W_U_MAXINT)
 or	(v1.M_Value[2] <> 0)
 or	(v1.M_Value[3] <> 0)
 then
@@ -2267,7 +2292,7 @@ then
 	exit;
 	end;
 
-Result:= INT_1W_U(R);
+Result:= MULTI_INT_1W_U(R);
 end;
 
 
@@ -2348,7 +2373,7 @@ procedure Multi_Int_X2_to_hex(const v1:Multi_Int_X2; var v2:ansistring; LZ:T_Mul
 var
 	s		:ansistring = '';
 	n		:Multi_int32u;
-	M_Val	:array[0..Multi_X4_max] of INT_2W_U;
+	M_Val	:array[0..Multi_X4_max] of MULTI_INT_2W_U;
 begin
 if	(Not v1.Defined_flag)
 then
@@ -2372,7 +2397,7 @@ then
 	exit;
 	end;
 
-n:= (INT_1W_SIZE div 4);
+n:= (MULTI_INT_1W_SIZE div 4);
 s:= '';
 
 s:= s
@@ -2400,8 +2425,8 @@ procedure hex_to_Multi_Int_X2(const v1:ansistring; var mi:Multi_Int_X2);
 label 999;
 var
 	n,i,b,c,e
-				:INT_2W_U;
-	M_Val		:array[0..Multi_X2_max] of INT_2W_U;
+				:MULTI_INT_2W_U;
+	M_Val		:array[0..Multi_X2_max] of MULTI_INT_2W_U;
 	Signeg,
 	Zeroneg,
 	M_Val_All_Zero		:boolean;
@@ -2421,7 +2446,7 @@ do begin M_Val[n]:= 0; inc(n); end;
 if	(length(v1) > 0) then
 	begin
 	b:=low(ansistring);
-	e:=b + INT_2W_U(length(v1)) - 1;
+	e:=b + MULTI_INT_2W_U(length(v1)) - 1;
 	if	(v1[b] = '-') then
 		begin
 		Signeg:= TRUE;
@@ -2457,16 +2482,16 @@ if	(length(v1) > 0) then
 		n:=0;
 		while (n < Multi_X2_max) do
 			begin
-			if	M_Val[n] > INT_1W_U_MAXINT then
+			if	M_Val[n] > MULTI_INT_1W_U_MAXINT then
 				begin
-				M_Val[n+1]:=M_Val[n+1] + (M_Val[n] DIV INT_1W_U_MAXINT_1);
-				M_Val[n]:=(M_Val[n] MOD INT_1W_U_MAXINT_1);
+				M_Val[n+1]:=M_Val[n+1] + (M_Val[n] DIV MULTI_INT_1W_U_MAXINT_1);
+				M_Val[n]:=(M_Val[n] MOD MULTI_INT_1W_U_MAXINT_1);
 				end;
 
 			inc(n);
 			end;
 
-		if	M_Val[n] > INT_1W_U_MAXINT then
+		if	M_Val[n] > MULTI_INT_1W_U_MAXINT then
 			begin
 			Multi_Int_OVERFLOW_ERROR:= TRUE;
 			mi.Defined_flag:=FALSE;
@@ -2510,7 +2535,7 @@ end;
 procedure Multi_Int_X2_to_ansistring(const v1:Multi_Int_X2; var v2:ansistring);
 var
 	s		:ansistring = '';
-	M_Val	:array[0..Multi_X2_max] of INT_2W_U;
+	M_Val	:array[0..Multi_X2_max] of MULTI_INT_2W_U;
 begin
 if	(Not v1.Defined_flag)
 then
@@ -2541,13 +2566,13 @@ M_Val[3]:= v1.M_Value[3];
 
 repeat
 
-	M_Val[2]:= M_Val[2] + (INT_1W_U_MAXINT_1 * (M_Val[3] MOD 10));
+	M_Val[2]:= M_Val[2] + (MULTI_INT_1W_U_MAXINT_1 * (M_Val[3] MOD 10));
 	M_Val[3]:= (M_Val[3] DIV 10);
 
-	M_Val[1]:= M_Val[1] + (INT_1W_U_MAXINT_1 * (M_Val[2] MOD 10));
+	M_Val[1]:= M_Val[1] + (MULTI_INT_1W_U_MAXINT_1 * (M_Val[2] MOD 10));
 	M_Val[2]:= (M_Val[2] DIV 10);
 
-	M_Val[0]:= M_Val[0] + (INT_1W_U_MAXINT_1 * (M_Val[1] MOD 10));
+	M_Val[0]:= M_Val[0] + (MULTI_INT_1W_U_MAXINT_1 * (M_Val[1] MOD 10));
 	M_Val[1]:= (M_Val[1] DIV 10);
 
 	s:= inttostr(M_Val[0] MOD 10) + s;
@@ -2612,8 +2637,8 @@ end;
 function add_Multi_Int_X2(const v1,v2:Multi_Int_X2):Multi_Int_X2;
 var
 	tv1,
-	tv2		:INT_2W_U;
-	M_Val	:array[0..Multi_X2_max] of INT_2W_U;
+	tv2		:MULTI_INT_2W_U;
+	M_Val	:array[0..Multi_X2_max] of MULTI_INT_2W_U;
 begin
 Result.Overflow_flag:=FALSE;
 Result.Defined_flag:=TRUE;
@@ -2622,39 +2647,39 @@ Result.Negative_flag:= Multi_UBool_UNDEF;
 tv1:= v1.M_Value[0];
 tv2:= v2.M_Value[0];
 M_Val[0]:= (tv1 + tv2);
-if	M_Val[0] > INT_1W_U_MAXINT then
+if	M_Val[0] > MULTI_INT_1W_U_MAXINT then
 	begin
-	M_Val[1]:= (M_Val[0] DIV INT_1W_U_MAXINT_1);
-	M_Val[0]:= (M_Val[0] MOD INT_1W_U_MAXINT_1);
+	M_Val[1]:= (M_Val[0] DIV MULTI_INT_1W_U_MAXINT_1);
+	M_Val[0]:= (M_Val[0] MOD MULTI_INT_1W_U_MAXINT_1);
 	end
 else M_Val[1]:= 0;
 
 tv1:= v1.M_Value[1];
 tv2:= v2.M_Value[1];
 M_Val[1]:=(M_Val[1] + tv1 + tv2);
-if	M_Val[1] > INT_1W_U_MAXINT then
+if	M_Val[1] > MULTI_INT_1W_U_MAXINT then
 	begin
-	M_Val[2]:= (M_Val[1] DIV INT_1W_U_MAXINT_1);
-	M_Val[1]:= (M_Val[1] MOD INT_1W_U_MAXINT_1);
+	M_Val[2]:= (M_Val[1] DIV MULTI_INT_1W_U_MAXINT_1);
+	M_Val[1]:= (M_Val[1] MOD MULTI_INT_1W_U_MAXINT_1);
 	end
 else M_Val[2]:= 0;
 
 tv1:= v1.M_Value[2];
 tv2:= v2.M_Value[2];
 M_Val[2]:=(M_Val[2] + tv1 + tv2);
-if	M_Val[2] > INT_1W_U_MAXINT then
+if	M_Val[2] > MULTI_INT_1W_U_MAXINT then
 	begin
-	M_Val[3]:= (M_Val[2] DIV INT_1W_U_MAXINT_1);
-	M_Val[2]:= (M_Val[2] MOD INT_1W_U_MAXINT_1);
+	M_Val[3]:= (M_Val[2] DIV MULTI_INT_1W_U_MAXINT_1);
+	M_Val[2]:= (M_Val[2] MOD MULTI_INT_1W_U_MAXINT_1);
 	end
 else M_Val[3]:= 0;
 
 tv1:= v1.M_Value[3];
 tv2:= v2.M_Value[3];
 M_Val[3]:=(M_Val[3] + tv1 + tv2);
-if	M_Val[3] > INT_1W_U_MAXINT then
+if	M_Val[3] > MULTI_INT_1W_U_MAXINT then
 	begin
-	M_Val[3]:= (M_Val[3] MOD INT_1W_U_MAXINT_1);
+	M_Val[3]:= (M_Val[3] MOD MULTI_INT_1W_U_MAXINT_1);
 	Result.Defined_flag:= FALSE;
 	Result.Overflow_flag:=TRUE;
 	end;
@@ -2676,7 +2701,7 @@ end;
 (******************************************)
 function subtract_Multi_Int_X2(const v1,v2:Multi_Int_X2):Multi_Int_X2;
 var
-	M_Val	:array[0..Multi_X2_max] of INT_2W_S;
+	M_Val	:array[0..Multi_X2_max] of MULTI_INT_2W_S;
 begin
 Result.Overflow_flag:=FALSE;
 Result.Defined_flag:=TRUE;
@@ -2686,7 +2711,7 @@ M_Val[0]:=(v1.M_Value[0] - v2.M_Value[0]);
 if	M_Val[0] < 0 then
 	begin
 	M_Val[1]:= -1;
-	M_Val[0]:= (M_Val[0] + INT_1W_U_MAXINT_1);
+	M_Val[0]:= (M_Val[0] + MULTI_INT_1W_U_MAXINT_1);
 	end
 else M_Val[1]:= 0;
 
@@ -2694,7 +2719,7 @@ M_Val[1]:=(v1.M_Value[1] - v2.M_Value[1] + M_Val[1]);
 if	M_Val[1] < 0 then
 	begin
 	M_Val[2]:= -1;
-	M_Val[1]:= (M_Val[1] + INT_1W_U_MAXINT_1);
+	M_Val[1]:= (M_Val[1] + MULTI_INT_1W_U_MAXINT_1);
 	end
 else M_Val[2]:= 0;
 
@@ -2702,7 +2727,7 @@ M_Val[2]:=(v1.M_Value[2] - v2.M_Value[2] + M_Val[2]);
 if	M_Val[2] < 0 then
 	begin
 	M_Val[3]:= -1;
-	M_Val[2]:= (M_Val[2] + INT_1W_U_MAXINT_1);
+	M_Val[2]:= (M_Val[2] + MULTI_INT_1W_U_MAXINT_1);
 	end
 else M_Val[3]:= 0;
 
@@ -3171,9 +3196,9 @@ end;
 (******************************************)
 procedure multiply_Multi_Int_X2(const v1,v2:Multi_Int_X2;var Result:Multi_Int_X2);
 var
-	M_Val	:array[0..Multi_X2_max_x2] of INT_2W_U;
-	tv1,tv2	:INT_2W_U;
-	i,j,k	:INT_1W_U;
+	M_Val	:array[0..Multi_X2_max_x2] of MULTI_INT_2W_U;
+	tv1,tv2	:MULTI_INT_2W_U;
+	i,j,k	:MULTI_INT_1W_U;
 begin
 Result.Overflow_flag:=FALSE;
 Result.Defined_flag:=TRUE;
@@ -3188,14 +3213,14 @@ repeat
 	repeat
 		tv1:=v1.M_Value[i];
 		tv2:=v2.M_Value[j];
-		M_Val[i+j+1]:= (M_Val[i+j+1] + ((tv1 * tv2) DIV INT_1W_U_MAXINT_1));
-		M_Val[i+j]:= (M_Val[i+j] + ((tv1 * tv2) MOD INT_1W_U_MAXINT_1));
+		M_Val[i+j+1]:= (M_Val[i+j+1] + ((tv1 * tv2) DIV MULTI_INT_1W_U_MAXINT_1));
+		M_Val[i+j]:= (M_Val[i+j] + ((tv1 * tv2) MOD MULTI_INT_1W_U_MAXINT_1));
 		INC(i);
 	until (i > Multi_X2_max);
 	k:=0;
 	repeat
-		M_Val[k+1]:= M_Val[k+1] + (M_Val[k] DIV INT_1W_U_MAXINT_1);
-		M_Val[k]:= (M_Val[k] MOD INT_1W_U_MAXINT_1);
+		M_Val[k+1]:= M_Val[k+1] + (M_Val[k] DIV MULTI_INT_1W_U_MAXINT_1);
+		M_Val[k]:= (M_Val[k] MOD MULTI_INT_1W_U_MAXINT_1);
 		INC(k);
 	until (k > Multi_X2_max);
 	INC(j);
@@ -3278,7 +3303,7 @@ end;
 (*-----------------------*)
 procedure SqRoot(const v1:Multi_Int_X2;var VR,VREM:Multi_Int_X2);
 var
-D,D2		:INT_2W_S;
+D,D2		:MULTI_INT_2W_S;
 HS,LS		:ansistring;
 H,L,C,CC,T	:Multi_Int_X2;
 R_EXACT,
@@ -3401,10 +3426,10 @@ end;
 (********************v3********************)
 { Function exp_by_squaring_iterative(TV, P) }
 
-class operator Multi_Int_X2.**(const v1:Multi_Int_X2; const P:INT_2W_S):Multi_Int_X2;
+class operator Multi_Int_X2.**(const v1:Multi_Int_X2; const P:MULTI_INT_2W_S):Multi_Int_X2;
 var
 Y,TV,T,R	:Multi_Int_X2;
-PT			:INT_2W_S;
+PT			:MULTI_INT_2W_S;
 begin
 PT:= P;
 TV:= v1;
@@ -3495,13 +3520,13 @@ quotient,
 quotient_factor,
 next_dividend,
 ZERO				:Multi_Int_X2;
-T					:INT_1W_U;
-z,k					:INT_2W_U;
+T					:MULTI_INT_1W_U;
+z,k					:MULTI_INT_2W_U;
 i,
 nlz_bits_dividend,
 nlz_bits_divisor,
 nlz_bits_P_divisor,
-nlz_bits_diff		:INT_2W_S;
+nlz_bits_diff		:MULTI_INT_2W_S;
 
 begin
 ZERO:= 0;
@@ -3553,8 +3578,8 @@ else
 		i:= Multi_X2_max;
 		while (i >= 0) do
 			begin
-			P_quotient.M_Value[i]:= (((k * INT_2W_U(INT_1W_U_MAXINT_1)) + INT_2W_U(dividend.M_Value[i])) div INT_2W_U(divisor.M_Value[0]));
-			k:= (((k * INT_2W_U(INT_1W_U_MAXINT_1)) + INT_2W_U(dividend.M_Value[i])) - (INT_2W_U(P_quotient.M_Value[i]) * INT_2W_U(divisor.M_Value[0])));
+			P_quotient.M_Value[i]:= (((k * MULTI_INT_2W_U(MULTI_INT_1W_U_MAXINT_1)) + MULTI_INT_2W_U(dividend.M_Value[i])) div MULTI_INT_2W_U(divisor.M_Value[0]));
+			k:= (((k * MULTI_INT_2W_U(MULTI_INT_1W_U_MAXINT_1)) + MULTI_INT_2W_U(dividend.M_Value[i])) - (MULTI_INT_2W_U(P_quotient.M_Value[i]) * MULTI_INT_2W_U(divisor.M_Value[0])));
 			Dec(i);
 			end;
 		P_remainder.M_Value[0]:= k;
@@ -3667,15 +3692,10 @@ if	(X2_Last_Divisor = v2)
 and	(X2_Last_Dividend = v1)
 then
 	Result:= X2_Last_Quotient
-else
+else	// different values than last time
 	begin
 	intdivide_Shift_And_Sub_X2(v1,v2,Quotient,Remainder);
-{
-	if	(v1.Negative_flag <> v2.Negative_flag)
-	then Quotient.Negative_flag:= TRUE
-	else if	(v2.Negative_flag)
-	then Remainder.Negative_flag:= TRUE;
-}
+
 	X2_Last_Divisor:= v2;
 	X2_Last_Dividend:= v1;
 	X2_Last_Quotient:= Quotient;
@@ -3684,6 +3704,36 @@ else
 	Result:= Quotient;
 	end;
 
+if	(X2_Last_Remainder.Overflow_flag)
+or	(X2_Last_Quotient.Overflow_flag)
+then
+	begin
+	Multi_Int_OVERFLOW_ERROR:= TRUE;
+	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
+		begin
+		Raise EIntOverflow.create('Overflow on divide');
+		end;
+	end;
+
+{
+// same values as last time
+
+if	(X2_Last_Divisor = v2)
+and	(X2_Last_Dividend = v1)
+then
+	Result:= X2_Last_Quotient
+else
+	begin
+	intdivide_Shift_And_Sub_X2(v1,v2,Quotient,Remainder);
+
+	X2_Last_Divisor:= v2;
+	X2_Last_Dividend:= v1;
+	X2_Last_Quotient:= Quotient;
+	X2_Last_Remainder:= Remainder;
+
+	Result:= Quotient;
+	end;
+}
 end;
 
 
@@ -3726,15 +3776,10 @@ if	(X2_Last_Divisor = v2)
 and	(X2_Last_Dividend = v1)
 then
 	Result:= X2_Last_Remainder
-else
+else	// different values than last time
 	begin
 	intdivide_Shift_And_Sub_X2(v1,v2,Quotient,Remainder);
-{
-	if	(v1.Negative_flag <> v2.Negative_flag)
-	then Quotient.Negative_flag:= TRUE
-	else if	(v2.Negative_flag)
-	then Remainder.Negative_flag:= TRUE;
-}
+
 	X2_Last_Divisor:= v2;
 	X2_Last_Dividend:= v1;
 	X2_Last_Quotient:= Quotient;
@@ -3743,6 +3788,36 @@ else
 	Result:= Remainder;
 	end;
 
+if	(X2_Last_Remainder.Overflow_flag)
+or	(X2_Last_Quotient.Overflow_flag)
+then
+	begin
+	Multi_Int_OVERFLOW_ERROR:= TRUE;
+	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
+		begin
+		Raise EIntOverflow.create('Overflow on divide');
+		end;
+	end;
+
+{
+// same values as last time
+
+if	(X2_Last_Divisor = v2)
+and	(X2_Last_Dividend = v1)
+then
+	Result:= X2_Last_Remainder
+else
+	begin
+	intdivide_Shift_And_Sub_X2(v1,v2,Quotient,Remainder);
+
+	X2_Last_Divisor:= v2;
+	X2_Last_Dividend:= v1;
+	X2_Last_Quotient:= Quotient;
+	X2_Last_Remainder:= Remainder;
+
+	Result:= Remainder;
+	end;
+}
 end;
 
 
@@ -3912,7 +3987,7 @@ end;
 
 (******************************************)
 function Multi_Int_X3_Odd(const v1:Multi_Int_X3):boolean;
-var	bit1_mask	:INT_1W_U;
+var	bit1_mask	:MULTI_INT_1W_U;
 begin
 
 {$ifdef Overflow_Checks}
@@ -3948,7 +4023,7 @@ end;
 
 (******************************************)
 function Multi_Int_X3_Even(const v1:Multi_Int_X3):boolean;
-var	bit1_mask	:INT_1W_U;
+var	bit1_mask	:MULTI_INT_1W_U;
 begin
 
 {$ifdef Overflow_Checks}
@@ -3983,7 +4058,7 @@ end;
 
 
 (******************************************)
-function nlz_words_X3(m:Multi_Int_X3):INT_1W_U;
+function nlz_words_X3(m:Multi_Int_X3):MULTI_INT_1W_U;
 var
 i,n		:Multi_int32;
 fini	:boolean;
@@ -4005,18 +4080,18 @@ end;
 
 
 (******************************************)
-function nlz_MultiBits_X3(m:Multi_Int_X3):INT_1W_U;
-var	w,b	:INT_1W_U;
+function nlz_MultiBits_X3(m:Multi_Int_X3):MULTI_INT_1W_U;
+var	w,b	:MULTI_INT_1W_U;
 begin
 w:= nlz_words_X3(m);
 if (w <= Multi_X3_max)
-then Result:= nlz_bits(m.M_Value[Multi_X3_max-w]) + (w * INT_1W_SIZE)
-else Result:= (w * INT_1W_SIZE);
+then Result:= nlz_bits(m.M_Value[Multi_X3_max-w]) + (w * MULTI_INT_1W_SIZE)
+else Result:= (w * MULTI_INT_1W_SIZE);
 end;
 
 
 (******************************************)
-procedure RotateUp_NBits_Multi_Int_X3(Var v1:Multi_Int_X3; NBits:INT_1W_U);
+procedure RotateUp_NBits_Multi_Int_X3(Var v1:Multi_Int_X3; NBits:MULTI_INT_1W_U);
 var	carry_bits_1,
 	carry_bits_2,
 	carry_bits_3,
@@ -4025,7 +4100,7 @@ var	carry_bits_1,
 	carry_bits_6,
 	carry_bits_mask,
 	NBits_max,
-	NBits_carry	:INT_1W_U;
+	NBits_carry	:MULTI_INT_1W_U;
 	n			:integer;
 begin
 if NBits > 0 then
@@ -4043,7 +4118,7 @@ carry_bits_mask:= $FFFF;
 carry_bits_mask:= $FFFFFFFF;
 {$endif}
 
-NBits_max:= INT_1W_SIZE;
+NBits_max:= MULTI_INT_1W_SIZE;
 
 NBits_carry:= (NBits_max - NBits);
 carry_bits_mask:= (carry_bits_mask << NBits_carry);
@@ -4083,8 +4158,8 @@ end;
 
 
 (******************************************)
-procedure RotateUp_NWords_Multi_Int_X3(Var v1:Multi_Int_X3; NWords:INT_1W_U);
-var	n,t	:INT_1W_U;
+procedure RotateUp_NWords_Multi_Int_X3(Var v1:Multi_Int_X3; NWords:MULTI_INT_1W_U);
+var	n,t	:MULTI_INT_1W_U;
 begin
 if		(NWords > 0)
 and		(NWords <= Multi_X3_max) then
@@ -4106,18 +4181,18 @@ end;
 
 
 {******************************************}
-procedure RotateUp_MultiBits_Multi_Int_X3(Var v1:Multi_Int_X3; NBits:INT_1W_U);
+procedure RotateUp_MultiBits_Multi_Int_X3(Var v1:Multi_Int_X3; NBits:MULTI_INT_1W_U);
 var
 NWords_count,
-NBits_count		:INT_1W_U;
+NBits_count		:MULTI_INT_1W_U;
 
 begin
 if (NBits > 0) then
 	begin
-	if (NBits >= INT_1W_SIZE) then
+	if (NBits >= MULTI_INT_1W_SIZE) then
 		begin
-		NWords_count:= (NBits DIV INT_1W_SIZE);
-		NBits_count:= (NBits MOD INT_1W_SIZE);
+		NWords_count:= (NBits DIV MULTI_INT_1W_SIZE);
+		NBits_count:= (NBits MOD MULTI_INT_1W_SIZE);
 		RotateUp_NWords_Multi_Int_X3(v1, NWords_count);
 		end
 	else NBits_count:= NBits;
@@ -4127,21 +4202,23 @@ end;
 
 
 (******************************************)
-procedure Multi_Int_X3.RotateUp_MultiBits(Var v1:Multi_Int_X3; NBits:INT_1W_U);
+{
+procedure Multi_Int_X3.RotateUp_MultiBits(Var v1:Multi_Int_X3; NBits:MULTI_INT_1W_U);
+begin
+RotateUp_MultiBits_Multi_Int_X3(v1, NBits);
+end;
+}
+
+
+(******************************************)
+procedure RotateUp(Var v1:Multi_Int_X3; NBits:MULTI_INT_1W_U); overload;
 begin
 RotateUp_MultiBits_Multi_Int_X3(v1, NBits);
 end;
 
 
 (******************************************)
-procedure RotateUp(Var v1:Multi_Int_X3; NBits:INT_1W_U); overload;
-begin
-RotateUp_MultiBits_Multi_Int_X3(v1, NBits);
-end;
-
-
-(******************************************)
-procedure RotateDown_NBits_Multi_Int_X3(Var v1:Multi_Int_X3; NBits:INT_1W_U);
+procedure RotateDown_NBits_Multi_Int_X3(Var v1:Multi_Int_X3; NBits:MULTI_INT_1W_U);
 var	carry_bits_1,
 	carry_bits_2,
 	carry_bits_3,
@@ -4150,7 +4227,7 @@ var	carry_bits_1,
 	carry_bits_6,
 	carry_bits_mask,
 	NBits_max,
-	NBits_carry	:INT_1W_U;
+	NBits_carry	:MULTI_INT_1W_U;
 	n			:integer;
 begin
 if NBits > 0 then
@@ -4168,7 +4245,7 @@ carry_bits_mask:= $FFFF;
 carry_bits_mask:= $FFFFFFFF;
 {$endif}
 
-NBits_max:= INT_1W_SIZE;
+NBits_max:= MULTI_INT_1W_SIZE;
 
 NBits_carry:= (NBits_max - NBits);
 carry_bits_mask:= (carry_bits_mask >> NBits_carry);
@@ -4208,8 +4285,8 @@ end;
 
 
 (******************************************)
-procedure RotateDown_NWords_Multi_Int_X3(Var v1:Multi_Int_X3; NWords:INT_1W_U);
-var	n,t	:INT_1W_U;
+procedure RotateDown_NWords_Multi_Int_X3(Var v1:Multi_Int_X3; NWords:MULTI_INT_1W_U);
+var	n,t	:MULTI_INT_1W_U;
 begin
 if		(NWords > 0)
 and		(NWords <= Multi_X3_max) then
@@ -4231,17 +4308,17 @@ end;
 
 
 {******************************************}
-procedure RotateDown_MultiBits_Multi_Int_X3(Var v1:Multi_Int_X3; NBits:INT_1W_U);
+procedure RotateDown_MultiBits_Multi_Int_X3(Var v1:Multi_Int_X3; NBits:MULTI_INT_1W_U);
 var
 NWords_count,
-NBits_count		:INT_1W_U;
+NBits_count		:MULTI_INT_1W_U;
 
 begin
 
-if (NBits >= INT_1W_SIZE) then
+if (NBits >= MULTI_INT_1W_SIZE) then
 	begin
-	NWords_count:= (NBits DIV INT_1W_SIZE);
-	NBits_count:= (NBits MOD INT_1W_SIZE);
+	NWords_count:= (NBits DIV MULTI_INT_1W_SIZE);
+	NBits_count:= (NBits MOD MULTI_INT_1W_SIZE);
 	RotateDown_NWords_Multi_Int_X3(v1, NWords_count);
 	end
 else NBits_count:= NBits;
@@ -4251,26 +4328,28 @@ end;
 
 
 (******************************************)
-procedure Multi_Int_X3.RotateDown_MultiBits(Var v1:Multi_Int_X3; NBits:INT_1W_U);
+{
+procedure Multi_Int_X3.RotateDown_MultiBits(Var v1:Multi_Int_X3; NBits:MULTI_INT_1W_U);
+begin
+RotateDown_MultiBits_Multi_Int_X3(v1, NBits);
+end;
+}
+
+
+(******************************************)
+procedure RotateDown(Var v1:Multi_Int_X3; NBits:MULTI_INT_1W_U); overload;
 begin
 RotateDown_MultiBits_Multi_Int_X3(v1, NBits);
 end;
 
 
 (******************************************)
-procedure RotateDown(Var v1:Multi_Int_X3; NBits:INT_1W_U); overload;
-begin
-RotateDown_MultiBits_Multi_Int_X3(v1, NBits);
-end;
-
-
-(******************************************)
-procedure ShiftUp_NBits_Multi_Int_X3(Var v1:Multi_Int_X3; NBits:INT_1W_U);
+procedure ShiftUp_NBits_Multi_Int_X3(Var v1:Multi_Int_X3; NBits:MULTI_INT_1W_U);
 var	carry_bits_1,
 	carry_bits_2,
 	carry_bits_mask,
 	NBits_max,
-	NBits_carry	:INT_1W_U;
+	NBits_carry	:MULTI_INT_1W_U;
 	n			:integer;
 begin
 if NBits > 0 then
@@ -4288,7 +4367,7 @@ carry_bits_mask:= $FFFF;
 carry_bits_mask:= $FFFFFFFF;
 {$endif}
 
-NBits_max:= INT_1W_SIZE;
+NBits_max:= MULTI_INT_1W_SIZE;
 
 NBits_carry:= (NBits_max - NBits);
 carry_bits_mask:= (carry_bits_mask << NBits_carry);
@@ -4325,8 +4404,8 @@ end;
 
 
 (******************************************)
-procedure ShiftUp_NWords_Multi_Int_X3(Var v1:Multi_Int_X3; NWords:INT_1W_U);
-var	n	:INT_1W_U;
+procedure ShiftUp_NWords_Multi_Int_X3(Var v1:Multi_Int_X3; NWords:MULTI_INT_1W_U);
+var	n	:MULTI_INT_1W_U;
 begin
 if		(NWords > 0)
 and		(NWords <= Multi_X3_max) then
@@ -4347,8 +4426,8 @@ end;
 
 
 (******************************************)
-procedure ShiftDown_NWords_Multi_Int_X3(Var v1:Multi_Int_X3; NWords:INT_1W_U);
-var	n	:INT_1W_U;
+procedure ShiftDown_NWords_Multi_Int_X3(Var v1:Multi_Int_X3; NWords:MULTI_INT_1W_U);
+var	n	:MULTI_INT_1W_U;
 begin
 if		(NWords > 0)
 and		(NWords <= Multi_X3_max) then
@@ -4369,18 +4448,18 @@ end;
 
 
 {******************************************}
-procedure ShiftUp_MultiBits_Multi_Int_X3(Var v1:Multi_Int_X3; NBits:INT_1W_U);
+procedure ShiftUp_MultiBits_Multi_Int_X3(Var v1:Multi_Int_X3; NBits:MULTI_INT_1W_U);
 var
 NWords_count,
-NBits_count		:INT_1W_U;
+NBits_count		:MULTI_INT_1W_U;
 
 begin
 if (NBits > 0) then
 	begin
-	if (NBits >= INT_1W_SIZE) then
+	if (NBits >= MULTI_INT_1W_SIZE) then
 		begin
-		NWords_count:= (NBits DIV INT_1W_SIZE);
-		NBits_count:= (NBits MOD INT_1W_SIZE);
+		NWords_count:= (NBits DIV MULTI_INT_1W_SIZE);
+		NBits_count:= (NBits MOD MULTI_INT_1W_SIZE);
 		ShiftUp_NWords_Multi_Int_X3(v1, NWords_count);
 		end
 	else NBits_count:= NBits;
@@ -4390,26 +4469,28 @@ end;
 
 
 {******************************************}
-procedure Multi_Int_X3.ShiftUp_MultiBits(Var v1:Multi_Int_X3; NBits:INT_1W_U);
+{
+procedure Multi_Int_X3.ShiftUp_MultiBits(Var v1:Multi_Int_X3; NBits:MULTI_INT_1W_U);
 begin
 ShiftUp_MultiBits_Multi_Int_X3(v1, NBits);
 end;
+}
 
 
 {******************************************}
-procedure ShiftUp(Var v1:Multi_Int_X3; NBits:INT_1W_U); overload;
+procedure ShiftUp(Var v1:Multi_Int_X3; NBits:MULTI_INT_1W_U); overload;
 begin
 ShiftUp_MultiBits_Multi_Int_X3(v1, NBits);
 end;
 
 
 (******************************************)
-procedure ShiftDown_NBits_Multi_Int_X3(Var v1:Multi_Int_X3; NBits:INT_1W_U);
+procedure ShiftDown_NBits_Multi_Int_X3(Var v1:Multi_Int_X3; NBits:MULTI_INT_1W_U);
 var	carry_bits_1,
 	carry_bits_2,
 	carry_bits_mask,
 	NBits_max,
-	NBits_carry	:INT_1W_U;
+	NBits_carry	:MULTI_INT_1W_U;
 	n			:integer;
 begin
 if NBits > 0 then
@@ -4427,7 +4508,7 @@ carry_bits_mask:= $FFFF;
 carry_bits_mask:= $FFFFFFFF;
 {$endif}
 
-NBits_max:= INT_1W_SIZE;
+NBits_max:= MULTI_INT_1W_SIZE;
 
 NBits_carry:= (NBits_max - NBits);
 carry_bits_mask:= (carry_bits_mask >> NBits_carry);
@@ -4464,17 +4545,17 @@ end;
 
 
 {******************************************}
-procedure ShiftDown_MultiBits_Multi_Int_X3(Var v1:Multi_Int_X3; NBits:INT_1W_U);
+procedure ShiftDown_MultiBits_Multi_Int_X3(Var v1:Multi_Int_X3; NBits:MULTI_INT_1W_U);
 var
 NWords_count,
-NBits_count		:INT_1W_U;
+NBits_count		:MULTI_INT_1W_U;
 
 begin
 
-if (NBits >= INT_1W_SIZE) then
+if (NBits >= MULTI_INT_1W_SIZE) then
 	begin
-	NWords_count:= (NBits DIV INT_1W_SIZE);
-	NBits_count:= (NBits MOD INT_1W_SIZE);
+	NWords_count:= (NBits DIV MULTI_INT_1W_SIZE);
+	NBits_count:= (NBits MOD MULTI_INT_1W_SIZE);
 	ShiftDown_NWords_Multi_Int_X3(v1, NWords_count);
 	end
 else NBits_count:= NBits;
@@ -4484,14 +4565,16 @@ end;
 
 
 {******************************************}
-procedure Multi_Int_X3.ShiftDown_MultiBits(Var v1:Multi_Int_X3; NBits:INT_1W_U);
+{
+procedure Multi_Int_X3.ShiftDown_MultiBits(Var v1:Multi_Int_X3; NBits:MULTI_INT_1W_U);
 begin
 ShiftDown_MultiBits_Multi_Int_X3(v1, NBits);
 end;
+}
 
 
 {******************************************}
-procedure ShiftDown(Var v1:Multi_Int_X3; NBits:INT_1W_U); overload;
+procedure ShiftDown(Var v1:Multi_Int_X3; NBits:MULTI_INT_1W_U); overload;
 begin
 ShiftDown_MultiBits_Multi_Int_X3(v1, NBits);
 end;
@@ -4650,8 +4733,8 @@ end;
 procedure ansistring_to_Multi_Int_X3(const v1:ansistring; var mi:Multi_Int_X3);
 label 999;
 var
-	i,b,c,e		:INT_2W_U;
-	M_Val		:array[0..Multi_X3_max] of INT_2W_U;
+	i,b,c,e		:MULTI_INT_2W_U;
+	M_Val		:array[0..Multi_X3_max] of MULTI_INT_2W_U;
 	Signeg,
 	Zeroneg		:boolean;
 begin
@@ -4673,7 +4756,7 @@ M_Val[5]:= 0;
 if	(length(v1) > 0) then
 	begin
 	b:=low(ansistring);
-	e:=b + INT_2W_U(length(v1)) - 1;
+	e:=b + MULTI_INT_2W_U(length(v1)) - 1;
 	if	(v1[b] = '-') then
 		begin
 		Signeg:= TRUE;
@@ -4703,37 +4786,37 @@ if	(length(v1) > 0) then
 		M_Val[4]:=(M_Val[4] * 10);
 		M_Val[5]:=(M_Val[5] * 10);
 
-		if	M_Val[0] > INT_1W_U_MAXINT then
+		if	M_Val[0] > MULTI_INT_1W_U_MAXINT then
 			begin
-			M_Val[1]:=M_Val[1] + (M_Val[0] DIV INT_1W_U_MAXINT_1);
-			M_Val[0]:=(M_Val[0] MOD INT_1W_U_MAXINT_1);
+			M_Val[1]:=M_Val[1] + (M_Val[0] DIV MULTI_INT_1W_U_MAXINT_1);
+			M_Val[0]:=(M_Val[0] MOD MULTI_INT_1W_U_MAXINT_1);
 			end;
 
-		if	M_Val[1] > INT_1W_U_MAXINT then
+		if	M_Val[1] > MULTI_INT_1W_U_MAXINT then
 			begin
-			M_Val[2]:=M_Val[2] + (M_Val[1] DIV INT_1W_U_MAXINT_1);
-			M_Val[1]:=(M_Val[1] MOD INT_1W_U_MAXINT_1);
+			M_Val[2]:=M_Val[2] + (M_Val[1] DIV MULTI_INT_1W_U_MAXINT_1);
+			M_Val[1]:=(M_Val[1] MOD MULTI_INT_1W_U_MAXINT_1);
 			end;
 
-		if	M_Val[2] > INT_1W_U_MAXINT then
+		if	M_Val[2] > MULTI_INT_1W_U_MAXINT then
 			begin
-			M_Val[3]:=M_Val[3] + (M_Val[2] DIV INT_1W_U_MAXINT_1);
-			M_Val[2]:=(M_Val[2] MOD INT_1W_U_MAXINT_1);
+			M_Val[3]:=M_Val[3] + (M_Val[2] DIV MULTI_INT_1W_U_MAXINT_1);
+			M_Val[2]:=(M_Val[2] MOD MULTI_INT_1W_U_MAXINT_1);
 			end;
 
-		if	M_Val[3] > INT_1W_U_MAXINT then
+		if	M_Val[3] > MULTI_INT_1W_U_MAXINT then
 			begin
-			M_Val[4]:=M_Val[4] + (M_Val[3] DIV INT_1W_U_MAXINT_1);
-			M_Val[3]:=(M_Val[3] MOD INT_1W_U_MAXINT_1);
+			M_Val[4]:=M_Val[4] + (M_Val[3] DIV MULTI_INT_1W_U_MAXINT_1);
+			M_Val[3]:=(M_Val[3] MOD MULTI_INT_1W_U_MAXINT_1);
 			end;
 
-		if	M_Val[4] > INT_1W_U_MAXINT then
+		if	M_Val[4] > MULTI_INT_1W_U_MAXINT then
 			begin
-			M_Val[5]:=M_Val[5] + (M_Val[4] DIV INT_1W_U_MAXINT_1);
-			M_Val[4]:=(M_Val[4] MOD INT_1W_U_MAXINT_1);
+			M_Val[5]:=M_Val[5] + (M_Val[4] DIV MULTI_INT_1W_U_MAXINT_1);
+			M_Val[4]:=(M_Val[4] MOD MULTI_INT_1W_U_MAXINT_1);
 			end;
 
-		if	M_Val[5] > INT_1W_U_MAXINT then
+		if	M_Val[5] > MULTI_INT_1W_U_MAXINT then
 			begin
 			Multi_Int_OVERFLOW_ERROR:= TRUE;
 			mi.Defined_flag:=FALSE;
@@ -4790,22 +4873,22 @@ end;
 
 {$ifdef 32bit}
 (******************************************)
-procedure INT_4W_S_to_Multi_Int_X3(const v1:INT_4W_S; var mi:Multi_Int_X3);
+procedure MULTI_INT_4W_S_to_Multi_Int_X3(const v1:MULTI_INT_4W_S; var mi:Multi_Int_X3);
 var
-v	:INT_4W_U;
-n	:INT_2W_U;
+v	:MULTI_INT_4W_U;
+n	:MULTI_INT_2W_U;
 begin
 mi.Overflow_flag:=FALSE;
 mi.Defined_flag:=TRUE;
 v:= Abs(v1);
 
 v:= v1;
-mi.M_Value[0]:= INT_1W_U(v MOD INT_1W_U_MAXINT_1);
-v:= (v div INT_1W_U_MAXINT_1);
-mi.M_Value[1]:= INT_1W_U(v MOD INT_1W_U_MAXINT_1);
-v:= (v div INT_1W_U_MAXINT_1);
-mi.M_Value[2]:= INT_1W_U(v MOD INT_1W_U_MAXINT_1);
-v:= (v div INT_1W_U_MAXINT_1);
+mi.M_Value[0]:= MULTI_INT_1W_U(v MOD MULTI_INT_1W_U_MAXINT_1);
+v:= (v div MULTI_INT_1W_U_MAXINT_1);
+mi.M_Value[1]:= MULTI_INT_1W_U(v MOD MULTI_INT_1W_U_MAXINT_1);
+v:= (v div MULTI_INT_1W_U_MAXINT_1);
+mi.M_Value[2]:= MULTI_INT_1W_U(v MOD MULTI_INT_1W_U_MAXINT_1);
+v:= (v div MULTI_INT_1W_U_MAXINT_1);
 mi.M_Value[3]:= v;
 
 mi.M_Value[4]:= 0;
@@ -4818,29 +4901,29 @@ end;
 
 
 (******************************************)
-class operator Multi_Int_X3.implicit(const v1:INT_4W_S):Multi_Int_X3;
+class operator Multi_Int_X3.implicit(const v1:MULTI_INT_4W_S):Multi_Int_X3;
 begin
-INT_4W_S_to_Multi_Int_X3(v1,Result);
+MULTI_INT_4W_S_to_Multi_Int_X3(v1,Result);
 end;
 
 
 (******************************************)
-procedure INT_4W_U_to_Multi_Int_X3(const v1:INT_4W_U; var mi:Multi_Int_X3);
+procedure MULTI_INT_4W_U_to_Multi_Int_X3(const v1:MULTI_INT_4W_U; var mi:Multi_Int_X3);
 var
-v	:INT_4W_U;
-n	:INT_2W_U;
+v	:MULTI_INT_4W_U;
+n	:MULTI_INT_2W_U;
 begin
 mi.Overflow_flag:=FALSE;
 mi.Defined_flag:=TRUE;
 mi.Negative_flag:= Multi_UBool_FALSE;
 
 v:= v1;
-mi.M_Value[0]:= INT_1W_U(v MOD INT_1W_U_MAXINT_1);
-v:= (v div INT_1W_U_MAXINT_1);
-mi.M_Value[1]:= INT_1W_U(v MOD INT_1W_U_MAXINT_1);
-v:= (v div INT_1W_U_MAXINT_1);
-mi.M_Value[2]:= INT_1W_U(v MOD INT_1W_U_MAXINT_1);
-v:= (v div INT_1W_U_MAXINT_1);
+mi.M_Value[0]:= MULTI_INT_1W_U(v MOD MULTI_INT_1W_U_MAXINT_1);
+v:= (v div MULTI_INT_1W_U_MAXINT_1);
+mi.M_Value[1]:= MULTI_INT_1W_U(v MOD MULTI_INT_1W_U_MAXINT_1);
+v:= (v div MULTI_INT_1W_U_MAXINT_1);
+mi.M_Value[2]:= MULTI_INT_1W_U(v MOD MULTI_INT_1W_U_MAXINT_1);
+v:= (v div MULTI_INT_1W_U_MAXINT_1);
 mi.M_Value[3]:= v;
 
 mi.M_Value[4]:= 0;
@@ -4850,15 +4933,15 @@ end;
 
 
 (******************************************)
-class operator Multi_Int_X3.implicit(const v1:INT_4W_U):Multi_Int_X3;
+class operator Multi_Int_X3.implicit(const v1:MULTI_INT_4W_U):Multi_Int_X3;
 begin
-INT_4W_U_to_Multi_Int_X3(v1,Result);
+MULTI_INT_4W_U_to_Multi_Int_X3(v1,Result);
 end;
 {$endif}
 
 
 (******************************************)
-procedure INT_2W_S_to_Multi_Int_X3(const v1:INT_2W_S; var mi:Multi_Int_X3);
+procedure MULTI_INT_2W_S_to_Multi_Int_X3(const v1:MULTI_INT_2W_S; var mi:Multi_Int_X3);
 begin
 mi.Overflow_flag:=FALSE;
 mi.Defined_flag:=TRUE;
@@ -4870,34 +4953,34 @@ mi.M_Value[5]:= 0;
 if (v1 < 0) then
 	begin
 	mi.Negative_flag:= Multi_UBool_TRUE;
-	mi.M_Value[0]:= (ABS(v1) MOD INT_1W_U_MAXINT_1);
-	mi.M_Value[1]:= (ABS(v1) DIV INT_1W_U_MAXINT_1);
+	mi.M_Value[0]:= (ABS(v1) MOD MULTI_INT_1W_U_MAXINT_1);
+	mi.M_Value[1]:= (ABS(v1) DIV MULTI_INT_1W_U_MAXINT_1);
 	end
 else
 	begin
 	mi.Negative_flag:= Multi_UBool_FALSE;
-	mi.M_Value[0]:= (v1 MOD INT_1W_U_MAXINT_1);
-	mi.M_Value[1]:= (v1 DIV INT_1W_U_MAXINT_1);
+	mi.M_Value[0]:= (v1 MOD MULTI_INT_1W_U_MAXINT_1);
+	mi.M_Value[1]:= (v1 DIV MULTI_INT_1W_U_MAXINT_1);
 	end;
 end;
 
 
 (******************************************)
-class operator Multi_Int_X3.implicit(const v1:INT_2W_S):Multi_Int_X3;
+class operator Multi_Int_X3.implicit(const v1:MULTI_INT_2W_S):Multi_Int_X3;
 begin
-INT_2W_S_to_Multi_Int_X3(v1,Result);
+MULTI_INT_2W_S_to_Multi_Int_X3(v1,Result);
 end;
 
 
 (******************************************)
-procedure INT_2W_U_to_Multi_Int_X3(const v1:INT_2W_U; var mi:Multi_Int_X3);
+procedure MULTI_INT_2W_U_to_Multi_Int_X3(const v1:MULTI_INT_2W_U; var mi:Multi_Int_X3);
 begin
 mi.Overflow_flag:=FALSE;
 mi.Defined_flag:=TRUE;
 mi.Negative_flag:= Multi_UBool_FALSE;
 
-mi.M_Value[0]:= (v1 MOD INT_1W_U_MAXINT_1);
-mi.M_Value[1]:= (v1 DIV INT_1W_U_MAXINT_1);
+mi.M_Value[0]:= (v1 MOD MULTI_INT_1W_U_MAXINT_1);
+mi.M_Value[1]:= (v1 DIV MULTI_INT_1W_U_MAXINT_1);
 mi.M_Value[2]:= 0;
 mi.M_Value[3]:= 0;
 mi.M_Value[4]:= 0;
@@ -4906,15 +4989,15 @@ end;
 
 
 (******************************************)
-class operator Multi_Int_X3.implicit(const v1:INT_2W_U):Multi_Int_X3;
+class operator Multi_Int_X3.implicit(const v1:MULTI_INT_2W_U):Multi_Int_X3;
 begin
-INT_2W_U_to_Multi_Int_X3(v1,Result);
+MULTI_INT_2W_U_to_Multi_Int_X3(v1,Result);
 end;
 
 
 (******************************************)
 function To_Multi_Int_X3(const v1:Multi_Int_XV):Multi_Int_X3;
-var n :INT_1W_U;
+var n :MULTI_INT_1W_U;
 begin
 Result.Overflow_flag:= v1.Overflow_flag;
 Result.Defined_flag:= v1.Defined_flag;
@@ -4955,7 +5038,7 @@ end;
 
 (******************************************)
 function To_Multi_Int_X3(const v1:Multi_Int_X4):Multi_Int_X3;
-var n :INT_1W_U;
+var n :MULTI_INT_1W_U;
 begin
 Result.Overflow_flag:= v1.Overflow_flag;
 Result.Defined_flag:= v1.Defined_flag;
@@ -4996,7 +5079,7 @@ end;
 
 (******************************************)
 function To_Multi_Int_X3(const v1:Multi_Int_X2):Multi_Int_X3;
-var n :INT_1W_U;
+var n :MULTI_INT_1W_U;
 begin
 Result.Overflow_flag:= v1.Overflow_flag;
 Result.Defined_flag:= v1.Defined_flag;
@@ -5043,7 +5126,7 @@ end;
 (******************************************)
 procedure Multi_Int_X2_to_Multi_Int_X3(const v1:Multi_Int_X2; var MI:Multi_Int_X3);
 var
-	n				:INT_1W_U;
+	n				:MULTI_INT_1W_U;
 begin
 MI.Overflow_flag:= v1.Overflow_flag;
 MI.Defined_flag:= v1.Defined_flag;
@@ -5105,7 +5188,7 @@ begin
 
 Multi_Int_OVERFLOW_ERROR:= FALSE;
 
-FloatToDecimal(R_FLOATREC, v1, SINGLE_TYPE_PRECISION_DIGITS, 0);
+FloatToDecimal(R_FLOATREC, v1, MULTI_SINGLE_TYPE_PRECISION_DIGITS, 0);
 ansistring_to_Multi_Int_X3(AddCharR('0',R_FLOATREC.digits,R_FLOATREC.Exponent), R);
 
 if (R.Overflow) then
@@ -5136,7 +5219,7 @@ begin
 
 Multi_Int_OVERFLOW_ERROR:= FALSE;
 
-FloatToDecimal(R_FLOATREC, v1, REAL_TYPE_PRECISION_DIGITS, 0);
+FloatToDecimal(R_FLOATREC, v1, MULTI_REAL_TYPE_PRECISION_DIGITS, 0);
 ansistring_to_Multi_Int_X3(AddCharR('0',R_FLOATREC.digits,R_FLOATREC.Exponent), R);
 
 if (R.Overflow) then
@@ -5167,7 +5250,7 @@ begin
 
 Multi_Int_OVERFLOW_ERROR:= FALSE;
 
-FloatToDecimal(R_FLOATREC, v1, DOUBLE_TYPE_PRECISION_DIGITS, 0);
+FloatToDecimal(R_FLOATREC, v1, MULTI_DOUBLE_TYPE_PRECISION_DIGITS, 0);
 ansistring_to_Multi_Int_X3(AddCharR('0',R_FLOATREC.digits,R_FLOATREC.Exponent), R);
 
 if (R.Overflow) then
@@ -5191,7 +5274,7 @@ end;
 class operator Multi_Int_X3.implicit(const v1:Multi_Int_X3):Single;
 var
 R,V,M		:Single;
-i			:INT_1W_U;
+i			:MULTI_INT_1W_U;
 finished	:boolean;
 begin
 if	(Not v1.Defined_flag)
@@ -5207,7 +5290,7 @@ then
 
 Multi_Int_OVERFLOW_ERROR:= FALSE;
 finished:= FALSE;
-M:= INT_1W_U_MAXINT_1;
+M:= MULTI_INT_1W_U_MAXINT_1;
 
 R:=	v1.M_Value[0];
 i:= 1;
@@ -5233,7 +5316,7 @@ do
 					end;
 				end;
 			end;
-			V:= INT_1W_U_MAXINT_1;
+			V:= MULTI_INT_1W_U_MAXINT_1;
 			try M:= (M * V);
 			except finished:= TRUE;
 			end;
@@ -5261,7 +5344,7 @@ end;
 class operator Multi_Int_X3.implicit(const v1:Multi_Int_X3):Real;
 var
 	R,V,M	:Real;
-	i		:INT_1W_U;
+	i		:MULTI_INT_1W_U;
 finished	:boolean;
 begin
 if	(Not v1.Defined_flag)
@@ -5277,7 +5360,7 @@ then
 
 Multi_Int_OVERFLOW_ERROR:= FALSE;
 finished:= FALSE;
-M:= INT_1W_U_MAXINT_1;
+M:= MULTI_INT_1W_U_MAXINT_1;
 
 R:=	v1.M_Value[0];
 i:= 1;
@@ -5303,7 +5386,7 @@ do
 					end;
 				end;
 			end;
-			V:= INT_1W_U_MAXINT_1;
+			V:= MULTI_INT_1W_U_MAXINT_1;
 			try M:= (M * V);
 			except finished:= TRUE;
 			end;
@@ -5331,7 +5414,7 @@ end;
 class operator Multi_Int_X3.implicit(const v1:Multi_Int_X3):Double;
 var
 	R,V,M	:Double;
-	i		:INT_1W_U;
+	i		:MULTI_INT_1W_U;
 finished	:boolean;
 begin
 if	(Not v1.Defined_flag)
@@ -5347,7 +5430,7 @@ then
 
 Multi_Int_OVERFLOW_ERROR:= FALSE;
 finished:= FALSE;
-M:= INT_1W_U_MAXINT_1;
+M:= MULTI_INT_1W_U_MAXINT_1;
 
 R:=	v1.M_Value[0];
 i:= 1;
@@ -5373,7 +5456,7 @@ do
 					end;
 				end;
 			end;
-			V:= INT_1W_U_MAXINT_1;
+			V:= MULTI_INT_1W_U_MAXINT_1;
 			try M:= (M * V);
 			except finished:= TRUE;
 			end;
@@ -5398,8 +5481,8 @@ end;
 
 
 (******************************************)
-class operator Multi_Int_X3.implicit(const v1:Multi_Int_X3):INT_2W_S;
-var	R	:INT_2W_U;
+class operator Multi_Int_X3.implicit(const v1:Multi_Int_X3):MULTI_INT_2W_S;
+var	R	:MULTI_INT_2W_U;
 begin
 Multi_Int_OVERFLOW_ERROR:= FALSE;
 if	(Not v1.Defined_flag)
@@ -5413,9 +5496,9 @@ then
 	exit;
 	end;
 
-R:= (INT_2W_U(v1.M_Value[0]) + (INT_2W_U(v1.M_Value[1]) * INT_1W_U_MAXINT_1));
+R:= (MULTI_INT_2W_U(v1.M_Value[0]) + (MULTI_INT_2W_U(v1.M_Value[1]) * MULTI_INT_1W_U_MAXINT_1));
 
-if	(R > INT_2W_S_MAXINT)
+if	(R > MULTI_INT_2W_S_MAXINT)
 or	(v1.M_Value[2] <> 0)
 or	(v1.M_Value[3] <> 0)
 or	(v1.M_Value[4] <> 0)
@@ -5432,14 +5515,14 @@ then
 	end;
 
 if v1.Negative_flag
-then Result:= INT_2W_S(-R)
-else Result:= INT_2W_S(R);
+then Result:= MULTI_INT_2W_S(-R)
+else Result:= MULTI_INT_2W_S(R);
 end;
 
 
 (******************************************)
-class operator Multi_Int_X3.implicit(const v1:Multi_Int_X3):INT_2W_U;
-var	R	:INT_2W_U;
+class operator Multi_Int_X3.implicit(const v1:Multi_Int_X3):MULTI_INT_2W_U;
+var	R	:MULTI_INT_2W_U;
 begin
 Multi_Int_OVERFLOW_ERROR:= FALSE;
 if	(Not v1.Defined_flag)
@@ -5453,8 +5536,8 @@ then
 	exit;
 	end;
 
-R:= (INT_2W_U(v1.M_Value[1]) << INT_1W_SIZE);
-R:= (R OR INT_2W_U(v1.M_Value[0]));
+R:= (MULTI_INT_2W_U(v1.M_Value[1]) << MULTI_INT_1W_SIZE);
+R:= (R OR MULTI_INT_2W_U(v1.M_Value[0]));
 
 if	(v1.M_Value[2] <> 0)
 or	(v1.M_Value[3] <> 0)
@@ -5475,8 +5558,8 @@ end;
 
 
 (******************************************)
-class operator Multi_Int_X3.implicit(const v1:Multi_Int_X3):INT_1W_S;
-var	R	:INT_2W_U;
+class operator Multi_Int_X3.implicit(const v1:Multi_Int_X3):MULTI_INT_1W_S;
+var	R	:MULTI_INT_2W_U;
 begin
 Multi_Int_OVERFLOW_ERROR:= FALSE;
 if	(Not v1.Defined_flag)
@@ -5490,9 +5573,9 @@ then
 	exit;
 	end;
 
-R:= (INT_2W_U(v1.M_Value[0]) + (INT_2W_U(v1.M_Value[1]) * INT_1W_U_MAXINT_1));
+R:= (MULTI_INT_2W_U(v1.M_Value[0]) + (MULTI_INT_2W_U(v1.M_Value[1]) * MULTI_INT_1W_U_MAXINT_1));
 
-if	(R > INT_1W_S_MAXINT)
+if	(R > MULTI_INT_1W_S_MAXINT)
 or	(v1.M_Value[2] <> 0)
 or	(v1.M_Value[3] <> 0)
 or	(v1.M_Value[4] <> 0)
@@ -5509,14 +5592,14 @@ then
 	end;
 
 if v1.Negative_flag
-then Result:= INT_1W_S(-R)
-else Result:= INT_1W_S(R);
+then Result:= MULTI_INT_1W_S(-R)
+else Result:= MULTI_INT_1W_S(R);
 end;
 
 
 (******************************************)
-class operator Multi_Int_X3.implicit(const v1:Multi_Int_X3):INT_1W_U;
-var	R	:INT_2W_U;
+class operator Multi_Int_X3.implicit(const v1:Multi_Int_X3):MULTI_INT_1W_U;
+var	R	:MULTI_INT_2W_U;
 begin
 Multi_Int_OVERFLOW_ERROR:= FALSE;
 if	(Not v1.Defined_flag)
@@ -5531,9 +5614,9 @@ then
 	exit;
 	end;
 
-R:= (v1.M_Value[0] + (v1.M_Value[1] * INT_1W_U_MAXINT_1));
+R:= (v1.M_Value[0] + (v1.M_Value[1] * MULTI_INT_1W_U_MAXINT_1));
 
-if	(R > INT_1W_U_MAXINT)
+if	(R > MULTI_INT_1W_U_MAXINT)
 or	(v1.M_Value[2] <> 0)
 or	(v1.M_Value[3] <> 0)
 or	(v1.M_Value[4] <> 0)
@@ -5549,7 +5632,7 @@ then
 	exit;
 	end;
 
-Result:= INT_1W_U(R);
+Result:= MULTI_INT_1W_U(R);
 end;
 
 
@@ -5633,7 +5716,7 @@ procedure Multi_Int_X3_to_hex(const v1:Multi_Int_X3; var v2:ansistring; LZ:T_Mul
 var
 	s		:ansistring = '';
 	n		:Multi_int32u;
-	M_Val	:array[0..Multi_X3_max] of INT_2W_U;
+	M_Val	:array[0..Multi_X3_max] of MULTI_INT_2W_U;
 begin
 if	(Not v1.Defined_flag)
 then
@@ -5657,7 +5740,7 @@ then
 	exit;
 	end;
 
-n:= (INT_1W_SIZE div 4);
+n:= (MULTI_INT_1W_SIZE div 4);
 s:= '';
 
 s:= s
@@ -5687,8 +5770,8 @@ procedure hex_to_Multi_Int_X3(const v1:ansistring; var mi:Multi_Int_X3);
 label 999;
 var
 	n,i,b,c,e
-				:INT_2W_U;
-	M_Val		:array[0..Multi_X3_max] of INT_2W_U;
+				:MULTI_INT_2W_U;
+	M_Val		:array[0..Multi_X3_max] of MULTI_INT_2W_U;
 	Signeg,
 	Zeroneg,
 	M_Val_All_Zero		:boolean;
@@ -5708,7 +5791,7 @@ do begin M_Val[n]:= 0; inc(n); end;
 if	(length(v1) > 0) then
 	begin
 	b:=low(ansistring);
-	e:=b + INT_2W_U(length(v1)) - 1;
+	e:=b + MULTI_INT_2W_U(length(v1)) - 1;
 	if	(v1[b] = '-') then
 		begin
 		Signeg:= TRUE;
@@ -5744,16 +5827,16 @@ if	(length(v1) > 0) then
 		n:=0;
 		while (n < Multi_X3_max) do
 			begin
-			if	M_Val[n] > INT_1W_U_MAXINT then
+			if	M_Val[n] > MULTI_INT_1W_U_MAXINT then
 				begin
-				M_Val[n+1]:=M_Val[n+1] + (M_Val[n] DIV INT_1W_U_MAXINT_1);
-				M_Val[n]:=(M_Val[n] MOD INT_1W_U_MAXINT_1);
+				M_Val[n+1]:=M_Val[n+1] + (M_Val[n] DIV MULTI_INT_1W_U_MAXINT_1);
+				M_Val[n]:=(M_Val[n] MOD MULTI_INT_1W_U_MAXINT_1);
 				end;
 
 			inc(n);
 			end;
 
-		if	M_Val[n] > INT_1W_U_MAXINT then
+		if	M_Val[n] > MULTI_INT_1W_U_MAXINT then
 			begin
 			Multi_Int_OVERFLOW_ERROR:= TRUE;
 			mi.Defined_flag:=FALSE;
@@ -5797,7 +5880,7 @@ end;
 procedure Multi_Int_X3_to_ansistring(const v1:Multi_Int_X3; var v2:ansistring);
 var
 	s		:ansistring = '';
-	M_Val	:array[0..Multi_X3_max] of INT_2W_U;
+	M_Val	:array[0..Multi_X3_max] of MULTI_INT_2W_U;
 begin
 if	(Not v1.Defined_flag)
 then
@@ -5830,19 +5913,19 @@ M_Val[5]:= v1.M_Value[5];
 
 repeat
 
-	M_Val[4]:= M_Val[4] + (INT_1W_U_MAXINT_1 * (M_Val[5] MOD 10));
+	M_Val[4]:= M_Val[4] + (MULTI_INT_1W_U_MAXINT_1 * (M_Val[5] MOD 10));
 	M_Val[5]:= (M_Val[5] DIV 10);
 
-	M_Val[3]:= M_Val[3] + (INT_1W_U_MAXINT_1 * (M_Val[4] MOD 10));
+	M_Val[3]:= M_Val[3] + (MULTI_INT_1W_U_MAXINT_1 * (M_Val[4] MOD 10));
 	M_Val[4]:= (M_Val[4] DIV 10);
 
-	M_Val[2]:= M_Val[2] + (INT_1W_U_MAXINT_1 * (M_Val[3] MOD 10));
+	M_Val[2]:= M_Val[2] + (MULTI_INT_1W_U_MAXINT_1 * (M_Val[3] MOD 10));
 	M_Val[3]:= (M_Val[3] DIV 10);
 
-	M_Val[1]:= M_Val[1] + (INT_1W_U_MAXINT_1 * (M_Val[2] MOD 10));
+	M_Val[1]:= M_Val[1] + (MULTI_INT_1W_U_MAXINT_1 * (M_Val[2] MOD 10));
 	M_Val[2]:= (M_Val[2] DIV 10);
 
-	M_Val[0]:= M_Val[0] + (INT_1W_U_MAXINT_1 * (M_Val[1] MOD 10));
+	M_Val[0]:= M_Val[0] + (MULTI_INT_1W_U_MAXINT_1 * (M_Val[1] MOD 10));
 	M_Val[1]:= (M_Val[1] DIV 10);
 
 	s:= inttostr(M_Val[0] MOD 10) + s;
@@ -5911,8 +5994,8 @@ end;
 function add_Multi_Int_X3(const v1,v2:Multi_Int_X3):Multi_Int_X3;
 var
 	tv1,
-	tv2		:INT_2W_U;
-	M_Val	:array[0..Multi_X3_max] of INT_2W_U;
+	tv2		:MULTI_INT_2W_U;
+	M_Val	:array[0..Multi_X3_max] of MULTI_INT_2W_U;
 begin
 Result.Overflow_flag:=FALSE;
 Result.Defined_flag:=TRUE;
@@ -5921,59 +6004,59 @@ Result.Negative_flag:= Multi_UBool_UNDEF;
 tv1:= v1.M_Value[0];
 tv2:= v2.M_Value[0];
 M_Val[0]:= (tv1 + tv2);
-if	M_Val[0] > INT_1W_U_MAXINT then
+if	M_Val[0] > MULTI_INT_1W_U_MAXINT then
 	begin
-	M_Val[1]:= (M_Val[0] DIV INT_1W_U_MAXINT_1);
-	M_Val[0]:= (M_Val[0] MOD INT_1W_U_MAXINT_1);
+	M_Val[1]:= (M_Val[0] DIV MULTI_INT_1W_U_MAXINT_1);
+	M_Val[0]:= (M_Val[0] MOD MULTI_INT_1W_U_MAXINT_1);
 	end
 else M_Val[1]:= 0;
 
 tv1:= v1.M_Value[1];
 tv2:= v2.M_Value[1];
 M_Val[1]:=(M_Val[1] + tv1 + tv2);
-if	M_Val[1] > INT_1W_U_MAXINT then
+if	M_Val[1] > MULTI_INT_1W_U_MAXINT then
 	begin
-	M_Val[2]:= (M_Val[1] DIV INT_1W_U_MAXINT_1);
-	M_Val[1]:= (M_Val[1] MOD INT_1W_U_MAXINT_1);
+	M_Val[2]:= (M_Val[1] DIV MULTI_INT_1W_U_MAXINT_1);
+	M_Val[1]:= (M_Val[1] MOD MULTI_INT_1W_U_MAXINT_1);
 	end
 else M_Val[2]:= 0;
 
 tv1:= v1.M_Value[2];
 tv2:= v2.M_Value[2];
 M_Val[2]:=(M_Val[2] + tv1 + tv2);
-if	M_Val[2] > INT_1W_U_MAXINT then
+if	M_Val[2] > MULTI_INT_1W_U_MAXINT then
 	begin
-	M_Val[3]:= (M_Val[2] DIV INT_1W_U_MAXINT_1);
-	M_Val[2]:= (M_Val[2] MOD INT_1W_U_MAXINT_1);
+	M_Val[3]:= (M_Val[2] DIV MULTI_INT_1W_U_MAXINT_1);
+	M_Val[2]:= (M_Val[2] MOD MULTI_INT_1W_U_MAXINT_1);
 	end
 else M_Val[3]:= 0;
 
 tv1:= v1.M_Value[3];
 tv2:= v2.M_Value[3];
 M_Val[3]:=(M_Val[3] + tv1 + tv2);
-if	M_Val[3] > INT_1W_U_MAXINT then
+if	M_Val[3] > MULTI_INT_1W_U_MAXINT then
 	begin
-	M_Val[4]:= (M_Val[3] DIV INT_1W_U_MAXINT_1);
-	M_Val[3]:= (M_Val[3] MOD INT_1W_U_MAXINT_1);
+	M_Val[4]:= (M_Val[3] DIV MULTI_INT_1W_U_MAXINT_1);
+	M_Val[3]:= (M_Val[3] MOD MULTI_INT_1W_U_MAXINT_1);
 	end
 else M_Val[4]:= 0;
 
 tv1:= v1.M_Value[4];
 tv2:= v2.M_Value[4];
 M_Val[4]:=(M_Val[4] + tv1 + tv2);
-if	M_Val[4] > INT_1W_U_MAXINT then
+if	M_Val[4] > MULTI_INT_1W_U_MAXINT then
 	begin
-	M_Val[5]:= (M_Val[4] DIV INT_1W_U_MAXINT_1);
-	M_Val[4]:= (M_Val[4] MOD INT_1W_U_MAXINT_1);
+	M_Val[5]:= (M_Val[4] DIV MULTI_INT_1W_U_MAXINT_1);
+	M_Val[4]:= (M_Val[4] MOD MULTI_INT_1W_U_MAXINT_1);
 	end
 else M_Val[5]:= 0;
 
 tv1:= v1.M_Value[5];
 tv2:= v2.M_Value[5];
 M_Val[5]:=(M_Val[5] + tv1 + tv2);
-if	M_Val[5] > INT_1W_U_MAXINT then
+if	M_Val[5] > MULTI_INT_1W_U_MAXINT then
 	begin
-	M_Val[5]:= (M_Val[5] MOD INT_1W_U_MAXINT_1);
+	M_Val[5]:= (M_Val[5] MOD MULTI_INT_1W_U_MAXINT_1);
 	Result.Defined_flag:= FALSE;
 	Result.Overflow_flag:=TRUE;
 	end;
@@ -5999,7 +6082,7 @@ end;
 (******************************************)
 function subtract_Multi_Int_X3(const v1,v2:Multi_Int_X3):Multi_Int_X3;
 var
-	M_Val	:array[0..Multi_X3_max] of INT_2W_S;
+	M_Val	:array[0..Multi_X3_max] of MULTI_INT_2W_S;
 begin
 Result.Overflow_flag:=FALSE;
 Result.Defined_flag:=TRUE;
@@ -6009,7 +6092,7 @@ M_Val[0]:=(v1.M_Value[0] - v2.M_Value[0]);
 if	M_Val[0] < 0 then
 	begin
 	M_Val[1]:= -1;
-	M_Val[0]:= (M_Val[0] + INT_1W_U_MAXINT_1);
+	M_Val[0]:= (M_Val[0] + MULTI_INT_1W_U_MAXINT_1);
 	end
 else M_Val[1]:= 0;
 
@@ -6017,7 +6100,7 @@ M_Val[1]:=(v1.M_Value[1] - v2.M_Value[1] + M_Val[1]);
 if	M_Val[1] < 0 then
 	begin
 	M_Val[2]:= -1;
-	M_Val[1]:= (M_Val[1] + INT_1W_U_MAXINT_1);
+	M_Val[1]:= (M_Val[1] + MULTI_INT_1W_U_MAXINT_1);
 	end
 else M_Val[2]:= 0;
 
@@ -6025,7 +6108,7 @@ M_Val[2]:=(v1.M_Value[2] - v2.M_Value[2] + M_Val[2]);
 if	M_Val[2] < 0 then
 	begin
 	M_Val[3]:= -1;
-	M_Val[2]:= (M_Val[2] + INT_1W_U_MAXINT_1);
+	M_Val[2]:= (M_Val[2] + MULTI_INT_1W_U_MAXINT_1);
 	end
 else M_Val[3]:= 0;
 
@@ -6033,7 +6116,7 @@ M_Val[3]:=(v1.M_Value[3] - v2.M_Value[3] + M_Val[3]);
 if	M_Val[3] < 0 then
 	begin
 	M_Val[4]:= -1;
-	M_Val[3]:= (M_Val[3] + INT_1W_U_MAXINT_1);
+	M_Val[3]:= (M_Val[3] + MULTI_INT_1W_U_MAXINT_1);
 	end
 else M_Val[4]:= 0;
 
@@ -6041,7 +6124,7 @@ M_Val[4]:=(v1.M_Value[4] - v2.M_Value[4] + M_Val[4]);
 if	M_Val[4] < 0 then
 	begin
 	M_Val[5]:= -1;
-	M_Val[4]:= (M_Val[4] + INT_1W_U_MAXINT_1);
+	M_Val[4]:= (M_Val[4] + MULTI_INT_1W_U_MAXINT_1);
 	end
 else M_Val[5]:= 0;
 
@@ -6515,9 +6598,9 @@ end;
 (******************************************)
 procedure multiply_Multi_Int_X3(const v1,v2:Multi_Int_X3;var Result:Multi_Int_X3);
 var
-	M_Val	:array[0..Multi_X3_max_x2] of INT_2W_U;
-	tv1,tv2	:INT_2W_U;
-	i,j,k	:INT_1W_U;
+	M_Val	:array[0..Multi_X3_max_x2] of MULTI_INT_2W_U;
+	tv1,tv2	:MULTI_INT_2W_U;
+	i,j,k	:MULTI_INT_1W_U;
 begin
 Result.Overflow_flag:=FALSE;
 Result.Defined_flag:=TRUE;
@@ -6532,14 +6615,14 @@ repeat
 	repeat
 		tv1:=v1.M_Value[i];
 		tv2:=v2.M_Value[j];
-		M_Val[i+j+1]:= (M_Val[i+j+1] + ((tv1 * tv2) DIV INT_1W_U_MAXINT_1));
-		M_Val[i+j]:= (M_Val[i+j] + ((tv1 * tv2) MOD INT_1W_U_MAXINT_1));
+		M_Val[i+j+1]:= (M_Val[i+j+1] + ((tv1 * tv2) DIV MULTI_INT_1W_U_MAXINT_1));
+		M_Val[i+j]:= (M_Val[i+j] + ((tv1 * tv2) MOD MULTI_INT_1W_U_MAXINT_1));
 		INC(i);
 	until (i > Multi_X3_max);
 	k:=0;
 	repeat
-		M_Val[k+1]:= M_Val[k+1] + (M_Val[k] DIV INT_1W_U_MAXINT_1);
-		M_Val[k]:= (M_Val[k] MOD INT_1W_U_MAXINT_1);
+		M_Val[k+1]:= M_Val[k+1] + (M_Val[k] DIV MULTI_INT_1W_U_MAXINT_1);
+		M_Val[k]:= (M_Val[k] MOD MULTI_INT_1W_U_MAXINT_1);
 		INC(k);
 	until (k > Multi_X3_max);
 	INC(j);
@@ -6623,7 +6706,7 @@ end;
 (*-----------------------*)
 procedure SqRoot(const v1:Multi_Int_X3;var VR,VREM:Multi_Int_X3);
 var
-D,D2		:INT_2W_S;
+D,D2		:MULTI_INT_2W_S;
 HS,LS		:ansistring;
 H,L,C,CC,T	:Multi_Int_X3;
 R_EXACT,
@@ -6746,10 +6829,10 @@ end;
 (********************v3********************)
 { Function exp_by_squaring_iterative(TV, P) }
 
-class operator Multi_Int_X3.**(const v1:Multi_Int_X3; const P:INT_2W_S):Multi_Int_X3;
+class operator Multi_Int_X3.**(const v1:Multi_Int_X3; const P:MULTI_INT_2W_S):Multi_Int_X3;
 var
 Y,TV,T,R	:Multi_Int_X3;
-PT			:INT_2W_S;
+PT			:MULTI_INT_2W_S;
 begin
 PT:= P;
 TV:= v1;
@@ -6840,13 +6923,13 @@ quotient,
 quotient_factor,
 next_dividend,
 ZERO				:Multi_Int_X3;
-T					:INT_1W_U;
-z,k					:INT_2W_U;
+T					:MULTI_INT_1W_U;
+z,k					:MULTI_INT_2W_U;
 i,
 nlz_bits_dividend,
 nlz_bits_divisor,
 nlz_bits_P_divisor,
-nlz_bits_diff		:INT_2W_S;
+nlz_bits_diff		:MULTI_INT_2W_S;
 
 begin
 ZERO:= 0;
@@ -6898,8 +6981,8 @@ else
 		i:= Multi_X3_max;
 		while (i >= 0) do
 			begin
-			P_quotient.M_Value[i]:= (((k * INT_2W_U(INT_1W_U_MAXINT_1)) + INT_2W_U(dividend.M_Value[i])) div INT_2W_U(divisor.M_Value[0]));
-			k:= (((k * INT_2W_U(INT_1W_U_MAXINT_1)) + INT_2W_U(dividend.M_Value[i])) - (INT_2W_U(P_quotient.M_Value[i]) * INT_2W_U(divisor.M_Value[0])));
+			P_quotient.M_Value[i]:= (((k * MULTI_INT_2W_U(MULTI_INT_1W_U_MAXINT_1)) + MULTI_INT_2W_U(dividend.M_Value[i])) div MULTI_INT_2W_U(divisor.M_Value[0]));
+			k:= (((k * MULTI_INT_2W_U(MULTI_INT_1W_U_MAXINT_1)) + MULTI_INT_2W_U(dividend.M_Value[i])) - (MULTI_INT_2W_U(P_quotient.M_Value[i]) * MULTI_INT_2W_U(divisor.M_Value[0])));
 			Dec(i);
 			end;
 		P_remainder.M_Value[0]:= k;
@@ -7011,15 +7094,10 @@ if	(X3_Last_Divisor = v2)
 and	(X3_Last_Dividend = v1)
 then
 	Result:= X3_Last_Quotient
-else
+else	// different values than last time
 	begin
 	intdivide_Shift_And_Sub_X3(v1,v2,Quotient,Remainder);
-{
-	if	(v1.Negative_flag <> v2.Negative_flag)
-	then Quotient.Negative_flag:= TRUE
-	else if	(v2.Negative_flag)
-	then Remainder.Negative_flag:= TRUE;
-}
+
 	X3_Last_Divisor:= v2;
 	X3_Last_Dividend:= v1;
 	X3_Last_Quotient:= Quotient;
@@ -7028,6 +7106,36 @@ else
 	Result:= Quotient;
 	end;
 
+if	(X3_Last_Remainder.Overflow_flag)
+or	(X3_Last_Quotient.Overflow_flag)
+then
+	begin
+	Multi_Int_OVERFLOW_ERROR:= TRUE;
+	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
+		begin
+		Raise EIntOverflow.create('Overflow on divide');
+		end;
+	end;
+
+{
+// same values as last time
+
+if	(X3_Last_Divisor = v2)
+and	(X3_Last_Dividend = v1)
+then
+	Result:= X3_Last_Quotient
+else
+	begin
+	intdivide_Shift_And_Sub_X3(v1,v2,Quotient,Remainder);
+
+	X3_Last_Divisor:= v2;
+	X3_Last_Dividend:= v1;
+	X3_Last_Quotient:= Quotient;
+	X3_Last_Remainder:= Remainder;
+
+	Result:= Quotient;
+	end;
+}
 end;
 
 
@@ -7070,15 +7178,10 @@ if	(X3_Last_Divisor = v2)
 and	(X3_Last_Dividend = v1)
 then
 	Result:= X3_Last_Remainder
-else
+else	// different values than last time
 	begin
 	intdivide_Shift_And_Sub_X3(v1,v2,Quotient,Remainder);
-{
-	if	(v1.Negative_flag <> v2.Negative_flag)
-	then Quotient.Negative_flag:= TRUE
-	else if	(v2.Negative_flag)
-	then Remainder.Negative_flag:= TRUE;
-}
+
 	X3_Last_Divisor:= v2;
 	X3_Last_Dividend:= v1;
 	X3_Last_Quotient:= Quotient;
@@ -7087,6 +7190,35 @@ else
 	Result:= Remainder;
 	end;
 
+if	(X3_Last_Remainder.Overflow_flag)
+or	(X3_Last_Quotient.Overflow_flag)
+then
+	begin
+	Multi_Int_OVERFLOW_ERROR:= TRUE;
+	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
+		begin
+		Raise EIntOverflow.create('Overflow on divide');
+		end;
+	end;
+{
+// same values as last time
+
+if	(X3_Last_Divisor = v2)
+and	(X3_Last_Dividend = v1)
+then
+	Result:= X3_Last_Remainder
+else
+	begin
+	intdivide_Shift_And_Sub_X3(v1,v2,Quotient,Remainder);
+
+	X3_Last_Divisor:= v2;
+	X3_Last_Dividend:= v1;
+	X3_Last_Quotient:= Quotient;
+	X3_Last_Remainder:= Remainder;
+
+	Result:= Remainder;
+	end;
+}
 end;
 
 
@@ -7287,7 +7419,7 @@ end;
 
 (******************************************)
 function Multi_Int_X4_Odd(const v1:Multi_Int_X4):boolean;
-var	bit1_mask	:INT_1W_U;
+var	bit1_mask	:MULTI_INT_1W_U;
 begin
 
 {$ifdef Overflow_Checks}
@@ -7323,7 +7455,7 @@ end;
 
 (******************************************)
 function Multi_Int_X4_Even(const v1:Multi_Int_X4):boolean;
-var	bit1_mask	:INT_1W_U;
+var	bit1_mask	:MULTI_INT_1W_U;
 begin
 
 {$ifdef Overflow_Checks}
@@ -7358,7 +7490,7 @@ end;
 
 
 (******************************************)
-function nlz_words_X4(m:Multi_Int_X4):INT_1W_U; // v2
+function nlz_words_X4(m:Multi_Int_X4):MULTI_INT_1W_U; // v2
 var
 i,n		:Multi_int32;
 fini	:boolean;
@@ -7380,18 +7512,18 @@ end;
 
 
 (******************************************)
-function nlz_MultiBits_X4(m:Multi_Int_X4):INT_1W_U;
-var	w,b	:INT_1W_U;
+function nlz_MultiBits_X4(m:Multi_Int_X4):MULTI_INT_1W_U;
+var	w,b	:MULTI_INT_1W_U;
 begin
 w:= nlz_words_X4(m);
 if (w <= Multi_X4_max)
-then Result:= nlz_bits(m.M_Value[Multi_X4_max-w]) + (w * INT_1W_SIZE)
-else Result:= (w * INT_1W_SIZE);
+then Result:= nlz_bits(m.M_Value[Multi_X4_max-w]) + (w * MULTI_INT_1W_SIZE)
+else Result:= (w * MULTI_INT_1W_SIZE);
 end;
 
 
 (******************************************)
-procedure RotateUp_NBits_Multi_Int_X4(Var v1:Multi_Int_X4; NBits:INT_1W_U);
+procedure RotateUp_NBits_Multi_Int_X4(Var v1:Multi_Int_X4; NBits:MULTI_INT_1W_U);
 var	carry_bits_1,
 	carry_bits_2,
 	carry_bits_3,
@@ -7402,7 +7534,7 @@ var	carry_bits_1,
 	carry_bits_8,
 	carry_bits_mask,
 	NBits_max,
-	NBits_carry	:INT_1W_U;
+	NBits_carry	:MULTI_INT_1W_U;
 	n			:integer;
 begin
 if NBits > 0 then
@@ -7420,7 +7552,7 @@ carry_bits_mask:= $FFFF;
 carry_bits_mask:= $FFFFFFFF;
 {$endif}
 
-NBits_max:= INT_1W_SIZE;
+NBits_max:= MULTI_INT_1W_SIZE;
 NBits_carry:= (NBits_max - NBits);
 carry_bits_mask:= (carry_bits_mask << NBits_carry);
 
@@ -7465,8 +7597,8 @@ end;
 
 
 (******************************************)
-procedure RotateUp_NWords_Multi_Int_X4(Var v1:Multi_Int_X4; NWords:INT_1W_U);
-var	n,t	:INT_1W_U;
+procedure RotateUp_NWords_Multi_Int_X4(Var v1:Multi_Int_X4; NWords:MULTI_INT_1W_U);
+var	n,t	:MULTI_INT_1W_U;
 begin
 if		(NWords > 0)
 and		(NWords <= Multi_X4_max) then
@@ -7490,18 +7622,18 @@ end;
 
 
 {******************************************}
-procedure RotateUp_MultiBits_Multi_Int_X4(Var v1:Multi_Int_X4; NBits:INT_1W_U);
+procedure RotateUp_MultiBits_Multi_Int_X4(Var v1:Multi_Int_X4; NBits:MULTI_INT_1W_U);
 var
 NWords_count,
-NBits_count		:INT_1W_U;
+NBits_count		:MULTI_INT_1W_U;
 
 begin
 if (NBits > 0) then
 	begin
-	if (NBits >= INT_1W_SIZE) then
+	if (NBits >= MULTI_INT_1W_SIZE) then
 		begin
-		NWords_count:= (NBits DIV INT_1W_SIZE);
-		NBits_count:= (NBits MOD INT_1W_SIZE);
+		NWords_count:= (NBits DIV MULTI_INT_1W_SIZE);
+		NBits_count:= (NBits MOD MULTI_INT_1W_SIZE);
 		RotateUp_NWords_Multi_Int_X4(v1, NWords_count);
 		end
 	else NBits_count:= NBits;
@@ -7511,21 +7643,23 @@ end;
 
 
 (******************************************)
-procedure Multi_Int_X4.RotateUp_MultiBits(Var v1:Multi_Int_X4; NBits:INT_1W_U);
+{
+procedure Multi_Int_X4.RotateUp_MultiBits(Var v1:Multi_Int_X4; NBits:MULTI_INT_1W_U);
+begin
+RotateUp_MultiBits_Multi_Int_X4(v1, NBits);
+end;
+}
+
+
+(******************************************)
+procedure RotateUp(Var v1:Multi_Int_X4; NBits:MULTI_INT_1W_U); overload;
 begin
 RotateUp_MultiBits_Multi_Int_X4(v1, NBits);
 end;
 
 
 (******************************************)
-procedure RotateUp(Var v1:Multi_Int_X4; NBits:INT_1W_U); overload;
-begin
-RotateUp_MultiBits_Multi_Int_X4(v1, NBits);
-end;
-
-
-(******************************************)
-procedure RotateDown_NBits_Multi_Int_X4(Var v1:Multi_Int_X4; NBits:INT_1W_U);
+procedure RotateDown_NBits_Multi_Int_X4(Var v1:Multi_Int_X4; NBits:MULTI_INT_1W_U);
 var	carry_bits_1,
 	carry_bits_2,
 	carry_bits_mask,
@@ -7536,7 +7670,7 @@ var	carry_bits_1,
 	carry_bits_7,
 	carry_bits_8,
 	NBits_max,
-	NBits_carry	:INT_1W_U;
+	NBits_carry	:MULTI_INT_1W_U;
 	n			:integer;
 begin
 if NBits > 0 then
@@ -7554,7 +7688,7 @@ carry_bits_mask:= $FFFF;
 carry_bits_mask:= $FFFFFFFF;
 {$endif}
 
-NBits_max:= INT_1W_SIZE;
+NBits_max:= MULTI_INT_1W_SIZE;
 NBits_carry:= (NBits_max - NBits);
 carry_bits_mask:= (carry_bits_mask >> NBits_carry);
 
@@ -7599,8 +7733,8 @@ end;
 
 
 (******************************************)
-procedure RotateDown_NWords_Multi_Int_X4(Var v1:Multi_Int_X4; NWords:INT_1W_U);
-var	n,t	:INT_1W_U;
+procedure RotateDown_NWords_Multi_Int_X4(Var v1:Multi_Int_X4; NWords:MULTI_INT_1W_U);
+var	n,t	:MULTI_INT_1W_U;
 begin
 if		(NWords > 0)
 and		(NWords <= Multi_X4_max) then
@@ -7624,17 +7758,17 @@ end;
 
 
 {******************************************}
-procedure RotateDown_MultiBits_Multi_Int_X4(Var v1:Multi_Int_X4; NBits:INT_1W_U);
+procedure RotateDown_MultiBits_Multi_Int_X4(Var v1:Multi_Int_X4; NBits:MULTI_INT_1W_U);
 var
 NWords_count,
-NBits_count		:INT_1W_U;
+NBits_count		:MULTI_INT_1W_U;
 
 begin
 
-if (NBits >= INT_1W_SIZE) then
+if (NBits >= MULTI_INT_1W_SIZE) then
 	begin
-	NWords_count:= (NBits DIV INT_1W_SIZE);
-	NBits_count:= (NBits MOD INT_1W_SIZE);
+	NWords_count:= (NBits DIV MULTI_INT_1W_SIZE);
+	NBits_count:= (NBits MOD MULTI_INT_1W_SIZE);
 	RotateDown_NWords_Multi_Int_X4(v1, NWords_count);
 	end
 else NBits_count:= NBits;
@@ -7644,26 +7778,28 @@ end;
 
 
 (******************************************)
-procedure Multi_Int_X4.RotateDown_MultiBits(Var v1:Multi_Int_X4; NBits:INT_1W_U);
+{
+procedure Multi_Int_X4.RotateDown_MultiBits(Var v1:Multi_Int_X4; NBits:MULTI_INT_1W_U);
+begin
+RotateDown_MultiBits_Multi_Int_X4(v1, NBits);
+end;
+}
+
+
+(******************************************)
+procedure RotateDown(Var v1:Multi_Int_X4; NBits:MULTI_INT_1W_U); overload;
 begin
 RotateDown_MultiBits_Multi_Int_X4(v1, NBits);
 end;
 
 
 (******************************************)
-procedure RotateDown(Var v1:Multi_Int_X4; NBits:INT_1W_U); overload;
-begin
-RotateDown_MultiBits_Multi_Int_X4(v1, NBits);
-end;
-
-
-(******************************************)
-procedure ShiftUp_NBits_Multi_Int_X4(Var v1:Multi_Int_X4; NBits:INT_1W_U);
+procedure ShiftUp_NBits_Multi_Int_X4(Var v1:Multi_Int_X4; NBits:MULTI_INT_1W_U);
 var	carry_bits_1,
 	carry_bits_2,
 	carry_bits_mask,
 	NBits_max,
-	NBits_carry	:INT_1W_U;
+	NBits_carry	:MULTI_INT_1W_U;
 	n			:integer;
 begin
 if NBits > 0 then
@@ -7681,7 +7817,7 @@ carry_bits_mask:= $FFFF;
 carry_bits_mask:= $FFFFFFFF;
 {$endif}
 
-NBits_max:= INT_1W_SIZE;
+NBits_max:= MULTI_INT_1W_SIZE;
 NBits_carry:= (NBits_max - NBits);
 carry_bits_mask:= (carry_bits_mask << NBits_carry);
 
@@ -7723,8 +7859,8 @@ end;
 
 
 (******************************************)
-procedure ShiftUp_NWords_Multi_Int_X4(Var v1:Multi_Int_X4; NWords:INT_1W_U);
-var	n	:INT_1W_U;
+procedure ShiftUp_NWords_Multi_Int_X4(Var v1:Multi_Int_X4; NWords:MULTI_INT_1W_U);
+var	n	:MULTI_INT_1W_U;
 begin
 if		(NWords > 0)
 and		(NWords <= Multi_X4_max) then
@@ -7747,12 +7883,12 @@ end;
 
 
 (******************************************)
-procedure ShiftDown_NBits_Multi_Int_X4(Var v1:Multi_Int_X4; NBits:INT_1W_U);
+procedure ShiftDown_NBits_Multi_Int_X4(Var v1:Multi_Int_X4; NBits:MULTI_INT_1W_U);
 var	carry_bits_1,
 	carry_bits_2,
 	carry_bits_mask,
 	NBits_max,
-	NBits_carry	:INT_1W_U;
+	NBits_carry	:MULTI_INT_1W_U;
 	n			:integer;
 begin
 if NBits > 0 then
@@ -7770,7 +7906,7 @@ carry_bits_mask:= $FFFF;
 carry_bits_mask:= $FFFFFFFF;
 {$endif}
 
-NBits_max:= INT_1W_SIZE;
+NBits_max:= MULTI_INT_1W_SIZE;
 NBits_carry:= (NBits_max - NBits);
 carry_bits_mask:= (carry_bits_mask >> NBits_carry);
 
@@ -7812,8 +7948,8 @@ end;
 
 
 (******************************************)
-procedure ShiftDown_NWords_Multi_Int_X4(Var v1:Multi_Int_X4; NWords:INT_1W_U);
-var	n	:INT_1W_U;
+procedure ShiftDown_NWords_Multi_Int_X4(Var v1:Multi_Int_X4; NWords:MULTI_INT_1W_U);
+var	n	:MULTI_INT_1W_U;
 begin
 if		(NWords > 0)
 and		(NWords <= Multi_X4_max) then
@@ -7836,18 +7972,18 @@ end;
 
 
 {******************************************}
-procedure ShiftUp_MultiBits_Multi_Int_X4(Var v1:Multi_Int_X4; NBits:INT_1W_U);
+procedure ShiftUp_MultiBits_Multi_Int_X4(Var v1:Multi_Int_X4; NBits:MULTI_INT_1W_U);
 var
 NWords_count,
-NBits_count		:INT_1W_U;
+NBits_count		:MULTI_INT_1W_U;
 
 begin
 if (NBits > 0) then
 	begin
-	if (NBits >= INT_1W_SIZE) then
+	if (NBits >= MULTI_INT_1W_SIZE) then
 		begin
-		NWords_count:= (NBits DIV INT_1W_SIZE);
-		NBits_count:= (NBits MOD INT_1W_SIZE);
+		NWords_count:= (NBits DIV MULTI_INT_1W_SIZE);
+		NBits_count:= (NBits MOD MULTI_INT_1W_SIZE);
 		ShiftUp_NWords_Multi_Int_X4(v1, NWords_count);
 		end
 	else NBits_count:= NBits;
@@ -7857,31 +7993,33 @@ end;
 
 
 {******************************************}
-procedure Multi_Int_X4.ShiftUp_MultiBits(Var v1:Multi_Int_X4; NBits:INT_1W_U);
+{
+procedure Multi_Int_X4.ShiftUp_MultiBits(Var v1:Multi_Int_X4; NBits:MULTI_INT_1W_U);
+begin
+ShiftUp_MultiBits_Multi_Int_X4(v1, NBits);
+end;
+}
+
+
+{******************************************}
+procedure ShiftUp(Var v1:Multi_Int_X4; NBits:MULTI_INT_1W_U); overload;
 begin
 ShiftUp_MultiBits_Multi_Int_X4(v1, NBits);
 end;
 
 
 {******************************************}
-procedure ShiftUp(Var v1:Multi_Int_X4; NBits:INT_1W_U); overload;
-begin
-ShiftUp_MultiBits_Multi_Int_X4(v1, NBits);
-end;
-
-
-{******************************************}
-procedure ShiftDown_MultiBits_Multi_Int_X4(Var v1:Multi_Int_X4; NBits:INT_1W_U);
+procedure ShiftDown_MultiBits_Multi_Int_X4(Var v1:Multi_Int_X4; NBits:MULTI_INT_1W_U);
 var
 NWords_count,
-NBits_count		:INT_1W_U;
+NBits_count		:MULTI_INT_1W_U;
 
 begin
 
-if (NBits >= INT_1W_SIZE) then
+if (NBits >= MULTI_INT_1W_SIZE) then
 	begin
-	NWords_count:= (NBits DIV INT_1W_SIZE);
-	NBits_count:= (NBits MOD INT_1W_SIZE);
+	NWords_count:= (NBits DIV MULTI_INT_1W_SIZE);
+	NBits_count:= (NBits MOD MULTI_INT_1W_SIZE);
 	ShiftDown_NWords_Multi_Int_X4(v1, NWords_count);
 	end
 else NBits_count:= NBits;
@@ -7891,14 +8029,16 @@ end;
 
 
 {******************************************}
-procedure Multi_Int_X4.ShiftDown_MultiBits(Var v1:Multi_Int_X4; NBits:INT_1W_U);
+{
+procedure Multi_Int_X4.ShiftDown_MultiBits(Var v1:Multi_Int_X4; NBits:MULTI_INT_1W_U);
 begin
 ShiftDown_MultiBits_Multi_Int_X4(v1, NBits);
 end;
+}
 
 
 {******************************************}
-procedure ShiftDown(Var v1:Multi_Int_X4; NBits:INT_1W_U); overload;
+procedure ShiftDown(Var v1:Multi_Int_X4; NBits:MULTI_INT_1W_U); overload;
 begin
 ShiftDown_MultiBits_Multi_Int_X4(v1, NBits);
 end;
@@ -8055,7 +8195,7 @@ end;
 
 (******************************************)
 function To_Multi_Int_X4(const v1:Multi_Int_XV):Multi_Int_X4;
-var n :INT_1W_U;
+var n :MULTI_INT_1W_U;
 begin
 Result.Overflow_flag:= v1.Overflow_flag;
 Result.Defined_flag:= v1.Defined_flag;
@@ -8096,7 +8236,7 @@ end;
 
 (******************************************)
 function To_Multi_Int_X4(const v1:Multi_Int_X3):Multi_Int_X4;
-var n :INT_1W_U;
+var n :MULTI_INT_1W_U;
 begin
 Result.Overflow_flag:= v1.Overflow_flag;
 Result.Defined_flag:= v1.Defined_flag;
@@ -8141,7 +8281,7 @@ end;
 
 (******************************************)
 function To_Multi_Int_X4(const v1:Multi_Int_X2):Multi_Int_X4;
-var n :INT_1W_U;
+var n :MULTI_INT_1W_U;
 begin
 Result.Overflow_flag:= v1.Overflow_flag;
 Result.Defined_flag:= v1.Defined_flag;
@@ -8187,7 +8327,7 @@ end;
 (******************************************)
 procedure Multi_Int_X2_to_Multi_Int_X4(const v1:Multi_Int_X2; var MI:Multi_Int_X4);
 var
-	n				:INT_1W_U;
+	n				:MULTI_INT_1W_U;
 begin
 MI.Overflow_flag:= v1.Overflow_flag;
 MI.Defined_flag:= v1.Defined_flag;
@@ -8240,7 +8380,7 @@ end;
 (******************************************)
 procedure Multi_Int_X3_to_Multi_Int_X4(const v1:Multi_Int_X3; var MI:Multi_Int_X4);
 var
-	n				:INT_1W_U;
+	n				:MULTI_INT_1W_U;
 begin
 MI.Overflow_flag:= v1.Overflow_flag;
 MI.Defined_flag:= v1.Defined_flag;
@@ -8294,8 +8434,8 @@ end;
 procedure ansistring_to_Multi_Int_X4(const v1:ansistring; var mi:Multi_Int_X4);
 label 999;
 var
-	i,b,c,e		:INT_2W_U;
-	M_Val		:array[0..Multi_X4_max] of INT_2W_U;
+	i,b,c,e		:MULTI_INT_2W_U;
+	M_Val		:array[0..Multi_X4_max] of MULTI_INT_2W_U;
 	Signeg,
 	Zeroneg		:boolean;
 begin
@@ -8319,7 +8459,7 @@ M_Val[7]:= 0;
 if	(length(v1) > 0) then
 	begin
 	b:=low(ansistring);
-	e:=b + INT_2W_U(length(v1)) - 1;
+	e:=b + MULTI_INT_2W_U(length(v1)) - 1;
 	if	(v1[b] = '-') then
 		begin
 		Signeg:= TRUE;
@@ -8350,49 +8490,49 @@ if	(length(v1) > 0) then
 		M_Val[6]:=(M_Val[6] * 10);
 		M_Val[7]:=(M_Val[7] * 10);
 
-		if	M_Val[0] > INT_1W_U_MAXINT then
+		if	M_Val[0] > MULTI_INT_1W_U_MAXINT then
 			begin
-			M_Val[1]:=M_Val[1] + (M_Val[0] DIV INT_1W_U_MAXINT_1);
-			M_Val[0]:=(M_Val[0] MOD INT_1W_U_MAXINT_1);
+			M_Val[1]:=M_Val[1] + (M_Val[0] DIV MULTI_INT_1W_U_MAXINT_1);
+			M_Val[0]:=(M_Val[0] MOD MULTI_INT_1W_U_MAXINT_1);
 			end;
 
-		if	M_Val[1] > INT_1W_U_MAXINT then
+		if	M_Val[1] > MULTI_INT_1W_U_MAXINT then
 			begin
-			M_Val[2]:=M_Val[2] + (M_Val[1] DIV INT_1W_U_MAXINT_1);
-			M_Val[1]:=(M_Val[1] MOD INT_1W_U_MAXINT_1);
+			M_Val[2]:=M_Val[2] + (M_Val[1] DIV MULTI_INT_1W_U_MAXINT_1);
+			M_Val[1]:=(M_Val[1] MOD MULTI_INT_1W_U_MAXINT_1);
 			end;
 
-		if	M_Val[2] > INT_1W_U_MAXINT then
+		if	M_Val[2] > MULTI_INT_1W_U_MAXINT then
 			begin
-			M_Val[3]:=M_Val[3] + (M_Val[2] DIV INT_1W_U_MAXINT_1);
-			M_Val[2]:=(M_Val[2] MOD INT_1W_U_MAXINT_1);
+			M_Val[3]:=M_Val[3] + (M_Val[2] DIV MULTI_INT_1W_U_MAXINT_1);
+			M_Val[2]:=(M_Val[2] MOD MULTI_INT_1W_U_MAXINT_1);
 			end;
 
-		if	M_Val[3] > INT_1W_U_MAXINT then
+		if	M_Val[3] > MULTI_INT_1W_U_MAXINT then
 			begin
-			M_Val[4]:=M_Val[4] + (M_Val[3] DIV INT_1W_U_MAXINT_1);
-			M_Val[3]:=(M_Val[3] MOD INT_1W_U_MAXINT_1);
+			M_Val[4]:=M_Val[4] + (M_Val[3] DIV MULTI_INT_1W_U_MAXINT_1);
+			M_Val[3]:=(M_Val[3] MOD MULTI_INT_1W_U_MAXINT_1);
 			end;
 
-		if	M_Val[4] > INT_1W_U_MAXINT then
+		if	M_Val[4] > MULTI_INT_1W_U_MAXINT then
 			begin
-			M_Val[5]:=M_Val[5] + (M_Val[4] DIV INT_1W_U_MAXINT_1);
-			M_Val[4]:=(M_Val[4] MOD INT_1W_U_MAXINT_1);
+			M_Val[5]:=M_Val[5] + (M_Val[4] DIV MULTI_INT_1W_U_MAXINT_1);
+			M_Val[4]:=(M_Val[4] MOD MULTI_INT_1W_U_MAXINT_1);
 			end;
 
-		if	M_Val[5] > INT_1W_U_MAXINT then
+		if	M_Val[5] > MULTI_INT_1W_U_MAXINT then
 			begin
-			M_Val[6]:=M_Val[6] + (M_Val[5] DIV INT_1W_U_MAXINT_1);
-			M_Val[5]:=(M_Val[5] MOD INT_1W_U_MAXINT_1);
+			M_Val[6]:=M_Val[6] + (M_Val[5] DIV MULTI_INT_1W_U_MAXINT_1);
+			M_Val[5]:=(M_Val[5] MOD MULTI_INT_1W_U_MAXINT_1);
 			end;
 
-		if	M_Val[6] > INT_1W_U_MAXINT then
+		if	M_Val[6] > MULTI_INT_1W_U_MAXINT then
 			begin
-			M_Val[7]:=M_Val[7] + (M_Val[6] DIV INT_1W_U_MAXINT_1);
-			M_Val[6]:=(M_Val[6] MOD INT_1W_U_MAXINT_1);
+			M_Val[7]:=M_Val[7] + (M_Val[6] DIV MULTI_INT_1W_U_MAXINT_1);
+			M_Val[6]:=(M_Val[6] MOD MULTI_INT_1W_U_MAXINT_1);
 			end;
 
-		if	M_Val[7] > INT_1W_U_MAXINT then
+		if	M_Val[7] > MULTI_INT_1W_U_MAXINT then
 			begin
 			mi.Defined_flag:=FALSE;
 			mi.Overflow_flag:=TRUE;
@@ -8452,22 +8592,22 @@ end;
 
 {$ifdef 32bit}
 (******************************************)
-procedure INT_4W_S_to_Multi_Int_X4(const v1:INT_4W_S; var mi:Multi_Int_X4);
+procedure MULTI_INT_4W_S_to_Multi_Int_X4(const v1:MULTI_INT_4W_S; var mi:Multi_Int_X4);
 var
-v	:INT_4W_U;
-n	:INT_2W_U;
+v	:MULTI_INT_4W_U;
+n	:MULTI_INT_2W_U;
 begin
 mi.Overflow_flag:=FALSE;
 mi.Defined_flag:=TRUE;
 v:= Abs(v1);
 
 v:= v1;
-mi.M_Value[0]:= INT_1W_U(v MOD INT_1W_U_MAXINT_1);
-v:= (v div INT_1W_U_MAXINT_1);
-mi.M_Value[1]:= INT_1W_U(v MOD INT_1W_U_MAXINT_1);
-v:= (v div INT_1W_U_MAXINT_1);
-mi.M_Value[2]:= INT_1W_U(v MOD INT_1W_U_MAXINT_1);
-v:= (v div INT_1W_U_MAXINT_1);
+mi.M_Value[0]:= MULTI_INT_1W_U(v MOD MULTI_INT_1W_U_MAXINT_1);
+v:= (v div MULTI_INT_1W_U_MAXINT_1);
+mi.M_Value[1]:= MULTI_INT_1W_U(v MOD MULTI_INT_1W_U_MAXINT_1);
+v:= (v div MULTI_INT_1W_U_MAXINT_1);
+mi.M_Value[2]:= MULTI_INT_1W_U(v MOD MULTI_INT_1W_U_MAXINT_1);
+v:= (v div MULTI_INT_1W_U_MAXINT_1);
 mi.M_Value[3]:= v;
 
 mi.M_Value[4]:= 0;
@@ -8482,29 +8622,29 @@ end;
 
 
 (******************************************)
-class operator Multi_Int_X4.implicit(const v1:INT_4W_S):Multi_Int_X4;
+class operator Multi_Int_X4.implicit(const v1:MULTI_INT_4W_S):Multi_Int_X4;
 begin
-INT_4W_S_to_Multi_Int_X4(v1,Result);
+MULTI_INT_4W_S_to_Multi_Int_X4(v1,Result);
 end;
 
 
 (******************************************)
-procedure INT_4W_U_to_Multi_Int_X4(const v1:INT_4W_U; var mi:Multi_Int_X4);
+procedure MULTI_INT_4W_U_to_Multi_Int_X4(const v1:MULTI_INT_4W_U; var mi:Multi_Int_X4);
 var
-v	:INT_4W_U;
-n	:INT_2W_U;
+v	:MULTI_INT_4W_U;
+n	:MULTI_INT_2W_U;
 begin
 mi.Overflow_flag:=FALSE;
 mi.Defined_flag:=TRUE;
 mi.Negative_flag:= Multi_UBool_FALSE;
 
 v:= v1;
-mi.M_Value[0]:= INT_1W_U(v MOD INT_1W_U_MAXINT_1);
-v:= (v div INT_1W_U_MAXINT_1);
-mi.M_Value[1]:= INT_1W_U(v MOD INT_1W_U_MAXINT_1);
-v:= (v div INT_1W_U_MAXINT_1);
-mi.M_Value[2]:= INT_1W_U(v MOD INT_1W_U_MAXINT_1);
-v:= (v div INT_1W_U_MAXINT_1);
+mi.M_Value[0]:= MULTI_INT_1W_U(v MOD MULTI_INT_1W_U_MAXINT_1);
+v:= (v div MULTI_INT_1W_U_MAXINT_1);
+mi.M_Value[1]:= MULTI_INT_1W_U(v MOD MULTI_INT_1W_U_MAXINT_1);
+v:= (v div MULTI_INT_1W_U_MAXINT_1);
+mi.M_Value[2]:= MULTI_INT_1W_U(v MOD MULTI_INT_1W_U_MAXINT_1);
+v:= (v div MULTI_INT_1W_U_MAXINT_1);
 mi.M_Value[3]:= v;
 
 mi.M_Value[4]:= 0;
@@ -8515,15 +8655,15 @@ end;
 
 
 (******************************************)
-class operator Multi_Int_X4.implicit(const v1:INT_4W_U):Multi_Int_X4;
+class operator Multi_Int_X4.implicit(const v1:MULTI_INT_4W_U):Multi_Int_X4;
 begin
-INT_4W_U_to_Multi_Int_X4(v1,Result);
+MULTI_INT_4W_U_to_Multi_Int_X4(v1,Result);
 end;
 {$endif}
 
 
 (******************************************)
-procedure INT_2W_S_to_Multi_Int_X4(const v1:INT_2W_S; var mi:Multi_Int_X4);
+procedure MULTI_INT_2W_S_to_Multi_Int_X4(const v1:MULTI_INT_2W_S; var mi:Multi_Int_X4);
 begin
 mi.Overflow_flag:=FALSE;
 mi.Defined_flag:=TRUE;
@@ -8537,34 +8677,34 @@ mi.M_Value[7]:= 0;
 if (v1 < 0) then
 	begin
 	mi.Negative_flag:= Multi_UBool_TRUE;
-	mi.M_Value[0]:= (ABS(v1) MOD INT_1W_U_MAXINT_1);
-	mi.M_Value[1]:= (ABS(v1) DIV INT_1W_U_MAXINT_1);
+	mi.M_Value[0]:= (ABS(v1) MOD MULTI_INT_1W_U_MAXINT_1);
+	mi.M_Value[1]:= (ABS(v1) DIV MULTI_INT_1W_U_MAXINT_1);
 	end
 else
 	begin
 	mi.Negative_flag:= Multi_UBool_FALSE;
-	mi.M_Value[0]:= (v1 MOD INT_1W_U_MAXINT_1);
-	mi.M_Value[1]:= (v1 DIV INT_1W_U_MAXINT_1);
+	mi.M_Value[0]:= (v1 MOD MULTI_INT_1W_U_MAXINT_1);
+	mi.M_Value[1]:= (v1 DIV MULTI_INT_1W_U_MAXINT_1);
 	end;
 end;
 
 
 (******************************************)
-class operator Multi_Int_X4.implicit(const v1:INT_2W_S):Multi_Int_X4;
+class operator Multi_Int_X4.implicit(const v1:MULTI_INT_2W_S):Multi_Int_X4;
 begin
-INT_2W_S_to_Multi_Int_X4(v1,Result);
+MULTI_INT_2W_S_to_Multi_Int_X4(v1,Result);
 end;
 
 
 (******************************************)
-procedure INT_2W_U_to_Multi_Int_X4(const v1:INT_2W_U; var mi:Multi_Int_X4);
+procedure MULTI_INT_2W_U_to_Multi_Int_X4(const v1:MULTI_INT_2W_U; var mi:Multi_Int_X4);
 begin
 mi.Overflow_flag:=FALSE;
 mi.Defined_flag:=TRUE;
 mi.Negative_flag:= Multi_UBool_FALSE;
 
-mi.M_Value[0]:= (v1 MOD INT_1W_U_MAXINT_1);
-mi.M_Value[1]:= (v1 DIV INT_1W_U_MAXINT_1);
+mi.M_Value[0]:= (v1 MOD MULTI_INT_1W_U_MAXINT_1);
+mi.M_Value[1]:= (v1 DIV MULTI_INT_1W_U_MAXINT_1);
 mi.M_Value[2]:= 0;
 mi.M_Value[3]:= 0;
 mi.M_Value[4]:= 0;
@@ -8575,9 +8715,9 @@ end;
 
 
 (******************************************)
-class operator Multi_Int_X4.implicit(const v1:INT_2W_U):Multi_Int_X4;
+class operator Multi_Int_X4.implicit(const v1:MULTI_INT_2W_U):Multi_Int_X4;
 begin
-INT_2W_U_to_Multi_Int_X4(v1,Result);
+MULTI_INT_2W_U_to_Multi_Int_X4(v1,Result);
 end;
 
 
@@ -8592,7 +8732,7 @@ begin
 
 Multi_Int_OVERFLOW_ERROR:= FALSE;
 
-FloatToDecimal(R_FLOATREC, v1, SINGLE_TYPE_PRECISION_DIGITS, 0);
+FloatToDecimal(R_FLOATREC, v1, MULTI_SINGLE_TYPE_PRECISION_DIGITS, 0);
 ansistring_to_Multi_Int_X4(AddCharR('0',R_FLOATREC.digits,R_FLOATREC.Exponent), R);
 
 if (R.Overflow) then
@@ -8623,7 +8763,7 @@ begin
 
 Multi_Int_OVERFLOW_ERROR:= FALSE;
 
-FloatToDecimal(R_FLOATREC, v1, REAL_TYPE_PRECISION_DIGITS, 0);
+FloatToDecimal(R_FLOATREC, v1, MULTI_REAL_TYPE_PRECISION_DIGITS, 0);
 ansistring_to_Multi_Int_X4(AddCharR('0',R_FLOATREC.digits,R_FLOATREC.Exponent), R);
 
 if (R.Overflow) then
@@ -8654,7 +8794,7 @@ begin
 
 Multi_Int_OVERFLOW_ERROR:= FALSE;
 
-FloatToDecimal(R_FLOATREC, v1, DOUBLE_TYPE_PRECISION_DIGITS, 0);
+FloatToDecimal(R_FLOATREC, v1, MULTI_DOUBLE_TYPE_PRECISION_DIGITS, 0);
 ansistring_to_Multi_Int_X4(AddCharR('0',R_FLOATREC.digits,R_FLOATREC.Exponent), R);
 
 if (R.Overflow) then
@@ -8678,7 +8818,7 @@ end;
 class operator Multi_Int_X4.implicit(const v1:Multi_Int_X4):Single;
 var
 R,V,M		:Single;
-i			:INT_1W_U;
+i			:MULTI_INT_1W_U;
 finished	:boolean;
 begin
 {$WARNING Float to Multi_Int type conversion loses some precision }
@@ -8696,7 +8836,7 @@ then
 
 Multi_Int_OVERFLOW_ERROR:= FALSE;
 finished:= FALSE;
-M:= INT_1W_U_MAXINT_1;
+M:= MULTI_INT_1W_U_MAXINT_1;
 
 R:=	v1.M_Value[0];
 i:= 1;
@@ -8722,7 +8862,7 @@ do
 					end;
 				end;
 			end;
-			V:= INT_1W_U_MAXINT_1;
+			V:= MULTI_INT_1W_U_MAXINT_1;
 			try M:= (M * V);
 			except finished:= TRUE;
 			end;
@@ -8750,7 +8890,7 @@ end;
 class operator Multi_Int_X4.implicit(const v1:Multi_Int_X4):Real;
 var
 	R,V,M	:Real;
-	i		:INT_1W_U;
+	i		:MULTI_INT_1W_U;
 finished	:boolean;
 begin
 if	(Not v1.Defined_flag)
@@ -8766,7 +8906,7 @@ then
 
 Multi_Int_OVERFLOW_ERROR:= FALSE;
 finished:= FALSE;
-M:= INT_1W_U_MAXINT_1;
+M:= MULTI_INT_1W_U_MAXINT_1;
 
 R:=	v1.M_Value[0];
 i:= 1;
@@ -8792,7 +8932,7 @@ do
 					end;
 				end;
 			end;
-			V:= INT_1W_U_MAXINT_1;
+			V:= MULTI_INT_1W_U_MAXINT_1;
 			try M:= (M * V);
 			except finished:= TRUE;
 			end;
@@ -8820,7 +8960,7 @@ end;
 class operator Multi_Int_X4.implicit(const v1:Multi_Int_X4):Double;
 var
 	R,V,M	:Double;
-	i		:INT_1W_U;
+	i		:MULTI_INT_1W_U;
 finished	:boolean;
 begin
 if	(Not v1.Defined_flag)
@@ -8836,7 +8976,7 @@ then
 
 Multi_Int_OVERFLOW_ERROR:= FALSE;
 finished:= FALSE;
-M:= INT_1W_U_MAXINT_1;
+M:= MULTI_INT_1W_U_MAXINT_1;
 
 R:=	v1.M_Value[0];
 i:= 1;
@@ -8862,7 +9002,7 @@ do
 					end;
 				end;
 			end;
-			V:= INT_1W_U_MAXINT_1;
+			V:= MULTI_INT_1W_U_MAXINT_1;
 			try M:= (M * V);
 			except finished:= TRUE;
 			end;
@@ -8887,8 +9027,8 @@ end;
 
 
 (******************************************)
-class operator Multi_Int_X4.implicit(const v1:Multi_Int_X4):INT_2W_S;
-var	R	:INT_2W_U;
+class operator Multi_Int_X4.implicit(const v1:Multi_Int_X4):MULTI_INT_2W_S;
+var	R	:MULTI_INT_2W_U;
 begin
 if	(Not v1.Defined_flag)
 then
@@ -8901,9 +9041,9 @@ then
 	exit;
 	end;
 
-R:= (INT_2W_U(v1.M_Value[0]) + (INT_2W_U(v1.M_Value[1]) * INT_1W_U_MAXINT_1));
+R:= (MULTI_INT_2W_U(v1.M_Value[0]) + (MULTI_INT_2W_U(v1.M_Value[1]) * MULTI_INT_1W_U_MAXINT_1));
 
-if (R >= INT_2W_S_MAXINT)
+if (R >= MULTI_INT_2W_S_MAXINT)
 or	(v1.M_Value[2] <> 0)
 or	(v1.M_Value[3] <> 0)
 or	(v1.M_Value[4] <> 0)
@@ -8921,14 +9061,14 @@ then
 	end;
 
 if v1.Negative_flag
-then Result:= INT_2W_S(-R)
-else Result:= INT_2W_S(R);
+then Result:= MULTI_INT_2W_S(-R)
+else Result:= MULTI_INT_2W_S(R);
 end;
 
 
 (******************************************)
-class operator Multi_Int_X4.implicit(const v1:Multi_Int_X4):INT_2W_U;
-var	R	:INT_2W_U;
+class operator Multi_Int_X4.implicit(const v1:Multi_Int_X4):MULTI_INT_2W_U;
+var	R	:MULTI_INT_2W_U;
 begin
 Multi_Int_OVERFLOW_ERROR:= FALSE;
 if	(Not v1.Defined_flag)
@@ -8942,8 +9082,8 @@ then
 	exit;
 	end;
 
-R:= (INT_2W_U(v1.M_Value[1]) << INT_1W_SIZE);
-R:= (R OR INT_2W_U(v1.M_Value[0]));
+R:= (MULTI_INT_2W_U(v1.M_Value[1]) << MULTI_INT_1W_SIZE);
+R:= (R OR MULTI_INT_2W_U(v1.M_Value[0]));
 
 if	(v1.M_Value[2] <> 0)
 or	(v1.M_Value[3] <> 0)
@@ -8967,8 +9107,8 @@ end;
 
 
 (******************************************)
-class operator Multi_Int_X4.implicit(const v1:Multi_Int_X4):INT_1W_S;
-var	R	:INT_2W_U;
+class operator Multi_Int_X4.implicit(const v1:Multi_Int_X4):MULTI_INT_1W_S;
+var	R	:MULTI_INT_2W_U;
 begin
 Multi_Int_OVERFLOW_ERROR:= FALSE;
 if	(Not v1.Defined_flag)
@@ -8982,9 +9122,9 @@ then
 	exit;
 	end;
 
-R:= (INT_2W_U(v1.M_Value[0]) + (INT_2W_U(v1.M_Value[1]) * INT_1W_U_MAXINT_1));
+R:= (MULTI_INT_2W_U(v1.M_Value[0]) + (MULTI_INT_2W_U(v1.M_Value[1]) * MULTI_INT_1W_U_MAXINT_1));
 
-if	(R > INT_1W_S_MAXINT)
+if	(R > MULTI_INT_1W_S_MAXINT)
 or	(v1.M_Value[2] <> 0)
 or	(v1.M_Value[3] <> 0)
 or	(v1.M_Value[4] <> 0)
@@ -9003,14 +9143,14 @@ then
 	end;
 
 if v1.Negative_flag
-then Result:= INT_1W_S(-R)
-else Result:= INT_1W_S(R);
+then Result:= MULTI_INT_1W_S(-R)
+else Result:= MULTI_INT_1W_S(R);
 end;
 
 
 (******************************************)
-class operator Multi_Int_X4.implicit(const v1:Multi_Int_X4):INT_1W_U;
-var	R	:INT_2W_U;
+class operator Multi_Int_X4.implicit(const v1:Multi_Int_X4):MULTI_INT_1W_U;
+var	R	:MULTI_INT_2W_U;
 begin
 Multi_Int_OVERFLOW_ERROR:= FALSE;
 if	(Not v1.Defined_flag)
@@ -9025,9 +9165,9 @@ then
 	exit;
 	end;
 
-R:= (INT_2W_U(v1.M_Value[0]) + (INT_2W_U(v1.M_Value[1]) * INT_1W_U_MAXINT_1));
+R:= (MULTI_INT_2W_U(v1.M_Value[0]) + (MULTI_INT_2W_U(v1.M_Value[1]) * MULTI_INT_1W_U_MAXINT_1));
 
-if	(R > INT_1W_U_MAXINT)
+if	(R > MULTI_INT_1W_U_MAXINT)
 or	(v1.M_Value[2] <> 0)
 or	(v1.M_Value[3] <> 0)
 or	(v1.M_Value[4] <> 0)
@@ -9045,7 +9185,7 @@ then
 	exit;
 	end;
 
-Result:= INT_1W_U(R);
+Result:= MULTI_INT_1W_U(R);
 end;
 
 
@@ -9134,7 +9274,7 @@ procedure Multi_Int_X4_to_hex(const v1:Multi_Int_X4; var v2:ansistring; LZ:T_Mul
 var
 	s		:ansistring = '';
 	n		:Multi_int32u;
-	M_Val	:array[0..Multi_X4_max] of INT_2W_U;
+	M_Val	:array[0..Multi_X4_max] of MULTI_INT_2W_U;
 begin
 if	(Not v1.Defined_flag)
 then
@@ -9157,7 +9297,7 @@ then
 	exit;
 	end;
 
-n:= (INT_1W_SIZE div 4);
+n:= (MULTI_INT_1W_SIZE div 4);
 s:= '';
 
 s:= s
@@ -9189,8 +9329,8 @@ procedure hex_to_Multi_Int_X4(const v1:ansistring; var mi:Multi_Int_X4);
 label 999;
 var
 	n,i,b,c,e
-				:INT_2W_U;
-	M_Val		:array[0..Multi_X4_max] of INT_2W_U;
+				:MULTI_INT_2W_U;
+	M_Val		:array[0..Multi_X4_max] of MULTI_INT_2W_U;
 	Signeg,
 	Zeroneg,
 	M_Val_All_Zero		:boolean;
@@ -9210,7 +9350,7 @@ do begin M_Val[n]:= 0; inc(n); end;
 if	(length(v1) > 0) then
 	begin
 	b:=low(ansistring);
-	e:=b + INT_2W_U(length(v1)) - 1;
+	e:=b + MULTI_INT_2W_U(length(v1)) - 1;
 	if	(v1[b] = '-') then
 		begin
 		Signeg:= TRUE;
@@ -9245,16 +9385,16 @@ if	(length(v1) > 0) then
 		n:=0;
 		while (n < Multi_X4_max) do
 			begin
-			if	M_Val[n] > INT_1W_U_MAXINT then
+			if	M_Val[n] > MULTI_INT_1W_U_MAXINT then
 				begin
-				M_Val[n+1]:=M_Val[n+1] + (M_Val[n] DIV INT_1W_U_MAXINT_1);
-				M_Val[n]:=(M_Val[n] MOD INT_1W_U_MAXINT_1);
+				M_Val[n+1]:=M_Val[n+1] + (M_Val[n] DIV MULTI_INT_1W_U_MAXINT_1);
+				M_Val[n]:=(M_Val[n] MOD MULTI_INT_1W_U_MAXINT_1);
 				end;
 
 			inc(n);
 			end;
 
-		if	M_Val[n] > INT_1W_U_MAXINT then
+		if	M_Val[n] > MULTI_INT_1W_U_MAXINT then
 			begin
 			mi.Defined_flag:=FALSE;
 			mi.Overflow_flag:=TRUE;
@@ -9298,7 +9438,7 @@ end;
 procedure Multi_Int_X4_to_ansistring(const v1:Multi_Int_X4; var v2:ansistring);
 var
 	s		:ansistring = '';
-	M_Val	:array[0..Multi_X4_max] of INT_2W_U;
+	M_Val	:array[0..Multi_X4_max] of MULTI_INT_2W_U;
 begin
 if	(Not v1.Defined_flag)
 then
@@ -9332,25 +9472,25 @@ M_Val[7]:= v1.M_Value[7];
 
 repeat
 
-	M_Val[6]:= M_Val[6] + (INT_1W_U_MAXINT_1 * (M_Val[7] MOD 10));
+	M_Val[6]:= M_Val[6] + (MULTI_INT_1W_U_MAXINT_1 * (M_Val[7] MOD 10));
 	M_Val[7]:= (M_Val[7] DIV 10);
 
-	M_Val[5]:= M_Val[5] + (INT_1W_U_MAXINT_1 * (M_Val[6] MOD 10));
+	M_Val[5]:= M_Val[5] + (MULTI_INT_1W_U_MAXINT_1 * (M_Val[6] MOD 10));
 	M_Val[6]:= (M_Val[6] DIV 10);
 
-	M_Val[4]:= M_Val[4] + (INT_1W_U_MAXINT_1 * (M_Val[5] MOD 10));
+	M_Val[4]:= M_Val[4] + (MULTI_INT_1W_U_MAXINT_1 * (M_Val[5] MOD 10));
 	M_Val[5]:= (M_Val[5] DIV 10);
 
-	M_Val[3]:= M_Val[3] + (INT_1W_U_MAXINT_1 * (M_Val[4] MOD 10));
+	M_Val[3]:= M_Val[3] + (MULTI_INT_1W_U_MAXINT_1 * (M_Val[4] MOD 10));
 	M_Val[4]:= (M_Val[4] DIV 10);
 
-	M_Val[2]:= M_Val[2] + (INT_1W_U_MAXINT_1 * (M_Val[3] MOD 10));
+	M_Val[2]:= M_Val[2] + (MULTI_INT_1W_U_MAXINT_1 * (M_Val[3] MOD 10));
 	M_Val[3]:= (M_Val[3] DIV 10);
 
-	M_Val[1]:= M_Val[1] + (INT_1W_U_MAXINT_1 * (M_Val[2] MOD 10));
+	M_Val[1]:= M_Val[1] + (MULTI_INT_1W_U_MAXINT_1 * (M_Val[2] MOD 10));
 	M_Val[2]:= (M_Val[2] DIV 10);
 
-	M_Val[0]:= M_Val[0] + (INT_1W_U_MAXINT_1 * (M_Val[1] MOD 10));
+	M_Val[0]:= M_Val[0] + (MULTI_INT_1W_U_MAXINT_1 * (M_Val[1] MOD 10));
 	M_Val[1]:= (M_Val[1] DIV 10);
 
 	s:= inttostr(M_Val[0] MOD 10) + s;
@@ -9424,8 +9564,8 @@ end;
 function add_Multi_Int_X4(const v1,v2:Multi_Int_X4):Multi_Int_X4;
 var
 	tv1,
-	tv2		:INT_2W_U;
-	M_Val	:array[0..Multi_X4_max] of INT_2W_U;
+	tv2		:MULTI_INT_2W_U;
+	M_Val	:array[0..Multi_X4_max] of MULTI_INT_2W_U;
 begin
 Result.Overflow_flag:=FALSE;
 Result.Defined_flag:=TRUE;
@@ -9434,79 +9574,79 @@ Result.Negative_flag:= Multi_UBool_UNDEF;
 tv1:= v1.M_Value[0];
 tv2:= v2.M_Value[0];
 M_Val[0]:= (tv1 + tv2);
-if	M_Val[0] > INT_1W_U_MAXINT then
+if	M_Val[0] > MULTI_INT_1W_U_MAXINT then
 	begin
-	M_Val[1]:= (M_Val[0] DIV INT_1W_U_MAXINT_1);
-	M_Val[0]:= (M_Val[0] MOD INT_1W_U_MAXINT_1);
+	M_Val[1]:= (M_Val[0] DIV MULTI_INT_1W_U_MAXINT_1);
+	M_Val[0]:= (M_Val[0] MOD MULTI_INT_1W_U_MAXINT_1);
 	end
 else M_Val[1]:= 0;
 
 tv1:= v1.M_Value[1];
 tv2:= v2.M_Value[1];
 M_Val[1]:=(M_Val[1] + tv1 + tv2);
-if	M_Val[1] > INT_1W_U_MAXINT then
+if	M_Val[1] > MULTI_INT_1W_U_MAXINT then
 	begin
-	M_Val[2]:= (M_Val[1] DIV INT_1W_U_MAXINT_1);
-	M_Val[1]:= (M_Val[1] MOD INT_1W_U_MAXINT_1);
+	M_Val[2]:= (M_Val[1] DIV MULTI_INT_1W_U_MAXINT_1);
+	M_Val[1]:= (M_Val[1] MOD MULTI_INT_1W_U_MAXINT_1);
 	end
 else M_Val[2]:= 0;
 
 tv1:= v1.M_Value[2];
 tv2:= v2.M_Value[2];
 M_Val[2]:=(M_Val[2] + tv1 + tv2);
-if	M_Val[2] > INT_1W_U_MAXINT then
+if	M_Val[2] > MULTI_INT_1W_U_MAXINT then
 	begin
-	M_Val[3]:= (M_Val[2] DIV INT_1W_U_MAXINT_1);
-	M_Val[2]:= (M_Val[2] MOD INT_1W_U_MAXINT_1);
+	M_Val[3]:= (M_Val[2] DIV MULTI_INT_1W_U_MAXINT_1);
+	M_Val[2]:= (M_Val[2] MOD MULTI_INT_1W_U_MAXINT_1);
 	end
 else M_Val[3]:= 0;
 
 tv1:= v1.M_Value[3];
 tv2:= v2.M_Value[3];
 M_Val[3]:=(M_Val[3] + tv1 + tv2);
-if	M_Val[3] > INT_1W_U_MAXINT then
+if	M_Val[3] > MULTI_INT_1W_U_MAXINT then
 	begin
-	M_Val[4]:= (M_Val[3] DIV INT_1W_U_MAXINT_1);
-	M_Val[3]:= (M_Val[3] MOD INT_1W_U_MAXINT_1);
+	M_Val[4]:= (M_Val[3] DIV MULTI_INT_1W_U_MAXINT_1);
+	M_Val[3]:= (M_Val[3] MOD MULTI_INT_1W_U_MAXINT_1);
 	end
 else M_Val[4]:= 0;
 
 tv1:= v1.M_Value[4];
 tv2:= v2.M_Value[4];
 M_Val[4]:=(M_Val[4] + tv1 + tv2);
-if	M_Val[4] > INT_1W_U_MAXINT then
+if	M_Val[4] > MULTI_INT_1W_U_MAXINT then
 	begin
-	M_Val[5]:= (M_Val[4] DIV INT_1W_U_MAXINT_1);
-	M_Val[4]:= (M_Val[4] MOD INT_1W_U_MAXINT_1);
+	M_Val[5]:= (M_Val[4] DIV MULTI_INT_1W_U_MAXINT_1);
+	M_Val[4]:= (M_Val[4] MOD MULTI_INT_1W_U_MAXINT_1);
 	end
 else M_Val[5]:= 0;
 
 tv1:= v1.M_Value[5];
 tv2:= v2.M_Value[5];
 M_Val[5]:=(M_Val[5] + tv1 + tv2);
-if	M_Val[5] > INT_1W_U_MAXINT then
+if	M_Val[5] > MULTI_INT_1W_U_MAXINT then
 	begin
-	M_Val[6]:= (M_Val[5] DIV INT_1W_U_MAXINT_1);
-	M_Val[5]:= (M_Val[5] MOD INT_1W_U_MAXINT_1);
+	M_Val[6]:= (M_Val[5] DIV MULTI_INT_1W_U_MAXINT_1);
+	M_Val[5]:= (M_Val[5] MOD MULTI_INT_1W_U_MAXINT_1);
 	end
 else M_Val[6]:= 0;
 
 tv1:= v1.M_Value[6];
 tv2:= v2.M_Value[6];
 M_Val[6]:=(M_Val[6] + tv1 + tv2);
-if	M_Val[6] > INT_1W_U_MAXINT then
+if	M_Val[6] > MULTI_INT_1W_U_MAXINT then
 	begin
-	M_Val[7]:= (M_Val[6] DIV INT_1W_U_MAXINT_1);
-	M_Val[6]:= (M_Val[6] MOD INT_1W_U_MAXINT_1);
+	M_Val[7]:= (M_Val[6] DIV MULTI_INT_1W_U_MAXINT_1);
+	M_Val[6]:= (M_Val[6] MOD MULTI_INT_1W_U_MAXINT_1);
 	end
 else M_Val[7]:= 0;
 
 tv1:= v1.M_Value[7];
 tv2:= v2.M_Value[7];
 M_Val[7]:=(M_Val[7] + tv1 + tv2);
-if	M_Val[7] > INT_1W_U_MAXINT then
+if	M_Val[7] > MULTI_INT_1W_U_MAXINT then
 	begin
-	M_Val[7]:= (M_Val[7] MOD INT_1W_U_MAXINT_1);
+	M_Val[7]:= (M_Val[7] MOD MULTI_INT_1W_U_MAXINT_1);
 	Result.Defined_flag:= FALSE;
 	Result.Overflow_flag:=TRUE;
 	end;
@@ -9536,7 +9676,7 @@ end;
 (******************************************)
 function subtract_Multi_Int_X4(const v1,v2:Multi_Int_X4):Multi_Int_X4;
 var
-	M_Val	:array[0..Multi_X4_max] of INT_2W_S;
+	M_Val	:array[0..Multi_X4_max] of MULTI_INT_2W_S;
 begin
 Result.Overflow_flag:=FALSE;
 Result.Defined_flag:=TRUE;
@@ -9546,7 +9686,7 @@ M_Val[0]:=(v1.M_Value[0] - v2.M_Value[0]);
 if	M_Val[0] < 0 then
 	begin
 	M_Val[1]:= -1;
-	M_Val[0]:= (M_Val[0] + INT_1W_U_MAXINT_1);
+	M_Val[0]:= (M_Val[0] + MULTI_INT_1W_U_MAXINT_1);
 	end
 else M_Val[1]:= 0;
 
@@ -9554,7 +9694,7 @@ M_Val[1]:=(v1.M_Value[1] - v2.M_Value[1] + M_Val[1]);
 if	M_Val[1] < 0 then
 	begin
 	M_Val[2]:= -1;
-	M_Val[1]:= (M_Val[1] + INT_1W_U_MAXINT_1);
+	M_Val[1]:= (M_Val[1] + MULTI_INT_1W_U_MAXINT_1);
 	end
 else M_Val[2]:= 0;
 
@@ -9562,7 +9702,7 @@ M_Val[2]:=(v1.M_Value[2] - v2.M_Value[2] + M_Val[2]);
 if	M_Val[2] < 0 then
 	begin
 	M_Val[3]:= -1;
-	M_Val[2]:= (M_Val[2] + INT_1W_U_MAXINT_1);
+	M_Val[2]:= (M_Val[2] + MULTI_INT_1W_U_MAXINT_1);
 	end
 else M_Val[3]:= 0;
 
@@ -9570,7 +9710,7 @@ M_Val[3]:=(v1.M_Value[3] - v2.M_Value[3] + M_Val[3]);
 if	M_Val[3] < 0 then
 	begin
 	M_Val[4]:= -1;
-	M_Val[3]:= (M_Val[3] + INT_1W_U_MAXINT_1);
+	M_Val[3]:= (M_Val[3] + MULTI_INT_1W_U_MAXINT_1);
 	end
 else M_Val[4]:= 0;
 
@@ -9578,7 +9718,7 @@ M_Val[4]:=(v1.M_Value[4] - v2.M_Value[4] + M_Val[4]);
 if	M_Val[4] < 0 then
 	begin
 	M_Val[5]:= -1;
-	M_Val[4]:= (M_Val[4] + INT_1W_U_MAXINT_1);
+	M_Val[4]:= (M_Val[4] + MULTI_INT_1W_U_MAXINT_1);
 	end
 else M_Val[5]:= 0;
 
@@ -9586,7 +9726,7 @@ M_Val[5]:=(v1.M_Value[5] - v2.M_Value[5] + M_Val[5]);
 if	M_Val[5] < 0 then
 	begin
 	M_Val[6]:= -1;
-	M_Val[5]:= (M_Val[5] + INT_1W_U_MAXINT_1);
+	M_Val[5]:= (M_Val[5] + MULTI_INT_1W_U_MAXINT_1);
 	end
 else M_Val[6]:= 0;
 
@@ -9594,7 +9734,7 @@ M_Val[6]:=(v1.M_Value[6] - v2.M_Value[6] + M_Val[6]);
 if	M_Val[6] < 0 then
 	begin
 	M_Val[7]:= -1;
-	M_Val[6]:= (M_Val[6] + INT_1W_U_MAXINT_1);
+	M_Val[6]:= (M_Val[6] + MULTI_INT_1W_U_MAXINT_1);
 	end
 else M_Val[7]:= 0;
 
@@ -10072,9 +10212,9 @@ end;
 (******************************************)
 procedure multiply_Multi_Int_X4(const v1,v2:Multi_Int_X4;var Result:Multi_Int_X4);
 var
-	M_Val	:array[0..Multi_X4_max_x2] of INT_2W_U;
-	tv1,tv2	:INT_2W_U;
-	i,j,k	:INT_1W_U;
+	M_Val	:array[0..Multi_X4_max_x2] of MULTI_INT_2W_U;
+	tv1,tv2	:MULTI_INT_2W_U;
+	i,j,k	:MULTI_INT_1W_U;
 begin
 Result.Overflow_flag:=FALSE;
 Result.Defined_flag:=TRUE;
@@ -10089,14 +10229,14 @@ repeat
 	repeat
 		tv1:=v1.M_Value[i];
 		tv2:=v2.M_Value[j];
-		M_Val[i+j+1]:= (M_Val[i+j+1] + ((tv1 * tv2) DIV INT_1W_U_MAXINT_1));
-		M_Val[i+j]:= (M_Val[i+j] + ((tv1 * tv2) MOD INT_1W_U_MAXINT_1));
+		M_Val[i+j+1]:= (M_Val[i+j+1] + ((tv1 * tv2) DIV MULTI_INT_1W_U_MAXINT_1));
+		M_Val[i+j]:= (M_Val[i+j] + ((tv1 * tv2) MOD MULTI_INT_1W_U_MAXINT_1));
 		INC(i);
 	until (i > Multi_X4_max);
 	k:=0;
 	repeat
-		M_Val[k+1]:= M_Val[k+1] + (M_Val[k] DIV INT_1W_U_MAXINT_1);
-		M_Val[k]:= (M_Val[k] MOD INT_1W_U_MAXINT_1);
+		M_Val[k+1]:= M_Val[k+1] + (M_Val[k] DIV MULTI_INT_1W_U_MAXINT_1);
+		M_Val[k]:= (M_Val[k] MOD MULTI_INT_1W_U_MAXINT_1);
 		INC(k);
 	until (k > Multi_X4_max);
 	INC(j);
@@ -10183,7 +10323,7 @@ end;
 (*-----------------------*)
 procedure SqRoot(const v1:Multi_Int_X4;var VR,VREM:Multi_Int_X4);
 var
-D,D2		:INT_2W_S;
+D,D2		:MULTI_INT_2W_S;
 HS,LS		:ansistring;
 H,L,C,CC,T	:Multi_Int_X4;
 R_EXACT,
@@ -10306,10 +10446,10 @@ end;
 (********************v3********************)
 { Function exp_by_squaring_iterative(TV, P) }
 
-class operator Multi_Int_X4.**(const v1:Multi_Int_X4; const P:INT_2W_S):Multi_Int_X4;
+class operator Multi_Int_X4.**(const v1:Multi_Int_X4; const P:MULTI_INT_2W_S):Multi_Int_X4;
 var
 Y,TV,T,R	:Multi_Int_X4;
-PT			:INT_2W_S;
+PT			:MULTI_INT_2W_S;
 begin
 PT:= P;
 TV:= v1;
@@ -10400,13 +10540,13 @@ quotient,
 quotient_factor,
 next_dividend,
 ZERO				:Multi_Int_X4;
-T					:INT_1W_U;
-z,k					:INT_2W_U;
+T					:MULTI_INT_1W_U;
+z,k					:MULTI_INT_2W_U;
 i,
 nlz_bits_dividend,
 nlz_bits_divisor,
 nlz_bits_P_divisor,
-nlz_bits_diff		:INT_2W_S;
+nlz_bits_diff		:MULTI_INT_2W_S;
 
 begin
 ZERO:= 0;
@@ -10458,8 +10598,8 @@ else
 		i:= Multi_X4_max;
 		while (i >= 0) do
 			begin
-			P_quotient.M_Value[i]:= (((k * INT_2W_U(INT_1W_U_MAXINT_1)) + INT_2W_U(dividend.M_Value[i])) div INT_2W_U(divisor.M_Value[0]));
-			k:= (((k * INT_2W_U(INT_1W_U_MAXINT_1)) + INT_2W_U(dividend.M_Value[i])) - (INT_2W_U(P_quotient.M_Value[i]) * INT_2W_U(divisor.M_Value[0])));
+			P_quotient.M_Value[i]:= (((k * MULTI_INT_2W_U(MULTI_INT_1W_U_MAXINT_1)) + MULTI_INT_2W_U(dividend.M_Value[i])) div MULTI_INT_2W_U(divisor.M_Value[0]));
+			k:= (((k * MULTI_INT_2W_U(MULTI_INT_1W_U_MAXINT_1)) + MULTI_INT_2W_U(dividend.M_Value[i])) - (MULTI_INT_2W_U(P_quotient.M_Value[i]) * MULTI_INT_2W_U(divisor.M_Value[0])));
 			Dec(i);
 			end;
 		P_remainder.M_Value[0]:= k;
@@ -10570,6 +10710,36 @@ then
 
 // same values as last time
 
+if	(X4_Last_Divisor = v2)
+and	(X4_Last_Dividend = v1)
+then
+	Result:= X4_Last_Quotient
+else	// different values than last time
+	begin
+	intdivide_Shift_And_Sub_X4(v1,v2,Quotient,Remainder);
+
+	X4_Last_Divisor:= v2;
+	X4_Last_Dividend:= v1;
+	X4_Last_Quotient:= Quotient;
+	X4_Last_Remainder:= Remainder;
+
+	Result:= Quotient;
+	end;
+
+if	(X4_Last_Remainder.Overflow_flag)
+or	(X4_Last_Quotient.Overflow_flag)
+then
+	begin
+	Multi_Int_OVERFLOW_ERROR:= TRUE;
+	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
+		begin
+		Raise EIntOverflow.create('Overflow on divide');
+		end;
+	end;
+
+{
+// same values as last time
+
 P_v1:= v1;
 P_v2:= v2;
 
@@ -10580,12 +10750,7 @@ then
 else
 	begin
 	intdivide_Shift_And_Sub_X4(P_v1,P_v2,Quotient,Remainder);
-{
-	if	(v1.Negative_flag <> v2.Negative_flag)
-	then Quotient.Negative_flag:= TRUE
-	else if	(v2.Negative_flag)
-	then Remainder.Negative_flag:= TRUE;
-}
+
 	X4_Last_Divisor:= P_v2;
 	X4_Last_Dividend:= P_v1;
 	X4_Last_Quotient:= Quotient;
@@ -10593,7 +10758,7 @@ else
 
 	Result:= Quotient;
 	end;
-
+}
 end;
 
 
@@ -10636,15 +10801,10 @@ if	(X4_Last_Divisor = v2)
 and	(X4_Last_Dividend = v1)
 then
 	Result:= X4_Last_Remainder
-else
+else	// different values than last time
 	begin
 	intdivide_Shift_And_Sub_X4(v1,v2,Quotient,Remainder);
-{
-	if	(v1.Negative_flag <> v2.Negative_flag)
-	then Quotient.Negative_flag:= TRUE
-	else if	(v2.Negative_flag)
-	then Remainder.Negative_flag:= TRUE;
-}
+
 	X4_Last_Divisor:= v2;
 	X4_Last_Dividend:= v1;
 	X4_Last_Quotient:= Quotient;
@@ -10653,6 +10813,36 @@ else
 	Result:= Remainder;
 	end;
 
+if	(X4_Last_Remainder.Overflow_flag)
+or	(X4_Last_Quotient.Overflow_flag)
+then
+	begin
+	Multi_Int_OVERFLOW_ERROR:= TRUE;
+	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
+		begin
+		Raise EIntOverflow.create('Overflow on divide');
+		end;
+	end;
+
+{
+// same values as last time
+
+if	(X4_Last_Divisor = v2)
+and	(X4_Last_Dividend = v1)
+then
+	Result:= X4_Last_Remainder
+else
+	begin
+	intdivide_Shift_And_Sub_X4(v1,v2,Quotient,Remainder);
+
+	X4_Last_Divisor:= v2;
+	X4_Last_Dividend:= v1;
+	X4_Last_Quotient:= Quotient;
+	X4_Last_Remainder:= Remainder;
+
+	Result:= Remainder;
+	end;
+}
 end;
 
 
@@ -10685,7 +10875,7 @@ end;
 
 function ABS_greaterthan_Multi_Int_XV(const v1,v2:Multi_Int_XV):Boolean;
 var
-	i	:INT_2W_U;
+	i	:MULTI_INT_2W_U;
 begin
 i:= Multi_XV_max;
 while (i > 0) do
@@ -10707,7 +10897,7 @@ end;
 (******************************************)
 function ABS_lessthan_Multi_Int_XV(const v1,v2:Multi_Int_XV):Boolean;
 var
-	i	:INT_2W_U;
+	i	:MULTI_INT_2W_U;
 begin
 i:= Multi_XV_max;
 while (i > 0) do
@@ -10726,7 +10916,7 @@ end;
 
 
 (******************************************)
-function nlz_words_XV(const m:Multi_Int_XV):INT_1W_U; // v2
+function nlz_words_XV(const m:Multi_Int_XV):MULTI_INT_1W_U; // v2
 var
 i,n		:Multi_int32;
 fini	:boolean;
@@ -10748,13 +10938,13 @@ end;
 
 
 (******************************************)
-function nlz_MultiBits_XV(const m:Multi_Int_XV):INT_1W_U;
-var	w,b	:INT_1W_U;
+function nlz_MultiBits_XV(const m:Multi_Int_XV):MULTI_INT_1W_U;
+var	w,b	:MULTI_INT_1W_U;
 begin
 w:= nlz_words_XV(m);
 if (w <= Multi_XV_max)
-then Result:= nlz_bits(m.M_Value[Multi_XV_max-w]) + (w * INT_1W_SIZE)
-else Result:= (w * INT_1W_SIZE);
+then Result:= nlz_bits(m.M_Value[Multi_XV_max-w]) + (w * MULTI_INT_1W_SIZE)
+else Result:= (w * MULTI_INT_1W_SIZE);
 end;
 
 
@@ -10810,7 +11000,7 @@ end;
 
 (******************************************)
 function Multi_Int_XV_Odd(const v1:Multi_Int_XV):boolean;
-var	bit1_mask	:INT_1W_U;
+var	bit1_mask	:MULTI_INT_1W_U;
 begin
 
 {$ifdef Overflow_Checks}
@@ -10846,7 +11036,7 @@ end;
 
 (******************************************)
 function Multi_Int_XV_Even(const v1:Multi_Int_XV):boolean;
-var	bit1_mask	:INT_1W_U;
+var	bit1_mask	:MULTI_INT_1W_U;
 begin
 
 {$ifdef Overflow_Checks}
@@ -10881,13 +11071,13 @@ end;
 
 
 (******************************************)
-procedure ShiftUp_NBits_Multi_Int_XV(var v1:Multi_Int_XV; NBits:INT_1W_U);
+procedure ShiftUp_NBits_Multi_Int_XV(var v1:Multi_Int_XV; NBits:MULTI_INT_1W_U);
 var	carry_bits_1,
 	carry_bits_2,
 	carry_bits_mask,
 	NBits_max,
-	NBits_carry	:INT_1W_U;
-	n			:INT_1W_U;
+	NBits_carry	:MULTI_INT_1W_U;
+	n			:MULTI_INT_1W_U;
 begin
 if NBits > 0 then
 begin
@@ -10904,7 +11094,7 @@ carry_bits_mask:= $FFFF;
 carry_bits_mask:= $FFFFFFFF;
 {$endif}
 
-NBits_max:= INT_1W_SIZE;
+NBits_max:= MULTI_INT_1W_SIZE;
 NBits_carry:= (NBits_max - NBits);
 carry_bits_mask:= (carry_bits_mask << NBits_carry);
 
@@ -10936,8 +11126,8 @@ end;
 
 
 (******************************************)
-procedure ShiftUp_NWords_Multi_Int_XV(var v1:Multi_Int_XV; NWords:INT_1W_U);
-var	n,i	:INT_1W_U;
+procedure ShiftUp_NWords_Multi_Int_XV(var v1:Multi_Int_XV; NWords:MULTI_INT_1W_U);
+var	n,i	:MULTI_INT_1W_U;
 begin
 if		(NWords > 0)
 and		(NWords <= Multi_XV_max) then
@@ -10959,18 +11149,18 @@ end;
 
 
 {******************************************}
-procedure ShiftUp_MultiBits_Multi_Int_XV(var v1:Multi_Int_XV; NBits:INT_1W_U);
+procedure ShiftUp_MultiBits_Multi_Int_XV(var v1:Multi_Int_XV; NBits:MULTI_INT_1W_U);
 var
 NWords_count,
-NBits_count		:INT_1W_U;
+NBits_count		:MULTI_INT_1W_U;
 
 begin
 if (NBits > 0) then
 	begin
-	if (NBits >= INT_1W_SIZE) then
+	if (NBits >= MULTI_INT_1W_SIZE) then
 		begin
-		NWords_count:= (NBits DIV INT_1W_SIZE);
-		NBits_count:= (NBits MOD INT_1W_SIZE);
+		NWords_count:= (NBits DIV MULTI_INT_1W_SIZE);
+		NBits_count:= (NBits MOD MULTI_INT_1W_SIZE);
 		ShiftUp_NWords_Multi_Int_XV(v1, NWords_count);
 		end
 	else NBits_count:= NBits;
@@ -10980,26 +11170,28 @@ end;
 
 
 {******************************************}
-procedure Multi_Int_XV.ShiftUp_MultiBits(var v1:Multi_Int_XV; NBits:INT_1W_U);
+{
+procedure Multi_Int_XV.ShiftUp_MultiBits(var v1:Multi_Int_XV; NBits:MULTI_INT_1W_U);
 begin
 ShiftUp_MultiBits_Multi_Int_XV(v1, NBits);
 end;
+}
 
 
 {******************************************}
-procedure ShiftUp(var v1:Multi_Int_XV; NBits:INT_1W_U); overload;
+procedure ShiftUp(var v1:Multi_Int_XV; NBits:MULTI_INT_1W_U); overload;
 begin
 ShiftUp_MultiBits_Multi_Int_XV(v1, NBits);
 end;
 
 
 (******************************************)
-procedure RotateUp_NBits_Multi_Int_XV(var v1:Multi_Int_XV; NBits:INT_1W_U);
+procedure RotateUp_NBits_Multi_Int_XV(var v1:Multi_Int_XV; NBits:MULTI_INT_1W_U);
 var	carry_bits_1,
 	carry_bits_2,
 	carry_bits_mask,
 	NBits_max,
-	NBits_carry	:INT_1W_U;
+	NBits_carry	:MULTI_INT_1W_U;
 	n			:integer;
 begin
 if NBits > 0 then
@@ -11017,7 +11209,7 @@ carry_bits_mask:= $FFFF;
 carry_bits_mask:= $FFFFFFFF;
 {$endif}
 
-NBits_max:= INT_1W_SIZE;
+NBits_max:= MULTI_INT_1W_SIZE;
 NBits_carry:= (NBits_max - NBits);
 carry_bits_mask:= (carry_bits_mask << NBits_carry);
 
@@ -11048,8 +11240,8 @@ end;
 
 
 (******************************************)
-procedure RotateUp_NWords_Multi_Int_XV(var v1:Multi_Int_XV; NWords:INT_1W_U);
-var	i,n,t	:INT_1W_U;
+procedure RotateUp_NWords_Multi_Int_XV(var v1:Multi_Int_XV; NWords:MULTI_INT_1W_U);
+var	i,n,t	:MULTI_INT_1W_U;
 begin
 if		(NWords > 0)
 and		(NWords <= Multi_XV_max) then
@@ -11072,18 +11264,18 @@ end;
 
 
 {******************************************}
-procedure RotateUp_MultiBits_Multi_Int_XV(var v1:Multi_Int_XV; NBits:INT_1W_U);
+procedure RotateUp_MultiBits_Multi_Int_XV(var v1:Multi_Int_XV; NBits:MULTI_INT_1W_U);
 var
 NWords_count,
-NBits_count		:INT_1W_U;
+NBits_count		:MULTI_INT_1W_U;
 
 begin
 if (NBits > 0) then
 	begin
-	if (NBits >= INT_1W_SIZE) then
+	if (NBits >= MULTI_INT_1W_SIZE) then
 		begin
-		NWords_count:= (NBits DIV INT_1W_SIZE);
-		NBits_count:= (NBits MOD INT_1W_SIZE);
+		NWords_count:= (NBits DIV MULTI_INT_1W_SIZE);
+		NBits_count:= (NBits MOD MULTI_INT_1W_SIZE);
 		RotateUp_NWords_Multi_Int_XV(v1, NWords_count);
 		end
 	else NBits_count:= NBits;
@@ -11093,26 +11285,28 @@ end;
 
 
 (******************************************)
-procedure Multi_Int_XV.RotateUp_MultiBits(var v1:Multi_Int_XV; NBits:INT_1W_U);
+{
+procedure Multi_Int_XV.RotateUp_MultiBits(var v1:Multi_Int_XV; NBits:MULTI_INT_1W_U);
+begin
+RotateUp_MultiBits_Multi_Int_XV(v1, NBits);
+end;
+}
+
+
+(******************************************)
+procedure RotateUp(var v1:Multi_Int_XV; NBits:MULTI_INT_1W_U); overload;
 begin
 RotateUp_MultiBits_Multi_Int_XV(v1, NBits);
 end;
 
 
 (******************************************)
-procedure RotateUp(var v1:Multi_Int_XV; NBits:INT_1W_U); overload;
-begin
-RotateUp_MultiBits_Multi_Int_XV(v1, NBits);
-end;
-
-
-(******************************************)
-procedure ShiftDown_NBits_Multi_Int_XV(var v1:Multi_Int_XV; NBits:INT_1W_U);
+procedure ShiftDown_NBits_Multi_Int_XV(var v1:Multi_Int_XV; NBits:MULTI_INT_1W_U);
 var	carry_bits_1,
 	carry_bits_2,
 	carry_bits_mask,
 	NBits_max,
-	NBits_carry	:INT_1W_U;
+	NBits_carry	:MULTI_INT_1W_U;
 	n			:integer;
 begin
 if NBits > 0 then
@@ -11130,7 +11324,7 @@ carry_bits_mask:= $FFFF;
 carry_bits_mask:= $FFFFFFFF;
 {$endif}
 
-NBits_max:= INT_1W_SIZE;
+NBits_max:= MULTI_INT_1W_SIZE;
 NBits_carry:= (NBits_max - NBits);
 carry_bits_mask:= (carry_bits_mask >> NBits_carry);
 
@@ -11162,8 +11356,8 @@ end;
 
 
 (******************************************)
-procedure ShiftDown_NWords_Multi_Int_XV(var v1:Multi_Int_XV; NWords:INT_1W_U);
-var	n,i	:INT_1W_U;
+procedure ShiftDown_NWords_Multi_Int_XV(var v1:Multi_Int_XV; NWords:MULTI_INT_1W_U);
+var	n,i	:MULTI_INT_1W_U;
 begin
 if		(NWords > 0)
 and		(NWords <= Multi_XV_max) then
@@ -11185,17 +11379,17 @@ end;
 
 
 {******************************************}
-procedure ShiftDown_MultiBits_Multi_Int_XV(var v1:Multi_Int_XV; NBits:INT_1W_U);
+procedure ShiftDown_MultiBits_Multi_Int_XV(var v1:Multi_Int_XV; NBits:MULTI_INT_1W_U);
 var
 NWords_count,
-NBits_count		:INT_1W_U;
+NBits_count		:MULTI_INT_1W_U;
 
 begin
 
-if (NBits >= INT_1W_SIZE) then
+if (NBits >= MULTI_INT_1W_SIZE) then
 	begin
-	NWords_count:= (NBits DIV INT_1W_SIZE);
-	NBits_count:= (NBits MOD INT_1W_SIZE);
+	NWords_count:= (NBits DIV MULTI_INT_1W_SIZE);
+	NBits_count:= (NBits MOD MULTI_INT_1W_SIZE);
 	ShiftDown_NWords_Multi_Int_XV(v1, NWords_count);
 	end
 else NBits_count:= NBits;
@@ -11205,26 +11399,28 @@ end;
 
 
 {******************************************}
-procedure Multi_Int_XV.ShiftDown_MultiBits(var v1:Multi_Int_XV; NBits:INT_1W_U);
+{
+procedure Multi_Int_XV.ShiftDown_MultiBits(var v1:Multi_Int_XV; NBits:MULTI_INT_1W_U);
 begin
 ShiftDown_MultiBits_Multi_Int_XV(v1, NBits);
 end;
+}
 
 
 {******************************************}
-procedure ShiftDown(var v1:Multi_Int_XV; NBits:INT_1W_U); overload;
+procedure ShiftDown(var v1:Multi_Int_XV; NBits:MULTI_INT_1W_U); overload;
 begin
 ShiftDown_MultiBits_Multi_Int_XV(v1, NBits);
 end;
 
 
 (******************************************)
-procedure RotateDown_NBits_Multi_Int_XV(var v1:Multi_Int_XV; NBits:INT_1W_U);
+procedure RotateDown_NBits_Multi_Int_XV(var v1:Multi_Int_XV; NBits:MULTI_INT_1W_U);
 var	carry_bits_1,
 	carry_bits_2,
 	carry_bits_mask,
 	NBits_max,
-	NBits_carry	:INT_1W_U;
+	NBits_carry	:MULTI_INT_1W_U;
 	n			:integer;
 begin
 if NBits > 0 then
@@ -11242,7 +11438,7 @@ carry_bits_mask:= $FFFF;
 carry_bits_mask:= $FFFFFFFF;
 {$endif}
 
-NBits_max:= INT_1W_SIZE;
+NBits_max:= MULTI_INT_1W_SIZE;
 NBits_carry:= (NBits_max - NBits);
 carry_bits_mask:= (carry_bits_mask >> NBits_carry);
 
@@ -11275,8 +11471,8 @@ end;
 
 
 (******************************************)
-procedure RotateDown_NWords_Multi_Int_XV(var v1:Multi_Int_XV; NWords:INT_1W_U);
-var	i,n,t	:INT_1W_U;
+procedure RotateDown_NWords_Multi_Int_XV(var v1:Multi_Int_XV; NWords:MULTI_INT_1W_U);
+var	i,n,t	:MULTI_INT_1W_U;
 begin
 if		(NWords > 0)
 and		(NWords <= Multi_XV_max) then
@@ -11299,18 +11495,18 @@ end;
 
 
 {******************************************}
-procedure RotateDown_MultiBits_Multi_Int_XV(var v1:Multi_Int_XV; NBits:INT_1W_U);
+procedure RotateDown_MultiBits_Multi_Int_XV(var v1:Multi_Int_XV; NBits:MULTI_INT_1W_U);
 var
 NWords_count,
-NBits_count		:INT_1W_U;
+NBits_count		:MULTI_INT_1W_U;
 
 begin
 if (NBits > 0) then
 	begin
-	if (NBits >= INT_1W_SIZE) then
+	if (NBits >= MULTI_INT_1W_SIZE) then
 		begin
-		NWords_count:= (NBits DIV INT_1W_SIZE);
-		NBits_count:= (NBits MOD INT_1W_SIZE);
+		NWords_count:= (NBits DIV MULTI_INT_1W_SIZE);
+		NBits_count:= (NBits MOD MULTI_INT_1W_SIZE);
 		RotateDown_NWords_Multi_Int_XV(v1, NWords_count);
 		end
 	else NBits_count:= NBits;
@@ -11320,14 +11516,16 @@ end;
 
 
 (******************************************)
-procedure Multi_Int_XV.RotateDown_MultiBits(var v1:Multi_Int_XV; NBits:INT_1W_U);
+{
+procedure Multi_Int_XV.RotateDown_MultiBits(var v1:Multi_Int_XV; NBits:MULTI_INT_1W_U);
 begin
 RotateDown_MultiBits_Multi_Int_XV(v1, NBits);
 end;
+}
 
 
 (******************************************)
-procedure RotateDown(var v1:Multi_Int_XV; NBits:INT_1W_U); overload;
+procedure RotateDown(var v1:Multi_Int_XV; NBits:MULTI_INT_1W_U); overload;
 begin
 RotateDown_MultiBits_Multi_Int_XV(v1, NBits);
 end;
@@ -11389,7 +11587,7 @@ end;
 (******************************************)
 function ABS_equal_Multi_Int_XV(const v1,v2:Multi_Int_XV):Boolean;
 var
-	i	:INT_2W_U;
+	i	:MULTI_INT_2W_U;
 begin
 Result:=TRUE;
 i:=0;
@@ -11513,8 +11711,8 @@ procedure ansistring_to_Multi_Int_XV(const v1:ansistring; var mi:Multi_Int_XV);
 label 999;
 var
 	n,i,b,c,e
-				:INT_2W_U;
-	M_Val		:array of INT_2W_U;
+				:MULTI_INT_2W_U;
+	M_Val		:array of MULTI_INT_2W_U;
 	Signeg,
 	Zeroneg,
 	M_Val_All_Zero		:boolean;
@@ -11536,7 +11734,7 @@ do begin M_Val[n]:= 0; inc(n); end;
 if	(length(v1) > 0) then
 	begin
 	b:=low(ansistring);
-	e:=b + INT_2W_U(length(v1)) - 1;
+	e:=b + MULTI_INT_2W_U(length(v1)) - 1;
 	if	(v1[b] = '-') then
 		begin
 		Signeg:= TRUE;
@@ -11570,16 +11768,16 @@ if	(length(v1) > 0) then
 		n:=0;
 		while (n < Multi_XV_max) do
 			begin
-			if	M_Val[n] > INT_1W_U_MAXINT then
+			if	M_Val[n] > MULTI_INT_1W_U_MAXINT then
 				begin
-				M_Val[n+1]:=M_Val[n+1] + (M_Val[n] DIV INT_1W_U_MAXINT_1);
-				M_Val[n]:=(M_Val[n] MOD INT_1W_U_MAXINT_1);
+				M_Val[n+1]:=M_Val[n+1] + (M_Val[n] DIV MULTI_INT_1W_U_MAXINT_1);
+				M_Val[n]:=(M_Val[n] MOD MULTI_INT_1W_U_MAXINT_1);
 				end;
 
 			inc(n);
 			end;
 
-		if	M_Val[n] > INT_1W_U_MAXINT then
+		if	M_Val[n] > MULTI_INT_1W_U_MAXINT then
 			begin
 			mi.Defined_flag:=FALSE;
 			mi.Overflow_flag:=TRUE;
@@ -11633,8 +11831,8 @@ end;
 procedure Multi_Int_XV_to_ansistring(const v1:Multi_Int_XV; var v2:ansistring);
 var
 	s			:ansistring = '';
-	M_Val		:array of INT_2W_U;
-	n,t			:INT_2W_U;
+	M_Val		:array of MULTI_INT_2W_U;
+	n,t			:MULTI_INT_2W_U;
 	M_Val_All_Zero	:boolean;
 begin
 setlength(M_Val, Multi_XV_size);
@@ -11672,7 +11870,7 @@ repeat
 	n:= Multi_XV_max;
 	M_Val_All_Zero:= TRUE;
 	repeat
-		M_Val[n-1]:= M_Val[n-1] + (INT_1W_U_MAXINT_1 * (M_Val[n] MOD 10));
+		M_Val[n-1]:= M_Val[n-1] + (MULTI_INT_1W_U_MAXINT_1 * (M_Val[n] MOD 10));
 		M_Val[n]:= (M_Val[n] DIV 10);
 		if M_Val[n] <> 0 then M_Val_All_Zero:= FALSE;
 		dec(n);
@@ -11708,8 +11906,8 @@ procedure hex_to_Multi_Int_XV(const v1:ansistring; var mi:Multi_Int_XV);
 label 999;
 var
 	n,i,b,c,e
-				:INT_2W_U;
-	M_Val		:array of INT_2W_U;
+				:MULTI_INT_2W_U;
+	M_Val		:array of MULTI_INT_2W_U;
 	Signeg,
 	Zeroneg,
 	M_Val_All_Zero		:boolean;
@@ -11732,7 +11930,7 @@ do begin M_Val[n]:= 0; inc(n); end;
 if	(length(v1) > 0) then
 	begin
 	b:=low(ansistring);
-	e:=b + INT_2W_U(length(v1)) - 1;
+	e:=b + MULTI_INT_2W_U(length(v1)) - 1;
 	if	(v1[b] = '-') then
 		begin
 		Signeg:= TRUE;
@@ -11745,14 +11943,9 @@ if	(length(v1) > 0) then
 		try
 			i:=Hex2Dec(v1[c]);
 			except
-				on EConvertError do
-					begin
-					mi.Defined_flag:= FALSE;
-					if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
-						begin
-						Raise;
-						end;
-					end;
+				mi.Defined_flag:= FALSE;
+				if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
+					Raise;
 			end;
 		if mi.Defined_flag = FALSE then goto 999;
 
@@ -11767,24 +11960,22 @@ if	(length(v1) > 0) then
 		n:=0;
 		while (n < Multi_XV_max) do
 			begin
-			if	M_Val[n] > INT_1W_U_MAXINT then
+			if	M_Val[n] > MULTI_INT_1W_U_MAXINT then
 				begin
-				M_Val[n+1]:=M_Val[n+1] + (M_Val[n] DIV INT_1W_U_MAXINT_1);
-				M_Val[n]:=(M_Val[n] MOD INT_1W_U_MAXINT_1);
+				M_Val[n+1]:=M_Val[n+1] + (M_Val[n] DIV MULTI_INT_1W_U_MAXINT_1);
+				M_Val[n]:=(M_Val[n] MOD MULTI_INT_1W_U_MAXINT_1);
 				end;
 
 			inc(n);
 			end;
 
-		if	M_Val[n] > INT_1W_U_MAXINT then
+		if	M_Val[n] > MULTI_INT_1W_U_MAXINT then
 			begin
 			mi.Defined_flag:=FALSE;
 			mi.Overflow_flag:=TRUE;
 			Multi_Int_OVERFLOW_ERROR:= TRUE;
 			if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
-				begin
-				Raise EIntOverflow.create('Overflow on string conversion');
-				end;
+				Raise EIntOverflow.create('Overflow on hex string conversion');
 			goto 999;
 			end;
 		Inc(c);
@@ -11820,7 +12011,7 @@ end;
 procedure Multi_Int_XV_to_hex(const v1:Multi_Int_XV; var v2:ansistring; LZ:T_Multi_Leading_Zeros);
 var
 	s		:ansistring = '';
-	i,n		:INT_1W_S;
+	i,n		:MULTI_INT_1W_S;
 begin
 if	(Not v1.Defined_flag)
 then
@@ -11843,7 +12034,7 @@ then
 	exit;
 	end;
 
-n:= (INT_1W_SIZE div 4);
+n:= (MULTI_INT_1W_SIZE div 4);
 s:= '';
 
 i:=Multi_XV_max;
@@ -11867,9 +12058,9 @@ end;
 
 
 (******************************************)
-procedure INT_2W_S_to_Multi_Int_XV(const v1:INT_2W_S; var mi:Multi_Int_XV);
+procedure MULTI_INT_2W_S_to_Multi_Int_XV(const v1:MULTI_INT_2W_S; var mi:Multi_Int_XV);
 var
-	n				:INT_2W_U;
+	n				:MULTI_INT_2W_U;
 begin
 mi.init;
 mi.Overflow_flag:=FALSE;
@@ -11885,37 +12076,37 @@ while (n <= Multi_XV_max) do
 if (v1 < 0) then
 	begin
 	mi.Negative_flag:= Multi_UBool_TRUE;
-	mi.M_Value[0]:= (ABS(v1) MOD INT_1W_U_MAXINT_1);
-	mi.M_Value[1]:= (ABS(v1) DIV INT_1W_U_MAXINT_1);
+	mi.M_Value[0]:= (ABS(v1) MOD MULTI_INT_1W_U_MAXINT_1);
+	mi.M_Value[1]:= (ABS(v1) DIV MULTI_INT_1W_U_MAXINT_1);
 	end
 else
 	begin
 	mi.Negative_flag:= Multi_UBool_FALSE;
-	mi.M_Value[0]:= (v1 MOD INT_1W_U_MAXINT_1);
-	mi.M_Value[1]:= (v1 DIV INT_1W_U_MAXINT_1);
+	mi.M_Value[0]:= (v1 MOD MULTI_INT_1W_U_MAXINT_1);
+	mi.M_Value[1]:= (v1 DIV MULTI_INT_1W_U_MAXINT_1);
 	end;
 end;
 
 
 (******************************************)
-class operator Multi_Int_XV.implicit(const v1:INT_2W_S):Multi_Int_XV;
+class operator Multi_Int_XV.implicit(const v1:MULTI_INT_2W_S):Multi_Int_XV;
 begin
-INT_2W_S_to_Multi_Int_XV(v1,Result);
+MULTI_INT_2W_S_to_Multi_Int_XV(v1,Result);
 end;
 
 
 (******************************************)
-procedure INT_2W_U_to_Multi_Int_XV(const v1:INT_2W_U; var mi:Multi_Int_XV);
+procedure MULTI_INT_2W_U_to_Multi_Int_XV(const v1:MULTI_INT_2W_U; var mi:Multi_Int_XV);
 var
-	n				:INT_2W_U;
+	n				:MULTI_INT_2W_U;
 begin
 mi.init;
 mi.Overflow_flag:=FALSE;
 mi.Defined_flag:=TRUE;
 mi.Negative_flag:= Multi_UBool_FALSE;
 
-mi.M_Value[0]:= (v1 MOD INT_1W_U_MAXINT_1);
-mi.M_Value[1]:= (v1 DIV INT_1W_U_MAXINT_1);
+mi.M_Value[0]:= (v1 MOD MULTI_INT_1W_U_MAXINT_1);
+mi.M_Value[1]:= (v1 DIV MULTI_INT_1W_U_MAXINT_1);
 
 n:=2;
 while (n <= Multi_XV_max) do
@@ -11927,18 +12118,18 @@ end;
 
 
 (******************************************)
-class operator Multi_Int_XV.implicit(const v1:INT_2W_U):Multi_Int_XV;
+class operator Multi_Int_XV.implicit(const v1:MULTI_INT_2W_U):Multi_Int_XV;
 begin
-INT_2W_U_to_Multi_Int_XV(v1,Result);
+MULTI_INT_2W_U_to_Multi_Int_XV(v1,Result);
 end;
 
 
 {$ifdef 32bit}
 (******************************************)
-procedure INT_4W_S_to_Multi_Int_XV(const v1:INT_4W_S; var mi:Multi_Int_XV);
+procedure MULTI_INT_4W_S_to_Multi_Int_XV(const v1:MULTI_INT_4W_S; var mi:Multi_Int_XV);
 var
-v	:INT_4W_U;
-n	:INT_2W_U;
+v	:MULTI_INT_4W_U;
+n	:MULTI_INT_2W_U;
 begin
 mi.init;
 mi.Overflow_flag:=FALSE;
@@ -11946,12 +12137,12 @@ mi.Defined_flag:=TRUE;
 v:= Abs(v1);
 
 v:= v1;
-mi.M_Value[0]:= INT_1W_U(v MOD INT_1W_U_MAXINT_1);
-v:= (v div INT_1W_U_MAXINT_1);
-mi.M_Value[1]:= INT_1W_U(v MOD INT_1W_U_MAXINT_1);
-v:= (v div INT_1W_U_MAXINT_1);
-mi.M_Value[2]:= INT_1W_U(v MOD INT_1W_U_MAXINT_1);
-v:= (v div INT_1W_U_MAXINT_1);
+mi.M_Value[0]:= MULTI_INT_1W_U(v MOD MULTI_INT_1W_U_MAXINT_1);
+v:= (v div MULTI_INT_1W_U_MAXINT_1);
+mi.M_Value[1]:= MULTI_INT_1W_U(v MOD MULTI_INT_1W_U_MAXINT_1);
+v:= (v div MULTI_INT_1W_U_MAXINT_1);
+mi.M_Value[2]:= MULTI_INT_1W_U(v MOD MULTI_INT_1W_U_MAXINT_1);
+v:= (v div MULTI_INT_1W_U_MAXINT_1);
 mi.M_Value[3]:= v;
 
 n:=4;
@@ -11968,17 +12159,17 @@ end;
 
 
 (******************************************)
-class operator Multi_Int_XV.implicit(const v1:INT_4W_S):Multi_Int_XV;
+class operator Multi_Int_XV.implicit(const v1:MULTI_INT_4W_S):Multi_Int_XV;
 begin
-INT_4W_S_to_Multi_Int_XV(v1,Result);
+MULTI_INT_4W_S_to_Multi_Int_XV(v1,Result);
 end;
 
 
 (******************************************)
-procedure INT_4W_U_to_Multi_Int_XV(const v1:INT_4W_U; var mi:Multi_Int_XV);
+procedure MULTI_INT_4W_U_to_Multi_Int_XV(const v1:MULTI_INT_4W_U; var mi:Multi_Int_XV);
 var
-v	:INT_4W_U;
-n	:INT_2W_U;
+v	:MULTI_INT_4W_U;
+n	:MULTI_INT_2W_U;
 begin
 mi.init;
 mi.Overflow_flag:=FALSE;
@@ -11986,12 +12177,12 @@ mi.Defined_flag:=TRUE;
 mi.Negative_flag:= Multi_UBool_FALSE;
 
 v:= v1;
-mi.M_Value[0]:= INT_1W_U(v MOD INT_1W_U_MAXINT_1);
-v:= (v div INT_1W_U_MAXINT_1);
-mi.M_Value[1]:= INT_1W_U(v MOD INT_1W_U_MAXINT_1);
-v:= (v div INT_1W_U_MAXINT_1);
-mi.M_Value[2]:= INT_1W_U(v MOD INT_1W_U_MAXINT_1);
-v:= (v div INT_1W_U_MAXINT_1);
+mi.M_Value[0]:= MULTI_INT_1W_U(v MOD MULTI_INT_1W_U_MAXINT_1);
+v:= (v div MULTI_INT_1W_U_MAXINT_1);
+mi.M_Value[1]:= MULTI_INT_1W_U(v MOD MULTI_INT_1W_U_MAXINT_1);
+v:= (v div MULTI_INT_1W_U_MAXINT_1);
+mi.M_Value[2]:= MULTI_INT_1W_U(v MOD MULTI_INT_1W_U_MAXINT_1);
+v:= (v div MULTI_INT_1W_U_MAXINT_1);
 mi.M_Value[3]:= v;
 
 n:=4;
@@ -12004,16 +12195,16 @@ end;
 
 
 (******************************************)
-class operator Multi_Int_XV.implicit(const v1:INT_4W_U):Multi_Int_XV;
+class operator Multi_Int_XV.implicit(const v1:MULTI_INT_4W_U):Multi_Int_XV;
 begin
-INT_4W_U_to_Multi_Int_XV(v1,Result);
+MULTI_INT_4W_U_to_Multi_Int_XV(v1,Result);
 end;
 {$endif}
 
 
 (******************************************)
 function To_Multi_Int_XV(const v1:Multi_Int_X4):Multi_Int_XV;
-var n :INT_1W_U;
+var n :MULTI_INT_1W_U;
 begin
 Result.Overflow_flag:= v1.Overflow_flag;
 Result.Defined_flag:= v1.Defined_flag;
@@ -12058,7 +12249,7 @@ end;
 
 (******************************************)
 function To_Multi_Int_XV(const v1:Multi_Int_X3):Multi_Int_XV;
-var n :INT_1W_U;
+var n :MULTI_INT_1W_U;
 begin
 Result.Overflow_flag:= v1.Overflow_flag;
 Result.Defined_flag:= v1.Defined_flag;
@@ -12103,7 +12294,7 @@ end;
 
 (******************************************)
 function To_Multi_Int_XV(const v1:Multi_Int_X2):Multi_Int_XV;
-var n :INT_1W_U;
+var n :MULTI_INT_1W_U;
 begin
 Result.Overflow_flag:= v1.Overflow_flag;
 Result.Defined_flag:= v1.Defined_flag;
@@ -12149,7 +12340,7 @@ end;
 (******************************************)
 procedure Multi_Int_X4_to_Multi_Int_XV(const v1:Multi_Int_X4; var MI:Multi_Int_XV);
 var
-	n				:INT_1W_U;
+	n				:MULTI_INT_1W_U;
 begin
 mi.init;
 MI.Overflow_flag:= v1.Overflow_flag;
@@ -12233,7 +12424,7 @@ end;
 (******************************************)
 procedure Multi_Int_X3_to_Multi_Int_XV(const v1:Multi_Int_X3; var MI:Multi_Int_XV);
 var
-	n				:INT_1W_U;
+	n				:MULTI_INT_1W_U;
 begin
 mi.init;
 MI.Overflow_flag:= v1.Overflow_flag;
@@ -12317,7 +12508,7 @@ end;
 (******************************************)
 procedure Multi_Int_X2_to_Multi_Int_XV(const v1:Multi_Int_X2; var MI:Multi_Int_XV);
 var
-	n				:INT_1W_U;
+	n				:MULTI_INT_1W_U;
 begin
 mi.init;
 MI.Overflow_flag:= v1.Overflow_flag;
@@ -12402,7 +12593,7 @@ end;
 class operator Multi_Int_XV.implicit(const v1:Multi_Int_XV):Single;
 var
 R,V,M		:Single;
-i			:INT_1W_U;
+i			:MULTI_INT_1W_U;
 finished	:boolean;
 begin
 if	(Not v1.Defined_flag)
@@ -12418,7 +12609,7 @@ then
 
 Multi_Int_OVERFLOW_ERROR:= FALSE;
 finished:= FALSE;
-M:= INT_1W_U_MAXINT_1;
+M:= MULTI_INT_1W_U_MAXINT_1;
 
 R:=	v1.M_Value[0];
 i:= 1;
@@ -12444,7 +12635,7 @@ do
 					end;
 				end;
 			end;
-			V:= INT_1W_U_MAXINT_1;
+			V:= MULTI_INT_1W_U_MAXINT_1;
 			try M:= (M * V);
 			except finished:= TRUE;
 			end;
@@ -12472,7 +12663,7 @@ end;
 class operator Multi_Int_XV.implicit(const v1:Multi_Int_XV):Real;
 var
 	R,V,M	:Real;
-	i		:INT_1W_U;
+	i		:MULTI_INT_1W_U;
 finished	:boolean;
 begin
 if	(Not v1.Defined_flag)
@@ -12488,7 +12679,7 @@ then
 
 Multi_Int_OVERFLOW_ERROR:= FALSE;
 finished:= FALSE;
-M:= INT_1W_U_MAXINT_1;
+M:= MULTI_INT_1W_U_MAXINT_1;
 
 R:=	v1.M_Value[0];
 i:= 1;
@@ -12514,7 +12705,7 @@ do
 					end;
 				end;
 			end;
-			V:= INT_1W_U_MAXINT_1;
+			V:= MULTI_INT_1W_U_MAXINT_1;
 			try M:= (M * V);
 			except finished:= TRUE;
 			end;
@@ -12542,7 +12733,7 @@ end;
 class operator Multi_Int_XV.implicit(const v1:Multi_Int_XV):Double;
 var
 	R,V,M	:Double;
-	i		:INT_1W_U;
+	i		:MULTI_INT_1W_U;
 finished	:boolean;
 begin
 if	(Not v1.Defined_flag)
@@ -12558,7 +12749,7 @@ then
 
 Multi_Int_OVERFLOW_ERROR:= FALSE;
 finished:= FALSE;
-M:= INT_1W_U_MAXINT_1;
+M:= MULTI_INT_1W_U_MAXINT_1;
 
 R:=	v1.M_Value[0];
 i:= 1;
@@ -12584,7 +12775,7 @@ do
 					end;
 				end;
 			end;
-			V:= INT_1W_U_MAXINT_1;
+			V:= MULTI_INT_1W_U_MAXINT_1;
 			try M:= (M * V);
 			except finished:= TRUE;
 			end;
@@ -12620,7 +12811,7 @@ begin
 Multi_Int_OVERFLOW_ERROR:= FALSE;
 
 Result.init;
-FloatToDecimal(R_FLOATREC, v1, SINGLE_TYPE_PRECISION_DIGITS, 0);
+FloatToDecimal(R_FLOATREC, v1, MULTI_SINGLE_TYPE_PRECISION_DIGITS, 0);
 ansistring_to_Multi_Int_XV(AddCharR('0',R_FLOATREC.digits,R_FLOATREC.Exponent), R);
 
 if (R.Overflow) then
@@ -12652,7 +12843,7 @@ begin
 Multi_Int_OVERFLOW_ERROR:= FALSE;
 
 Result.init;
-FloatToDecimal(R_FLOATREC, v1, REAL_TYPE_PRECISION_DIGITS, 0);
+FloatToDecimal(R_FLOATREC, v1, MULTI_REAL_TYPE_PRECISION_DIGITS, 0);
 ansistring_to_Multi_Int_XV(AddCharR('0',R_FLOATREC.digits,R_FLOATREC.Exponent), R);
 
 if (R.Overflow) then
@@ -12684,7 +12875,7 @@ begin
 Multi_Int_OVERFLOW_ERROR:= FALSE;
 
 Result.init;
-FloatToDecimal(R_FLOATREC, v1, DOUBLE_TYPE_PRECISION_DIGITS, 0);
+FloatToDecimal(R_FLOATREC, v1, MULTI_DOUBLE_TYPE_PRECISION_DIGITS, 0);
 ansistring_to_Multi_Int_XV(AddCharR('0',R_FLOATREC.digits,R_FLOATREC.Exponent), R);
 
 if (R.Overflow) then
@@ -12705,10 +12896,10 @@ end;
 
 
 (******************************************)
-class operator Multi_Int_XV.implicit(const v1:Multi_Int_XV):INT_2W_S;
+class operator Multi_Int_XV.implicit(const v1:Multi_Int_XV):MULTI_INT_2W_S;
 var
-	R	:INT_2W_U;
-	n	:INT_1W_U;
+	R	:MULTI_INT_2W_U;
+	n	:MULTI_INT_1W_U;
 	M_Val_All_Zero	:boolean;
 
 begin
@@ -12723,7 +12914,7 @@ then
 	exit;
 	end;
 
-R:= (INT_2W_U(v1.M_Value[0]) + (INT_2W_U(v1.M_Value[1]) * INT_1W_U_MAXINT_1));
+R:= (MULTI_INT_2W_U(v1.M_Value[0]) + (MULTI_INT_2W_U(v1.M_Value[1]) * MULTI_INT_1W_U_MAXINT_1));
 
 M_Val_All_Zero:= TRUE;
 n:=2;
@@ -12736,7 +12927,7 @@ do
 	inc(n)
 	end;
 
-if (R >= INT_2W_S_MAXINT)
+if (R >= MULTI_INT_2W_S_MAXINT)
 or	(not M_Val_All_Zero)
 then
 	begin
@@ -12749,16 +12940,16 @@ then
 	end;
 
 if v1.Negative_flag
-then Result:= INT_2W_S(-R)
-else Result:= INT_2W_S(R);
+then Result:= MULTI_INT_2W_S(-R)
+else Result:= MULTI_INT_2W_S(R);
 end;
 
 
 (******************************************)
-class operator Multi_Int_XV.implicit(const v1:Multi_Int_XV):INT_2W_U;
+class operator Multi_Int_XV.implicit(const v1:Multi_Int_XV):MULTI_INT_2W_U;
 var
-	R	:INT_2W_U;
-	n	:INT_1W_U;
+	R	:MULTI_INT_2W_U;
+	n	:MULTI_INT_1W_U;
 	M_Val_All_Zero	:boolean;
 begin
 Multi_Int_OVERFLOW_ERROR:= FALSE;
@@ -12773,8 +12964,8 @@ then
 	exit;
 	end;
 
-R:= (INT_2W_U(v1.M_Value[1]) << INT_1W_SIZE);
-R:= (R OR INT_2W_U(v1.M_Value[0]));
+R:= (MULTI_INT_2W_U(v1.M_Value[1]) << MULTI_INT_1W_SIZE);
+R:= (R OR MULTI_INT_2W_U(v1.M_Value[0]));
 
 M_Val_All_Zero:= TRUE;
 n:=2;
@@ -12804,10 +12995,10 @@ end;
 
 
 (******************************************)
-class operator Multi_Int_XV.implicit(const v1:Multi_Int_XV):INT_1W_S;
+class operator Multi_Int_XV.implicit(const v1:Multi_Int_XV):MULTI_INT_1W_S;
 var
-	R	:INT_2W_U;
-	n	:INT_1W_U;
+	R	:MULTI_INT_2W_U;
+	n	:MULTI_INT_1W_U;
 	M_Val_All_Zero	:boolean;
 begin
 Multi_Int_OVERFLOW_ERROR:= FALSE;
@@ -12822,7 +13013,7 @@ then
 	exit;
 	end;
 
-R:= (INT_2W_U(v1.M_Value[0]) + (INT_2W_U(v1.M_Value[1]) * INT_1W_U_MAXINT_1));
+R:= (MULTI_INT_2W_U(v1.M_Value[0]) + (MULTI_INT_2W_U(v1.M_Value[1]) * MULTI_INT_1W_U_MAXINT_1));
 
 M_Val_All_Zero:= TRUE;
 n:=2;
@@ -12835,7 +13026,7 @@ do
 	inc(n)
 	end;
 
-if	(R > INT_1W_S_MAXINT)
+if	(R > MULTI_INT_1W_S_MAXINT)
 or (not M_Val_All_Zero)
 then
 	begin
@@ -12849,16 +13040,16 @@ then
 	end;
 
 if v1.Negative_flag
-then Result:= INT_1W_S(-R)
-else Result:= INT_1W_S(R);
+then Result:= MULTI_INT_1W_S(-R)
+else Result:= MULTI_INT_1W_S(R);
 end;
 
 
 (******************************************)
-class operator Multi_Int_XV.implicit(const v1:Multi_Int_XV):INT_1W_U;
+class operator Multi_Int_XV.implicit(const v1:Multi_Int_XV):MULTI_INT_1W_U;
 var
-	R	:INT_2W_U;
-	n	:INT_1W_U;
+	R	:MULTI_INT_2W_U;
+	n	:MULTI_INT_1W_U;
 	M_Val_All_Zero	:boolean;
 begin
 Multi_Int_OVERFLOW_ERROR:= FALSE;
@@ -12874,7 +13065,7 @@ then
 	exit;
 	end;
 
-R:= (INT_2W_U(v1.M_Value[0]) + (INT_2W_U(v1.M_Value[1]) * INT_1W_U_MAXINT_1));
+R:= (MULTI_INT_2W_U(v1.M_Value[0]) + (MULTI_INT_2W_U(v1.M_Value[1]) * MULTI_INT_1W_U_MAXINT_1));
 
 M_Val_All_Zero:= TRUE;
 n:=2;
@@ -12887,7 +13078,7 @@ do
 	inc(n)
 	end;
 
-if	(R > INT_1W_U_MAXINT)
+if	(R > MULTI_INT_1W_U_MAXINT)
 or (not M_Val_All_Zero)
 then
 	begin
@@ -12900,7 +13091,7 @@ then
 	exit;
 	end;
 
-Result:= INT_1W_U(R);
+Result:= MULTI_INT_1W_U(R);
 end;
 
 
@@ -12973,8 +13164,8 @@ function add_Multi_Int_XV(const v1,v2:Multi_Int_XV):Multi_Int_XV;
 var
 	tv1,
 	tv2,
-	n			:INT_2W_U;
-	M_Val		:array of INT_2W_U;
+	n			:MULTI_INT_2W_U;
+	M_Val		:array of MULTI_INT_2W_U;
 	M_Val_All_Zero	:boolean;
 begin
 setlength(M_Val, Multi_XV_size);
@@ -12986,10 +13177,10 @@ Result.Negative_flag:= Multi_UBool_UNDEF;
 tv1:= v1.M_Value[0];
 tv2:= v2.M_Value[0];
 M_Val[0]:= (tv1 + tv2);
-if	M_Val[0] > INT_1W_U_MAXINT then
+if	M_Val[0] > MULTI_INT_1W_U_MAXINT then
 	begin
-	M_Val[1]:= (M_Val[0] DIV INT_1W_U_MAXINT_1);
-	M_Val[0]:= (M_Val[0] MOD INT_1W_U_MAXINT_1);
+	M_Val[1]:= (M_Val[0] DIV MULTI_INT_1W_U_MAXINT_1);
+	M_Val[0]:= (M_Val[0] MOD MULTI_INT_1W_U_MAXINT_1);
 	end
 else M_Val[1]:= 0;
 
@@ -12999,10 +13190,10 @@ while (n < Multi_XV_max) do
 	tv1:= v1.M_Value[n];
 	tv2:= v2.M_Value[n];
 	M_Val[n]:=(M_Val[n] + tv1 + tv2);
-	if	M_Val[n] > INT_1W_U_MAXINT then
+	if	M_Val[n] > MULTI_INT_1W_U_MAXINT then
 		begin
-		M_Val[n+1]:= (M_Val[n] DIV INT_1W_U_MAXINT_1);
-		M_Val[n]:= (M_Val[n] MOD INT_1W_U_MAXINT_1);
+		M_Val[n+1]:= (M_Val[n] DIV MULTI_INT_1W_U_MAXINT_1);
+		M_Val[n]:= (M_Val[n] MOD MULTI_INT_1W_U_MAXINT_1);
 		end
 	else M_Val[n+1]:= 0;
 
@@ -13012,9 +13203,9 @@ while (n < Multi_XV_max) do
 tv1:= v1.M_Value[n];
 tv2:= v2.M_Value[n];
 M_Val[n]:=(M_Val[n] + tv1 + tv2);
-if	M_Val[n] > INT_1W_U_MAXINT then
+if	M_Val[n] > MULTI_INT_1W_U_MAXINT then
 	begin
-	M_Val[n]:= (M_Val[n] MOD INT_1W_U_MAXINT_1);
+	M_Val[n]:= (M_Val[n] MOD MULTI_INT_1W_U_MAXINT_1);
 	Result.Defined_flag:= FALSE;
 	Result.Overflow_flag:=TRUE;
 	end;
@@ -13037,9 +13228,9 @@ end;
 (******************************************)
 function subtract_Multi_Int_XV(const v1,v2:Multi_Int_XV):Multi_Int_XV;
 var
-//	M_Val	:array[0..Multi_XV_max] of INT_2W_S;
-	M_Val		:array of INT_2W_S;
-	n		:INT_2W_U;
+//	M_Val	:array[0..Multi_XV_max] of MULTI_INT_2W_S;
+	M_Val		:array of MULTI_INT_2W_S;
+	n		:MULTI_INT_2W_U;
 	M_Val_All_Zero	:boolean;
 begin
 setlength(M_Val, Multi_XV_size);
@@ -13052,7 +13243,7 @@ M_Val[0]:=(v1.M_Value[0] - v2.M_Value[0]);
 if	M_Val[0] < 0 then
 	begin
 	M_Val[1]:= -1;
-	M_Val[0]:= (M_Val[0] + INT_1W_U_MAXINT_1);
+	M_Val[0]:= (M_Val[0] + MULTI_INT_1W_U_MAXINT_1);
 	end
 else M_Val[1]:= 0;
 
@@ -13063,7 +13254,7 @@ while (n < Multi_XV_max) do
 	if	M_Val[n] < 0 then
 		begin
 		M_Val[n+1]:= -1;
-		M_Val[n]:= (M_Val[n] + INT_1W_U_MAXINT_1);
+		M_Val[n]:= (M_Val[n] + MULTI_INT_1W_U_MAXINT_1);
 		end
 	else M_Val[n+1]:= 0;
 
@@ -13536,7 +13727,7 @@ end;
 (******************************************)
 class operator Multi_Int_XV.xor(const v1,v2:Multi_Int_XV):Multi_Int_XV;
 var
-	n		:INT_2W_U;
+	n		:MULTI_INT_2W_U;
 begin
 if	(Not v1.Defined_flag)
 or	(Not v2.Defined_flag)
@@ -13570,10 +13761,10 @@ end;
 procedure multiply_Multi_Int_XV(const v1,v2:Multi_Int_XV;var Result:Multi_Int_XV);
 label	999;
 var
-M_Val		:array of INT_2W_U;
-tv1,tv2		:INT_2W_U;
+M_Val		:array of MULTI_INT_2W_U;
+tv1,tv2		:MULTI_INT_2W_U;
 i,j,k,n,
-jz,iz		:INT_1W_S;
+jz,iz		:MULTI_INT_1W_S;
 zf			:boolean;
 begin
 setlength(M_Val, Multi_XV_size_x2);
@@ -13628,14 +13819,14 @@ repeat
 	repeat
 		tv1:=v1.M_Value[i];
 		tv2:=v2.M_Value[j];
-		M_Val[i+j+1]:= (M_Val[i+j+1] + ((tv1 * tv2) DIV INT_1W_U_MAXINT_1));
-		M_Val[i+j]:= (M_Val[i+j] + ((tv1 * tv2) MOD INT_1W_U_MAXINT_1));
+		M_Val[i+j+1]:= (M_Val[i+j+1] + ((tv1 * tv2) DIV MULTI_INT_1W_U_MAXINT_1));
+		M_Val[i+j]:= (M_Val[i+j] + ((tv1 * tv2) MOD MULTI_INT_1W_U_MAXINT_1));
 		INC(i);
 	until (i > iz);
 	k:=0;
 	repeat
-		M_Val[k+1]:= M_Val[k+1] + (M_Val[k] DIV INT_1W_U_MAXINT_1);
-		M_Val[k]:= (M_Val[k] MOD INT_1W_U_MAXINT_1);
+		M_Val[k+1]:= M_Val[k+1] + (M_Val[k] DIV MULTI_INT_1W_U_MAXINT_1);
+		M_Val[k]:= (M_Val[k] MOD MULTI_INT_1W_U_MAXINT_1);
 		INC(k);
 	until (k > Multi_XV_max);
 	i:=0;
@@ -13674,10 +13865,10 @@ end;
 procedure multiply_Multi_Int_XV_v2(const v1,v2:Multi_Int_XV;var Result:Multi_Int_XV);
 label	999;
 var
-//	M_Val	:array[0..Multi_XV_max_x2] of INT_2W_U;
-M_Val		:array of INT_2W_U;
-tv1,tv2		:INT_2W_U;
-i,j,k,n,z	:INT_1W_S;
+//	M_Val	:array[0..Multi_XV_max_x2] of MULTI_INT_2W_U;
+M_Val		:array of MULTI_INT_2W_U;
+tv1,tv2		:MULTI_INT_2W_U;
+i,j,k,n,z	:MULTI_INT_1W_S;
 zf			:boolean;
 begin
 setlength(M_Val, Multi_XV_size_x2);
@@ -13713,14 +13904,14 @@ repeat
 	repeat
 		tv1:=v1.M_Value[i];
 		tv2:=v2.M_Value[j];
-		M_Val[i+j+1]:= (M_Val[i+j+1] + ((tv1 * tv2) DIV INT_1W_U_MAXINT_1));
-		M_Val[i+j]:= (M_Val[i+j] + ((tv1 * tv2) MOD INT_1W_U_MAXINT_1));
+		M_Val[i+j+1]:= (M_Val[i+j+1] + ((tv1 * tv2) DIV MULTI_INT_1W_U_MAXINT_1));
+		M_Val[i+j]:= (M_Val[i+j] + ((tv1 * tv2) MOD MULTI_INT_1W_U_MAXINT_1));
 		INC(i);
 	until (i > Multi_XV_max);
 	k:=0;
 	repeat
-		M_Val[k+1]:= M_Val[k+1] + (M_Val[k] DIV INT_1W_U_MAXINT_1);
-		M_Val[k]:= (M_Val[k] MOD INT_1W_U_MAXINT_1);
+		M_Val[k+1]:= M_Val[k+1] + (M_Val[k] DIV MULTI_INT_1W_U_MAXINT_1);
+		M_Val[k]:= (M_Val[k] MOD MULTI_INT_1W_U_MAXINT_1);
 		INC(k);
 	until (k > Multi_XV_max);
 	i:=0;
@@ -13758,10 +13949,10 @@ end;
 (******************v1**********************)
 procedure multiply_Multi_Int_XV_v1(const v1,v2:Multi_Int_XV;var Result:Multi_Int_XV);
 var
-//	M_Val	:array[0..Multi_XV_max_x2] of INT_2W_U;
-	M_Val		:array of INT_2W_U;
-	tv1,tv2	:INT_2W_U;
-	i,j,k,n	:INT_1W_U;
+//	M_Val	:array[0..Multi_XV_max_x2] of MULTI_INT_2W_U;
+	M_Val		:array of MULTI_INT_2W_U;
+	tv1,tv2	:MULTI_INT_2W_U;
+	i,j,k,n	:MULTI_INT_1W_U;
 begin
 setlength(M_Val, Multi_XV_size_x2);
 Result.init;
@@ -13778,14 +13969,14 @@ repeat
 	repeat
 		tv1:=v1.M_Value[i];
 		tv2:=v2.M_Value[j];
-		M_Val[i+j+1]:= (M_Val[i+j+1] + ((tv1 * tv2) DIV INT_1W_U_MAXINT_1));
-		M_Val[i+j]:= (M_Val[i+j] + ((tv1 * tv2) MOD INT_1W_U_MAXINT_1));
+		M_Val[i+j+1]:= (M_Val[i+j+1] + ((tv1 * tv2) DIV MULTI_INT_1W_U_MAXINT_1));
+		M_Val[i+j]:= (M_Val[i+j] + ((tv1 * tv2) MOD MULTI_INT_1W_U_MAXINT_1));
 		INC(i);
 	until (i > Multi_XV_max);
 	k:=0;
 	repeat
-		M_Val[k+1]:= M_Val[k+1] + (M_Val[k] DIV INT_1W_U_MAXINT_1);
-		M_Val[k]:= (M_Val[k] MOD INT_1W_U_MAXINT_1);
+		M_Val[k+1]:= M_Val[k+1] + (M_Val[k] DIV MULTI_INT_1W_U_MAXINT_1);
+		M_Val[k]:= (M_Val[k] MOD MULTI_INT_1W_U_MAXINT_1);
 		INC(k);
 	until (k > Multi_XV_max);
 	INC(j);
@@ -13870,7 +14061,7 @@ end;
 (*-----------------------*)
 procedure SqRoot(const v1:Multi_Int_XV;var VR,VREM:Multi_Int_XV);
 var
-D,D2		:INT_2W_S;
+D,D2		:MULTI_INT_2W_S;
 HS,LS		:ansistring;
 H,L,C,CC,T	:Multi_Int_XV;
 R_EXACT,
@@ -13993,10 +14184,10 @@ end;
 (********************v3********************)
 { Function exp_by_squaring_iterative(TV, P) }
 
-class operator Multi_Int_XV.**(const v1:Multi_Int_XV; const P:INT_2W_S):Multi_Int_XV;
+class operator Multi_Int_XV.**(const v1:Multi_Int_XV; const P:MULTI_INT_2W_S):Multi_Int_XV;
 var
 Y,TV,T,R	:Multi_Int_XV;
-PT			:INT_2W_S;
+PT			:MULTI_INT_2W_S;
 begin
 PT:= P;
 TV:= v1;
@@ -14087,13 +14278,13 @@ quotient,
 quotient_factor,
 next_dividend,
 ZERO				:Multi_Int_XV;
-T					:INT_1W_U;
-z,k					:INT_2W_U;
+T					:MULTI_INT_1W_U;
+z,k					:MULTI_INT_2W_U;
 i,
 nlz_bits_dividend,
 nlz_bits_divisor,
 nlz_bits_P_divisor,
-nlz_bits_diff		:INT_2W_S;
+nlz_bits_diff		:MULTI_INT_2W_S;
 
 begin
 ZERO:= 0;
@@ -14145,8 +14336,8 @@ else
 		i:= Multi_XV_max;
 		while (i >= 0) do
 			begin
-			P_quotient.M_Value[i]:= (((k * INT_2W_U(INT_1W_U_MAXINT_1)) + INT_2W_U(dividend.M_Value[i])) div INT_2W_U(divisor.M_Value[0]));
-			k:= (((k * INT_2W_U(INT_1W_U_MAXINT_1)) + INT_2W_U(dividend.M_Value[i])) - (INT_2W_U(P_quotient.M_Value[i]) * INT_2W_U(divisor.M_Value[0])));
+			P_quotient.M_Value[i]:= (((k * MULTI_INT_2W_U(MULTI_INT_1W_U_MAXINT_1)) + MULTI_INT_2W_U(dividend.M_Value[i])) div MULTI_INT_2W_U(divisor.M_Value[0]));
+			k:= (((k * MULTI_INT_2W_U(MULTI_INT_1W_U_MAXINT_1)) + MULTI_INT_2W_U(dividend.M_Value[i])) - (MULTI_INT_2W_U(P_quotient.M_Value[i]) * MULTI_INT_2W_U(divisor.M_Value[0])));
 			Dec(i);
 			end;
 		P_remainder.M_Value[0]:= k;
@@ -14262,30 +14453,25 @@ then
 else	// different values than last time
 	begin
 	intdivide_Shift_And_Sub_XV(v1,v2,Quotient,Remainder);
-{
-	if	(v1.Negative_flag <> v2.Negative_flag)
-	then Quotient.Negative_flag:= TRUE
-	else if	(v2.Negative_flag)
-	then Remainder.Negative_flag:= TRUE;
-}
+
 	XV_Last_Divisor:= v2;
 	XV_Last_Dividend:= v1;
 	XV_Last_Quotient:= Quotient;
 	XV_Last_Remainder:= Remainder;
 
 	Result:= Quotient;
-
-	if	(Remainder.Overflow_flag or Quotient.Overflow_flag)
-	then
-		begin
-		Multi_Int_OVERFLOW_ERROR:= TRUE;
-		if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
-			begin
-			Raise EIntOverflow.create('Overflow on divide');
-			end;
-		end;
 	end;
 
+if	(XV_Last_Remainder.Overflow_flag)
+or	(XV_Last_Quotient.Overflow_flag)
+then
+	begin
+	Multi_Int_OVERFLOW_ERROR:= TRUE;
+	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
+		begin
+		Raise EIntOverflow.create('Overflow on divide');
+		end;
+	end;
 end;
 
 
@@ -14331,27 +14517,24 @@ then
 else	// different values than last time
 	begin
 	intdivide_Shift_And_Sub_XV(v1,v2,Quotient,Remainder);
-{
-	if	(v1.Negative_flag <> v2.Negative_flag)
-	then Quotient.Negative_flag:= TRUE
-	else if	(v2.Negative_flag)
-	then Remainder.Negative_flag:= TRUE;
-}
+
 	XV_Last_Divisor:= v2;
 	XV_Last_Dividend:= v1;
 	XV_Last_Quotient:= Quotient;
 	XV_Last_Remainder:= Remainder;
 
 	Result:= Remainder;
+	end;
 
-	if	(Remainder.Overflow_flag or Quotient.Overflow_flag)
-	then
+
+if	(XV_Last_Remainder.Overflow_flag)
+or	(XV_Last_Quotient.Overflow_flag)
+then
+	begin
+	Multi_Int_OVERFLOW_ERROR:= TRUE;
+	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
 		begin
-		Multi_Int_OVERFLOW_ERROR:= TRUE;
-		if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
-			begin
-			Raise EIntOverflow.create('Overflow on divide');
-			end;
+		Raise EIntOverflow.create('Overflow on divide');
 		end;
 	end;
 end;
@@ -14413,7 +14596,7 @@ Multi_Int_X2_MAXINT:= 0;
 i:=0;
 while (i <= Multi_X2_max) do
 	begin
-	Multi_Int_X2_MAXINT.M_Value[i]:= INT_1W_U_MAXINT;
+	Multi_Int_X2_MAXINT.M_Value[i]:= MULTI_INT_1W_U_MAXINT;
 	Inc(i);
 	end;
 
@@ -14421,7 +14604,7 @@ Multi_Int_X3_MAXINT:= 0;
 i:=0;
 while (i <= Multi_X3_max) do
 	begin
-	Multi_Int_X3_MAXINT.M_Value[i]:= INT_1W_U_MAXINT;
+	Multi_Int_X3_MAXINT.M_Value[i]:= MULTI_INT_1W_U_MAXINT;
 	Inc(i);
 	end;
 
@@ -14429,7 +14612,7 @@ Multi_Int_X4_MAXINT:= 0;
 i:=0;
 while (i <= Multi_X4_max) do
 	begin
-	Multi_Int_X4_MAXINT.M_Value[i]:= INT_1W_U_MAXINT;
+	Multi_Int_X4_MAXINT.M_Value[i]:= MULTI_INT_1W_U_MAXINT;
 	Inc(i);
 	end;
 
@@ -14446,7 +14629,7 @@ Multi_Int_XV_MAXINT:= 0;
 i:=0;
 while (i <= Multi_XV_max) do
 	begin
-	Multi_Int_XV_MAXINT.M_Value[i]:= INT_1W_U_MAXINT;
+	Multi_Int_XV_MAXINT.M_Value[i]:= MULTI_INT_1W_U_MAXINT;
 	Inc(i);
 	end;
 
