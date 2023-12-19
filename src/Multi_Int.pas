@@ -106,6 +106,7 @@ v4.32.04
 
 v4.32.05
 -	exception not raised when div values same as last time
+-	create method function FromHex(const v1:ansistring):Multi_Int;
 *)
 
 // {$define Overflow_Checks}
@@ -246,6 +247,7 @@ Multi_Int_X2	=	record
 					public
 						function ToStr:ansistring;
 						function ToHex(const LZ:T_Multi_Leading_Zeros=Multi_Trim_Leading_Zeros):ansistring;
+						function FromHex(const v1:ansistring):Multi_Int_X2;
 						function Overflow:boolean;
 						function Negative:boolean;
 						function Defined:boolean;
@@ -307,6 +309,7 @@ Multi_Int_X3	=	record
 					public
 						function ToStr:ansistring;
 						function ToHex(const LZ:T_Multi_Leading_Zeros=Multi_Trim_Leading_Zeros):ansistring;
+						function FromHex(const v1:ansistring):Multi_Int_X3;
 						function Overflow:boolean;
 						function Negative:boolean;
 						function Defined:boolean;
@@ -369,6 +372,7 @@ Multi_Int_X4	=	record
 					public
 						function ToStr:ansistring;
 						function ToHex(const LZ:T_Multi_Leading_Zeros=Multi_Trim_Leading_Zeros):ansistring;
+						function FromHex(const v1:ansistring):Multi_Int_X4;
 						function Overflow:boolean;
 						function Negative:boolean;
 						function Defined:boolean;
@@ -433,6 +437,7 @@ Multi_Int_XV	=	record
 						procedure init;
 						function ToStr:ansistring;
 						function ToHex(const LZ:T_Multi_Leading_Zeros=Multi_Trim_Leading_Zeros):ansistring;
+						function FromHex(const v1:ansistring):Multi_Int_XV;
 						function Overflow:boolean;
 						function Negative:boolean;
 						function Defined:boolean;
@@ -548,6 +553,18 @@ procedure FromHex(const v1:ansistring; var v2:Multi_Int_X2); overload;
 procedure FromHex(const v1:ansistring; var v2:Multi_Int_X3); overload;
 procedure FromHex(const v1:ansistring; var v2:Multi_Int_X4); overload;
 procedure FromHex(const v1:ansistring; var v2:Multi_Int_XV); overload;
+
+function Hex_to_Multi_Int_X2(const v1:ansistring):Multi_Int_X2; overload;
+procedure Hex_to_Multi_Int_X2(const v1:ansistring; var mi:Multi_Int_X2); overload;
+
+function Hex_to_Multi_Int_X3(const v1:ansistring):Multi_Int_X3; overload;
+procedure Hex_to_Multi_Int_X3(const v1:ansistring; var mi:Multi_Int_X3); overload;
+
+function Hex_to_Multi_Int_X4(const v1:ansistring):Multi_Int_X4; overload;
+procedure Hex_to_Multi_Int_X4(const v1:ansistring; var mi:Multi_Int_X4); overload;
+
+function Hex_to_Multi_Int_XV(const v1:ansistring):Multi_Int_XV; overload;
+procedure Hex_to_Multi_Int_XV(const v1:ansistring; var mi:Multi_Int_XV); overload;
 
 function To_Multi_Int_XV(const v1:Multi_Int_X4):Multi_Int_XV; overload;
 function To_Multi_Int_XV(const v1:Multi_Int_X3):Multi_Int_XV; overload;
@@ -2407,8 +2424,9 @@ s:= s
 	+   IntToHex(v1.M_Value[0],n)
 	;
 
-if (LZ = Multi_Trim_Leading_Zeros) then Removeleadingchars(s,['0']);
+if	(LZ = Multi_Trim_Leading_Zeros) then Removeleadingchars(s,['0']);
 if	(v1.Negative_flag = Multi_UBool_TRUE) then s:='-' + s;
+if	(s = '') then s:= '0';
 v2:=s;
 end;
 
@@ -2528,6 +2546,20 @@ end;
 procedure FromHex(const v1:ansistring; var v2:Multi_Int_X2); overload;
 begin
 hex_to_Multi_Int_X2(v1,v2);
+end;
+
+
+(******************************************)
+function Multi_Int_X2.FromHex(const v1:ansistring):Multi_Int_X2;
+begin
+hex_to_Multi_Int_X2(v1,Result);
+end;
+
+
+(******************************************)
+function Hex_to_Multi_Int_X2(const v1:ansistring):Multi_Int_X2;
+begin
+hex_to_Multi_Int_X2(v1,Result);
 end;
 
 
@@ -5754,6 +5786,7 @@ s:= s
 
 if (LZ = Multi_Trim_Leading_Zeros) then Removeleadingchars(s,['0']);
 if	(v1.Negative_flag = Multi_UBool_TRUE) then s:='-' + s;
+if	(s = '') then s:= '0';
 v2:=s;
 end;
 
@@ -5873,6 +5906,20 @@ end;
 procedure FromHex(const v1:ansistring; var v2:Multi_Int_X3); overload;
 begin
 hex_to_Multi_Int_X3(v1,v2);
+end;
+
+
+(******************************************)
+function Multi_Int_X3.FromHex(const v1:ansistring):Multi_Int_X3;
+begin
+hex_to_Multi_Int_X3(v1,Result);
+end;
+
+
+(******************************************)
+function Hex_to_Multi_Int_X3(const v1:ansistring):Multi_Int_X3;
+begin
+hex_to_Multi_Int_X3(v1,Result);
 end;
 
 
@@ -9313,6 +9360,7 @@ s:= s
 
 if (LZ = Multi_Trim_Leading_Zeros) then Removeleadingchars(s,['0']);
 if	(v1.Negative_flag = Multi_UBool_TRUE) then s:='-' + s;
+if	(s = '') then s:= '0';
 v2:=s;
 end;
 
@@ -9431,6 +9479,20 @@ end;
 procedure FromHex(const v1:ansistring; var v2:Multi_Int_X4); overload;
 begin
 hex_to_Multi_Int_X4(v1,v2);
+end;
+
+
+(******************************************)
+function Multi_Int_X4.FromHex(const v1:ansistring):Multi_Int_X4;
+begin
+hex_to_Multi_Int_X4(v1,Result);
+end;
+
+
+(******************************************)
+function Hex_to_Multi_Int_X4(const v1:ansistring):Multi_Int_X4;
+begin
+hex_to_Multi_Int_X4(v1,Result);
 end;
 
 
@@ -12001,6 +12063,20 @@ end;
 
 
 (******************************************)
+function Hex_to_Multi_Int_XV(const v1:ansistring):Multi_Int_XV;
+begin
+hex_to_Multi_Int_XV(v1,Result);
+end;
+
+
+(******************************************)
+function Multi_Int_XV.FromHex(const v1:ansistring):Multi_Int_XV;
+begin
+hex_to_Multi_Int_XV(v1,Result);
+end;
+
+
+(******************************************)
 procedure FromHex(const v1:ansistring; var v2:Multi_Int_XV); overload;
 begin
 hex_to_Multi_Int_XV(v1,v2);
@@ -12046,6 +12122,7 @@ while (i >= 0) do
 
 if (LZ = Multi_Trim_Leading_Zeros) then Removeleadingchars(s,['0']);
 if	(v1.Negative_flag = Multi_UBool_TRUE) then s:='-' + s;
+if	(s = '') then s:= '0';
 v2:=s;
 end;
 
