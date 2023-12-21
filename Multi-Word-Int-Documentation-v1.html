@@ -1,0 +1,288 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta http-equiv="content-type" content="text/html; charset=utf-8"/>
+	<title></title>
+	<meta name="generator" content="LibreOffice 7.5.5.2 (Windows)"/>
+	<meta name="created" content="2023-12-21T10:43:13.415000000"/>
+	<meta name="changed" content="2023-12-21T16:53:07.269000000"/>
+	<style type="text/css">
+		@page { size: 21cm 29.7cm; margin: 2cm }
+		p { line-height: 115%; margin-bottom: 0.25cm; background: transparent }
+		a:link { color: #000080; text-decoration: underline }
+		a:visited { color: #800000; text-decoration: underline }
+	</style>
+</head>
+<body lang="en-GB" link="#000080" vlink="#800000" dir="ltr"><p style="line-height: 100%; margin-bottom: 0cm">
+<font size="4" style="font-size: 16pt"><u><b>Multi-Word-Int</b></u></font></p>
+<p style="line-height: 100%; margin-bottom: 0cm">Multi-Word-Int is a
+large integer library for the Free Pascal compiler.</p>
+<p style="line-height: 100%; margin-bottom: 0cm">It is written
+entirely in Pascal, works in both 32bit and 64bit environments, so
+should be portable to any platform that is targeted by the compiler.</p>
+<p style="line-height: 100%; margin-bottom: 0cm">The library is
+designed to be as easy to use as possible. In most cases, the large
+integer types are used in exactly the same way as the standard
+built-in integers. Automatic/implicit type conversion is provided for
+most other numerical types, and also for conversion from strings to
+large integer. Where automatic/implicit type conversion is not
+available, explicit type conversion functions/procedures/methods are
+provided.</p>
+<p style="line-height: 100%; margin-bottom: 0cm">One the main design
+aims is to allow existing code to be changed to use the library with
+minimal changes.</p>
+<p style="line-height: 100%; margin-bottom: 0cm"><font size="3" style="font-size: 13pt"><b><u>Large
+</u><u>Integer Types</u></b></font></p>
+<p style="line-height: 100%; margin-bottom: 0cm">The large integer
+types provided are:</p>
+<p style="line-height: 100%; margin-bottom: 0cm">Multi_Int_X2 :	fixed
+2 word integer</p>
+<p style="line-height: 100%; margin-bottom: 0cm">In a 64bit
+environment this equals 128 bits, in a 32bit environment this equals
+64 bits.</p>
+<p style="line-height: 100%; margin-bottom: 0cm">Multi_Int_X3 :	fixed
+3 word integer</p>
+<p style="line-height: 100%; margin-bottom: 0cm">In a 64bit
+environment this equals 192 bits, in a 32bit environment this equals
+96 bits.</p>
+<p style="line-height: 100%; margin-bottom: 0cm">Multi_Int_X4 :	fixed
+4 word integer</p>
+<p style="line-height: 100%; margin-bottom: 0cm">In a 64bit
+environment this equals 256 bits, in a 32bit environment this equals
+128 bits.</p>
+<p style="line-height: 100%; margin-bottom: 0cm">Multi_Int_XV :	user
+definable multiple word integer</p>
+<p style="line-height: 100%; margin-bottom: 0cm">The size of this
+type is defined by the calling code in a parameter to the
+initialisation procedure; this is in half-words. So, if you specify
+128, this equals 64 whole words, which equals 4096 bits in a 64bit
+environment. Set this size to be the maximum you need for your
+application. The larger the size specified, the slower the
+calculations become. There is a default size that is defined if the
+initialisation procedure is not called.  The types Multi_Int_X2,
+Multi_Int_X3 and Multi_Int_X4 are provided for maximum speed, the
+Multi_Int_XV type is provided for maximum flexibility. 
+</p>
+<p style="line-height: 100%; margin-bottom: 0cm"><font size="3" style="font-size: 13pt"><span style="font-style: normal"><u><b>Operators</b></u></span></font></p>
+<p style="line-height: 100%; margin-bottom: 0cm">The following
+arithmetical operators are provided:</p>
+<p style="line-height: 100%; margin-bottom: 0cm">+ :	add</p>
+<p style="line-height: 100%; margin-bottom: 0cm">- :	subtract (also
+unary minus)</p>
+<p style="line-height: 100%; margin-bottom: 0cm">* :	multiply</p>
+<p style="line-height: 100%; margin-bottom: 0cm">div :	divide</p>
+<p style="line-height: 100%; margin-bottom: 0cm">xor :	exclusive-or</p>
+<p style="line-height: 100%; margin-bottom: 0cm">mod :	modulo</p>
+<p style="line-height: 100%; margin-bottom: 0cm">** : 	power</p>
+<p style="line-height: 100%; margin-bottom: 0cm">abs :	absolute value</p>
+<p style="line-height: 100%; margin-bottom: 0cm">The standard
+comparison/logical operators are provided:</p>
+<p style="line-height: 100%; margin-bottom: 0cm">  =  equals</p>
+<p style="line-height: 100%; margin-bottom: 0cm"> &lt;&gt; 
+not-equals</p>
+<p style="line-height: 100%; margin-bottom: 0cm"> &gt; greater-than</p>
+<p style="line-height: 100%; margin-bottom: 0cm"> &gt;=
+greater-than-or-equal-to</p>
+<p style="line-height: 100%; margin-bottom: 0cm"> &lt; less-than 
+</p>
+<p style="line-height: 100%; margin-bottom: 0cm">&lt;=
+less-than-or-equal-to</p>
+<p style="line-height: 100%; margin-bottom: 0cm">These can be used in
+expressions in the same was as standard built-in integers.</p>
+<p style="line-height: 100%; margin-bottom: 0cm"><font size="3" style="font-size: 13pt"><b><u>Type
+Conversion</u></b></font></p>
+<p style="line-height: 100%; margin-bottom: 0cm">Conversion to/from
+other types is automatic/implicit, for the following types:</p>
+<p style="line-height: 100%; margin-bottom: 0cm">to/from integers</p>
+<p style="line-height: 100%; margin-bottom: 0cm">to/from real</p>
+<p style="line-height: 100%; margin-bottom: 0cm">from string (decimal
+notation is assumed)</p>
+<p style="line-height: 100%; margin-bottom: 0cm">from smaller
+Multi_Int_X types to larger ones (from larger to smaller requires
+explicit conversion via methods)</p>
+<p style="line-height: 100%; margin-bottom: 0cm"><u>Explicit
+conversion to/from other types is provided for the following types:</u></p>
+<p style="line-height: 100%; margin-bottom: 0cm">to string in decimal
+notation with the ToStr method</p>
+<p style="line-height: 100%; margin-bottom: 0cm">to/from string in
+hex notation with ToHex and FromHex methods/functions</p>
+<p style="line-height: 100%; margin-bottom: 0cm">to any large integer
+type from any other with typecast functions:</p>
+<p style="line-height: 100%; margin-bottom: 0cm"> To_Multi_Int_XV,</p>
+<p style="line-height: 100%; margin-bottom: 0cm"> To_Multi_Int_X4,</p>
+<p style="line-height: 100%; margin-bottom: 0cm"> To_Multi_Int_X3</p>
+<p style="line-height: 100%; margin-bottom: 0cm"> and To_Multi_Int_X2</p>
+<p style="line-height: 100%; margin-bottom: 0cm"><font size="3" style="font-size: 13pt"><b><u>Other
+operations/functions</u></b></font></p>
+<p style="line-height: 100%; margin-bottom: 0cm">The following
+operations/functions are provided:</p>
+<p style="line-height: 100%; margin-bottom: 0cm">Odd(v)</p>
+<p style="line-height: 100%; margin-bottom: 0cm">Even(v)</p>
+<p style="line-height: 100%; margin-bottom: 0cm">SqRoot(v,result,remainder)</p>
+<p style="line-height: 100%; margin-bottom: 0cm">Abs(v)</p>
+<p style="line-height: 100%; margin-bottom: 0cm">ShiftUp(v,
+Nbits)		bit shift towards the most significant end</p>
+<p style="line-height: 100%; margin-bottom: 0cm">ShiftDown(v,
+Nbits)		bit shift towards the least significant end</p>
+<p style="line-height: 100%; margin-bottom: 0cm">RotateUp(v,
+Nbits)		bit rotate towards the most significant end</p>
+<p style="line-height: 100%; margin-bottom: 0cm">RotateDown(v,
+Nbits)		bit rotate towards the least significant end</p>
+<p style="line-height: 100%; margin-bottom: 0cm">If the SqRoot
+(square root) function cannot give an exact result, it rounds down,
+and gives a remainder. The usefulness of the RotateUp and RotateDown
+procedures is debatable. I created them because I thought I would use
+them, then did not use them. But it seemed a bit sad to throw away
+the code.</p>
+<p style="line-height: 100%; margin-bottom: 0cm">The following
+methods are also provided to calling code:</p>
+<p style="line-height: 100%; margin-bottom: 0cm">v.Defined	this
+indicates if the variable is defined/undefined</p>
+<p style="line-height: 100%; margin-bottom: 0cm">v.Overflow	this
+indicates if the variable has overflowed</p>
+<p style="line-height: 100%; margin-bottom: 0cm">v.Negative	this
+indicates if the variable is negative</p>
+<p style="line-height: 100%; margin-bottom: 0cm"><font size="3" style="font-size: 13pt"><b><u>Constants</u></b></font></p>
+<p style="line-height: 100%; margin-bottom: 0cm">The following
+constants are provided (technically, these are variables calculated
+during initialisation):</p>
+<p style="line-height: 100%; margin-bottom: 0cm">Multi_Int_X2_MAXINT</p>
+<p style="line-height: 100%; margin-bottom: 0cm">Multi_Int_X3_MAXINT</p>
+<p style="line-height: 100%; margin-bottom: 0cm">Multi_Int_X4_MAXINT</p>
+<p style="line-height: 100%; margin-bottom: 0cm">Multi_Int_XV_MAXINT	this
+is recalculated whenever the size of the type is set</p>
+<p style="line-height: 100%; margin-bottom: 0cm"><font size="3" style="font-size: 13pt"><u><b>Exceptions</b></u></font></p>
+<p style="line-height: 100%; margin-bottom: 0cm">The unit exports a
+variable Multi_Int_RAISE_EXCEPTIONS_ENABLED, which can be set by the
+calling code, at any point. If set to TRUE, this enables run-time
+exceptions to be generated in the event of overflow (and other)
+errors. Multi_Int types have attributes named Defined and Overload
+which can be checked explicitly in the calling code. The unit also
+exports a boolean variable named Multi_Int_OVERFLOW_ERROR, which is
+also set after any operation that generates an overflow error.  The
+Defined and Overload attributes and the Multi_Int_OVERFLOW_ERROR
+variable are always set, even if Multi_Int_RAISE_EXCEPTIONS_ENABLED
+variable is set to FALSE. If Multi_Int_RAISE_EXCEPTIONS_ENABLED is
+FALSE, the Defined and Overload attributes and the
+Multi_Int_OVERFLOW_ERROR variable can be checked from the calling
+code.</p>
+<p style="line-height: 100%; margin-bottom: 0cm">Note that if
+Multi_Int_RAISE_EXCEPTIONS_ENABLED is FALSE, when converting
+Multi_Int variables to other types, the only way to detect overflow
+errors, is via the Multi_Int_OVERFLOW_ERROR variable.</p>
+<p style="line-height: 100%; margin-bottom: 0cm"><font size="3" style="font-size: 13pt"><u><b>Technical
+Notes</b></u></font></p>
+<p style="line-height: 100%; margin-bottom: 0cm">The code will only
+compile &amp; work correctly in Delphi mode. The unit will not work
+correctly if compiled in ObjFPC with &quot;advancedrecords&quot;
+mode. However, the calling code does not have to be in Delphi mode.</p>
+<p style="line-height: 100%; margin-bottom: 0cm">The code will
+compile in both 32bit and 64bit environments. In the unit source
+there is a define &quot;{$define 64bit}&quot; or &quot;{$define
+32bit}&quot; which is set depending on the environment, i.e. whether
+standard integers are 32bit or 64bit. This is set automatically to
+match the version of the compiler you are using, but can be
+overidden.</p>
+<p style="line-height: 100%; margin-bottom: 0cm">Multi_Init_Initialisation
+should only be called once, before any Multi_Int variables are used.
+If called a second time after  Multi_Int variables have been
+created/used, the results could be unpredictable. Further
+testing/checks are needed in this area. A variable named
+Multi_Int_ALLOW_UNLIMITED_INITIALISATIONS can be set, which will
+allow unlimited calls to the Multi_Init_Initialisation, but this is
+intended only for building test suites, and is not recommended for
+normal use.</p>
+<p style="line-height: 100%; margin-bottom: 0cm">The standard integer
+types have been aliased as follows, to make the internal unit coding
+easier in both 32bit and 64bit environments, and are not intended for
+use by calling code; the unit code depends on these, so do not change
+them:</p>
+<p style="line-height: 100%; margin-bottom: 0cm">	Multi_int8u = byte;</p>
+<p style="line-height: 100%; margin-bottom: 0cm">	Multi_int8 =
+shortint;</p>
+<p style="line-height: 100%; margin-bottom: 0cm">	Multi_int16 =
+smallint;</p>
+<p style="line-height: 100%; margin-bottom: 0cm">	Multi_int16u =
+word;</p>
+<p style="line-height: 100%; margin-bottom: 0cm">	Multi_int32 =
+longint;</p>
+<p style="line-height: 100%; margin-bottom: 0cm">	Multi_int32u =
+longword;</p>
+<p style="line-height: 100%; margin-bottom: 0cm">	Multi_int64u =
+QWord;</p>
+<p style="line-height: 100%; margin-bottom: 0cm">	Multi_int64 =
+int64;</p>
+<p style="line-height: 100%; margin-bottom: 0cm">The following
+integer type aliases have also  been set, to make the internal unit
+coding easier in both 32bit and 64bit environments, and are not
+intended for use by calling code; the unit code depends on these, so
+do not change them:</p>
+<p style="line-height: 100%; margin-bottom: 0cm">	INT_1W_S</p>
+<p style="line-height: 100%; margin-bottom: 0cm">	INT_1W_U</p>
+<p style="line-height: 100%; margin-bottom: 0cm">	INT_2W_S</p>
+<p style="line-height: 100%; margin-bottom: 0cm">and	INT_2W_U</p>
+<p style="line-height: 100%; margin-bottom: 0cm">These are aliased to
+the above types depending on whether &quot;{$define 64bit}&quot; or
+&quot;{$define 32bit}&quot; are defined. For example the following
+are defined for a 64bit environment. Do not change these:</p>
+<p style="line-height: 100%; margin-bottom: 0cm">	MULTI_INT_1W_S =
+Multi_int32;</p>
+<p style="line-height: 100%; margin-bottom: 0cm">	MULTI_INT_1W_U =
+Multi_int32u;</p>
+<p style="line-height: 100%; margin-bottom: 0cm">	MULTI_INT_2W_S =
+Multi_int64;</p>
+<p style="line-height: 100%; margin-bottom: 0cm">	MULTI_INT_2W_U =
+Multi_int64u;</p>
+<p style="line-height: 100%; margin-bottom: 0cm">The library code
+imports a unit named UBool to provide an exotic boolean type:</p>
+<p style="line-height: 100%; margin-bottom: 0cm">UBool =
+(UBool_UNDEF,UBool_FALSE,UBool_TRUE)</p>
+<p style="line-height: 100%; margin-bottom: 0cm">and T_Ubool. The
+main feature of the T_UBool and UBool types are to provide boolean
+variables that can have an additional value of &quot;undefined&quot;.
+The Ubool unit implements implicit conversion to/from standard
+boolean values, where possible.</p>
+<p style="line-height: 100%; margin-bottom: 0cm">Here is a small Demo
+Program...</p>
+<p style="line-height: 100%; margin-bottom: 0cm"><font face="Courier New, monospace"><font size="2" style="font-size: 10pt"><b>(*----------------------------*)</b></font></font></p>
+<p style="line-height: 100%; margin-bottom: 0cm"><font face="Courier New, monospace"><font size="2" style="font-size: 10pt"><b>Program
+hello_multi_int;</b></font></font></p>
+<p style="line-height: 100%; margin-bottom: 0cm"><font face="Courier New, monospace"><font size="2" style="font-size: 10pt"><b>uses
+Multi_Int;</b></font></font></p>
+<p style="line-height: 100%; margin-bottom: 0cm"><font face="Courier New, monospace"><font size="2" style="font-size: 10pt"><b>type
+Big_Int= Multi_int_XV;</b></font></font></p>
+<p style="line-height: 100%; margin-bottom: 0cm"><font face="Courier New, monospace"><font size="2" style="font-size: 10pt"><b>var	N,P,R,Q	:
+Big_Int;</b></font></font></p>
+<p style="line-height: 100%; margin-bottom: 0cm"><font face="Courier New, monospace"><font size="2" style="font-size: 10pt"><b>begin</b></font></font></p>
+<p style="line-height: 100%; margin-bottom: 0cm"><font face="Courier New, monospace"><font size="2" style="font-size: 10pt"><b>//
+literal numbers &gt; 64bit MAXINT can be specified as strings</b></font></font></p>
+<p style="line-height: 100%; margin-bottom: 0cm"><font face="Courier New, monospace"><font size="2" style="font-size: 10pt"><b>N:=
+'340282366920938463463374607431768211455';  // equals ((2 ** 128) -
+1)</b></font></font></p>
+<p style="line-height: 100%; margin-bottom: 0cm"><font face="Courier New, monospace"><font size="2" style="font-size: 10pt"><b>P:=
+((Big_Int(2) ** Big_Int(128)) – 1); // sometimes explicit type
+casting is necessary</b></font></font></p>
+<p style="line-height: 100%; margin-bottom: 0cm"><font face="Courier New, monospace"><font size="2" style="font-size: 10pt"><b>if
+((P - N) &lt;&gt; 0) then writeln('Fail!');</b></font></font></p>
+<p style="line-height: 100%; margin-bottom: 0cm"><font face="Courier New, monospace"><font size="2" style="font-size: 10pt"><b>P:=
+(N ** 2);</b></font></font></p>
+<p style="line-height: 100%; margin-bottom: 0cm"><font face="Courier New, monospace"><font size="2" style="font-size: 10pt"><b>R:=
+(P div N);</b></font></font></p>
+<p style="line-height: 100%; margin-bottom: 0cm"><font face="Courier New, monospace"><font size="2" style="font-size: 10pt"><b>if
+(R &lt;&gt; N) then writeln('Fail!')</b></font></font></p>
+<p style="line-height: 100%; margin-bottom: 0cm"><font face="Courier New, monospace"><font size="2" style="font-size: 10pt"><b>else
+writeln('R = N = ',R.ToStr);</b></font></font></p>
+<p style="line-height: 100%; margin-bottom: 0cm"><font face="Courier New, monospace"><font size="2" style="font-size: 10pt"><b>sqroot(P,R,Q);</b></font></font></p>
+<p style="line-height: 100%; margin-bottom: 0cm"><font face="Courier New, monospace"><font size="2" style="font-size: 10pt"><b>if
+(R &lt;&gt; N) or (Q &lt;&gt; 0)</b></font></font></p>
+<p style="line-height: 100%; margin-bottom: 0cm"><font face="Courier New, monospace"><font size="2" style="font-size: 10pt"><b>then
+writeln('Fail!')</b></font></font></p>
+<p style="line-height: 100%; margin-bottom: 0cm"><font face="Courier New, monospace"><font size="2" style="font-size: 10pt"><b>else
+writeln('Hex R = N = ',R.ToHex);</b></font></font></p>
+<p style="line-height: 100%; margin-bottom: 0cm"><font face="Courier New, monospace"><font size="2" style="font-size: 10pt"><b>end.</b></font></font></p>
+<p style="line-height: 100%; margin-bottom: 0cm"><font face="Courier New, monospace"><font size="2" style="font-size: 10pt"><b>(*----------------------------*)</b></font></font></p>
+<p style="line-height: 100%; margin-bottom: 0cm"><br/>
+
+</p>
+</body>
+</html>
