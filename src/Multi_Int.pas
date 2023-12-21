@@ -16,13 +16,9 @@ UNIT Multi_Int;
   	{$define 32bit}
 {$ENDIF}
 
-
 {$ifdef 32bit}
 	{$SAFEFPUEXCEPTIONS ON}
 {$endif}
-
-//{$FPUTYPE SSE2}
-
 
 {$MODESWITCH NESTEDCOMMENTS+}
 
