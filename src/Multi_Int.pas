@@ -103,10 +103,10 @@ v4.32.04
 v4.32.05
 -	exception not raised when div values same as last time
 -	create method function FromHex(const v1:ansistring):Multi_Int;
+-	power function did not check overflow/defined
 *)
 
 // {$define Overflow_Checks}
-
 // {$define extended_inc_operator}
 
 (* END OF USER OPTIONAL DEFINES *)
@@ -505,7 +505,7 @@ Multi_XV_max		:MULTI_INT_1W_U;
 Multi_XV_size_x2	:MULTI_INT_1W_U;
 Multi_XV_max_x2		:MULTI_INT_1W_U;
 
-procedure Multi_Init_Initialisation(const P_Multi_XV_size:Multi_int32u = 32);
+procedure Multi_Init_Initialisation(const P_Multi_XV_size:Multi_int32u = 16);
 
 function Odd(const v1:Multi_Int_XV):boolean; overload;
 function Odd(const v1:Multi_Int_X4):boolean; overload;
@@ -3459,6 +3459,32 @@ var
 Y,TV,T,R	:Multi_Int_X2;
 PT			:MULTI_INT_2W_S;
 begin
+if	(Not v1.Defined_flag)
+then
+	begin
+	Result:=0;
+	Result.Defined_flag:= FALSE;
+	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
+		begin
+		Raise EInterror.create('Uninitialised variable');
+		end;
+	exit;
+	end;
+
+if	(v1.Overflow_flag)
+then
+	begin
+	Result:= 0;
+	Result.Overflow_flag:=TRUE;
+	Result.Defined_flag:=TRUE;
+	Multi_Int_OVERFLOW_ERROR:= TRUE;
+	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
+		begin
+		Raise EIntOverflow.create('Overflow on power');
+		end;
+	exit;
+	end;
+
 PT:= P;
 TV:= v1;
 if	(PT < 0) then R:= 0
@@ -6877,6 +6903,32 @@ var
 Y,TV,T,R	:Multi_Int_X3;
 PT			:MULTI_INT_2W_S;
 begin
+if	(Not v1.Defined_flag)
+then
+	begin
+	Result:=0;
+	Result.Defined_flag:= FALSE;
+	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
+		begin
+		Raise EInterror.create('Uninitialised variable');
+		end;
+	exit;
+	end;
+
+if	(v1.Overflow_flag)
+then
+	begin
+	Result:= 0;
+	Result.Overflow_flag:=TRUE;
+	Result.Defined_flag:=TRUE;
+	Multi_Int_OVERFLOW_ERROR:= TRUE;
+	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
+		begin
+		Raise EIntOverflow.create('Overflow on power');
+		end;
+	exit;
+	end;
+
 PT:= P;
 TV:= v1;
 if	(PT < 0) then R:= 0
@@ -10509,6 +10561,32 @@ var
 Y,TV,T,R	:Multi_Int_X4;
 PT			:MULTI_INT_2W_S;
 begin
+if	(Not v1.Defined_flag)
+then
+	begin
+	Result:=0;
+	Result.Defined_flag:= FALSE;
+	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
+		begin
+		Raise EInterror.create('Uninitialised variable');
+		end;
+	exit;
+	end;
+
+if	(v1.Overflow_flag)
+then
+	begin
+	Result:= 0;
+	Result.Overflow_flag:=TRUE;
+	Result.Defined_flag:=TRUE;
+	Multi_Int_OVERFLOW_ERROR:= TRUE;
+	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
+		begin
+		Raise EIntOverflow.create('Overflow on power');
+		end;
+	exit;
+	end;
+
 PT:= P;
 TV:= v1;
 if	(PT < 0) then R:= 0
@@ -10931,6 +11009,7 @@ self.Defined_flag:= FALSE;
 end;
 
 
+(******************************************)
 function ABS_greaterthan_Multi_Int_XV(const v1,v2:Multi_Int_XV):Boolean;
 var
 	i	:MULTI_INT_2W_U;
@@ -14262,6 +14341,32 @@ var
 Y,TV,T,R	:Multi_Int_XV;
 PT			:MULTI_INT_2W_S;
 begin
+if	(Not v1.Defined_flag)
+then
+	begin
+	Result:=0;
+	Result.Defined_flag:= FALSE;
+	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
+		begin
+		Raise EInterror.create('Uninitialised variable');
+		end;
+	exit;
+	end;
+
+if	(v1.Overflow_flag)
+then
+	begin
+	Result:= 0;
+	Result.Overflow_flag:=TRUE;
+	Result.Defined_flag:=TRUE;
+	Multi_Int_OVERFLOW_ERROR:= TRUE;
+	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
+		begin
+		Raise EIntOverflow.create('Overflow on power');
+		end;
+	exit;
+	end;
+
 PT:= P;
 TV:= v1;
 if	(PT < 0) then R:= 0
@@ -14619,7 +14724,7 @@ Multi_Init_Initialisation
 ******************************************
 }
 
-procedure Multi_Init_Initialisation(const P_Multi_XV_size:Multi_int32u = 32);
+procedure Multi_Init_Initialisation(const P_Multi_XV_size:Multi_int32u = 16);
 var	i:Multi_int32u;
 
 begin
