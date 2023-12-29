@@ -10,3 +10,6 @@ This should be considered a beta development version.
 Version 4.33 has:
 - better exception handling if initialisation called incorrectly
 - exception bug fixes
+- overflow bug fixes
+- some shift operations were failing if range-checking was enabled - range-checking disabled around shift operations
+- Multi_Int_XV xor operation was not initialising result variable
