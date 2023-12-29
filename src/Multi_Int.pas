@@ -108,6 +108,12 @@ v4.33.00
 -	check and prevent Multi_Init_Initialisation if XV vars already exist
 -	check invalidly resized XV vars
 -	xor function was not checking overflow
+
+v4.33.01
+-	unary minus was not checking overflow
+-	Multi_Int_XV xor function was not calling init
+-	some shift operations did not have {$Q-} and {$R-}
+-	To_Multi_Int_XV functions were not calling the Multi_Int_X_to_Multi_Int_XV proc
 *)
 
 // {$define Overflow_Checks}
@@ -932,7 +938,14 @@ carry_bits_mask:= $FFFFFFFF;
 NBits_max:= MULTI_INT_1W_SIZE;
 
 NBits_carry:= (NBits_max - NBits);
+
+{$Q-}
+{$R-}
 carry_bits_mask:= (carry_bits_mask << NBits_carry);
+{$ifdef Overflow_Checks}
+{$Q+}
+{$R+}
+{$endif}
 
 if NBits <= NBits_max then
 	begin
@@ -1155,7 +1168,14 @@ carry_bits_mask:= $FFFFFFFF;
 NBits_max:= MULTI_INT_1W_SIZE;
 
 NBits_carry:= (NBits_max - NBits);
+
+{$Q-}
+{$R-}
 carry_bits_mask:= (carry_bits_mask << NBits_carry);
+{$ifdef Overflow_Checks}
+{$Q+}
+{$R+}
+{$endif}
 
 if NBits <= NBits_max then
 begin
@@ -3220,6 +3240,32 @@ end;
 (******************************************)
 class operator Multi_Int_X2.-(const v1:Multi_Int_X2):Multi_Int_X2;
 begin
+if	(Not v1.Defined_flag)
+then
+	begin
+	Result:=0;
+	Result.Defined_flag:= v1.Defined_flag;
+	Result.Overflow_flag:= v1.Overflow_flag;
+	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
+		begin
+		Raise EInterror.create('Uninitialised variable');
+		end;
+	exit;
+	end;
+if	(v1.Overflow_flag)
+then
+	begin
+	Result:= 0;
+	Result.Defined_flag:= v1.Defined_flag;
+	Result.Overflow_flag:= v1.Overflow_flag;
+	Multi_Int_ERROR:= TRUE;
+	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
+		begin
+		Raise EIntOverflow.create('Overflow on unary minus');
+		end;
+	exit;
+	end;
+
 Result:= v1;
 if	(v1.Negative_flag = Multi_UBool_TRUE) then Result.Negative_flag:= Multi_UBool_FALSE;
 if	(v1.Negative_flag = Multi_UBool_FALSE) then Result.Negative_flag:= Multi_UBool_TRUE;
@@ -4154,7 +4200,14 @@ carry_bits_mask:= $FFFFFFFF;
 NBits_max:= MULTI_INT_1W_SIZE;
 
 NBits_carry:= (NBits_max - NBits);
+
+{$Q-}
+{$R-}
 carry_bits_mask:= (carry_bits_mask << NBits_carry);
+{$ifdef Overflow_Checks}
+{$Q+}
+{$R+}
+{$endif}
 
 if NBits <= NBits_max then
 begin
@@ -4403,7 +4456,14 @@ carry_bits_mask:= $FFFFFFFF;
 NBits_max:= MULTI_INT_1W_SIZE;
 
 NBits_carry:= (NBits_max - NBits);
+
+{$Q-}
+{$R-}
 carry_bits_mask:= (carry_bits_mask << NBits_carry);
+{$ifdef Overflow_Checks}
+{$Q+}
+{$R+}
+{$endif}
 
 if NBits <= NBits_max then
 begin
@@ -6637,6 +6697,32 @@ end;
 (******************************************)
 class operator Multi_Int_X3.-(const v1:Multi_Int_X3):Multi_Int_X3;
 begin
+if	(Not v1.Defined_flag)
+then
+	begin
+	Result:=0;
+	Result.Defined_flag:= v1.Defined_flag;
+	Result.Overflow_flag:= v1.Overflow_flag;
+	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
+		begin
+		Raise EInterror.create('Uninitialised variable');
+		end;
+	exit;
+	end;
+if	(v1.Overflow_flag)
+then
+	begin
+	Result:= 0;
+	Result.Defined_flag:= v1.Defined_flag;
+	Result.Overflow_flag:= v1.Overflow_flag;
+	Multi_Int_ERROR:= TRUE;
+	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
+		begin
+		Raise EIntOverflow.create('Overflow on unary minus');
+		end;
+	exit;
+	end;
+
 Result:= v1;
 if	(v1.Negative_flag = Multi_UBool_TRUE) then Result.Negative_flag:= Multi_UBool_FALSE;
 if	(v1.Negative_flag = Multi_UBool_FALSE) then Result.Negative_flag:= Multi_UBool_TRUE;
@@ -7602,7 +7688,14 @@ carry_bits_mask:= $FFFFFFFF;
 
 NBits_max:= MULTI_INT_1W_SIZE;
 NBits_carry:= (NBits_max - NBits);
+
+{$Q-}
+{$R-}
 carry_bits_mask:= (carry_bits_mask << NBits_carry);
+{$ifdef Overflow_Checks}
+{$Q+}
+{$R+}
+{$endif}
 
 if NBits <= NBits_max then
 begin
@@ -7867,7 +7960,14 @@ carry_bits_mask:= $FFFFFFFF;
 
 NBits_max:= MULTI_INT_1W_SIZE;
 NBits_carry:= (NBits_max - NBits);
+
+{$Q-}
+{$R-}
 carry_bits_mask:= (carry_bits_mask << NBits_carry);
+{$ifdef Overflow_Checks}
+{$Q+}
+{$R+}
+{$endif}
 
 if NBits <= NBits_max then
 begin
@@ -10266,6 +10366,32 @@ end;
 (******************************************)
 class operator Multi_Int_X4.-(const v1:Multi_Int_X4):Multi_Int_X4;
 begin
+if	(Not v1.Defined_flag)
+then
+	begin
+	Result:=0;
+	Result.Defined_flag:= v1.Defined_flag;
+	Result.Overflow_flag:= v1.Overflow_flag;
+	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
+		begin
+		Raise EInterror.create('Uninitialised variable');
+		end;
+	exit;
+	end;
+if	(v1.Overflow_flag)
+then
+	begin
+	Result:= 0;
+	Result.Defined_flag:= v1.Defined_flag;
+	Result.Overflow_flag:= v1.Overflow_flag;
+	Multi_Int_ERROR:= TRUE;
+	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
+		begin
+		Raise EIntOverflow.create('Overflow on unary minus');
+		end;
+	exit;
+	end;
+
 Result:= v1;
 if	(v1.Negative_flag = Multi_UBool_TRUE) then Result.Negative_flag:= Multi_UBool_FALSE;
 if	(v1.Negative_flag = Multi_UBool_FALSE) then Result.Negative_flag:= Multi_UBool_TRUE;
@@ -11159,7 +11285,14 @@ carry_bits_mask:= $FFFFFFFF;
 
 NBits_max:= MULTI_INT_1W_SIZE;
 NBits_carry:= (NBits_max - NBits);
+
+{$Q-}
+{$R-}
 carry_bits_mask:= (carry_bits_mask << NBits_carry);
+{$ifdef Overflow_Checks}
+{$Q+}
+{$R+}
+{$endif}
 
 if NBits <= NBits_max then
 	begin
@@ -11274,7 +11407,14 @@ carry_bits_mask:= $FFFFFFFF;
 
 NBits_max:= MULTI_INT_1W_SIZE;
 NBits_carry:= (NBits_max - NBits);
+
+{$Q-}
+{$R-}
 carry_bits_mask:= (carry_bits_mask << NBits_carry);
+{$ifdef Overflow_Checks}
+{$Q+}
+{$R+}
+{$endif}
 
 if NBits <= NBits_max then
 	begin
@@ -12288,141 +12428,6 @@ end;
 
 
 (******************************************)
-function To_Multi_Int_XV(const v1:Multi_Int_X4):Multi_Int_XV;
-var n :MULTI_INT_1W_U;
-begin
-Result.Overflow_flag:= v1.Overflow_flag;
-Result.Defined_flag:= v1.Defined_flag;
-Result.Negative_flag:= v1.Negative_flag;
-
-if	(v1.Defined_flag = FALSE)
-then
-	begin
-	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
-		begin
-		Raise EInterror.create('Uninitialised variable');
-		end;
-	Result.Defined_flag:= FALSE;
-	exit;
-	end;
-
-if	(v1.Overflow_flag = TRUE)
-then
-	begin
-	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
-		begin
-		Raise EInterror.create('Overflow');
-		end;
-	Result.Overflow_flag:= TRUE;
-	exit;
-	end;
-
-n:= 0;
-while (n <= Multi_X4_max) do
-	begin
-	Result.M_Value[n]:= v1.M_Value[n];
-	inc(n);
-	end;
-
-while (n <= Multi_XV_max) do
-	begin
-	Result.M_Value[n]:= 0;
-	inc(n);
-	end;
-end;
-
-
-(******************************************)
-function To_Multi_Int_XV(const v1:Multi_Int_X3):Multi_Int_XV;
-var n :MULTI_INT_1W_U;
-begin
-Result.Overflow_flag:= v1.Overflow_flag;
-Result.Defined_flag:= v1.Defined_flag;
-Result.Negative_flag:= v1.Negative_flag;
-
-if	(v1.Defined_flag = FALSE)
-then
-	begin
-	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
-		begin
-		Raise EInterror.create('Uninitialised variable');
-		end;
-	Result.Defined_flag:= FALSE;
-	exit;
-	end;
-
-if	(v1.Overflow_flag = TRUE)
-then
-	begin
-	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
-		begin
-		Raise EInterror.create('Overflow');
-		end;
-	Result.Overflow_flag:= TRUE;
-	exit;
-	end;
-
-n:= 0;
-while (n <= Multi_X3_max) do
-	begin
-	Result.M_Value[n]:= v1.M_Value[n];
-	inc(n);
-	end;
-
-while (n <= Multi_XV_max) do
-	begin
-	Result.M_Value[n]:= 0;
-	inc(n);
-	end;
-end;
-
-
-(******************************************)
-function To_Multi_Int_XV(const v1:Multi_Int_X2):Multi_Int_XV;
-var n :MULTI_INT_1W_U;
-begin
-Result.Overflow_flag:= v1.Overflow_flag;
-Result.Defined_flag:= v1.Defined_flag;
-Result.Negative_flag:= v1.Negative_flag;
-
-if	(v1.Defined_flag = FALSE)
-then
-	begin
-	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
-		begin
-		Raise EInterror.create('Uninitialised variable');
-		end;
-	Result.Defined_flag:= FALSE;
-	exit;
-	end;
-
-if	(v1.Overflow_flag = TRUE)
-then
-	begin
-	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
-		begin
-		Raise EInterror.create('Overflow');
-		end;
-	Result.Overflow_flag:= TRUE;
-	exit;
-	end;
-
-n:= 0;
-while (n <= Multi_X2_max) do
-	begin
-	Result.M_Value[n]:= v1.M_Value[n];
-	inc(n);
-	end;
-
-while (n <= Multi_XV_max) do
-	begin
-	Result.M_Value[n]:= 0;
-	inc(n);
-	end;
-end;
-
-
-(******************************************)
 procedure Multi_Int_X4_to_Multi_Int_XV(const v1:Multi_Int_X4; var MI:Multi_Int_XV);
 var
 	n				:MULTI_INT_1W_U;
@@ -12501,6 +12506,13 @@ end;
 
 (******************************************)
 class operator Multi_Int_XV.implicit(const v1:Multi_Int_X4):Multi_Int_XV;
+begin
+Multi_Int_X4_to_Multi_Int_XV(v1,Result);
+end;
+
+
+(******************************************)
+function To_Multi_Int_XV(const v1:Multi_Int_X4):Multi_Int_XV;
 begin
 Multi_Int_X4_to_Multi_Int_XV(v1,Result);
 end;
@@ -12591,6 +12603,13 @@ end;
 
 
 (******************************************)
+function To_Multi_Int_XV(const v1:Multi_Int_X3):Multi_Int_XV;
+begin
+Multi_Int_X3_to_Multi_Int_XV(v1,Result);
+end;
+
+
+(******************************************)
 procedure Multi_Int_X2_to_Multi_Int_XV(const v1:Multi_Int_X2; var MI:Multi_Int_XV);
 var
 	n				:MULTI_INT_1W_U;
@@ -12669,6 +12688,13 @@ end;
 
 (******************************************)
 class operator Multi_Int_XV.implicit(const v1:Multi_Int_X2):Multi_Int_XV;
+begin
+Multi_Int_X2_to_Multi_Int_XV(v1,Result);
+end;
+
+
+(******************************************)
+function To_Multi_Int_XV(const v1:Multi_Int_X2):Multi_Int_XV;
 begin
 Multi_Int_X2_to_Multi_Int_XV(v1,Result);
 end;
@@ -13913,6 +13939,33 @@ end;
 (******************************************)
 class operator Multi_Int_XV.-(const v1:Multi_Int_XV):Multi_Int_XV;
 begin
+if	(Not v1.Defined_flag)
+or	(length(v1.M_Value) <> Multi_XV_size)
+then
+	begin
+	Result:=0;
+	Result.Defined_flag:= v1.Defined_flag;
+	Result.Overflow_flag:= v1.Overflow_flag;
+	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
+		begin
+		Raise EInterror.create('Uninitialised variable');
+		end;
+	exit;
+	end;
+if	(v1.Overflow_flag)
+then
+	begin
+	Result:= 0;
+	Result.Defined_flag:= v1.Defined_flag;
+	Result.Overflow_flag:= v1.Overflow_flag;
+	Multi_Int_ERROR:= TRUE;
+	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
+		begin
+		Raise EIntOverflow.create('Overflow on unary minus');
+		end;
+	exit;
+	end;
+
 Result:= v1;
 if	(v1.Negative_flag = Multi_UBool_TRUE) then Result.Negative_flag:= Multi_UBool_FALSE;
 if	(v1.Negative_flag = Multi_UBool_FALSE) then Result.Negative_flag:= Multi_UBool_TRUE;
