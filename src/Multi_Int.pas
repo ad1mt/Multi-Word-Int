@@ -174,6 +174,7 @@ v4.34.11
 -	small speedups in multiplication routines.
 -	bring UBool unit back inside from the cold.
 -	testing bug fix in Multi_Int_X2 modulus functine
+-	need extra initialisation routines reset_X2_Last_Divisor etc
 *)
 
 (* END OF USER OPTIONAL DEFINES *)
@@ -187,7 +188,7 @@ uses	sysutils
 ;
 
 const
-	version = '4.34.10';
+	version = '4.34.11';
 
 const
 
@@ -578,6 +579,10 @@ Multi_XW_size_x2	:MULTI_INT_1W_U;
 Multi_XW_max_x2		:MULTI_INT_1W_U;
 
 procedure Multi_Init_Initialisation(const P_Multi_XV_size:MULTI_INT_1W_U = 16);
+procedure reset_X2_Last_Divisor;
+procedure reset_X3_Last_Divisor;
+procedure reset_X4_Last_Divisor;
+procedure reset_XV_Last_Divisor;
 
 function Odd(const v1:Multi_Int_XV):boolean; overload;
 function Odd(const v1:Multi_Int_X4):boolean; overload;
@@ -17496,6 +17501,38 @@ Multi_32bit_or_64bit:= Multi_64bit;
 Multi_32bit_or_64bit:= Multi_32bit;
 {$endif}
 
+end;
+
+procedure reset_X2_Last_Divisor;
+begin
+X2_Last_Divisor:= 0;
+X2_Last_Dividend:= 0;
+X2_Last_Quotient:= 0;
+X2_Last_Remainder:= 0;
+end;
+
+procedure reset_X3_Last_Divisor;
+begin
+X3_Last_Divisor:= 0;
+X3_Last_Dividend:= 0;
+X3_Last_Quotient:= 0;
+X3_Last_Remainder:= 0;
+end;
+
+procedure reset_X4_Last_Divisor;
+begin
+X4_Last_Divisor:= 0;
+X4_Last_Dividend:= 0;
+X4_Last_Quotient:= 0;
+X4_Last_Remainder:= 0;
+end;
+
+procedure reset_XV_Last_Divisor;
+begin
+XV_Last_Divisor:= 0;
+XV_Last_Dividend:= 0;
+XV_Last_Quotient:= 0;
+XV_Last_Remainder:= 0;
 end;
 
 
