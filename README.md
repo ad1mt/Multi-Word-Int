@@ -12,3 +12,4 @@ Version 4.34 has:
 - small speedups in multiplication routines
 - minor bug fixes
 - UBool type now merged in, no longer a separate unit/file
+- testing bug fix
