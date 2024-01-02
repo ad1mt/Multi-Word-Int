@@ -13,3 +13,4 @@ Version 4.34 has:
 - minor bug fixes
 - UBool type now merged in, no longer a separate unit/file
 - testing bug fix
+- bug fix in division algorithm
