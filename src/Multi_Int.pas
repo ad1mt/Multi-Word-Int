@@ -176,6 +176,9 @@ v4.34.11
 -	testing bug fix in Multi_Int_X2 modulus functine
 -	need extra initialisation routines reset_X2_Last_Divisor etc
 -	bug fix in division algorithm
+
+v4.34.12
+-	major bug fix in division algorithm
 *)
 
 (* END OF USER OPTIONAL DEFINES *)
@@ -3987,21 +3990,20 @@ else
 				adjacent_word_dividend:= (dividend.M_Value[dividend_i_1] + (next_word_carry * MULTI_INT_1W_U_MAXINT_1));
                 adjacent_word_division:= (dividor.M_Value[dividor_i_1] * word_division);
 				if (adjacent_word_division > adjacent_word_dividend) then
-					begin
 					Dec(word_division);
-			        next_word_carry:= (word_dividend - (word_division * dividor.M_Value[dividor_i]));
-					end;
 				end;
 			quotient:= 0;
-
 			quotient.M_Value[quotient_i]:= word_division;
             next_dividend:= (dividend - (dividor * quotient));
-			if (next_dividend >= 0) then
+			if (next_dividend < 0) then
 				begin
-				P_quotient.M_Value[quotient_i]:= word_division;
-                dividend:= next_dividend;
-	            word_carry:= next_word_carry;
+				Dec(word_division);
+				quotient.M_Value[quotient_i]:= word_division;
+	            next_dividend:= (dividend - (dividor * quotient));
 				end;
+			P_quotient.M_Value[quotient_i]:= word_division;
+            dividend:= next_dividend;
+            word_carry:= dividend.M_Value[dividend_i];
 			end
 		else
 			begin
@@ -7508,20 +7510,20 @@ else
 				adjacent_word_dividend:= (dividend.M_Value[dividend_i_1] + (next_word_carry * MULTI_INT_1W_U_MAXINT_1));
                 adjacent_word_division:= (dividor.M_Value[dividor_i_1] * word_division);
 				if (adjacent_word_division > adjacent_word_dividend) then
-					begin
 					Dec(word_division);
-			        next_word_carry:= (word_dividend - (word_division * dividor.M_Value[dividor_i]));
-					end;
 				end;
 			quotient:= 0;
 			quotient.M_Value[quotient_i]:= word_division;
             next_dividend:= (dividend - (dividor * quotient));
-			if (next_dividend >= 0) then
+			if (next_dividend < 0) then
 				begin
-				P_quotient.M_Value[quotient_i]:= word_division;
-                dividend:= next_dividend;
-	            word_carry:= next_word_carry;
+				Dec(word_division);
+				quotient.M_Value[quotient_i]:= word_division;
+	            next_dividend:= (dividend - (dividor * quotient));
 				end;
+			P_quotient.M_Value[quotient_i]:= word_division;
+            dividend:= next_dividend;
+            word_carry:= dividend.M_Value[dividend_i];
 			end
 		else
 			begin
@@ -11395,20 +11397,20 @@ else
 				adjacent_word_dividend:= (dividend.M_Value[dividend_i_1] + (next_word_carry * MULTI_INT_1W_U_MAXINT_1));
                 adjacent_word_division:= (dividor.M_Value[dividor_i_1] * word_division);
 				if (adjacent_word_division > adjacent_word_dividend) then
-					begin
 					Dec(word_division);
-			        next_word_carry:= (word_dividend - (word_division * dividor.M_Value[dividor_i]));
-					end;
 				end;
 			quotient:= 0;
 			quotient.M_Value[quotient_i]:= word_division;
             next_dividend:= (dividend - (dividor * quotient));
-			if (next_dividend >= 0) then
+			if (next_dividend.Negative_flag) then
 				begin
-				P_quotient.M_Value[quotient_i]:= word_division;
-                dividend:= next_dividend;
-	            word_carry:= next_word_carry;
+				Dec(word_division);
+				quotient.M_Value[quotient_i]:= word_division;
+	            next_dividend:= (dividend - (dividor * quotient));
 				end;
+			P_quotient.M_Value[quotient_i]:= word_division;
+            dividend:= next_dividend;
+            word_carry:= dividend.M_Value[dividend_i];
 			end
 		else
 			begin
@@ -11417,7 +11419,7 @@ else
 
 		Dec(dividend_i);
 		quotient_i:= (dividend_i - dividor_non_zero_pos);
-		end; { while (not finished)}
+		end; { while }
 
 	ShiftDown_MultiBits_Multi_Int_X5(dividend, shiftup_bits_dividor);
 	P_remainder:= To_Multi_Int_X4(dividend);
@@ -16121,20 +16123,20 @@ else
 				adjacent_word_dividend:= (dividend.M_Value[dividend_i_1] + (next_word_carry * MULTI_INT_1W_U_MAXINT_1));
                 adjacent_word_division:= (dividor.M_Value[dividor_i_1] * word_division);
 				if (adjacent_word_division > adjacent_word_dividend) then
-					begin
 					Dec(word_division);
-			        next_word_carry:= (word_dividend - (word_division * dividor.M_Value[dividor_i]));
-					end;
 				end;
 			quotient:= 0;
 			quotient.M_Value[quotient_i]:= word_division;
             next_dividend:= (dividend - (dividor * quotient));
-			if (next_dividend >= 0) then
+			if (next_dividend.Negative_flag) then
 				begin
-				P_quotient.M_Value[quotient_i]:= word_division;
-                dividend:= next_dividend;
-	            word_carry:= next_word_carry;
+				Dec(word_division);
+				quotient.M_Value[quotient_i]:= word_division;
+	            next_dividend:= (dividend - (dividor * quotient));
 				end;
+			P_quotient.M_Value[quotient_i]:= word_division;
+            dividend:= next_dividend;
+            word_carry:= dividend.M_Value[dividend_i];
 			end
 		else
 			begin
@@ -16143,7 +16145,7 @@ else
 
 		Dec(dividend_i);
 		quotient_i:= (dividend_i - dividor_non_zero_pos);
-		end; { while (not finished)}
+		end; { while }
 
 	ShiftDown_MultiBits_Multi_Int_XW(dividend, shiftup_bits_dividor);
 	P_remainder:= To_Multi_Int_XV(dividend);
