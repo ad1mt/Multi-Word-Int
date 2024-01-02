@@ -175,6 +175,7 @@ v4.34.11
 -	bring UBool unit back inside from the cold.
 -	testing bug fix in Multi_Int_X2 modulus functine
 -	need extra initialisation routines reset_X2_Last_Divisor etc
+-	bug fix in division algorithm
 *)
 
 (* END OF USER OPTIONAL DEFINES *)
@@ -4008,15 +4009,6 @@ else
 			end;
 
 		Dec(dividend_i);
-		finished:= FALSE;
-		while (not finished) do
-		    if (dividend_i >= 0) then
-			    if (dividend.M_Value[dividend_i] = 0) then
-					Dec(dividend_i)
-				else finished:= TRUE
-			else finished:= TRUE
-			;
-
 		quotient_i:= (dividend_i - dividor_non_zero_pos);
 		end; { while }
 
@@ -7537,15 +7529,6 @@ else
 			end;
 
 		Dec(dividend_i);
-		finished:= FALSE;
-		while (not finished) do
-		    if (dividend_i >= 0) then
-			    if (dividend.M_Value[dividend_i] = 0) then
-					Dec(dividend_i)
-				else finished:= TRUE
-			else finished:= TRUE
-			;
-
 		quotient_i:= (dividend_i - dividor_non_zero_pos);
 		end; { while }
 
@@ -11433,15 +11416,6 @@ else
 			end;
 
 		Dec(dividend_i);
-		finished:= FALSE;
-		while (not finished) do
-		    if (dividend_i >= 0) then
-			    if (dividend.M_Value[dividend_i] = 0) then
-					Dec(dividend_i)
-				else finished:= TRUE
-			else finished:= TRUE
-			;
-
 		quotient_i:= (dividend_i - dividor_non_zero_pos);
 		end; { while (not finished)}
 
@@ -16168,15 +16142,6 @@ else
 			end;
 
 		Dec(dividend_i);
-		finished:= FALSE;
-		while (not finished) do
-		    if (dividend_i >= 0) then
-			    if (dividend.M_Value[dividend_i] = 0) then
-					Dec(dividend_i)
-				else finished:= TRUE
-			else finished:= TRUE
-			;
-
 		quotient_i:= (dividend_i - dividor_non_zero_pos);
 		end; { while (not finished)}
 
