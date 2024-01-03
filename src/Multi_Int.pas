@@ -182,6 +182,8 @@ v4.34.12
 
 v4.34.13
 -	another bug fix in division algorithm
+-	more reliable conversion from float types, by
+	truncating the final digit instead of rounding.
 *)
 
 (* END OF USER OPTIONAL DEFINES *)
@@ -2067,11 +2069,10 @@ var operation_str	:ansistring;
 begin
 operation_str:= 'Multi_Int_X2.implicit';
 {$WARNING Float to Multi_Int type conversion loses some precision }
-
 Multi_Int_ERROR:= FALSE;
 
 FloatToDecimal(R_FLOATREC, v1, MULTI_SINGLE_TYPE_PRECISION_DIGITS, 0);
-ansistring_to_Multi_Int_X2(AddCharR('0',R_FLOATREC.digits,R_FLOATREC.Exponent), R);
+ansistring_to_Multi_Int_X2(AddCharR('0',AnsiLeftStr(R_FLOATREC.digits,(MULTI_SINGLE_TYPE_PRECISION_DIGITS-1)),R_FLOATREC.Exponent), R);
 
 if (R.Overflow) then
 	begin
@@ -2103,7 +2104,7 @@ operation_str:= 'Multi_Int_X2.implicit';
 Multi_Int_ERROR:= FALSE;
 
 FloatToDecimal(R_FLOATREC, v1, MULTI_REAL_TYPE_PRECISION_DIGITS, 0);
-ansistring_to_Multi_Int_X2(AddCharR('0',R_FLOATREC.digits,R_FLOATREC.Exponent), R);
+ansistring_to_Multi_Int_X2(AddCharR('0',AnsiLeftStr(R_FLOATREC.digits,(MULTI_REAL_TYPE_PRECISION_DIGITS-1)),R_FLOATREC.Exponent), R);
 
 if (R.Overflow) then
 	begin
@@ -2135,7 +2136,7 @@ operation_str:= 'Multi_Int_X2.implicit';
 Multi_Int_ERROR:= FALSE;
 
 FloatToDecimal(R_FLOATREC, v1, MULTI_DOUBLE_TYPE_PRECISION_DIGITS, 0);
-ansistring_to_Multi_Int_X2(AddCharR('0',R_FLOATREC.digits,R_FLOATREC.Exponent), R);
+ansistring_to_Multi_Int_X2(AddCharR('0',AnsiLeftStr(R_FLOATREC.digits,(MULTI_DOUBLE_TYPE_PRECISION_DIGITS-1)),R_FLOATREC.Exponent), R);
 
 if (R.Overflow) then
 	begin
@@ -5541,7 +5542,7 @@ begin
 Multi_Int_ERROR:= FALSE;
 
 FloatToDecimal(R_FLOATREC, v1, MULTI_SINGLE_TYPE_PRECISION_DIGITS, 0);
-ansistring_to_Multi_Int_X3(AddCharR('0',R_FLOATREC.digits,R_FLOATREC.Exponent), R);
+ansistring_to_Multi_Int_X3(AddCharR('0',AnsiLeftStr(R_FLOATREC.digits,(MULTI_SINGLE_TYPE_PRECISION_DIGITS-1)),R_FLOATREC.Exponent), R);
 
 if (R.Overflow) then
 	begin
@@ -5572,7 +5573,7 @@ begin
 Multi_Int_ERROR:= FALSE;
 
 FloatToDecimal(R_FLOATREC, v1, MULTI_REAL_TYPE_PRECISION_DIGITS, 0);
-ansistring_to_Multi_Int_X3(AddCharR('0',R_FLOATREC.digits,R_FLOATREC.Exponent), R);
+ansistring_to_Multi_Int_X3(AddCharR('0',AnsiLeftStr(R_FLOATREC.digits,(MULTI_REAL_TYPE_PRECISION_DIGITS-1)),R_FLOATREC.Exponent), R);
 
 if (R.Overflow) then
 	begin
@@ -5603,7 +5604,7 @@ begin
 Multi_Int_ERROR:= FALSE;
 
 FloatToDecimal(R_FLOATREC, v1, MULTI_DOUBLE_TYPE_PRECISION_DIGITS, 0);
-ansistring_to_Multi_Int_X3(AddCharR('0',R_FLOATREC.digits,R_FLOATREC.Exponent), R);
+ansistring_to_Multi_Int_X3(AddCharR('0',AnsiLeftStr(R_FLOATREC.digits,(MULTI_DOUBLE_TYPE_PRECISION_DIGITS-1)),R_FLOATREC.Exponent), R);
 
 if (R.Overflow) then
 	begin
@@ -9220,7 +9221,7 @@ begin
 Multi_Int_ERROR:= FALSE;
 
 FloatToDecimal(R_FLOATREC, v1, MULTI_SINGLE_TYPE_PRECISION_DIGITS, 0);
-ansistring_to_Multi_Int_X4(AddCharR('0',R_FLOATREC.digits,R_FLOATREC.Exponent), R);
+ansistring_to_Multi_Int_X4(AddCharR('0',AnsiLeftStr(R_FLOATREC.digits,(MULTI_SINGLE_TYPE_PRECISION_DIGITS-1)),R_FLOATREC.Exponent), R);
 
 if (R.Overflow) then
 	begin
@@ -9251,7 +9252,7 @@ begin
 Multi_Int_ERROR:= FALSE;
 
 FloatToDecimal(R_FLOATREC, v1, MULTI_REAL_TYPE_PRECISION_DIGITS, 0);
-ansistring_to_Multi_Int_X4(AddCharR('0',R_FLOATREC.digits,R_FLOATREC.Exponent), R);
+ansistring_to_Multi_Int_X4(AddCharR('0',AnsiLeftStr(R_FLOATREC.digits,(MULTI_REAL_TYPE_PRECISION_DIGITS-1)),R_FLOATREC.Exponent), R);
 
 if (R.Overflow) then
 	begin
@@ -9282,7 +9283,7 @@ begin
 Multi_Int_ERROR:= FALSE;
 
 FloatToDecimal(R_FLOATREC, v1, MULTI_DOUBLE_TYPE_PRECISION_DIGITS, 0);
-ansistring_to_Multi_Int_X4(AddCharR('0',R_FLOATREC.digits,R_FLOATREC.Exponent), R);
+ansistring_to_Multi_Int_X4(AddCharR('0',AnsiLeftStr(R_FLOATREC.digits,(MULTI_DOUBLE_TYPE_PRECISION_DIGITS-1)),R_FLOATREC.Exponent), R);
 
 if (R.Overflow) then
 	begin
@@ -14547,7 +14548,7 @@ Multi_Int_ERROR:= FALSE;
 
 Result.init;
 FloatToDecimal(R_FLOATREC, v1, MULTI_SINGLE_TYPE_PRECISION_DIGITS, 0);
-ansistring_to_Multi_Int_XV(AddCharR('0',R_FLOATREC.digits,R_FLOATREC.Exponent), R);
+ansistring_to_Multi_Int_XV(AddCharR('0',AnsiLeftStr(R_FLOATREC.digits,(MULTI_SINGLE_TYPE_PRECISION_DIGITS-1)),R_FLOATREC.Exponent), R);
 
 if (R.Overflow) then
 	begin
@@ -14579,7 +14580,7 @@ Multi_Int_ERROR:= FALSE;
 
 Result.init;
 FloatToDecimal(R_FLOATREC, v1, MULTI_REAL_TYPE_PRECISION_DIGITS, 0);
-ansistring_to_Multi_Int_XV(AddCharR('0',R_FLOATREC.digits,R_FLOATREC.Exponent), R);
+ansistring_to_Multi_Int_XV(AddCharR('0',AnsiLeftStr(R_FLOATREC.digits,(MULTI_REAL_TYPE_PRECISION_DIGITS-1)),R_FLOATREC.Exponent), R);
 
 if (R.Overflow) then
 	begin
@@ -14611,7 +14612,7 @@ Multi_Int_ERROR:= FALSE;
 
 Result.init;
 FloatToDecimal(R_FLOATREC, v1, MULTI_DOUBLE_TYPE_PRECISION_DIGITS, 0);
-ansistring_to_Multi_Int_XV(AddCharR('0',R_FLOATREC.digits,R_FLOATREC.Exponent), R);
+ansistring_to_Multi_Int_XV(AddCharR('0',AnsiLeftStr(R_FLOATREC.digits,(MULTI_DOUBLE_TYPE_PRECISION_DIGITS-1)),R_FLOATREC.Exponent), R);
 
 if (R.Overflow) then
 	begin
