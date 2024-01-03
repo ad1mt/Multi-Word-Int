@@ -16,3 +16,4 @@ Version 4.34 has:
 - minor bug fix in division algorithm
 - major bug fix in division algorithm
 - another bug fix in division algorithm
+- more reliable conversion from float types by truncating least significant digit instead of rounding
