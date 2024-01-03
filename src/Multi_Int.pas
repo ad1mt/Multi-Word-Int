@@ -179,6 +179,9 @@ v4.34.11
 
 v4.34.12
 -	major bug fix in division algorithm
+
+v4.34.13
+-	another bug fix in division algorithm
 *)
 
 (* END OF USER OPTIONAL DEFINES *)
@@ -192,7 +195,7 @@ uses	sysutils
 ;
 
 const
-	version = '4.34.11';
+	version = '4.34.13';
 
 const
 
@@ -678,6 +681,7 @@ Multi_Int_X5	=	record
 						Overflow_flag	:boolean;
 						Defined_flag	:boolean;
 					public
+						function Negative:boolean;
 						class operator implicit(const v1:MULTI_INT_2W_U):Multi_Int_X5;
 						class operator implicit(const v1:Multi_Int_X4):Multi_Int_X5;
 						class operator >=(const v1,v2:Multi_Int_X5):Boolean;
@@ -697,6 +701,7 @@ Multi_Int_XW	=	record
 						Defined_flag	:boolean;
 					public
 						procedure init;
+						function Negative:boolean;
 						function ToStr:ansistring;
 						class operator implicit(const v1:ansistring):Multi_Int_XW;
 						class operator implicit(const v1:Multi_Int_XW):ansistring;
@@ -3856,7 +3861,7 @@ end;
 
 (********************v1********************)
 procedure intdivide_taylor_warruth_X2(const P_dividend,P_dividor:Multi_Int_X2;var P_quotient,P_remainder:Multi_Int_X2);
-label	9000,9999;
+label	AGAIN,9000,9999;
 var
 dividor,
 quotient,
@@ -3987,15 +3992,21 @@ else
 			dividend_i_1:= (dividend_i - 1);
 			if	(dividend_i_1 >= 0) then
 				begin
+				AGAIN:
 				adjacent_word_dividend:= (dividend.M_Value[dividend_i_1] + (next_word_carry * MULTI_INT_1W_U_MAXINT_1));
                 adjacent_word_division:= (dividor.M_Value[dividor_i_1] * word_division);
 				if (adjacent_word_division > adjacent_word_dividend) then
+					begin
 					Dec(word_division);
+					next_word_carry:= next_word_carry + dividor.M_Value[dividor_i];
+					if (next_word_carry < MULTI_INT_1W_U_MAXINT_1) then
+						goto AGAIN;
+					end;
 				end;
 			quotient:= 0;
 			quotient.M_Value[quotient_i]:= word_division;
             next_dividend:= (dividend - (dividor * quotient));
-			if (next_dividend < 0) then
+			if (next_dividend.Negative) then
 				begin
 				Dec(word_division);
 				quotient.M_Value[quotient_i]:= word_division;
@@ -7378,7 +7389,7 @@ end;
 
 (********************v1********************)
 procedure intdivide_taylor_warruth_X3(const P_dividend,P_dividor:Multi_Int_X3;var P_quotient,P_remainder:Multi_Int_X3);
-label	9000,9999;
+label	AGAIN,9000,9999;
 var
 dividor,
 quotient,
@@ -7507,15 +7518,21 @@ else
 			dividend_i_1:= (dividend_i - 1);
 			if	(dividend_i_1 >= 0) then
 				begin
+				AGAIN:
 				adjacent_word_dividend:= (dividend.M_Value[dividend_i_1] + (next_word_carry * MULTI_INT_1W_U_MAXINT_1));
                 adjacent_word_division:= (dividor.M_Value[dividor_i_1] * word_division);
 				if (adjacent_word_division > adjacent_word_dividend) then
+					begin
 					Dec(word_division);
+					next_word_carry:= next_word_carry + dividor.M_Value[dividor_i];
+					if (next_word_carry < MULTI_INT_1W_U_MAXINT_1) then
+						goto AGAIN;
+					end;
 				end;
 			quotient:= 0;
 			quotient.M_Value[quotient_i]:= word_division;
             next_dividend:= (dividend - (dividor * quotient));
-			if (next_dividend < 0) then
+			if (next_dividend.Negative) then
 				begin
 				Dec(word_division);
 				quotient.M_Value[quotient_i]:= word_division;
@@ -11265,7 +11282,7 @@ end;
 
 (********************v1********************)
 procedure intdivide_taylor_warruth_X4(const P_dividend,P_dividor:Multi_Int_X4;var P_quotient,P_remainder:Multi_Int_X4);
-label	9000,9999;
+label	AGAIN,9000,9999;
 var
 dividor,
 quotient,
@@ -11394,15 +11411,21 @@ else
 			dividend_i_1:= (dividend_i - 1);
 			if	(dividend_i_1 >= 0) then
 				begin
+				AGAIN:
 				adjacent_word_dividend:= (dividend.M_Value[dividend_i_1] + (next_word_carry * MULTI_INT_1W_U_MAXINT_1));
                 adjacent_word_division:= (dividor.M_Value[dividor_i_1] * word_division);
 				if (adjacent_word_division > adjacent_word_dividend) then
+					begin
 					Dec(word_division);
+					next_word_carry:= next_word_carry + dividor.M_Value[dividor_i];
+					if (next_word_carry < MULTI_INT_1W_U_MAXINT_1) then
+						goto AGAIN;
+					end;
 				end;
 			quotient:= 0;
 			quotient.M_Value[quotient_i]:= word_division;
             next_dividend:= (dividend - (dividor * quotient));
-			if (next_dividend.Negative_flag) then
+			if (next_dividend.Negative) then
 				begin
 				Dec(word_division);
 				quotient.M_Value[quotient_i]:= word_division;
@@ -11688,6 +11711,13 @@ else
 																if	(v1.M_Value[0] < v2.M_Value[0])
 																then begin Result:=TRUE; exit; end
 																else begin Result:=FALSE; exit; end;
+end;
+
+
+(******************************************)
+function Multi_Int_X5.Negative:boolean;
+begin
+Result:= self.Negative_flag;
 end;
 
 
@@ -15988,7 +16018,7 @@ end;
 
 (********************v0********************)
 procedure intdivide_taylor_warruth_XV(const P_dividend,P_dividor:Multi_Int_XV;var P_quotient,P_remainder:Multi_Int_XV);
-label	9000,9999;
+label	AGAIN,9000,9999;
 var
 dividor,
 quotient,
@@ -16120,15 +16150,21 @@ else
 			dividend_i_1:= (dividend_i - 1);
 			if	(dividend_i_1 >= 0) then
 				begin
+				AGAIN:
 				adjacent_word_dividend:= (dividend.M_Value[dividend_i_1] + (next_word_carry * MULTI_INT_1W_U_MAXINT_1));
                 adjacent_word_division:= (dividor.M_Value[dividor_i_1] * word_division);
 				if (adjacent_word_division > adjacent_word_dividend) then
+					begin
 					Dec(word_division);
+					next_word_carry:= next_word_carry + dividor.M_Value[dividor_i];
+					if (next_word_carry < MULTI_INT_1W_U_MAXINT_1) then
+						goto AGAIN;
+					end;
 				end;
 			quotient:= 0;
 			quotient.M_Value[quotient_i]:= word_division;
             next_dividend:= (dividend - (dividor * quotient));
-			if (next_dividend.Negative_flag) then
+			if (next_dividend.Negative) then
 				begin
 				Dec(word_division);
 				quotient.M_Value[quotient_i]:= word_division;
@@ -16363,6 +16399,13 @@ while (i > 0) do
 if	(v1.M_Value[0] < v2.M_Value[0])
 then begin Result:=TRUE; exit; end
 else begin Result:=FALSE; exit; end;
+end;
+
+
+(******************************************)
+function Multi_Int_XW.Negative:boolean;
+begin
+Result:= self.Negative_flag;
 end;
 
 
