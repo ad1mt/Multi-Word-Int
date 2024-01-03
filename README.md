@@ -15,3 +15,4 @@ Version 4.34 has:
 - testing bug fix
 - minor bug fix in division algorithm
 - major bug fix in division algorithm
+- another bug fix in division algorithm
