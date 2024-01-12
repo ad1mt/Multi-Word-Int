@@ -7,7 +7,7 @@ Will compile and run on 32bit and 64bit environments.
 Written purely in Pascal to be portable and reliable (no assembly or C language code).
 This should be considered a beta development version.
 
-Version 4.34 has:
+Changes in version 4.35:
 - Multi_Int_XV type is now variable in size and automatically resizes as necessary
 - many minor bug fixes arising from above new feature
 - some minor changes to the API, which might require minor changes in calling code
