@@ -1,4 +1,4 @@
-# Multi-Word-Int v4.34
+# Multi-Word-Int v4.35
 Library to provide multi-word (large) integers for the Free Pascal compiler.
 Designed to be reasonably fast, and requiring minimal changes to existing code.
 Provides basic arithmetic operations add, subtract, multiply, divide, exclusive-or, power, odd, even, bit shift.
@@ -8,12 +8,6 @@ Written purely in Pascal to be portable and reliable (no assembly or C language 
 This should be considered a beta development version.
 
 Version 4.34 has:
-- a significantly better division algorithm; around 10x-30x faster
-- small speedups in multiplication routines
-- minor bug fixes
-- UBool type now merged in, no longer a separate unit/file
-- testing bug fix
-- minor bug fix in division algorithm
-- major bug fix in division algorithm
-- another bug fix in division algorithm
-- more reliable conversion from float types by truncating least significant digit instead of rounding
+- Multi_Int_XV type now variable in size and automatically resizes as necessary
+- many minor bug fixes arising from above new feature
+- some minor changes to the API, which might require minor changes in calling code
