@@ -8,6 +8,6 @@ Written purely in Pascal to be portable and reliable (no assembly or C language 
 This should be considered a beta development version.
 
 Version 4.34 has:
-- Multi_Int_XV type now variable in size and automatically resizes as necessary
+- Multi_Int_XV type is now variable in size and automatically resizes as necessary
 - many minor bug fixes arising from above new feature
 - some minor changes to the API, which might require minor changes in calling code
