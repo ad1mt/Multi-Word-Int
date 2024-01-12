@@ -584,7 +584,7 @@ Multi_Int_XV	=	record
 					end;
 
 var
-Multi_Int_ALLOW_UNLIMITED_INITIALISATIONS	:boolean = FALSE;
+// Multi_Int_ALLOW_UNLIMITED_INITIALISATIONS	:boolean = FALSE;
 Multi_Int_RAISE_EXCEPTIONS_ENABLED			:boolean = TRUE;
 Multi_Int_ERROR								:boolean = FALSE;
 Multi_Int_X2_MAXINT							:Multi_Int_X2;
@@ -16040,19 +16040,6 @@ procedure Multi_Init_Initialisation(const P_Multi_XV_size:MULTI_INT_1W_U = 16);
 var	i:MULTI_INT_1W_U;
 
 begin
-if	(not Multi_Int_ALLOW_UNLIMITED_INITIALISATIONS) then
-	begin
-	if	(Multi_Init_Initialisation_count > 2)
-	or	(	(Multi_Init_Initialisation_count > 1)
-		and	(Multi_Int_XV_VARS_CREATED)
-		)
-	then
-		begin
-		Raise EInterror.create('Multi_Init_Initialisation has already been called and/or Multi_Int_XV variables already created');
-		exit;
-		end;
-	end;
-
 Inc(Multi_Init_Initialisation_count);
 
 Multi_XV_size:=	P_Multi_XV_size;
