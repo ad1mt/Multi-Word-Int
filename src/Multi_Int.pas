@@ -3878,7 +3878,9 @@ else
 				AGAIN:
 				adjacent_word_dividend:= (dividend.M_Value[dividend_i_1] + (next_word_carry * MULTI_INT_1W_U_MAXINT_1));
                 adjacent_word_division:= (dividor.M_Value[dividor_i_1] * word_division);
-				if (adjacent_word_division > adjacent_word_dividend) then
+				if	(adjacent_word_division > adjacent_word_dividend)
+				or	(word_division >= MULTI_INT_1W_U_MAXINT_1)
+				then
 					begin
 					Dec(word_division);
 					next_word_carry:= next_word_carry + dividor.M_Value[dividor_i];
@@ -7350,7 +7352,9 @@ else
 				AGAIN:
 				adjacent_word_dividend:= (dividend.M_Value[dividend_i_1] + (next_word_carry * MULTI_INT_1W_U_MAXINT_1));
                 adjacent_word_division:= (dividor.M_Value[dividor_i_1] * word_division);
-				if (adjacent_word_division > adjacent_word_dividend) then
+				if	(adjacent_word_division > adjacent_word_dividend)
+				or	(word_division >= MULTI_INT_1W_U_MAXINT_1)
+				then
 					begin
 					Dec(word_division);
 					next_word_carry:= next_word_carry + dividor.M_Value[dividor_i];
@@ -11046,7 +11050,9 @@ else
 				AGAIN:
 				adjacent_word_dividend:= (dividend.M_Value[dividend_i_1] + (next_word_carry * MULTI_INT_1W_U_MAXINT_1));
                 adjacent_word_division:= (dividor.M_Value[dividor_i_1] * word_division);
-				if (adjacent_word_division > adjacent_word_dividend) then
+				if	(adjacent_word_division > adjacent_word_dividend)
+				or	(word_division >= MULTI_INT_1W_U_MAXINT_1)
+				then
 					begin
 					Dec(word_division);
 					next_word_carry:= next_word_carry + dividor.M_Value[dividor_i];
