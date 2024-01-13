@@ -202,6 +202,7 @@ v4.35.02
 	ansistring_to_Multi_Int_XV, hex_to_Multi_Int_XV, add_Multi_Int_XV,
 	subtract_Multi_Int_XV and multiply_Multi_Int_XV
 -	in Multi_Int_Set_XV_Limit check Multi_XV_Limit > Multi_Int_XV_size
+-	exceptional case bug fix in division algorithm
 *)
 
 (* END OF USER OPTIONAL DEFINES *)
@@ -15806,7 +15807,9 @@ else
 				AGAIN:
 				adjacent_word_dividend:= (dividend.M_Value[dividend_i_1] + (next_word_carry * MULTI_INT_1W_U_MAXINT_1));
                 adjacent_word_division:= (dividor.M_Value[dividor_i_1] * word_division);
-				if (adjacent_word_division > adjacent_word_dividend) then
+				if	(adjacent_word_division > adjacent_word_dividend)
+				or	(word_division >= MULTI_INT_1W_U_MAXINT_1)
+				then
 					begin
 					Dec(word_division);
 					next_word_carry:= next_word_carry + dividor.M_Value[dividor_i];
@@ -15815,7 +15818,7 @@ else
 					end;
 				end;
 			quotient:= 0;
-			if (quotient.M_Value_Size <> div_s) then
+			if (quotient.M_Value_Size < div_s) then
 				begin
 				Multi_Int_Reset_XV_Size(quotient, div_s);
 				if (quotient.Overflow) then
@@ -15832,55 +15835,14 @@ else
 			quotient.M_Value[quotient_i]:= word_division;
             next_dividend:= (dividor * quotient);
             next_dividend:= (dividend - next_dividend);
-			if (next_dividend.M_Value_Size <> div_s) then
-				begin
-	            Multi_Int_Reset_XV_Size(next_dividend, div_s);
-				if (next_dividend.Overflow) then
-					begin
-					P_quotient.Defined_flag:= FALSE;
-					P_quotient.Overflow_flag:= TRUE;
-					P_remainder.Defined_flag:= FALSE;
-					P_remainder.Overflow_flag:= TRUE;
-					Multi_Int_ERROR:= TRUE;
-					goto 9999;
-					end;
-				end;
-
 			if (next_dividend.Negative) then
 				begin
 				Dec(word_division);
 				quotient.M_Value[quotient_i]:= word_division;
 	            next_dividend:= (dividend - (dividor * quotient));
-				if (next_dividend.M_Value_Size <> div_s) then
-					begin
-		            Multi_Int_Reset_XV_Size(next_dividend, div_s);
-					if (next_dividend.Overflow) then
-						begin
-						P_quotient.Defined_flag:= FALSE;
-						P_quotient.Overflow_flag:= TRUE;
-						P_remainder.Defined_flag:= FALSE;
-						P_remainder.Overflow_flag:= TRUE;
-						Multi_Int_ERROR:= TRUE;
-						goto 9999;
-						end;
-					end;
 				end;
 			P_quotient.M_Value[quotient_i]:= word_division;
             dividend:= next_dividend;
-			if (dividend.M_Value_Size <> div_s) then
-				begin
-	            Multi_Int_Reset_XV_Size(dividend, div_s);
-				if (next_dividend.Overflow) then
-					begin
-					P_quotient.Defined_flag:= FALSE;
-					P_quotient.Overflow_flag:= TRUE;
-					P_remainder.Defined_flag:= FALSE;
-					P_remainder.Overflow_flag:= TRUE;
-					Multi_Int_ERROR:= TRUE;
-					goto 9999;
-					end;
-				end;
-
             word_carry:= dividend.M_Value[dividend_i];
 			end
 		else
