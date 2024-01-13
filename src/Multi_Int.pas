@@ -201,6 +201,7 @@ v4.35.02
 -	where internal M_Val array is used, result must be init := 0 in
 	ansistring_to_Multi_Int_XV, hex_to_Multi_Int_XV, add_Multi_Int_XV,
 	subtract_Multi_Int_XV and multiply_Multi_Int_XV
+-	in Multi_Int_Set_XV_Limit check Multi_XV_Limit > Multi_Int_XV_size
 *)
 
 (* END OF USER OPTIONAL DEFINES *)
@@ -12291,7 +12292,14 @@ end;
 (******************************************)
 procedure Multi_Int_Set_XV_Limit(const S:MULTI_INT_1W_U);
 begin
-Multi_XV_limit:= S;
+if (S > Multi_XV_size) then Multi_XV_limit:= S
+else
+	begin
+	Multi_Int_ERROR:= TRUE;
+	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
+		Raise EInterror.create('Multi_XV_limit must be > Multi_XV_size');
+	exit;
+	end;
 end;
 
 
