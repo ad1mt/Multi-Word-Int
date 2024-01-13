@@ -10,19 +10,20 @@ uses	sysutils
 ;
 	
 const
-M2_DIV_ITERATIONS	= 100000;
+M2_DIV_ITERATIONS	= 1000000;
 M2_MUL_ITERATIONS	= 1000000;
 M2_SUB_ITERATIONS	= 10000000;
-M4_DIV_ITERATIONS	= 100000;
+M4_DIV_ITERATIONS	= 1000000;
 M4_MUL_ITERATIONS	= 1000000;
 M4_SUB_ITERATIONS	= 1000000;
-MV_DIV_ITERATIONS	= 1000;
+MV_DIV_ITERATIONS	= 10000;
 MV_MUL_ITERATIONS	= 100000;
 MV_SUB_ITERATIONS	= 100000;
 
 var
 op		:string;
 i,
+big_int_size,
 start_time,
 end_time		:int32;
 delta			:double;
@@ -246,7 +247,7 @@ then writeln(' Overflow!');
 
 end_time:= GetTickCount64;
 delta:= (end_time - start_time) / 1000;
-writeln(Format('time elapsed is %f seconds for %d iterations of divide with %d bit integers', [delta,MV_DIV_ITERATIONS,((Multi_XV_size div 2) * 64)]));
+writeln(Format('time elapsed is %f seconds for %d iterations of divide with %d bit integers', [delta,MV_DIV_ITERATIONS,((big_int_size div 2) * 64)]));
 
 (*----*)
 start_time:= GetTickCount64;
@@ -275,7 +276,7 @@ then writeln(' Overflow!');
 
 end_time:= GetTickCount64;
 delta:= (end_time - start_time) / 1000;
-writeln(Format('time elapsed is %f seconds for %d iterations of multiply with %d bit integers', [delta, MV_MUL_ITERATIONS, ((Multi_XV_size div 2) * 64)]));
+writeln(Format('time elapsed is %f seconds for %d iterations of multiply with %d bit integers', [delta, MV_MUL_ITERATIONS, ((big_int_size div 2) * 64)]));
 
 (*----*)
 start_time:= GetTickCount64;
@@ -304,13 +305,14 @@ then writeln(' Overflow!');
 
 end_time:= GetTickCount64;
 delta:= (end_time - start_time) / 1000;
-writeln(Format('time elapsed is %f seconds for %d iterations of subtract with %d bit integers', [delta, MV_SUB_ITERATIONS,((Multi_XV_size div 2) * 64)]));
+writeln(Format('time elapsed is %f seconds for %d iterations of subtract with %d bit integers', [delta, MV_SUB_ITERATIONS,((big_int_size div 2) * 64)]));
 writeln;
 end;
 
 
 begin
-// Multi_Init_Initialisation(128);
+big_int_size:= 16;
+Multi_Init_Initialisation(big_int_size);
 
 test_Multi_Int_X2;
 test_Multi_Int_X4;

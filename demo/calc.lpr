@@ -15,24 +15,31 @@ Mi,
 Mj,
 Mk		:Multi_Int_XV;
 i,
+big_size,
 start_time,
 end_time		:int32;
 delta			:double;
 
 BEGIN
-Multi_Init_Initialisation(16);
+big_size:= 16;
+Multi_Init_Initialisation(big_size);
+Multi_Int_Set_XV_Limit(big_size + 1);
 
 if (ParamCount = 0) then
 	begin
+	writeln('calc v',version,' ',big_size,' words (',(big_size * MULTI_INT_1W_SIZE),' bits)');
 	writeln('usage: calc  number  operator  number');
 	writeln('where: operator can be one of:');
-	writeln(' + - * div (/) mod (%) xor shu shd sqr pow (^ or **)');
+	writeln(' + - * div (/) mod (%) xor shu shd sqr hex dec pow (^ or **) ');
 	writeln('where shu/shd means shift bits and sqr means square root');
 	writeln('and number can be up to +/- ',Multi_Int_XV_MAXINT.tostr);
+	writeln('or approx ',trunc(((big_size * MULTI_INT_1W_SIZE)/128000)*38532),' digits long');
 	end
 else
 	begin
-	Mi:= ParamStr(1);
+	if	(ParamStr(2) = 'dec')
+	then FromHex(ParamStr(1),Mi)
+    else Mi:= ParamStr(1);
 	Mj:= ParamStr(3);
 
 	if	(not Mi.defined)
@@ -90,6 +97,18 @@ else
 			op:= 'SQR';
 			end
 
+		else if	(ParamStr(2) = 'hex') then
+			begin
+			Mk:= Mi;
+			op:= 'HEX';
+			end
+
+		else if	(ParamStr(2) = 'dec') then
+			begin
+			Mk:= Mi;
+			op:= 'DEC';
+			end
+
 		else
 			begin
 			writeln('Invalid operator');
@@ -104,6 +123,11 @@ else
 			writeln;
 			writeln(Mk.ToStr);
 			writeln('Remainder ',Mj.tostr);
+			end
+		else if (ParamStr(2) = 'hex') then
+			begin
+			writeln;
+			writeln(Mk.ToHex);
 			end
 		else
 			begin
