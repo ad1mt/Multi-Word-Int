@@ -41,11 +41,6 @@ UNIT Multi_Int;
 
 // {$define Overflow_Checks}
 
-// This define enables the extended Inc/Dec operators that take two parameters.
-// These operations can be disabled, because they sometimes cause compilation errors.
-
-// {$define extended_inc_operator}
-
 (******************************************************************************)
 (*
 v4.23B
@@ -197,13 +192,18 @@ v4.35.01
 v4.35.02
 -	lots of M_Value array indexing bugs fixed
 -	result must not be set to 0 after failed call to Multi_Int_Reset_XV_Size
--	potetnial overflow bug in sqroot fixed
+-	potential overflow bug in sqroot fixed
 -	where internal M_Val array is used, result must be init := 0 in
 	ansistring_to_Multi_Int_XV, hex_to_Multi_Int_XV, add_Multi_Int_XV,
 	subtract_Multi_Int_XV and multiply_Multi_Int_XV
 -	in Multi_Int_Set_XV_Limit check Multi_XV_Limit > Multi_Int_XV_size
 -	exceptional case bug fix in division algorithm
 -	lots undefined bug fixes in equals,less-than etc
+
+v4.35.03
+-	ToBin and FromBin functions
+-	removed extended Inc operator (two-parameter version)
+-	clean up hints, notes, warnings
 *)
 
 (* END OF USER OPTIONAL DEFINES *)
@@ -212,12 +212,10 @@ INTERFACE
 
 uses	sysutils
 ,		strutils
-,		strings
-,		math
 ;
 
 const
-	version = '4.35.02';
+	version = '4.35.03';
 
 const
 
@@ -353,7 +351,7 @@ T_Multi_UBool	=	record
 						class operator notequal(v1,v2:T_Multi_UBool):Boolean; inline;
 					end;
 
-T_A	= array of MULTI_INT_1W_U;
+// T_Aarray_of_MULTI_INT_1W_U	= array of MULTI_INT_1W_U;
 
 Multi_Int_X2	=	record
 					private
@@ -392,10 +390,6 @@ Multi_Int_X2	=	record
 						class operator subtract(const v1,v2:Multi_Int_X2):Multi_Int_X2;
 						class operator inc(const v1:Multi_Int_X2):Multi_Int_X2;
 						class operator dec(const v1:Multi_Int_X2):Multi_Int_X2;
-					{$ifdef extended_inc_operator}
-						class operator inc(const v1,v2:Multi_Int_X2):Multi_Int_X2; overload;
-						class operator dec(const v1,v2:Multi_Int_X2):Multi_Int_X2; overload;
-					{$endif}
 						class operator greaterthan(const v1,v2:Multi_Int_X2):Boolean;
 						class operator lessthan(const v1,v2:Multi_Int_X2):Boolean;
 						class operator equal(const v1,v2:Multi_Int_X2):Boolean;
@@ -449,10 +443,6 @@ Multi_Int_X3	=	record
 						class operator subtract(const v1,v2:Multi_Int_X3):Multi_Int_X3;
 						class operator inc(const v1:Multi_Int_X3):Multi_Int_X3;
 						class operator dec(const v1:Multi_Int_X3):Multi_Int_X3;
-					{$ifdef extended_inc_operator}
-						class operator inc(const v1,v2:Multi_Int_X3):Multi_Int_X3;
-						class operator dec(const v1,v2:Multi_Int_X3):Multi_Int_X3;
-					{$endif}
 						class operator greaterthan(const v1,v2:Multi_Int_X3):Boolean;
 						class operator lessthan(const v1,v2:Multi_Int_X3):Boolean;
 						class operator equal(const v1,v2:Multi_Int_X3):Boolean;
@@ -507,10 +497,6 @@ Multi_Int_X4	=	record
 						class operator subtract(const v1,v2:Multi_Int_X4):Multi_Int_X4;
 						class operator inc(const v1:Multi_Int_X4):Multi_Int_X4;
 						class operator dec(const v1:Multi_Int_X4):Multi_Int_X4;
-					{$ifdef extended_inc_operator}
-						class operator inc(const v1,v2:Multi_Int_X4):Multi_Int_X4;
-						class operator dec(const v1,v2:Multi_Int_X4):Multi_Int_X4;
-					{$endif}
 						class operator greaterthan(const v1,v2:Multi_Int_X4):Boolean;
 						class operator lessthan(const v1,v2:Multi_Int_X4):Boolean;
 						class operator equal(const v1,v2:Multi_Int_X4):Boolean;
@@ -528,7 +514,7 @@ Multi_Int_X4	=	record
 
 Multi_Int_XV	=	record
 					private
-						M_Value			:T_A;
+						M_Value			:array of MULTI_INT_1W_U;
 						Negative_flag	:T_Multi_UBool;
 						Overflow_flag	:boolean;
 						Defined_flag	:boolean;
@@ -537,6 +523,7 @@ Multi_Int_XV	=	record
 						procedure init;
 						function ToStr:ansistring;
 						function ToHex(const LZ:T_Multi_Leading_Zeros=Multi_Trim_Leading_Zeros):ansistring;
+						function ToBin(const LZ:T_Multi_Leading_Zeros=Multi_Trim_Leading_Zeros):ansistring;
 						function FromHex(const v1:ansistring):Multi_Int_XV;
 						function Overflow:boolean;
 						function Negative:boolean;
@@ -572,10 +559,6 @@ Multi_Int_XV	=	record
 						class operator subtract(const v1,v2:Multi_Int_XV):Multi_Int_XV;
 						class operator inc(const v1:Multi_Int_XV):Multi_Int_XV;
 						class operator dec(const v1:Multi_Int_XV):Multi_Int_XV;
-					{$ifdef extended_inc_operator}
-						class operator inc(const v1,v2:Multi_Int_XV):Multi_Int_XV;
-						class operator dec(const v1,v2:Multi_Int_XV):Multi_Int_XV;
-					{$endif}
 						class operator xor(const v1,v2:Multi_Int_XV):Multi_Int_XV;
 						class operator multiply(const v1,v2:Multi_Int_XV):Multi_Int_XV;
 						class operator intdivide(const v1,v2:Multi_Int_XV):Multi_Int_XV;
@@ -587,7 +570,6 @@ Multi_Int_XV	=	record
 					end;
 
 var
-// Multi_Int_ALLOW_UNLIMITED_INITIALISATIONS	:boolean = FALSE;
 Multi_Int_RAISE_EXCEPTIONS_ENABLED			:boolean = TRUE;
 Multi_Int_ERROR								:boolean = FALSE;
 Multi_Int_X2_MAXINT							:Multi_Int_X2;
@@ -659,6 +641,10 @@ procedure Hex_to_Multi_Int_X4(const v1:ansistring; var mi:Multi_Int_X4); overloa
 function Hex_to_Multi_Int_XV(const v1:ansistring):Multi_Int_XV; overload;
 procedure Hex_to_Multi_Int_XV(const v1:ansistring; var mi:Multi_Int_XV); overload;
 
+function bin_to_Multi_Int_XV(const v1:ansistring):Multi_Int_XV; overload;
+procedure bin_to_Multi_Int_XV(const v1:ansistring; var mi:Multi_Int_XV); overload;
+procedure FromBin(const v1:ansistring; var mi:Multi_Int_XV); overload;
+
 function To_Multi_Int_XV(const v1:Multi_Int_X4):Multi_Int_XV; overload;
 function To_Multi_Int_XV(const v1:Multi_Int_X3):Multi_Int_XV; overload;
 function To_Multi_Int_XV(const v1:Multi_Int_X2):Multi_Int_XV; overload;
@@ -708,9 +694,6 @@ Multi_Int_X5	=	record
 var
 
 Multi_Init_Initialisation_count				:MULTI_INT_1W_S = 0;
-Multi_Int_XV_VARS_CREATED					:boolean = FALSE;
-Multi_Int_XW_VARS_CREATED					:boolean = FALSE;
-Multi_32bit_or_64bit						:T_Multi_32bit_or_64bit;
 Multi_XV_size								:MULTI_INT_1W_U = 0;
 Multi_XV_maxi								:MULTI_INT_1W_U;
 Multi_XV_limit								:MULTI_INT_1W_U;
@@ -2002,7 +1985,9 @@ end;
 (******************************************)
 class operator Multi_Int_X2.implicit(const v1:ansistring):Multi_Int_X2;
 begin
+{$HINTS OFF} {$WARNINGS OFF}
 ansistring_to_Multi_Int_X2(v1,Result);
+{$HINTS ON} {$WARNINGS ON}
 end;
 
 
@@ -2096,7 +2081,9 @@ end;
 (******************************************)
 class operator Multi_Int_X2.implicit(const v1:MULTI_INT_2W_S):Multi_Int_X2;
 begin
+{$HINTS OFF} {$WARNINGS OFF}
 MULTI_INT_2W_S_to_Multi_Int_X2(v1,Result);
+{$HINTS ON} {$WARNINGS ON}
 end;
 
 
@@ -2117,11 +2104,14 @@ end;
 (******************************************)
 class operator Multi_Int_X2.implicit(const v1:MULTI_INT_2W_U):Multi_Int_X2;
 begin
+{$HINTS OFF} {$WARNINGS OFF}
 MULTI_INT_2W_U_to_Multi_Int_X2(v1,Result);
+{$HINTS ON} {$WARNINGS ON}
 end;
 
 
 (******************************************)
+// WARNING Float to Multi_Int type conversion loses some precision
 class operator Multi_Int_X2.implicit(const v1:Single):Multi_Int_X2;
 var
 R			:Multi_Int_X2;
@@ -2129,11 +2119,12 @@ R_FLOATREC	:TFloatRec;
 var operation_str	:ansistring;
 begin
 operation_str:= 'Multi_Int_X2.implicit';
-{$WARNING Float to Multi_Int type conversion loses some precision }
 Multi_Int_ERROR:= FALSE;
 
 FloatToDecimal(R_FLOATREC, v1, MULTI_SINGLE_TYPE_PRECISION_DIGITS, 0);
+{$HINTS OFF} {$WARNINGS OFF}
 ansistring_to_Multi_Int_X2(AddCharR('0',AnsiLeftStr(R_FLOATREC.digits,(MULTI_SINGLE_TYPE_PRECISION_DIGITS-1)),R_FLOATREC.Exponent), R);
+{$HINTS ON} {$WARNINGS ON}
 
 if (R.Overflow) then
 	begin
@@ -2153,6 +2144,7 @@ end;
 
 
 (******************************************)
+// WARNING Float to Multi_Int type conversion loses some precision
 class operator Multi_Int_X2.implicit(const v1:Real):Multi_Int_X2;
 var
 R			:Multi_Int_X2;
@@ -2160,12 +2152,12 @@ R_FLOATREC	:TFloatRec;
 	operation_str	:ansistring;
 begin
 operation_str:= 'Multi_Int_X2.implicit';
-{$WARNING Float to Multi_Int type conversion loses some precision }
-
 Multi_Int_ERROR:= FALSE;
 
 FloatToDecimal(R_FLOATREC, v1, MULTI_REAL_TYPE_PRECISION_DIGITS, 0);
+{$HINTS OFF} {$WARNINGS OFF}
 ansistring_to_Multi_Int_X2(AddCharR('0',AnsiLeftStr(R_FLOATREC.digits,(MULTI_REAL_TYPE_PRECISION_DIGITS-1)),R_FLOATREC.Exponent), R);
+{$HINTS ON} {$WARNINGS ON}
 
 if (R.Overflow) then
 	begin
@@ -2185,6 +2177,7 @@ end;
 
 
 (******************************************)
+// WARNING Float to Multi_Int type conversion loses some precision
 class operator Multi_Int_X2.implicit(const v1:Double):Multi_Int_X2;
 var
 R			:Multi_Int_X2;
@@ -2192,12 +2185,12 @@ R_FLOATREC	:TFloatRec;
 	operation_str	:ansistring;
 begin
 operation_str:= 'Multi_Int_X2.implicit';
-{$WARNING Float to Multi_Int type conversion loses some precision }
-
 Multi_Int_ERROR:= FALSE;
 
 FloatToDecimal(R_FLOATREC, v1, MULTI_DOUBLE_TYPE_PRECISION_DIGITS, 0);
+{$HINTS OFF} {$WARNINGS OFF}
 ansistring_to_Multi_Int_X2(AddCharR('0',AnsiLeftStr(R_FLOATREC.digits,(MULTI_DOUBLE_TYPE_PRECISION_DIGITS-1)),R_FLOATREC.Exponent), R);
+{$HINTS ON} {$WARNINGS ON}
 
 if (R.Overflow) then
 	begin
@@ -2576,7 +2569,6 @@ end;
 
 {******************************************}
 class operator Multi_Int_X2.implicit(const v1:Multi_Int_X2):Multi_int8u;
-var	R	:Multi_int8u;
 begin
 Multi_Int_ERROR:= FALSE;
 if	(Not v1.Defined_flag)
@@ -2612,7 +2604,6 @@ end;
 
 {******************************************}
 class operator Multi_Int_X2.implicit(const v1:Multi_Int_X2):Multi_int8;
-var	R	:Multi_int8;
 begin
 Multi_Int_ERROR:= FALSE;
 if	(Not v1.Defined_flag)
@@ -2651,7 +2642,6 @@ procedure Multi_Int_X2_to_hex(const v1:Multi_Int_X2; var v2:ansistring; LZ:T_Mul
 var
 	s		:ansistring = '';
 	n		:Multi_int32u;
-	M_Val	:array[0..Multi_X4_maxi] of MULTI_INT_2W_U;
 begin
 if	(Not v1.Defined_flag)
 then
@@ -2695,7 +2685,9 @@ end;
 (******************************************)
 function Multi_Int_X2.ToHex(const LZ:T_Multi_Leading_Zeros):ansistring;
 begin
+{$WARNINGS OFF}
 Multi_Int_X2_to_hex(self, Result, LZ);
+{$WARNINGS ON}
 end;
 
 
@@ -2813,14 +2805,18 @@ end;
 (******************************************)
 function Multi_Int_X2.FromHex(const v1:ansistring):Multi_Int_X2;
 begin
+{$HINTS OFF} {$WARNINGS OFF}
 hex_to_Multi_Int_X2(v1,Result);
+{$HINTS ON} {$WARNINGS ON}
 end;
 
 
 (******************************************)
 function Hex_to_Multi_Int_X2(const v1:ansistring):Multi_Int_X2;
 begin
+{$HINTS OFF} {$WARNINGS OFF}
 hex_to_Multi_Int_X2(v1,Result);
+{$HINTS ON} {$WARNINGS ON}
 end;
 
 
@@ -2887,14 +2883,18 @@ end;
 (******************************************)
 function Multi_Int_X2.ToStr:ansistring;
 begin
+{$HINTS OFF} {$WARNINGS OFF}
 Multi_Int_X2_to_ansistring(self, Result);
+{$WARNINGS ON} {$HINTS ON}
 end;
 
 
 (******************************************)
 class operator Multi_Int_X2.implicit(const v1:Multi_Int_X2):ansistring;
 begin
+{$HINTS OFF} {$WARNINGS OFF}
 Multi_Int_X2_to_ansistring(v1, Result);
+{$WARNINGS ON} {$HINTS ON}
 end;
 
 
@@ -3109,135 +3109,6 @@ if (Result.Overflow_flag = TRUE) then
 
 if	(Result.Negative_flag = Multi_UBool_UNDEF) then Result.Negative_flag:= Neg;
 end;
-
-
-{$ifdef extended_inc_operator}
-
-(******************************************)
-class operator Multi_Int_X2.inc(const v1,v2:Multi_Int_X2):Multi_Int_X2;
-Var	Neg	:Multi_UBool_Values;
-begin
-if	(Not v1.Defined_flag)
-then
-	begin
-	Result:=0;
-	Result.Defined_flag:= v1.Defined_flag;
-	Result.Overflow_flag:= v1.Overflow_flag;
-	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
-		begin
-		Raise EInterror.create('Uninitialised variable');
-		end;
-	exit;
-	end;
-
-if	(v1.Overflow_flag)
-then
-	begin
-	Result:= 0;
-	Result.Defined_flag:= v1.Defined_flag;
-	Result.Overflow_flag:= v1.Overflow_flag;
-	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
-		begin
-		Raise EIntOverflow.create('Overflow on inc');
-		end;
-	exit;
-	end;
-
-Neg:=Multi_UBool_UNDEF;
-
-if	(v1.Negative_flag = FALSE)
-then
-	begin
-	Result:=add_Multi_Int_X2(v1,v2);
-	Neg:= v1.Negative_flag;
-	end
-else
-	begin
-	if	ABS_greaterthan_Multi_Int_X2(v1,v2)
-	then
-		begin
-		Result:=subtract_Multi_Int_X2(v1,v2);
-		Neg:= Multi_UBool_TRUE;
-		end
-	else
-		begin
-		Result:=subtract_Multi_Int_X2(v2,v1);
-		Neg:= Multi_UBool_FALSE;
-		end;
-	end;
-
-if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
-	begin
-	if (Result.Overflow_flag = TRUE) then
-		Raise EIntOverflow.create('Overflow on Inc');
-	end;
-
-if	(Result.Negative_flag = Multi_UBool_UNDEF) then Result.Negative_flag:= Neg;
-end;
-
-
-(******************************************)
-class operator Multi_Int_X2.dec(const v1,v2:Multi_Int_X2):Multi_Int_X2;
-Var	Neg	:Multi_UBool_Values;
-begin
-if	(Not v1.Defined_flag)
-then
-	begin
-	Result:=0;
-	Result.Defined_flag:= v1.Defined_flag;
-	Result.Overflow_flag:= v1.Overflow_flag;
-	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
-		begin
-		Raise EInterror.create('Uninitialised variable');
-		end;
-	exit;
-	end;
-
-if	(v1.Overflow_flag)
-then
-	begin
-	Result:= 0;
-	Result.Defined_flag:= v1.Defined_flag;
-	Result.Overflow_flag:= v1.Overflow_flag;
-	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
-		begin
-		Raise EIntOverflow.create('Overflow on inc');
-		end;
-	exit;
-	end;
-
-Neg:=Multi_UBool_UNDEF;
-
-if	(v1.Negative_flag = FALSE) then
-	begin
-	if	ABS_greaterthan_Multi_Int_X2(v2,v1)
-	then
-		begin
-		Result:=subtract_Multi_Int_X2(v2,v1);
-		Neg:=Multi_UBool_TRUE;
-		end
-	else
-		begin
-		Result:=subtract_Multi_Int_X2(v1,v2);
-		Neg:=Multi_UBool_FALSE;
-		end
-	end
-else (* v1 is Negative_flag *)
-	begin
-	Result:=add_Multi_Int_X2(v1,v2);
-	Neg:=Multi_UBool_TRUE;
-	end;
-
-if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
-	begin
-	if (Result.Overflow_flag = TRUE) then
-		Raise EIntOverflow.create('Overflow on Dec');
-	end;
-
-if	(Result.Negative_flag = Multi_UBool_UNDEF) then Result.Negative_flag:= Neg;
-end;
-
-{$endif}
 
 
 (******************************************)
@@ -3633,7 +3504,9 @@ then
 	exit;
 	end;
 
+{$HINTS OFF} {$WARNINGS OFF}
 multiply_Multi_Int_X2(v1,v2,R);
+{$HINTS ON} {$WARNINGS ON}
 
 if	(R.Negative_flag = Multi_UBool_UNDEF) then
 	if	(v1.Negative_flag = v2.Negative_flag)
@@ -3659,7 +3532,6 @@ var
 D,D2		:MULTI_INT_2W_S;
 HS,LS		:ansistring;
 H,L,C,CC,T	:Multi_Int_X2;
-R_EXACT,
 finished		:boolean;
 begin
 if	(Not v1.Defined_flag)
@@ -3723,14 +3595,15 @@ else
 	L:= LS;
 	end;
 
-R_EXACT:= FALSE;
 finished:= FALSE;
 while not finished do
 	begin
     T:= subtract_Multi_Int_X2(H,L);
     ShiftDown(T,1);
     C:= add_Multi_Int_X2(L,T);
+{$HINTS OFF} {$WARNINGS OFF}
     multiply_Multi_Int_X2(C,C, CC);
+{$HINTS ON} {$WARNINGS ON}
 
 	if	(CC.Overflow)
 	or	ABS_greaterthan_Multi_Int_X2(CC,v1)
@@ -3760,7 +3633,6 @@ while not finished do
 		end
 	else
 		begin
-		R_EXACT:= TRUE;
 		VREM:= 0;
 		finished:= TRUE;
 		end;
@@ -3791,7 +3663,9 @@ else
 		begin
 		if	odd(PT) then
 			begin
+		{$HINTS OFF} {$WARNINGS OFF}
 			multiply_Multi_Int_X2(TV,Y, T);
+		{$HINTS ON} {$WARNINGS ON}
 			if	(T.Overflow_flag)
 			then
 				begin
@@ -3871,23 +3745,17 @@ quotient_i,
 dividor_i,
 dividor_i_1,
 dividor_non_zero_pos,
-dividend_non_zero_pos,
 shiftup_bits_dividor,
-i,
-T1WS			:MULTI_INT_1W_S;
-
-word_dividor,
-T1WU			:MULTI_INT_1W_U;
+i
+				:MULTI_INT_1W_S;
 
 adjacent_word_dividend,
 adjacent_word_division,
 word_division,
-next_word_division,
 word_dividend,
-next_word_dividend,
 word_carry,
-next_word_carry,
-T2WU			:MULTI_INT_2W_U;
+next_word_carry
+				:MULTI_INT_2W_U;
 
 finished		:boolean;
 
@@ -3980,7 +3848,7 @@ else
 	and		(quotient_i >= 0)
 	do
 		begin
-		word_dividend:= ((word_carry * MULTI_INT_1W_U_MAXINT_1) + dividend.M_Value[dividend_i]);
+		word_dividend:= ((word_carry * MULTI_INT_2W_U(MULTI_INT_1W_U_MAXINT_1)) + dividend.M_Value[dividend_i]);
         word_division:= (word_dividend div dividor.M_Value[dividor_i]);
         next_word_carry:= (word_dividend mod dividor.M_Value[dividor_i]);
 
@@ -3990,7 +3858,7 @@ else
 			if	(dividend_i_1 >= 0) then
 				begin
 				AGAIN:
-				adjacent_word_dividend:= (dividend.M_Value[dividend_i_1] + (next_word_carry * MULTI_INT_1W_U_MAXINT_1));
+				adjacent_word_dividend:= ((next_word_carry * MULTI_INT_2W_U(MULTI_INT_1W_U_MAXINT_1)) + dividend.M_Value[dividend_i_1]);
                 adjacent_word_division:= (dividor.M_Value[dividor_i_1] * word_division);
 				if	(adjacent_word_division > adjacent_word_dividend)
 				or	(word_division >= MULTI_INT_1W_U_MAXINT_1)
@@ -4083,7 +3951,9 @@ then
 	Result:= X2_Last_Quotient
 else	// different values than last time
 	begin
+{$HINTS OFF} {$WARNINGS OFF}
 	intdivide_taylor_warruth_X2(v1,v2,Quotient,Remainder);
+{$HINTS ON} {$WARNINGS ON}
 
 	X2_Last_Divisor:= v2;
 	X2_Last_Dividend:= v1;
@@ -4147,7 +4017,9 @@ then
 	Result:= X2_Last_Remainder
 else	// different values than last time
 	begin
+{$HINTS OFF} {$WARNINGS OFF}
 	intdivide_taylor_warruth_X2(v1,v2,Quotient,Remainder);
+{$HINTS ON} {$WARNINGS ON}
 
 	X2_Last_Divisor:= v2;
 	X2_Last_Dividend:= v1;
@@ -4460,7 +4332,7 @@ end;
 
 (******************************************)
 function nlz_MultiBits_X3(v1:Multi_Int_X3):MULTI_INT_1W_U;
-var	w,b	:MULTI_INT_1W_U;
+var	w	:MULTI_INT_1W_U;
 begin
 if	(Not v1.Defined_flag)
 then
@@ -4491,7 +4363,6 @@ var	carry_bits_1,
 	carry_bits_mask,
 	NBits_max,
 	NBits_carry	:MULTI_INT_1W_U;
-	n			:integer;
 begin
 if NBits > 0 then
 begin
@@ -4620,7 +4491,6 @@ var	carry_bits_1,
 	carry_bits_mask,
 	NBits_max,
 	NBits_carry	:MULTI_INT_1W_U;
-	n			:integer;
 begin
 if NBits > 0 then
 begin
@@ -4743,7 +4613,6 @@ var	carry_bits_1,
 	carry_bits_mask,
 	NBits_max,
 	NBits_carry	:MULTI_INT_1W_U;
-	n			:integer;
 begin
 if NBits > 0 then
 begin
@@ -4886,7 +4755,6 @@ var	carry_bits_1,
 	carry_bits_mask,
 	NBits_max,
 	NBits_carry	:MULTI_INT_1W_U;
-	n			:integer;
 begin
 if NBits > 0 then
 begin
@@ -5284,7 +5152,9 @@ end;
 (******************************************)
 class operator Multi_Int_X3.implicit(const v1:ansistring):Multi_Int_X3;
 begin
+{$HINTS OFF} {$WARNINGS OFF}
 ansistring_to_Multi_Int_X3(v1,Result);
+{$HINTS ON} {$WARNINGS ON}
 end;
 
 
@@ -5385,7 +5255,9 @@ end;
 (******************************************)
 class operator Multi_Int_X3.implicit(const v1:MULTI_INT_2W_S):Multi_Int_X3;
 begin
+{$HINTS OFF} {$WARNINGS OFF}
 MULTI_INT_2W_S_to_Multi_Int_X3(v1,Result);
+{$HINTS ON} {$WARNINGS ON}
 end;
 
 
@@ -5408,7 +5280,9 @@ end;
 (******************************************)
 class operator Multi_Int_X3.implicit(const v1:MULTI_INT_2W_U):Multi_Int_X3;
 begin
+{$HINTS OFF} {$WARNINGS OFF}
 MULTI_INT_2W_U_to_Multi_Int_X3(v1,Result);
+{$HINTS ON} {$WARNINGS ON}
 end;
 
 
@@ -5590,23 +5464,25 @@ end;
 (******************************************)
 class operator Multi_Int_X3.implicit(const v1:Multi_Int_X2):Multi_Int_X3;
 begin
+{$HINTS OFF} {$WARNINGS OFF}
 Multi_Int_X2_to_Multi_Int_X3(v1,Result);
+{$HINTS ON} {$WARNINGS ON}
 end;
 
 
 (******************************************)
+// WARNING Float to Multi_Int type conversion loses some precision
 class operator Multi_Int_X3.implicit(const v1:Single):Multi_Int_X3;
 var
 R			:Multi_Int_X3;
 R_FLOATREC	:TFloatRec;
-var operation_str	:ansistring;
 begin
-{$WARNING Float to Multi_Int type conversion loses some precision }
-
 Multi_Int_ERROR:= FALSE;
 
 FloatToDecimal(R_FLOATREC, v1, MULTI_SINGLE_TYPE_PRECISION_DIGITS, 0);
+{$HINTS OFF} {$WARNINGS OFF}
 ansistring_to_Multi_Int_X3(AddCharR('0',AnsiLeftStr(R_FLOATREC.digits,(MULTI_SINGLE_TYPE_PRECISION_DIGITS-1)),R_FLOATREC.Exponent), R);
+{$HINTS ON} {$WARNINGS ON}
 
 if (R.Overflow) then
 	begin
@@ -5615,7 +5491,7 @@ if (R.Overflow) then
 	Result.Negative_flag:= Multi_UBool_UNDEF;
 	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
 		begin
-		Raise EIntOverflow.create('Overflow on Single to Multi_Int conversion on ' + operation_str);
+		Raise EIntOverflow.create('Overflow on Single to Multi_Int conversion');
 		end;
 	exit;
 	end;
@@ -5626,18 +5502,19 @@ end;
 
 
 (******************************************)
+// WARNING Float to Multi_Int type conversion loses some precision
 class operator Multi_Int_X3.implicit(const v1:Real):Multi_Int_X3;
 var
 R			:Multi_Int_X3;
 R_FLOATREC	:TFloatRec;
-var operation_str	:ansistring;
-begin
-{$WARNING Float to Multi_Int type conversion loses some precision }
 
+begin
 Multi_Int_ERROR:= FALSE;
 
 FloatToDecimal(R_FLOATREC, v1, MULTI_REAL_TYPE_PRECISION_DIGITS, 0);
+{$HINTS OFF} {$WARNINGS OFF}
 ansistring_to_Multi_Int_X3(AddCharR('0',AnsiLeftStr(R_FLOATREC.digits,(MULTI_REAL_TYPE_PRECISION_DIGITS-1)),R_FLOATREC.Exponent), R);
+{$HINTS ON} {$WARNINGS ON}
 
 if (R.Overflow) then
 	begin
@@ -5646,7 +5523,7 @@ if (R.Overflow) then
 	Result.Negative_flag:= Multi_UBool_UNDEF;
 	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
 		begin
-		Raise EIntOverflow.create('Overflow on Real to Multi_Int conversion on ' + operation_str);
+		Raise EIntOverflow.create('Overflow on Real to Multi_Int conversion');
 		end;
 	exit;
 	end;
@@ -5657,18 +5534,19 @@ end;
 
 
 (******************************************)
+// WARNING Float to Multi_Int type conversion loses some precision
 class operator Multi_Int_X3.implicit(const v1:Double):Multi_Int_X3;
 var
 R			:Multi_Int_X3;
 R_FLOATREC	:TFloatRec;
-var operation_str	:ansistring;
-begin
-{$WARNING Float to Multi_Int type conversion loses some precision }
 
+begin
 Multi_Int_ERROR:= FALSE;
 
 FloatToDecimal(R_FLOATREC, v1, MULTI_DOUBLE_TYPE_PRECISION_DIGITS, 0);
+{$HINTS OFF} {$WARNINGS OFF}
 ansistring_to_Multi_Int_X3(AddCharR('0',AnsiLeftStr(R_FLOATREC.digits,(MULTI_DOUBLE_TYPE_PRECISION_DIGITS-1)),R_FLOATREC.Exponent), R);
+{$HINTS ON} {$WARNINGS ON}
 
 if (R.Overflow) then
 	begin
@@ -5677,7 +5555,7 @@ if (R.Overflow) then
 	Result.Negative_flag:= Multi_UBool_UNDEF;
 	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
 		begin
-		Raise EIntOverflow.create('Overflow on Double to Multi_Int conversion on ' + operation_str);
+		Raise EIntOverflow.create('Overflow on Double to Multi_Int conversion');
 		end;
 	exit;
 	end;
@@ -6133,7 +6011,6 @@ procedure Multi_Int_X3_to_hex(const v1:Multi_Int_X3; var v2:ansistring; LZ:T_Mul
 var
 	s		:ansistring = '';
 	n		:Multi_int32u;
-	M_Val	:array[0..Multi_X3_maxi] of MULTI_INT_2W_U;
 begin
 if	(Not v1.Defined_flag)
 then
@@ -6179,7 +6056,9 @@ end;
 (******************************************)
 function Multi_Int_X3.ToHex(const LZ:T_Multi_Leading_Zeros):ansistring;
 begin
+{$HINTS OFF} {$WARNINGS OFF}
 Multi_Int_X3_to_hex(self, Result, LZ);
+{$WARNINGS ON} {$HINTS ON}
 end;
 
 
@@ -6297,14 +6176,18 @@ end;
 (******************************************)
 function Multi_Int_X3.FromHex(const v1:ansistring):Multi_Int_X3;
 begin
+{$HINTS OFF} {$WARNINGS OFF}
 hex_to_Multi_Int_X3(v1,Result);
+{$HINTS ON} {$WARNINGS ON}
 end;
 
 
 (******************************************)
 function Hex_to_Multi_Int_X3(const v1:ansistring):Multi_Int_X3;
 begin
+{$HINTS OFF} {$WARNINGS OFF}
 hex_to_Multi_Int_X3(v1,Result);
+{$HINTS ON} {$WARNINGS ON}
 end;
 
 
@@ -6381,14 +6264,18 @@ end;
 (******************************************)
 function Multi_Int_X3.ToStr:ansistring;
 begin
+{$HINTS OFF} {$WARNINGS OFF}
 Multi_Int_X3_to_ansistring(self, Result);
+{$WARNINGS ON} {$HINTS ON}
 end;
 
 
 (******************************************)
 class operator Multi_Int_X3.implicit(const v1:Multi_Int_X3):ansistring;
 begin
+{$HINTS OFF} {$WARNINGS OFF}
 Multi_Int_X3_to_ansistring(v1, Result);
+{$WARNINGS ON} {$HINTS ON}
 end;
 
 
@@ -6650,135 +6537,6 @@ if (Result.Overflow_flag = TRUE) then
 
 if	(Result.Negative_flag = Multi_UBool_UNDEF) then Result.Negative_flag:= Neg;
 end;
-
-
-
-{$ifdef extended_inc_operator}
-
-(******************************************)
-class operator Multi_Int_X3.inc(const v1,v2:Multi_Int_X3):Multi_Int_X3;
-Var	Neg	:Multi_UBool_Values;
-begin
-if	(Not v1.Defined_flag)
-then
-	begin
-	Result:=0;
-	Result.Defined_flag:= v1.Defined_flag;
-	Result.Overflow_flag:= v1.Overflow_flag;
-	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
-		begin
-		Raise EInterror.create('Uninitialised variable');
-		end;
-	exit;
-	end;
-
-if	(v1.Overflow_flag)
-then
-	begin
-	Result:= 0;
-	Result.Defined_flag:= v1.Defined_flag;
-	Result.Overflow_flag:= v1.Overflow_flag;
-	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
-		begin
-		Raise EIntOverflow.create('Overflow on inc');
-		end;
-	exit;
-	end;
-
-Neg:=Multi_UBool_UNDEF;
-
-if	(v1.Negative_flag = FALSE)
-then
-	begin
-	Result:=add_Multi_Int_X3(v1,v2);
-	Neg:= v1.Negative_flag;
-	end
-else
-	begin
-	if	ABS_greaterthan_Multi_Int_X3(v1,v2)
-	then
-		begin
-		Result:=subtract_Multi_Int_X3(v1,v2);
-		Neg:= Multi_UBool_TRUE;
-		end
-	else
-		begin
-		Result:=subtract_Multi_Int_X3(v2,v1);
-		Neg:= Multi_UBool_FALSE;
-		end;
-	end;
-
-if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
-		begin
-		if (Result.Overflow_flag = TRUE) then
-			Raise EIntOverflow.create('Overflow on Inc');
-		end;
-
-if	(Result.Negative_flag = Multi_UBool_UNDEF) then Result.Negative_flag:= Neg;
-end;
-
-
-(******************************************)
-class operator Multi_Int_X3.dec(const v1,v2:Multi_Int_X3):Multi_Int_X3;
-Var	Neg	:Multi_UBool_Values;
-begin
-if	(Not v1.Defined_flag)
-then
-	begin
-	Result:=0;
-	Result.Defined_flag:= v1.Defined_flag;
-	Result.Overflow_flag:= v1.Overflow_flag;
-	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
-		begin
-		Raise EInterror.create('Uninitialised variable');
-		end;
-	exit;
-	end;
-
-if	(v1.Overflow_flag)
-then
-	begin
-	Result:= 0;
-	Result.Defined_flag:= v1.Defined_flag;
-	Result.Overflow_flag:= v1.Overflow_flag;
-	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
-		begin
-		Raise EIntOverflow.create('Overflow on inc');
-		end;
-	exit;
-	end;
-
-Neg:=Multi_UBool_UNDEF;
-
-if	(v1.Negative_flag = FALSE) then
-	begin
-	if	ABS_greaterthan_Multi_Int_X3(v2,v1)
-	then
-		begin
-		Result:=subtract_Multi_Int_X3(v2,v1);
-		Neg:=Multi_UBool_TRUE;
-		end
-	else
-		begin
-		Result:=subtract_Multi_Int_X3(v1,v2);
-		Neg:=Multi_UBool_FALSE;
-		end
-	end
-else (* v1 is Negative_flag *)
-	begin
-	Result:=add_Multi_Int_X3(v1,v2);
-	Neg:=Multi_UBool_TRUE;
-	end;
-
-if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
-		begin
-		if (Result.Overflow_flag = TRUE) then
-			Raise EIntOverflow.create('Overflow on Dec');
-		end;
-
-if	(Result.Negative_flag = Multi_UBool_UNDEF) then Result.Negative_flag:= Neg;
-end;
-{$endif}
 
 
 (******************************************)
@@ -7175,7 +6933,9 @@ then
 	exit;
 	end;
 
+{$HINTS OFF} {$WARNINGS OFF}
 multiply_Multi_Int_X3(v1,v2,R);
+{$HINTS ON} {$WARNINGS ON}
 
 if	(R.Negative_flag = Multi_UBool_UNDEF) then
 	if	(v1.Negative_flag = v2.Negative_flag)
@@ -7224,7 +6984,9 @@ then
 	exit;
 	end;
 
+{$HINTS OFF} {$WARNINGS OFF}
 multiply_Multi_Int_X3(v1,v2,R);
+{$HINTS ON} {$WARNINGS ON}
 
 if	(R.Negative_flag = Multi_UBool_UNDEF) then
 	if	(v1.Negative_flag = v2.Negative_flag)
@@ -7248,8 +7010,8 @@ var
 D,D2		:MULTI_INT_2W_S;
 HS,LS		:ansistring;
 H,L,C,CC,T	:Multi_Int_X3;
-R_EXACT,
 finished		:boolean;
+
 begin
 if	(Not v1.Defined_flag)
 then
@@ -7312,14 +7074,15 @@ else
 	L:= LS;
 	end;
 
-R_EXACT:= FALSE;
 finished:= FALSE;
 while not finished do
 	begin
     T:= subtract_Multi_Int_X3(H,L);
     ShiftDown(T,1);
     C:= add_Multi_Int_X3(L,T);
+{$HINTS OFF} {$WARNINGS OFF}
     multiply_Multi_Int_X3(C,C, CC);
+{$HINTS ON} {$WARNINGS ON}
 
 	if	(CC.Overflow)
 	or	ABS_greaterthan_Multi_Int_X3(CC,v1)
@@ -7349,7 +7112,6 @@ while not finished do
 		end
 	else
 		begin
-		R_EXACT:= TRUE;
 		VREM:= 0;
 		finished:= TRUE;
 		end;
@@ -7380,7 +7142,9 @@ else
 		begin
 		if	odd(PT) then
 			begin
+		{$HINTS OFF} {$WARNINGS OFF}
 			multiply_Multi_Int_X3(TV,Y, T);
+		{$HINTS ON} {$WARNINGS ON}
 			if	(T.Overflow_flag)
 			then
 				begin
@@ -7460,21 +7224,16 @@ quotient_i,
 dividor_i,
 dividor_i_1,
 dividor_non_zero_pos,
-dividend_non_zero_pos,
 shiftup_bits_dividor,
 i				:MULTI_INT_1W_S;
-
-word_dividor	:MULTI_INT_1W_U;
 
 adjacent_word_dividend,
 adjacent_word_division,
 word_division,
-next_word_division,
 word_dividend,
-next_word_dividend,
 word_carry,
-next_word_carry,
-T2WU			:MULTI_INT_2W_U;
+next_word_carry
+				:MULTI_INT_2W_U;
 
 finished		:boolean;
 
@@ -7567,7 +7326,7 @@ else
 	and		(quotient_i >= 0)
 	do
 		begin
-		word_dividend:= ((word_carry * MULTI_INT_1W_U_MAXINT_1) + dividend.M_Value[dividend_i]);
+		word_dividend:= ((word_carry * MULTI_INT_2W_U(MULTI_INT_1W_U_MAXINT_1)) + dividend.M_Value[dividend_i]);
         word_division:= (word_dividend div dividor.M_Value[dividor_i]);
         next_word_carry:= (word_dividend mod dividor.M_Value[dividor_i]);
 
@@ -7577,7 +7336,7 @@ else
 			if	(dividend_i_1 >= 0) then
 				begin
 				AGAIN:
-				adjacent_word_dividend:= (dividend.M_Value[dividend_i_1] + (next_word_carry * MULTI_INT_1W_U_MAXINT_1));
+				adjacent_word_dividend:= ((next_word_carry * MULTI_INT_2W_U(MULTI_INT_1W_U_MAXINT_1)) + dividend.M_Value[dividend_i_1]);
                 adjacent_word_division:= (dividor.M_Value[dividor_i_1] * word_division);
 				if	(adjacent_word_division > adjacent_word_dividend)
 				or	(word_division >= MULTI_INT_1W_U_MAXINT_1)
@@ -7670,7 +7429,9 @@ then
 	Result:= X3_Last_Quotient
 else	// different values than last time
 	begin
+{$HINTS OFF} {$WARNINGS OFF}
 	intdivide_taylor_warruth_X3(v1,v2,Quotient,Remainder);
+{$HINTS ON} {$WARNINGS ON}
 
 	X3_Last_Divisor:= v2;
 	X3_Last_Dividend:= v1;
@@ -7734,7 +7495,9 @@ then
 	Result:= X3_Last_Remainder
 else	// different values than last time
 	begin
+{$HINTS OFF} {$WARNINGS OFF}
 	intdivide_taylor_warruth_X3(v1,v2,Quotient,Remainder);
+{$HINTS ON} {$WARNINGS ON}
 
 	X3_Last_Divisor:= v2;
 	X3_Last_Dividend:= v1;
@@ -8079,7 +7842,7 @@ end;
 
 (******************************************)
 function nlz_MultiBits_X4(v1:Multi_Int_X4):MULTI_INT_1W_U;
-var	w,b	:MULTI_INT_1W_U;
+var	w	:MULTI_INT_1W_U;
 begin
 if	(Not v1.Defined_flag)
 then
@@ -8112,7 +7875,6 @@ var	carry_bits_1,
 	carry_bits_mask,
 	NBits_max,
 	NBits_carry	:MULTI_INT_1W_U;
-	n			:integer;
 begin
 if NBits > 0 then
 begin
@@ -8250,7 +8012,6 @@ var	carry_bits_1,
 	carry_bits_8,
 	NBits_max,
 	NBits_carry	:MULTI_INT_1W_U;
-	n			:integer;
 begin
 if NBits > 0 then
 begin
@@ -8380,7 +8141,6 @@ var	carry_bits_1,
 	carry_bits_mask,
 	NBits_max,
 	NBits_carry	:MULTI_INT_1W_U;
-	n			:integer;
 begin
 if NBits > 0 then
 begin
@@ -8476,7 +8236,6 @@ var	carry_bits_1,
 	carry_bits_mask,
 	NBits_max,
 	NBits_carry	:MULTI_INT_1W_U;
-	n			:integer;
 begin
 if NBits > 0 then
 begin
@@ -8993,7 +8752,9 @@ end;
 (******************************************)
 class operator Multi_Int_X4.implicit(const v1:Multi_Int_X2):Multi_Int_X4;
 begin
+{$HINTS OFF} {$WARNINGS OFF}
 Multi_Int_X2_to_Multi_Int_X4(v1,Result);
+{$HINTS ON} {$WARNINGS ON}
 end;
 
 
@@ -9046,7 +8807,9 @@ end;
 (******************************************)
 class operator Multi_Int_X4.implicit(const v1:Multi_Int_X3):Multi_Int_X4;
 begin
+{$HINTS OFF} {$WARNINGS OFF}
 Multi_Int_X3_to_Multi_Int_X4(v1,Result);
+{$HINTS ON} {$WARNINGS ON}
 end;
 
 
@@ -9199,7 +8962,9 @@ end;
 (******************************************)
 class operator Multi_Int_X4.implicit(const v1:ansistring):Multi_Int_X4;
 begin
+{$HINTS OFF} {$WARNINGS OFF}
 ansistring_to_Multi_Int_X4(v1,Result);
+{$HINTS ON} {$WARNINGS ON}
 end;
 
 
@@ -9305,7 +9070,9 @@ end;
 (******************************************)
 class operator Multi_Int_X4.implicit(const v1:MULTI_INT_2W_S):Multi_Int_X4;
 begin
+{$HINTS OFF} {$WARNINGS OFF}
 MULTI_INT_2W_S_to_Multi_Int_X4(v1,Result);
+{$HINTS ON} {$WARNINGS ON}
 end;
 
 
@@ -9330,23 +9097,25 @@ end;
 (******************************************)
 class operator Multi_Int_X4.implicit(const v1:MULTI_INT_2W_U):Multi_Int_X4;
 begin
+{$HINTS OFF} {$WARNINGS OFF}
 MULTI_INT_2W_U_to_Multi_Int_X4(v1,Result);
+{$HINTS ON} {$WARNINGS ON}
 end;
 
 
 (******************************************)
+// WARNING Float to Multi_Int type conversion loses some precision
 class operator Multi_Int_X4.implicit(const v1:Single):Multi_Int_X4;
 var
 R			:Multi_Int_X4;
 R_FLOATREC	:TFloatRec;
-var operation_str	:ansistring;
 begin
-{$WARNING Float to Multi_Int type conversion loses some precision }
-
 Multi_Int_ERROR:= FALSE;
 
 FloatToDecimal(R_FLOATREC, v1, MULTI_SINGLE_TYPE_PRECISION_DIGITS, 0);
+{$HINTS OFF} {$WARNINGS OFF}
 ansistring_to_Multi_Int_X4(AddCharR('0',AnsiLeftStr(R_FLOATREC.digits,(MULTI_SINGLE_TYPE_PRECISION_DIGITS-1)),R_FLOATREC.Exponent), R);
+{$HINTS ON} {$WARNINGS ON}
 
 if (R.Overflow) then
 	begin
@@ -9355,7 +9124,7 @@ if (R.Overflow) then
 	Result.Negative_flag:= Multi_UBool_UNDEF;
 	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
 		begin
-		Raise EIntOverflow.create('Overflow on Single to Multi_Int conversion on ' + operation_str);
+		Raise EIntOverflow.create('Overflow on Single to Multi_Int conversion');
 		end;
 	exit;
 	end;
@@ -9366,18 +9135,19 @@ end;
 
 
 (******************************************)
+// WARNING Float to Multi_Int type conversion loses some precision
 class operator Multi_Int_X4.implicit(const v1:Real):Multi_Int_X4;
 var
 R			:Multi_Int_X4;
 R_FLOATREC	:TFloatRec;
-var operation_str	:ansistring;
-begin
-{$WARNING Float to Multi_Int type conversion loses some precision }
 
+begin
 Multi_Int_ERROR:= FALSE;
 
 FloatToDecimal(R_FLOATREC, v1, MULTI_REAL_TYPE_PRECISION_DIGITS, 0);
+{$HINTS OFF} {$WARNINGS OFF}
 ansistring_to_Multi_Int_X4(AddCharR('0',AnsiLeftStr(R_FLOATREC.digits,(MULTI_REAL_TYPE_PRECISION_DIGITS-1)),R_FLOATREC.Exponent), R);
+{$HINTS ON} {$WARNINGS ON}
 
 if (R.Overflow) then
 	begin
@@ -9386,7 +9156,7 @@ if (R.Overflow) then
 	Result.Negative_flag:= Multi_UBool_UNDEF;
 	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
 		begin
-		Raise EIntOverflow.create('Overflow on Real to Multi_Int conversion on ' + operation_str);
+		Raise EIntOverflow.create('Overflow on Real to Multi_Int conversion');
 		end;
 	exit;
 	end;
@@ -9397,18 +9167,19 @@ end;
 
 
 (******************************************)
+// WARNING Float to Multi_Int type conversion loses some precision
 class operator Multi_Int_X4.implicit(const v1:Double):Multi_Int_X4;
 var
 R			:Multi_Int_X4;
 R_FLOATREC	:TFloatRec;
-var operation_str	:ansistring;
-begin
-{$WARNING Float to Multi_Int type conversion loses some precision }
 
+begin
 Multi_Int_ERROR:= FALSE;
 
 FloatToDecimal(R_FLOATREC, v1, MULTI_DOUBLE_TYPE_PRECISION_DIGITS, 0);
+{$HINTS OFF} {$WARNINGS OFF}
 ansistring_to_Multi_Int_X4(AddCharR('0',AnsiLeftStr(R_FLOATREC.digits,(MULTI_DOUBLE_TYPE_PRECISION_DIGITS-1)),R_FLOATREC.Exponent), R);
+{$HINTS ON} {$WARNINGS ON}
 
 if (R.Overflow) then
 	begin
@@ -9417,7 +9188,7 @@ if (R.Overflow) then
 	Result.Negative_flag:= Multi_UBool_UNDEF;
 	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
 		begin
-		Raise EIntOverflow.create('Overflow on Double to Multi_Int conversion on ' + operation_str);
+		Raise EIntOverflow.create('Overflow on Double to Multi_Int conversion');
 		end;
 	exit;
 	end;
@@ -9428,14 +9199,13 @@ end;
 
 
 (******************************************)
+// WARNING Float to Multi_Int type conversion loses some precision
 class operator Multi_Int_X4.implicit(const v1:Multi_Int_X4):Single;
 var
 R,V,M		:Single;
 i			:MULTI_INT_1W_U;
 finished	:boolean;
 begin
-{$WARNING Float to Multi_Int type conversion loses some precision }
-
 if	(Not v1.Defined_flag)
 then
 	begin
@@ -9887,7 +9657,6 @@ procedure Multi_Int_X4_to_hex(const v1:Multi_Int_X4; var v2:ansistring; LZ:T_Mul
 var
 	s		:ansistring = '';
 	n		:Multi_int32u;
-	M_Val	:array[0..Multi_X4_maxi] of MULTI_INT_2W_U;
 begin
 if	(Not v1.Defined_flag)
 then
@@ -9934,7 +9703,9 @@ end;
 (******************************************)
 function Multi_Int_X4.ToHex(const LZ:T_Multi_Leading_Zeros):ansistring;
 begin
+{$HINTS OFF} {$WARNINGS OFF}
 Multi_Int_X4_to_hex(self, Result, LZ);
+{$WARNINGS ON} {$HINTS ON}
 end;
 
 
@@ -10051,14 +9822,18 @@ end;
 (******************************************)
 function Multi_Int_X4.FromHex(const v1:ansistring):Multi_Int_X4;
 begin
+{$HINTS OFF} {$WARNINGS OFF}
 hex_to_Multi_Int_X4(v1,Result);
+{$HINTS ON} {$WARNINGS ON}
 end;
 
 
 (******************************************)
 function Hex_to_Multi_Int_X4(const v1:ansistring):Multi_Int_X4;
 begin
+{$HINTS OFF} {$WARNINGS OFF}
 hex_to_Multi_Int_X4(v1,Result);
+{$HINTS ON} {$WARNINGS ON}
 end;
 
 
@@ -10144,14 +9919,18 @@ end;
 (******************************************)
 function Multi_Int_X4.ToStr:ansistring;
 begin
+{$HINTS OFF} {$WARNINGS OFF}
 Multi_Int_X4_to_ansistring(self, Result);
+{$WARNINGS ON} {$HINTS ON}
 end;
 
 
 (******************************************)
 class operator Multi_Int_X4.implicit(const v1:Multi_Int_X4):ansistring;
 begin
+{$HINTS OFF} {$WARNINGS OFF}
 Multi_Int_X4_to_ansistring(v1, Result);
+{$WARNINGS ON} {$HINTS ON}
 end;
 
 
@@ -10460,135 +10239,6 @@ if (Result.Overflow_flag = TRUE) then
 
 if	(Result.Negative_flag = Multi_UBool_UNDEF) then Result.Negative_flag:= Neg;
 end;
-
-
-
-{$ifdef extended_inc_operator}
-
-(******************************************)
-class operator Multi_Int_X4.inc(const v1, v2:Multi_Int_X4):Multi_Int_X4;
-Var	Neg	:Multi_UBool_Values;
-begin
-if	(Not v1.Defined_flag)
-then
-	begin
-	Result:=0;
-	Result.Defined_flag:= v1.Defined_flag;
-	Result.Overflow_flag:= v1.Overflow_flag;
-	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
-		begin
-		Raise EInterror.create('Uninitialised variable');
-		end;
-	exit;
-	end;
-
-if	(v1.Overflow_flag)
-then
-	begin
-	Result:= 0;
-	Result.Defined_flag:= v1.Defined_flag;
-	Result.Overflow_flag:= v1.Overflow_flag;
-	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
-		begin
-		Raise EIntOverflow.create('Overflow on inc');
-		end;
-	exit;
-	end;
-
-Neg:=Multi_UBool_UNDEF;
-
-if	(v1.Negative_flag = FALSE)
-then
-	begin
-	Result:=add_Multi_Int_X4(v1,v2);
-	Neg:= v1.Negative_flag;
-	end
-else
-	begin
-	if	ABS_greaterthan_Multi_Int_X4(v1,v2)
-	then
-		begin
-		Result:=subtract_Multi_Int_X4(v1,v2);
-		Neg:= Multi_UBool_TRUE;
-		end
-	else
-		begin
-		Result:=subtract_Multi_Int_X4(v2,v1);
-		Neg:= Multi_UBool_FALSE;
-		end;
-	end;
-
-if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
-		begin
-		if (Result.Overflow_flag = TRUE) then
-			Raise EIntOverflow.create('Overflow on Inc');
-		end;
-
-if	(Result.Negative_flag = Multi_UBool_UNDEF) then Result.Negative_flag:= Neg;
-end;
-
-
-(******************************************)
-class operator Multi_Int_X4.dec(const v1, v2:Multi_Int_X4):Multi_Int_X4;
-Var	Neg	:Multi_UBool_Values;
-begin
-if	(Not v1.Defined_flag)
-then
-	begin
-	Result:=0;
-	Result.Defined_flag:= v1.Defined_flag;
-	Result.Overflow_flag:= v1.Overflow_flag;
-	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
-		begin
-		Raise EInterror.create('Uninitialised variable');
-		end;
-	exit;
-	end;
-
-if	(v1.Overflow_flag)
-then
-	begin
-	Result:= 0;
-	Result.Defined_flag:= v1.Defined_flag;
-	Result.Overflow_flag:= v1.Overflow_flag;
-	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
-		begin
-		Raise EIntOverflow.create('Overflow on inc');
-		end;
-	exit;
-	end;
-
-Neg:=Multi_UBool_UNDEF;
-
-if	(v1.Negative_flag = FALSE) then
-	begin
-	if	ABS_greaterthan_Multi_Int_X4(v2,v1)
-	then
-		begin
-		Result:=subtract_Multi_Int_X4(v2,v1);
-		Neg:=Multi_UBool_TRUE;
-		end
-	else
-		begin
-		Result:=subtract_Multi_Int_X4(v1,v2);
-		Neg:=Multi_UBool_FALSE;
-		end
-	end
-else (* v1 is Negative_flag *)
-	begin
-	Result:=add_Multi_Int_X4(v1,v2);
-	Neg:=Multi_UBool_TRUE;
-	end;
-
-if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
-		begin
-		if (Result.Overflow_flag = TRUE) then
-			Raise EIntOverflow.create('Overflow on Dec');
-		end;
-
-if	(Result.Negative_flag = Multi_UBool_UNDEF) then Result.Negative_flag:= Neg;
-end;
-{$endif}
 
 
 (******************************************)
@@ -10985,7 +10635,9 @@ then
 	exit;
 	end;
 
+{$HINTS OFF} {$WARNINGS OFF}
 multiply_Multi_Int_X4(v1,v2,R);
+{$HINTS ON} {$WARNINGS ON}
 
 if	(R.Negative_flag = Multi_UBool_UNDEF) then
 	if	(v1.Negative_flag = v2.Negative_flag)
@@ -11035,7 +10687,9 @@ then
 	exit;
 	end;
 
+{$HINTS OFF} {$WARNINGS OFF}
 multiply_Multi_Int_X4(v1,v2,R);
+{$HINTS ON} {$WARNINGS ON}
 
 if	(R.Negative_flag = Multi_UBool_UNDEF) then
 	if	(v1.Negative_flag = v2.Negative_flag)
@@ -11059,7 +10713,6 @@ var
 D,D2		:MULTI_INT_2W_S;
 HS,LS		:ansistring;
 H,L,C,CC,T	:Multi_Int_X4;
-R_EXACT,
 finished		:boolean;
 begin
 if	(Not v1.Defined_flag)
@@ -11123,14 +10776,15 @@ else
 	L:= LS;
 	end;
 
-R_EXACT:= FALSE;
 finished:= FALSE;
 while not finished do
 	begin
     T:= subtract_Multi_Int_X4(H,L);
     ShiftDown(T,1);
     C:= add_Multi_Int_X4(L,T);
+{$HINTS OFF} {$WARNINGS OFF}
     multiply_Multi_Int_X4(C,C, CC);
+{$HINTS ON} {$WARNINGS ON}
 
 	if	(CC.Overflow)
 	or	ABS_greaterthan_Multi_Int_X4(CC,v1)
@@ -11160,7 +10814,6 @@ while not finished do
 		end
 	else
 		begin
-		R_EXACT:= TRUE;
 		VREM:= 0;
 		finished:= TRUE;
 		end;
@@ -11191,7 +10844,9 @@ else
 		begin
 		if	odd(PT) then
 			begin
+		{$HINTS OFF} {$WARNINGS OFF}
 			multiply_Multi_Int_X4(TV,Y, T);
+		{$HINTS ON} {$WARNINGS ON}
 			if	(T.Overflow_flag)
 			then
 				begin
@@ -11232,7 +10887,10 @@ else
 		TV:= T;
 		PT := (PT div 2);
 		end;
+{$WARNINGS OFF} {$HINTS OFF}
 	multiply_Multi_Int_X4(TV,Y, R);
+{$HINTS ON} {$WARNINGS ON}
+
 	if	(R.Overflow_flag)
 	then
 		begin
@@ -11271,23 +10929,18 @@ quotient_i,
 dividor_i,
 dividor_i_1,
 dividor_non_zero_pos,
-dividend_non_zero_pos,
 shiftup_bits_dividor,
 i				:MULTI_INT_1W_S;
 
-T1W,
-word_dividor,
 t_word			:MULTI_INT_1W_U;
 
 adjacent_word_dividend,
 adjacent_word_division,
 word_division,
-next_word_division,
 word_dividend,
-next_word_dividend,
 word_carry,
-next_word_carry,
-T2W				:MULTI_INT_2W_U;
+next_word_carry
+				:MULTI_INT_2W_U;
 
 finished		:boolean;
 
@@ -11378,7 +11031,7 @@ else
 	and		(quotient_i >= 0)
 	do
 		begin
-		word_dividend:= ((word_carry * MULTI_INT_1W_U_MAXINT_1) + dividend.M_Value[dividend_i]);
+		word_dividend:= ((word_carry * MULTI_INT_2W_U(MULTI_INT_1W_U_MAXINT_1)) + dividend.M_Value[dividend_i]);
         word_division:= (word_dividend div dividor.M_Value[dividor_i]);
         next_word_carry:= (word_dividend mod dividor.M_Value[dividor_i]);
 
@@ -11388,7 +11041,7 @@ else
 			if	(dividend_i_1 >= 0) then
 				begin
 				AGAIN:
-				adjacent_word_dividend:= (dividend.M_Value[dividend_i_1] + (next_word_carry * MULTI_INT_1W_U_MAXINT_1));
+				adjacent_word_dividend:= ((next_word_carry * MULTI_INT_2W_U(MULTI_INT_1W_U_MAXINT_1)) + dividend.M_Value[dividend_i_1]);
                 adjacent_word_division:= (dividor.M_Value[dividor_i_1] * word_division);
 				if	(adjacent_word_division > adjacent_word_dividend)
 				or	(word_division >= MULTI_INT_1W_U_MAXINT_1)
@@ -11443,8 +11096,6 @@ end;
 (******************************************)
 class operator Multi_Int_X4.intdivide(const v1,v2:Multi_Int_X4):Multi_Int_X4;
 var
-	P_v1,
-	P_v2,
 	Remainder,
 	Quotient	:Multi_Int_X4;
 begin
@@ -11483,7 +11134,9 @@ then
 	Result:= X4_Last_Quotient
 else	// different values than last time
 	begin
+{$HINTS OFF} {$WARNINGS OFF}
 	intdivide_taylor_warruth_X4(v1,v2,Quotient,Remainder);
+{$HINTS ON} {$WARNINGS ON}
 
 	X4_Last_Divisor:= v2;
 	X4_Last_Dividend:= v1;
@@ -11546,7 +11199,9 @@ then
 	Result:= X4_Last_Remainder
 else	// different values than last time
 	begin
+{$HINTS OFF} {$WARNINGS OFF}
 	intdivide_taylor_warruth_X4(v1,v2,Quotient,Remainder);
+{$HINTS ON} {$WARNINGS ON}
 
 	X4_Last_Divisor:= v2;
 	X4_Last_Dividend:= v1;
@@ -11770,7 +11425,6 @@ var	carry_bits_1,
 	carry_bits_mask,
 	NBits_max,
 	NBits_carry	:MULTI_INT_1W_U;
-	n			:integer;
 begin
 if NBits > 0 then
 begin
@@ -11845,7 +11499,6 @@ var	carry_bits_1,
 	carry_bits_mask,
 	NBits_max,
 	NBits_carry	:MULTI_INT_1W_U;
-	n			:integer;
 begin
 if NBits > 0 then
 begin
@@ -11983,7 +11636,9 @@ end;
 (******************************************)
 class operator Multi_Int_X5.implicit(const v1:MULTI_INT_2W_U):Multi_Int_X5;
 begin
+{$HINTS OFF} {$WARNINGS OFF}
 MULTI_INT_2W_U_to_Multi_Int_X5(v1,Result);
+{$HINTS ON} {$WARNINGS ON}
 end;
 
 
@@ -12036,14 +11691,18 @@ end;
 (******************************************)
 class operator Multi_Int_X5.implicit(const v1:Multi_Int_X4):Multi_Int_X5;
 begin
+{$HINTS OFF} {$WARNINGS OFF}
 Multi_Int_X4_to_Multi_Int_X5(v1,Result);
+{$HINTS ON} {$WARNINGS ON}
 end;
 
 
 (******************************************)
 function To_Multi_Int_X5(const v1:Multi_Int_X4):Multi_Int_X5;
 begin
+{$HINTS OFF} {$WARNINGS OFF}
 Multi_Int_X4_to_Multi_Int_X5(v1,Result);
+{$HINTS ON} {$WARNINGS ON}
 end;
 
 
@@ -12236,7 +11895,9 @@ then
 	exit;
 	end;
 
+{$HINTS OFF} {$WARNINGS OFF}
 multiply_Multi_Int_X5(v1,v2,R);
+{$HINTS ON} {$WARNINGS ON}
 
 if	(R.Negative_flag = Multi_UBool_UNDEF) then
 	if	(v1.Negative_flag = v2.Negative_flag)
@@ -12286,7 +11947,9 @@ then
 	exit;
 	end;
 
+{$HINTS OFF} {$WARNINGS OFF}
 multiply_Multi_Int_X5(v1,v2,R);
+{$HINTS ON} {$WARNINGS ON}
 
 if	(R.Negative_flag = Multi_UBool_UNDEF) then
 	if	(v1.Negative_flag = v2.Negative_flag)
@@ -12652,7 +12315,6 @@ self.M_Value_Size:= Multi_XV_size;
 self.Negative_flag:= Multi_UBool_FALSE;
 self.Overflow_flag:= FALSE;
 self.Defined_flag:= FALSE;
-Multi_Int_XV_VARS_CREATED:= TRUE;
 end;
 
 
@@ -12817,7 +12479,7 @@ end;
 
 (******************************************)
 function nlz_MultiBits_XV(const v1:Multi_Int_XV):MULTI_INT_1W_U;
-var	w,b	:MULTI_INT_1W_U;
+var	w	:MULTI_INT_1W_U;
 begin
 if	(Not v1.Defined_flag)
 then
@@ -13692,7 +13354,9 @@ var
 begin
 Multi_Int_ERROR:= FALSE;
 s:= Multi_XV_size;
+{$HINTS OFF} {$WARNINGS OFF}
 setlength(M_Val, s);
+{$HINTS ON} {$WARNINGS ON}
 mi:= 0;
 mi.Overflow_flag:=FALSE;
 mi.Defined_flag:= TRUE;
@@ -13800,7 +13464,9 @@ end;
 (******************************************)
 class operator Multi_Int_XV.implicit(const v1:ansistring):Multi_Int_XV;
 begin
+{$HINTS OFF} {$WARNINGS OFF}
 ansistring_to_Multi_Int_XV(v1,Result);
+{$WARNINGS ON} {$HINTS ON}
 end;
 
 
@@ -13835,7 +13501,9 @@ then
 	exit;
 	end;
 
+{$HINTS OFF} {$WARNINGS OFF}
 setlength(M_Val, v1.M_Value_Size);
+{$HINTS ON} {$WARNINGS ON}
 
 n:=0;
 while (n < v1.M_Value_Size) do
@@ -13869,14 +13537,18 @@ end;
 (******************************************)
 function Multi_Int_XV.ToStr:ansistring;
 begin
+{$HINTS OFF} {$WARNINGS OFF}
 Multi_Int_XV_to_ansistring(self, Result);
+{$WARNINGS ON} {$HINTS ON}
 end;
 
 
 (******************************************)
 class operator Multi_Int_XV.implicit(const v1:Multi_Int_XV):ansistring;
 begin
+{$HINTS OFF} {$WARNINGS OFF}
 Multi_Int_XV_to_ansistring(v1, Result);
+{$WARNINGS ON} {$HINTS ON}
 end;
 
 
@@ -13892,7 +13564,9 @@ var
 begin
 Multi_Int_ERROR:= FALSE;
 s:= Multi_XV_size;
+{$HINTS OFF} {$WARNINGS OFF}
 setlength(M_Val, s);
+{$HINTS ON} {$WARNINGS ON}
 mi:= 0;
 mi.Overflow_flag:=FALSE;
 mi.Defined_flag:= TRUE;
@@ -13994,14 +13668,18 @@ end;
 (******************************************)
 function Hex_to_Multi_Int_XV(const v1:ansistring):Multi_Int_XV;
 begin
+{$HINTS OFF} {$WARNINGS OFF}
 hex_to_Multi_Int_XV(v1,Result);
+{$WARNINGS ON} {$HINTS ON}
 end;
 
 
 (******************************************)
 function Multi_Int_XV.FromHex(const v1:ansistring):Multi_Int_XV;
 begin
+{$HINTS OFF} {$WARNINGS OFF}
 hex_to_Multi_Int_XV(v1,Result);
+{$WARNINGS ON} {$HINTS ON}
 end;
 
 
@@ -14064,7 +13742,199 @@ end;
 (******************************************)
 function Multi_Int_XV.ToHex(const LZ:T_Multi_Leading_Zeros):ansistring;
 begin
+{$HINTS OFF} {$WARNINGS OFF}
 Multi_Int_XV_to_hex(self, Result, LZ);
+{$WARNINGS ON} {$HINTS ON}
+end;
+
+
+(******************************************)
+procedure Bin_to_Multi_Int_XV(const v1:ansistring; var mi:Multi_Int_XV);
+label 999;
+var
+	n,b,c,e,s	:MULTI_INT_2W_U;
+	bit			:MULTI_INT_1W_U;
+	M_Val		:array of MULTI_INT_2W_U;
+	Signeg,
+	Zeroneg,
+	M_Val_All_Zero		:boolean;
+begin
+Multi_Int_ERROR:= FALSE;
+s:= Multi_XV_size;
+{$HINTS OFF} {$WARNINGS OFF}
+setlength(M_Val, s);
+{$HINTS ON} {$WARNINGS ON}
+mi:= 0;
+mi.Overflow_flag:=FALSE;
+mi.Defined_flag:= TRUE;
+mi.Negative_flag:= FALSE;
+Signeg:= FALSE;
+Zeroneg:= FALSE;
+
+n:=0;
+while (n < s)
+do begin M_Val[n]:= 0; inc(n); end;
+
+if	(length(v1) > 0) then
+	begin
+	b:=low(ansistring);
+	e:=b + MULTI_INT_2W_U(length(v1)) - 1;
+	if	(v1[b] = '-') then
+		begin
+		Signeg:= TRUE;
+		INC(b);
+		end;
+
+	c:= b;
+	while (c <= e) do
+		begin
+		bit:= (ord(v1[c]) - ord('0'));
+	{$HINTS OFF} {$WARNINGS OFF}
+		if	(bit < 0)
+ 		or	(bit > 1)
+	{$WARNINGS ON} {$HINTS ON}
+		then
+			begin
+			Multi_Int_ERROR:= TRUE;
+			mi.Defined_flag:= FALSE;
+			if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
+				Raise EInterror.create('Invalid binary digit');
+			goto 999;
+			end;
+
+		M_Val[0]:=(M_Val[0] * 2) + bit;
+		n:=1;
+		while (n < s) do
+			begin
+			M_Val[n]:=(M_Val[n] * 2);
+			inc(n);
+			end;
+
+		n:=0;
+		while (n < (s-1)) do
+			begin
+			if	M_Val[n] > MULTI_INT_1W_U_MAXINT then
+				begin
+				M_Val[n+1]:=M_Val[n+1] + (M_Val[n] DIV MULTI_INT_1W_U_MAXINT_1);
+				M_Val[n]:=(M_Val[n] MOD MULTI_INT_1W_U_MAXINT_1);
+				end;
+
+			inc(n);
+			end;
+
+		if	M_Val[n] > MULTI_INT_1W_U_MAXINT then
+			begin
+			Inc(s);
+			setlength(M_Val, s);
+			M_Val[n+1]:=M_Val[n+1] + (M_Val[n] DIV MULTI_INT_1W_U_MAXINT_1);
+			M_Val[n]:=(M_Val[n] MOD MULTI_INT_1W_U_MAXINT_1);
+			end;
+
+		Inc(c);
+		end;
+	end;
+
+if (s > mi.M_Value_Size) then
+	begin
+	Multi_Int_Reset_XV_Size(mi,s);
+	if (mi.Overflow) then
+		begin
+		mi.Defined_flag:= FALSE;
+		Multi_Int_ERROR:= TRUE;
+		if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
+			begin
+			Raise EInterror.create('Overflow');
+			end;
+		goto 999;
+		end;
+	end;
+
+M_Val_All_Zero:= TRUE;
+n:=0;
+while (n < s) do
+	begin
+	mi.M_Value[n]:= M_Val[n];
+	if M_Val[n] > 0 then M_Val_All_Zero:= FALSE;
+	inc(n);
+	end;
+if M_Val_All_Zero then Zeroneg:= TRUE;
+
+if Zeroneg then mi.Negative_flag:= Multi_UBool_FALSE
+else if Signeg then mi.Negative_flag:= Multi_UBool_TRUE
+else mi.Negative_flag:= Multi_UBool_FALSE;
+
+999:
+end;
+
+
+(******************************************)
+function Bin_to_Multi_Int_XV(const v1:ansistring):Multi_Int_XV;
+begin
+{$HINTS OFF} {$WARNINGS OFF}
+Bin_to_Multi_Int_XV(v1,Result);
+{$WARNINGS ON} {$HINTS ON}
+end;
+
+
+(******************************************)
+procedure FromBin(const v1:ansistring; var mi:Multi_Int_XV); overload;
+begin
+Bin_to_Multi_Int_XV(v1,mi);
+end;
+
+
+(******************************************)
+procedure Multi_Int_XV_to_bin(const v1:Multi_Int_XV; var v2:ansistring; LZ:T_Multi_Leading_Zeros);
+var
+	s		:ansistring = '';
+	i,n		:MULTI_INT_1W_S;
+begin
+if	(Not v1.Defined_flag)
+then
+	begin
+	v2:='UNDEFINED';
+	Multi_Int_ERROR:= TRUE;
+	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
+		begin
+		Raise EInterror.create('Uninitialised variable');
+		end;
+	exit;
+	end;
+if	(v1.Overflow_flag)
+then
+	begin
+	v2:='OVERFLOW';
+	Multi_Int_ERROR:= TRUE;
+	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
+		begin
+		Raise EInterror.create('Overflow');
+		end;
+	exit;
+	end;
+
+n:= MULTI_INT_1W_SIZE;
+s:= '';
+
+i:= (v1.M_Value_Size - 1);
+while (i >= 0) do
+	begin
+	s:= s + IntToBin(v1.M_Value[i],n);
+	dec(i);
+	end;
+
+if (LZ = Multi_Trim_Leading_Zeros) then Removeleadingchars(s,['0']);
+if	(v1.Negative_flag = Multi_UBool_TRUE) then s:='-' + s;
+if	(s = '') then s:= '0';
+v2:=s;
+end;
+
+
+(******************************************)
+function Multi_Int_XV.ToBin(const LZ:T_Multi_Leading_Zeros):ansistring;
+begin
+{$HINTS OFF} {$WARNINGS OFF}
+Multi_Int_XV_to_bin(self, Result, LZ);
+{$WARNINGS ON} {$HINTS ON}
 end;
 
 
@@ -14102,7 +13972,9 @@ end;
 (******************************************)
 class operator Multi_Int_XV.implicit(const v1:MULTI_INT_2W_S):Multi_Int_XV;
 begin
+{$HINTS OFF} {$WARNINGS OFF}
 MULTI_INT_2W_S_to_Multi_Int_XV(v1,Result);
+{$WARNINGS ON} {$HINTS ON}
 end;
 
 
@@ -14131,7 +14003,9 @@ end;
 (******************************************)
 class operator Multi_Int_XV.implicit(const v1:MULTI_INT_2W_U):Multi_Int_XV;
 begin
+{$HINTS OFF} {$WARNINGS OFF}
 MULTI_INT_2W_U_to_Multi_Int_XV(v1,Result);
+{$WARNINGS ON} {$HINTS ON}
 end;
 
 
@@ -14303,14 +14177,18 @@ end;
 (******************************************)
 class operator Multi_Int_XV.implicit(const v1:Multi_Int_X4):Multi_Int_XV;
 begin
+{$HINTS OFF} {$WARNINGS OFF}
 Multi_Int_X4_to_Multi_Int_XV(v1,Result);
+{$WARNINGS ON} {$HINTS ON}
 end;
 
 
 (******************************************)
 function To_Multi_Int_XV(const v1:Multi_Int_X4):Multi_Int_XV;
 begin
+{$HINTS OFF} {$WARNINGS OFF}
 Multi_Int_X4_to_Multi_Int_XV(v1,Result);
+{$WARNINGS ON} {$HINTS ON}
 end;
 
 
@@ -14378,14 +14256,18 @@ end;
 (******************************************)
 class operator Multi_Int_XV.implicit(const v1:Multi_Int_X3):Multi_Int_XV;
 begin
+{$HINTS OFF} {$WARNINGS OFF}
 Multi_Int_X3_to_Multi_Int_XV(v1,Result);
+{$WARNINGS ON} {$HINTS ON}
 end;
 
 
 (******************************************)
 function To_Multi_Int_XV(const v1:Multi_Int_X3):Multi_Int_XV;
 begin
+{$HINTS OFF} {$WARNINGS OFF}
 Multi_Int_X3_to_Multi_Int_XV(v1,Result);
+{$WARNINGS ON} {$HINTS ON}
 end;
 
 
@@ -14453,14 +14335,18 @@ end;
 (******************************************)
 class operator Multi_Int_XV.implicit(const v1:Multi_Int_X2):Multi_Int_XV;
 begin
+{$HINTS OFF} {$WARNINGS OFF}
 Multi_Int_X2_to_Multi_Int_XV(v1,Result);
+{$WARNINGS ON} {$HINTS ON}
 end;
 
 
 (******************************************)
 function To_Multi_Int_XV(const v1:Multi_Int_X2):Multi_Int_XV;
 begin
+{$HINTS OFF} {$WARNINGS OFF}
 Multi_Int_X2_to_Multi_Int_XV(v1,Result);
+{$WARNINGS ON} {$HINTS ON}
 end;
 
 
@@ -14708,19 +14594,18 @@ end;
 
 
 (******************************************)
+// WARNING Float type to Multi_Int type conversion loses some precision
 class operator Multi_Int_XV.implicit(const v1:Single):Multi_Int_XV;
 var
 R			:Multi_Int_XV;
 R_FLOATREC	:TFloatRec;
-var operation_str	:ansistring;
 begin
-{$WARNING Float type to Multi_Int type conversion loses some precision }
-
 Multi_Int_ERROR:= FALSE;
 
-Result.init;
 FloatToDecimal(R_FLOATREC, v1, MULTI_SINGLE_TYPE_PRECISION_DIGITS, 0);
+{$HINTS OFF} {$WARNINGS OFF}
 ansistring_to_Multi_Int_XV(AddCharR('0',AnsiLeftStr(R_FLOATREC.digits,(MULTI_SINGLE_TYPE_PRECISION_DIGITS-1)),R_FLOATREC.Exponent), R);
+{$HINTS ON} {$WARNINGS ON}
 
 if (R.Overflow) then
 	begin
@@ -14729,7 +14614,7 @@ if (R.Overflow) then
 	Multi_Int_ERROR:= TRUE;
 	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
 		begin
-		Raise EIntOverflow.create('Overflow on single to Multi_Int conversion on ' + operation_str);
+		Raise EIntOverflow.create('Overflow on single to Multi_Int conversion');
 		end;
 	exit;
 	end;
@@ -14740,19 +14625,19 @@ end;
 
 
 (******************************************)
+// WARNING Float type to Multi_Int type conversion loses some precision
 class operator Multi_Int_XV.implicit(const v1:Real):Multi_Int_XV;
 var
 R			:Multi_Int_XV;
 R_FLOATREC	:TFloatRec;
-var operation_str	:ansistring;
-begin
-{$WARNING Float type to Multi_Int type conversion loses some precision }
 
+begin
 Multi_Int_ERROR:= FALSE;
 
-Result.init;
 FloatToDecimal(R_FLOATREC, v1, MULTI_REAL_TYPE_PRECISION_DIGITS, 0);
+{$HINTS OFF} {$WARNINGS OFF}
 ansistring_to_Multi_Int_XV(AddCharR('0',AnsiLeftStr(R_FLOATREC.digits,(MULTI_REAL_TYPE_PRECISION_DIGITS-1)),R_FLOATREC.Exponent), R);
+{$HINTS ON} {$WARNINGS ON}
 
 if (R.Overflow) then
 	begin
@@ -14761,7 +14646,7 @@ if (R.Overflow) then
 	Result.Negative_flag:= Multi_UBool_UNDEF;
 	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
 		begin
-		Raise EIntOverflow.create('Overflow on Real to Multi_Int conversion on ' + operation_str);
+		Raise EIntOverflow.create('Overflow on Real to Multi_Int conversion');
 		end;
 	exit;
 	end;
@@ -14772,19 +14657,19 @@ end;
 
 
 (******************************************)
+// WARNING Float type to Multi_Int type conversion loses some precision
 class operator Multi_Int_XV.implicit(const v1:Double):Multi_Int_XV;
 var
 R			:Multi_Int_XV;
 R_FLOATREC	:TFloatRec;
-var operation_str	:ansistring;
-begin
-{$WARNING Float type to Multi_Int type conversion loses some precision }
 
+begin
 Multi_Int_ERROR:= FALSE;
 
-Result.init;
 FloatToDecimal(R_FLOATREC, v1, MULTI_DOUBLE_TYPE_PRECISION_DIGITS, 0);
+{$HINTS OFF} {$WARNINGS OFF}
 ansistring_to_Multi_Int_XV(AddCharR('0',AnsiLeftStr(R_FLOATREC.digits,(MULTI_DOUBLE_TYPE_PRECISION_DIGITS-1)),R_FLOATREC.Exponent), R);
+{$HINTS ON} {$WARNINGS ON}
 
 if (R.Overflow) then
 	begin
@@ -14793,7 +14678,7 @@ if (R.Overflow) then
 	Result.Negative_flag:= Multi_UBool_UNDEF;
 	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
 		begin
-		Raise EIntOverflow.create('Overflow on Double to Multi_Int conversion on ' + operation_str);
+		Raise EIntOverflow.create('Overflow on Double to Multi_Int conversion');
 		end;
 	exit;
 	end;
@@ -15147,7 +15032,9 @@ s2:= v2.M_Value_Size;
 s:= s1;
 if (s1 < s2) then s:= s2;
 ss:= (s+1);
+{$HINTS OFF} {$WARNINGS OFF}
 setlength(M_Val, ss);
+{$HINTS ON} {$WARNINGS ON}
 
 tv1:= v1.M_Value[0];
 tv2:= v2.M_Value[0];
@@ -15225,7 +15112,7 @@ end;
 function subtract_Multi_Int_XV(const v1,v2:Multi_Int_XV):Multi_Int_XV;
 label 999;
 var
-	tv1,tv2			:MULTI_INT_2W_U;
+	tv1,tv2			:MULTI_INT_2W_S;
 	M_Val			:array of MULTI_INT_2W_S;
 	i,s1,s2,s,ss	:MULTI_INT_1W_S;
 	M_Val_All_Zero	:boolean;
@@ -15235,7 +15122,9 @@ s2:= v2.M_Value_Size;
 s:= s1;
 if (s1 < s2) then s:= s2;
 ss:= (s+1);
+{$HINTS OFF} {$WARNINGS OFF}
 setlength(M_Val, ss);
+{$HINTS ON} {$WARNINGS ON}
 
 M_Val[0]:=(v1.M_Value[0] - v2.M_Value[0]);
 if	M_Val[0] < 0 then
@@ -15250,7 +15139,7 @@ while (i < (s-1)) do
 	begin
 	if	(i < s1) then tv1:= v1.M_Value[i] else tv1:= 0;
 	if	(i < s2) then tv2:= v2.M_Value[i] else tv2:= 0;
-	M_Val[i]:=(M_Val[i] + (tv1 - tv2));
+	M_Val[i]:= (M_Val[i] + (tv1 - tv2));
 	if	M_Val[i] < 0 then
 		begin
 		M_Val[i+1]:= -1;
@@ -15262,7 +15151,7 @@ while (i < (s-1)) do
 
 if	(i < s1) then tv1:= v1.M_Value[i] else tv1:= 0;
 if	(i < s2) then tv2:= v2.M_Value[i] else tv2:= 0;
-M_Val[i]:=(M_Val[i] + (tv1 - tv2));
+M_Val[i]:= (M_Val[i] + (tv1 - tv2));
 if	M_Val[i] < 0 then
 	begin
 	M_Val[i+1]:= -1;
@@ -15645,8 +15534,8 @@ end;
 class operator Multi_Int_XV.xor(const v1,v2:Multi_Int_XV):Multi_Int_XV;
 label 999;
 var
-i,s1,s2,s,ss	:MULTI_INT_1W_S;
-tv1,tv2			:MULTI_INT_2W_U;
+i,s1,s2,s	:MULTI_INT_1W_S;
+tv1,tv2		:MULTI_INT_2W_U;
 begin
 if	(Not v1.Defined_flag)
 or	(Not v2.Defined_flag)
@@ -15715,21 +15604,20 @@ procedure multiply_Multi_Int_XV(const v1,v2:Multi_Int_XV;var Result:Multi_Int_XV
 label	999;
 var
 i,j,k,
-s1,s2,s,ss,
+s1,s2,ss,
 z2,z1		:MULTI_INT_1W_S;
 zf,
 zero_mult	:boolean;
 tv1,tv2		:MULTI_INT_2W_U;
 M_Val			:array of MULTI_INT_2W_U;
-M_Val_All_Zero	:boolean;
 
 begin
 s1:= v1.M_Value_Size;
 s2:= v2.M_Value_Size;
-s:= s1;
-if (s1 < s2) then s:= s2;
 ss:= (s1 + s2);
+{$HINTS OFF} {$WARNINGS OFF}
 setlength(M_Val, ss);
+{$HINTS ON} {$WARNINGS ON}
 
 Result.init;
 Result:= 0;
@@ -15889,6 +15777,7 @@ then
 	exit;
 	end;
 
+R.init;
 multiply_Multi_Int_XV(v1,v2,R);
 
 if	(R.Negative_flag = Multi_UBool_UNDEF) then
@@ -15914,8 +15803,7 @@ var
 D,D2		:MULTI_INT_2W_S;
 HS,LS		:ansistring;
 H,L,C,CC,T	:Multi_Int_XV;
-R_EXACT,
-finished		:boolean;
+finished	:boolean;
 begin
 if	(Not v1.Defined_flag)
 then
@@ -15960,6 +15848,8 @@ then
 	exit;
 	end;
 
+CC.init;
+
 D:= length(v1.ToStr);
 D2:= D div 2;
 if ((D mod 2)=0) then
@@ -15977,7 +15867,6 @@ else
 	L:= LS;
 	end;
 
-R_EXACT:= FALSE;
 finished:= FALSE;
 while not finished do
 	begin
@@ -16014,7 +15903,6 @@ while not finished do
 		end
 	else
 		begin
-		R_EXACT:= TRUE;
 		VREM:= 0;
 		finished:= TRUE;
 		end;
@@ -16070,7 +15958,9 @@ else
 		begin
 		if	odd(PT) then
 			begin
+		{$HINTS OFF} {$WARNINGS OFF}
 			multiply_Multi_Int_XV(TV,Y, T);
+		{$HINTS ON} {$WARNINGS ON}
 			if	(T.Overflow_flag)
 			then
 				begin
@@ -16153,24 +16043,17 @@ dividor_s,
 div_s,
 dividor_i_1,
 dividor_non_zero_pos,
-dividend_non_zero_pos,
 shiftup_bits_dividor,
 i
 				:MULTI_INT_1W_S;
 
-word_dividor,
-t_word,
-T1W				:MULTI_INT_1W_U;
-
 adjacent_word_dividend,
 adjacent_word_division,
 word_division,
-next_word_division,
 word_dividend,
-next_word_dividend,
 word_carry,
-next_word_carry,
-T2W				:MULTI_INT_2W_U;
+next_word_carry
+				:MULTI_INT_2W_U;
 
 finished		:boolean;
 
@@ -16301,7 +16184,7 @@ else
 	and		(quotient_i >= 0)
 	do
 		begin
-		word_dividend:= ((word_carry * MULTI_INT_1W_U_MAXINT_1) + dividend.M_Value[dividend_i]);
+		word_dividend:= ((word_carry * MULTI_INT_2W_U(MULTI_INT_1W_U_MAXINT_1)) + dividend.M_Value[dividend_i]);
         word_division:= (word_dividend div dividor.M_Value[dividor_i]);
         next_word_carry:= (word_dividend mod dividor.M_Value[dividor_i]);
 
@@ -16311,7 +16194,7 @@ else
 			if	(dividend_i_1 >= 0) then
 				begin
 				AGAIN:
-				adjacent_word_dividend:= (dividend.M_Value[dividend_i_1] + (next_word_carry * MULTI_INT_1W_U_MAXINT_1));
+				adjacent_word_dividend:= ((next_word_carry * MULTI_INT_2W_U(MULTI_INT_1W_U_MAXINT_1)) + dividend.M_Value[dividend_i_1]);
                 adjacent_word_division:= (dividor.M_Value[dividor_i_1] * word_division);
 				if	(adjacent_word_division > adjacent_word_dividend)
 				or	(word_division >= MULTI_INT_1W_U_MAXINT_1)
@@ -16419,7 +16302,9 @@ then
 	Result:= XV_Last_Quotient
 else	// different values than last time
 	begin
+{$HINTS OFF} {$WARNINGS OFF}
 	intdivide_taylor_warruth_XV(v1,v2,Quotient,Remainder);
+{$HINTS ON} {$WARNINGS ON}
 
 	XV_Last_Divisor:= v2;
 	XV_Last_Dividend:= v1;
@@ -16482,7 +16367,9 @@ then
 	Result:= XV_Last_Remainder
 else	// different values than last time
 	begin
+{$HINTS OFF} {$WARNINGS OFF}
 	intdivide_taylor_warruth_XV(v1,v2,Quotient,Remainder);
+{$HINTS ON} {$WARNINGS ON}
 
 	XV_Last_Divisor:= v2;
 	XV_Last_Dividend:= v1;
@@ -16589,17 +16476,6 @@ while (i <= Multi_XV_maxi) do
 	Multi_Int_XV_MAXINT.M_Value[i]:= MULTI_INT_1W_U_MAXINT;
 	Inc(i);
 	end;
-
-Multi_Int_XV_VARS_CREATED:= FALSE;
-
-Multi_32bit_or_64bit:= Multi_undef;
-{$ifdef 64bit}
-Multi_32bit_or_64bit:= Multi_64bit;
-{$endif}
-{$ifdef 32bit}
-Multi_32bit_or_64bit:= Multi_32bit;
-{$endif}
-
 end;
 
 procedure Multi_Int_Reset_X2_Last_Divisor;
