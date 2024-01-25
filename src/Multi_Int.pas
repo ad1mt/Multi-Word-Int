@@ -204,6 +204,7 @@ v4.35.03
 -	ToBin and FromBin functions
 -	removed extended Inc operator (two-parameter version)
 -	clean up hints, notes, warnings
+-	exception overflow bug fix in add/subtract_Multi_Int_XV
 *)
 
 (* END OF USER OPTIONAL DEFINES *)
@@ -15022,7 +15023,8 @@ end;
 function add_Multi_Int_XV(const v1,v2:Multi_Int_XV):Multi_Int_XV;
 label 999;
 var
-	tv1,tv2			:MULTI_INT_2W_U;
+	tv1,tv2			:MULTI_INT_2W_S;
+//	tv1,tv2			:MULTI_INT_2W_U;
 	i,s1,s2,s,ss	:MULTI_INT_1W_S;
 	M_Val			:array of MULTI_INT_2W_U;
 	M_Val_All_Zero	:boolean;
