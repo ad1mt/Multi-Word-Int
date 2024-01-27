@@ -205,6 +205,7 @@ v4.35.03
 -	removed extended Inc operator (two-parameter version)
 -	clean up hints, notes, warnings
 -	exception overflow bug fix in add/subtract_Multi_Int_XV
+-	more exception bug fixes
 *)
 
 (* END OF USER OPTIONAL DEFINES *)
@@ -363,7 +364,9 @@ Multi_Int_X2	=	record
 					public
 						function ToStr:ansistring;
 						function ToHex(const LZ:T_Multi_Leading_Zeros=Multi_Trim_Leading_Zeros):ansistring;
+						function ToBin(const LZ:T_Multi_Leading_Zeros=Multi_Trim_Leading_Zeros):ansistring;
 						function FromHex(const v1:ansistring):Multi_Int_X2;
+						function FromBin(const v1:ansistring):Multi_Int_X2;
 						function Overflow:boolean;
 						function Negative:boolean;
 						function Defined:boolean;
@@ -415,7 +418,9 @@ Multi_Int_X3	=	record
 					public
 						function ToStr:ansistring;
 						function ToHex(const LZ:T_Multi_Leading_Zeros=Multi_Trim_Leading_Zeros):ansistring;
+						function ToBin(const LZ:T_Multi_Leading_Zeros=Multi_Trim_Leading_Zeros):ansistring;
 						function FromHex(const v1:ansistring):Multi_Int_X3;
+						function FromBin(const v1:ansistring):Multi_Int_X3;
 						function Overflow:boolean;
 						function Negative:boolean;
 						function Defined:boolean;
@@ -468,7 +473,9 @@ Multi_Int_X4	=	record
 					public
 						function ToStr:ansistring;
 						function ToHex(const LZ:T_Multi_Leading_Zeros=Multi_Trim_Leading_Zeros):ansistring;
+						function ToBin(const LZ:T_Multi_Leading_Zeros=Multi_Trim_Leading_Zeros):ansistring;
 						function FromHex(const v1:ansistring):Multi_Int_X4;
+						function FromBin(const v1:ansistring):Multi_Int_X4;
 						function Overflow:boolean;
 						function Negative:boolean;
 						function Defined:boolean;
@@ -526,6 +533,7 @@ Multi_Int_XV	=	record
 						function ToHex(const LZ:T_Multi_Leading_Zeros=Multi_Trim_Leading_Zeros):ansistring;
 						function ToBin(const LZ:T_Multi_Leading_Zeros=Multi_Trim_Leading_Zeros):ansistring;
 						function FromHex(const v1:ansistring):Multi_Int_XV;
+						function FromBin(const v1:ansistring):Multi_Int_XV;
 						function Overflow:boolean;
 						function Negative:boolean;
 						function Defined:boolean;
@@ -630,21 +638,28 @@ procedure FromHex(const v1:ansistring; var v2:Multi_Int_X3); overload;
 procedure FromHex(const v1:ansistring; var v2:Multi_Int_X4); overload;
 procedure FromHex(const v1:ansistring; var v2:Multi_Int_XV); overload;
 
+procedure FromBin(const v1:ansistring; var mi:Multi_Int_X2); overload;
+procedure FromBin(const v1:ansistring; var mi:Multi_Int_X3); overload;
+procedure FromBin(const v1:ansistring; var mi:Multi_Int_X4); overload;
+procedure FromBin(const v1:ansistring; var mi:Multi_Int_XV); overload;
+
 function Hex_to_Multi_Int_X2(const v1:ansistring):Multi_Int_X2; overload;
 procedure Hex_to_Multi_Int_X2(const v1:ansistring; var mi:Multi_Int_X2); overload;
-
 function Hex_to_Multi_Int_X3(const v1:ansistring):Multi_Int_X3; overload;
 procedure Hex_to_Multi_Int_X3(const v1:ansistring; var mi:Multi_Int_X3); overload;
-
 function Hex_to_Multi_Int_X4(const v1:ansistring):Multi_Int_X4; overload;
 procedure Hex_to_Multi_Int_X4(const v1:ansistring; var mi:Multi_Int_X4); overload;
-
 function Hex_to_Multi_Int_XV(const v1:ansistring):Multi_Int_XV; overload;
 procedure Hex_to_Multi_Int_XV(const v1:ansistring; var mi:Multi_Int_XV); overload;
 
+function bin_to_Multi_Int_X2(const v1:ansistring):Multi_Int_X2; overload;
+procedure bin_to_Multi_Int_X2(const v1:ansistring; var mi:Multi_Int_X2); overload;
+function bin_to_Multi_Int_X3(const v1:ansistring):Multi_Int_X3; overload;
+procedure bin_to_Multi_Int_X3(const v1:ansistring; var mi:Multi_Int_X3); overload;
+function bin_to_Multi_Int_X4(const v1:ansistring):Multi_Int_X4; overload;
+procedure bin_to_Multi_Int_X4(const v1:ansistring; var mi:Multi_Int_X4); overload;
 function bin_to_Multi_Int_XV(const v1:ansistring):Multi_Int_XV; overload;
 procedure bin_to_Multi_Int_XV(const v1:ansistring; var mi:Multi_Int_XV); overload;
-procedure FromBin(const v1:ansistring; var mi:Multi_Int_XV); overload;
 
 function To_Multi_Int_XV(const v1:Multi_Int_X4):Multi_Int_XV; overload;
 function To_Multi_Int_XV(const v1:Multi_Int_X3):Multi_Int_XV; overload;
@@ -2639,6 +2654,185 @@ end;
 
 
 (******************************************)
+procedure bin_to_Multi_Int_X2(const v1:ansistring; var mi:Multi_Int_X2);
+label 999;
+var
+	n,b,c,e	:MULTI_INT_2W_U;
+	bit			:MULTI_INT_1W_U;
+	M_Val		:array[0..Multi_X2_maxi] of MULTI_INT_2W_U;
+	Signeg,
+	Zeroneg,
+	M_Val_All_Zero		:boolean;
+begin
+Multi_Int_ERROR:= FALSE;
+
+mi.Overflow_flag:=FALSE;
+mi.Defined_flag:= TRUE;
+mi.Negative_flag:= FALSE;
+Signeg:= FALSE;
+Zeroneg:= FALSE;
+
+n:=0;
+while (n <= Multi_X2_maxi)
+do begin M_Val[n]:= 0; inc(n); end;
+
+if	(length(v1) > 0) then
+	begin
+	b:=low(ansistring);
+	e:=b + MULTI_INT_2W_U(length(v1)) - 1;
+	if	(v1[b] = '-') then
+		begin
+		Signeg:= TRUE;
+		INC(b);
+		end;
+
+	c:= b;
+	while (c <= e) do
+		begin
+		bit:= (ord(v1[c]) - ord('0'));
+		if	(bit > 1)
+		then
+			begin
+			Multi_Int_ERROR:= TRUE;
+			mi.Overflow_flag:=TRUE;
+			mi.Defined_flag:= FALSE;
+			if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
+				Raise EInterror.create('Invalid binary digit');
+			goto 999;
+			end;
+
+		M_Val[0]:=(M_Val[0] * 2) + bit;
+		n:=1;
+		while (n <= Multi_X2_maxi) do
+			begin
+			M_Val[n]:=(M_Val[n] * 2);
+			inc(n);
+			end;
+
+		n:=0;
+		while (n < Multi_X2_maxi) do
+			begin
+			if	M_Val[n] > MULTI_INT_1W_U_MAXINT then
+				begin
+				M_Val[n+1]:=M_Val[n+1] + (M_Val[n] DIV MULTI_INT_1W_U_MAXINT_1);
+				M_Val[n]:=(M_Val[n] MOD MULTI_INT_1W_U_MAXINT_1);
+				end;
+
+			inc(n);
+			end;
+
+		if	M_Val[n] > MULTI_INT_1W_U_MAXINT then
+			begin
+			mi.Defined_flag:=FALSE;
+			mi.Overflow_flag:=TRUE;
+			Multi_Int_ERROR:= TRUE;
+			if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
+				begin
+				Raise EIntOverflow.create('Overflow on string conversion');
+				end;
+			goto 999;
+			end;
+		Inc(c);
+		end;
+	end;
+
+M_Val_All_Zero:= TRUE;
+n:=0;
+while (n <= Multi_X2_maxi) do
+	begin
+	mi.M_Value[n]:= M_Val[n];
+	if M_Val[n] > 0 then M_Val_All_Zero:= FALSE;
+	inc(n);
+	end;
+if M_Val_All_Zero then Zeroneg:= TRUE;
+
+if Zeroneg then mi.Negative_flag:= Multi_UBool_FALSE
+else if Signeg then mi.Negative_flag:= Multi_UBool_TRUE
+else mi.Negative_flag:= Multi_UBool_FALSE;
+
+999:
+end;
+
+
+(******************************************)
+function Bin_to_Multi_Int_X2(const v1:ansistring):Multi_Int_X2;
+begin
+{$HINTS OFF} {$WARNINGS OFF}
+Bin_to_Multi_Int_X2(v1,Result);
+{$WARNINGS ON} {$HINTS ON}
+end;
+
+
+(******************************************)
+procedure FromBin(const v1:ansistring; var mi:Multi_Int_X2); overload;
+begin
+Bin_to_Multi_Int_X2(v1,mi);
+end;
+
+
+(******************************************)
+function Multi_Int_X2.FromBin(const v1:ansistring):Multi_Int_X2;
+begin
+{$HINTS OFF} {$WARNINGS OFF}
+bin_to_Multi_Int_X2(v1,Result);
+{$HINTS ON} {$WARNINGS ON}
+end;
+
+
+(******************************************)
+procedure Multi_Int_X2_to_bin(const v1:Multi_Int_X2; var v2:ansistring; LZ:T_Multi_Leading_Zeros);
+var
+	s		:ansistring = '';
+	n		:MULTI_INT_1W_S;
+begin
+if	(Not v1.Defined_flag)
+then
+	begin
+	v2:='UNDEFINED';
+	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
+		begin
+		Raise EInterror.create('Uninitialised variable');
+		end;
+	exit;
+	end;
+if	(v1.Overflow_flag)
+then
+	begin
+	v2:='OVERFLOW';
+	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
+		begin
+		Raise EInterror.create('Overflow');
+		end;
+	exit;
+	end;
+
+n:= MULTI_INT_1W_SIZE;
+s:= '';
+
+s:= s
+	+   IntToBin(v1.M_Value[3],n)
+	+   IntToBin(v1.M_Value[2],n)
+	+   IntToBin(v1.M_Value[1],n)
+	+   IntToBin(v1.M_Value[0],n)
+	;
+
+if (LZ = Multi_Trim_Leading_Zeros) then Removeleadingchars(s,['0']);
+if	(v1.Negative_flag = Multi_UBool_TRUE) then s:='-' + s;
+if	(s = '') then s:= '0';
+v2:=s;
+end;
+
+
+(******************************************)
+function Multi_Int_X2.Tobin(const LZ:T_Multi_Leading_Zeros):ansistring;
+begin
+{$HINTS OFF} {$WARNINGS OFF}
+Multi_Int_X2_to_bin(self, Result, LZ);
+{$WARNINGS ON} {$HINTS ON}
+end;
+
+
+(******************************************)
 procedure Multi_Int_X2_to_hex(const v1:Multi_Int_X2; var v2:ansistring; LZ:T_Multi_Leading_Zeros);
 var
 	s		:ansistring = '';
@@ -2735,6 +2929,7 @@ if	(length(v1) > 0) then
 					begin
 					Multi_Int_ERROR:= TRUE;
 					mi.Defined_flag:= FALSE;
+					mi.Overflow_flag:=TRUE;
 					if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
 						begin
 						Raise;
@@ -5067,6 +5262,7 @@ if	(length(v1) > 0) then
 					begin
 					Multi_Int_ERROR:= TRUE;
 					mi.Defined_flag:= FALSE;
+					mi.Overflow_flag:=TRUE;
 					if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
 						begin
 						Raise;
@@ -5427,11 +5623,12 @@ MI.Negative_flag:= v1.Negative_flag;
 if	(v1.Defined_flag = FALSE)
 then
 	begin
+	Multi_Int_ERROR:= TRUE;
+	MI.Defined_flag:= FALSE;
 	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
 		begin
 		Raise EInterror.create('Uninitialised variable');
 		end;
-	MI.Defined_flag:= FALSE;
 	exit;
 	end;
 
@@ -6008,6 +6205,187 @@ end;
 
 
 (******************************************)
+procedure bin_to_Multi_Int_X3(const v1:ansistring; var mi:Multi_Int_X3);
+label 999;
+var
+	n,b,c,e	:MULTI_INT_2W_U;
+	bit			:MULTI_INT_1W_U;
+	M_Val		:array[0..Multi_X3_maxi] of MULTI_INT_2W_U;
+	Signeg,
+	Zeroneg,
+	M_Val_All_Zero		:boolean;
+begin
+Multi_Int_ERROR:= FALSE;
+
+mi.Overflow_flag:=FALSE;
+mi.Defined_flag:= TRUE;
+mi.Negative_flag:= FALSE;
+Signeg:= FALSE;
+Zeroneg:= FALSE;
+
+n:=0;
+while (n <= Multi_X3_maxi)
+do begin M_Val[n]:= 0; inc(n); end;
+
+if	(length(v1) > 0) then
+	begin
+	b:=low(ansistring);
+	e:=b + MULTI_INT_2W_U(length(v1)) - 1;
+	if	(v1[b] = '-') then
+		begin
+		Signeg:= TRUE;
+		INC(b);
+		end;
+
+	c:= b;
+	while (c <= e) do
+		begin
+		bit:= (ord(v1[c]) - ord('0'));
+		if	(bit > 1)
+		then
+			begin
+			Multi_Int_ERROR:= TRUE;
+			mi.Defined_flag:= FALSE;
+			mi.Overflow_flag:=TRUE;
+			if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
+				Raise EInterror.create('Invalid binary digit');
+			goto 999;
+			end;
+
+		M_Val[0]:=(M_Val[0] * 2) + bit;
+		n:=1;
+		while (n <= Multi_X3_maxi) do
+			begin
+			M_Val[n]:=(M_Val[n] * 2);
+			inc(n);
+			end;
+
+		n:=0;
+		while (n < Multi_X3_maxi) do
+			begin
+			if	M_Val[n] > MULTI_INT_1W_U_MAXINT then
+				begin
+				M_Val[n+1]:=M_Val[n+1] + (M_Val[n] DIV MULTI_INT_1W_U_MAXINT_1);
+				M_Val[n]:=(M_Val[n] MOD MULTI_INT_1W_U_MAXINT_1);
+				end;
+
+			inc(n);
+			end;
+
+		if	M_Val[n] > MULTI_INT_1W_U_MAXINT then
+			begin
+			mi.Defined_flag:=FALSE;
+			mi.Overflow_flag:=TRUE;
+			Multi_Int_ERROR:= TRUE;
+			if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
+				begin
+				Raise EIntOverflow.create('Overflow on string conversion');
+				end;
+			goto 999;
+			end;
+		Inc(c);
+		end;
+	end;
+
+M_Val_All_Zero:= TRUE;
+n:=0;
+while (n <= Multi_X3_maxi) do
+	begin
+	mi.M_Value[n]:= M_Val[n];
+	if M_Val[n] > 0 then M_Val_All_Zero:= FALSE;
+	inc(n);
+	end;
+if M_Val_All_Zero then Zeroneg:= TRUE;
+
+if Zeroneg then mi.Negative_flag:= Multi_UBool_FALSE
+else if Signeg then mi.Negative_flag:= Multi_UBool_TRUE
+else mi.Negative_flag:= Multi_UBool_FALSE;
+
+999:
+end;
+
+
+(******************************************)
+function Bin_to_Multi_Int_X3(const v1:ansistring):Multi_Int_X3;
+begin
+{$HINTS OFF} {$WARNINGS OFF}
+Bin_to_Multi_Int_X3(v1,Result);
+{$WARNINGS ON} {$HINTS ON}
+end;
+
+
+(******************************************)
+procedure FromBin(const v1:ansistring; var mi:Multi_Int_X3); overload;
+begin
+Bin_to_Multi_Int_X3(v1,mi);
+end;
+
+
+(******************************************)
+function Multi_Int_X3.FromBin(const v1:ansistring):Multi_Int_X3;
+begin
+{$HINTS OFF} {$WARNINGS OFF}
+bin_to_Multi_Int_X3(v1,Result);
+{$HINTS ON} {$WARNINGS ON}
+end;
+
+
+(******************************************)
+procedure Multi_Int_X3_to_bin(const v1:Multi_Int_X3; var v2:ansistring; LZ:T_Multi_Leading_Zeros);
+var
+	s		:ansistring = '';
+	n		:MULTI_INT_1W_S;
+begin
+if	(Not v1.Defined_flag)
+then
+	begin
+	v2:='UNDEFINED';
+	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
+		begin
+		Raise EInterror.create('Uninitialised variable');
+		end;
+	exit;
+	end;
+if	(v1.Overflow_flag)
+then
+	begin
+	v2:='OVERFLOW';
+	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
+		begin
+		Raise EInterror.create('Overflow');
+		end;
+	exit;
+	end;
+
+n:= MULTI_INT_1W_SIZE;
+s:= '';
+
+s:= s
+	+   IntToBin(v1.M_Value[5],n)
+	+   IntToBin(v1.M_Value[4],n)
+	+   IntToBin(v1.M_Value[3],n)
+	+   IntToBin(v1.M_Value[2],n)
+	+   IntToBin(v1.M_Value[1],n)
+	+   IntToBin(v1.M_Value[0],n)
+	;
+
+if (LZ = Multi_Trim_Leading_Zeros) then Removeleadingchars(s,['0']);
+if	(v1.Negative_flag = Multi_UBool_TRUE) then s:='-' + s;
+if	(s = '') then s:= '0';
+v2:=s;
+end;
+
+
+(******************************************)
+function Multi_Int_X3.Tobin(const LZ:T_Multi_Leading_Zeros):ansistring;
+begin
+{$HINTS OFF} {$WARNINGS OFF}
+Multi_Int_X3_to_bin(self, Result, LZ);
+{$WARNINGS ON} {$HINTS ON}
+end;
+
+
+(******************************************)
 procedure Multi_Int_X3_to_hex(const v1:Multi_Int_X3; var v2:ansistring; LZ:T_Multi_Leading_Zeros);
 var
 	s		:ansistring = '';
@@ -6106,6 +6484,7 @@ if	(length(v1) > 0) then
 					begin
 					Multi_Int_ERROR:= TRUE;
 					mi.Defined_flag:= FALSE;
+					mi.Overflow_flag:=TRUE;
 					if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
 						begin
 						Raise;
@@ -8716,22 +9095,24 @@ MI.Negative_flag:= v1.Negative_flag;
 if	(v1.Defined_flag = FALSE)
 then
 	begin
+	Multi_Int_ERROR:= TRUE;
+	MI.Defined_flag:= FALSE;
 	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
 		begin
 		Raise EInterror.create('Uninitialised variable');
 		end;
-	MI.Defined_flag:= FALSE;
 	exit;
 	end;
 
 if	(v1.Overflow_flag = TRUE)
 then
 	begin
+	Multi_Int_ERROR:= TRUE;
+	MI.Overflow_flag:= TRUE;
 	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
 		begin
 		Raise EInterror.create('Overflow');
 		end;
-	MI.Overflow_flag:= TRUE;
 	exit;
 	end;
 
@@ -8771,22 +9152,24 @@ MI.Negative_flag:= v1.Negative_flag;
 if	(v1.Defined_flag = FALSE)
 then
 	begin
+	Multi_Int_ERROR:= TRUE;
+	MI.Defined_flag:= FALSE;
 	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
 		begin
 		Raise EInterror.create('Uninitialised variable');
 		end;
-	MI.Defined_flag:= FALSE;
 	exit;
 	end;
 
 if	(v1.Overflow_flag = TRUE)
 then
 	begin
+	Multi_Int_ERROR:= TRUE;
+	MI.Overflow_flag:= TRUE;
 	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
 		begin
 		Raise EInterror.create('Overflow');
 		end;
-	MI.Overflow_flag:= TRUE;
 	exit;
 	end;
 
@@ -9654,10 +10037,136 @@ end;
 
 
 (******************************************)
-procedure Multi_Int_X4_to_hex(const v1:Multi_Int_X4; var v2:ansistring; LZ:T_Multi_Leading_Zeros);
+procedure bin_to_Multi_Int_X4(const v1:ansistring; var mi:Multi_Int_X4);
+label 999;
+var
+	n,b,c,e	:MULTI_INT_2W_U;
+	bit			:MULTI_INT_1W_U;
+	M_Val		:array[0..Multi_X4_maxi] of MULTI_INT_2W_U;
+	Signeg,
+	Zeroneg,
+	M_Val_All_Zero		:boolean;
+begin
+Multi_Int_ERROR:= FALSE;
+
+mi.Overflow_flag:=FALSE;
+mi.Defined_flag:= TRUE;
+mi.Negative_flag:= FALSE;
+Signeg:= FALSE;
+Zeroneg:= FALSE;
+
+n:=0;
+while (n <= Multi_X4_maxi)
+do begin M_Val[n]:= 0; inc(n); end;
+
+if	(length(v1) > 0) then
+	begin
+	b:=low(ansistring);
+	e:=b + MULTI_INT_2W_U(length(v1)) - 1;
+	if	(v1[b] = '-') then
+		begin
+		Signeg:= TRUE;
+		INC(b);
+		end;
+
+	c:= b;
+	while (c <= e) do
+		begin
+		bit:= (ord(v1[c]) - ord('0'));
+		if	(bit > 1)
+		then
+			begin
+			Multi_Int_ERROR:= TRUE;
+			mi.Overflow_flag:=TRUE;
+			mi.Defined_flag:= FALSE;
+			if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
+				Raise EInterror.create('Invalid binary digit');
+			goto 999;
+			end;
+
+		M_Val[0]:=(M_Val[0] * 2) + bit;
+		n:=1;
+		while (n <= Multi_X4_maxi) do
+			begin
+			M_Val[n]:=(M_Val[n] * 2);
+			inc(n);
+			end;
+
+		n:=0;
+		while (n < Multi_X4_maxi) do
+			begin
+			if	M_Val[n] > MULTI_INT_1W_U_MAXINT then
+				begin
+				M_Val[n+1]:=M_Val[n+1] + (M_Val[n] DIV MULTI_INT_1W_U_MAXINT_1);
+				M_Val[n]:=(M_Val[n] MOD MULTI_INT_1W_U_MAXINT_1);
+				end;
+
+			inc(n);
+			end;
+
+		if	M_Val[n] > MULTI_INT_1W_U_MAXINT then
+			begin
+			mi.Defined_flag:=FALSE;
+			mi.Overflow_flag:=TRUE;
+			Multi_Int_ERROR:= TRUE;
+			if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
+				begin
+				Raise EIntOverflow.create('Overflow on string conversion');
+				end;
+			goto 999;
+			end;
+		Inc(c);
+		end;
+	end;
+
+M_Val_All_Zero:= TRUE;
+n:=0;
+while (n <= Multi_X4_maxi) do
+	begin
+	mi.M_Value[n]:= M_Val[n];
+	if M_Val[n] > 0 then M_Val_All_Zero:= FALSE;
+	inc(n);
+	end;
+if M_Val_All_Zero then Zeroneg:= TRUE;
+
+if Zeroneg then mi.Negative_flag:= Multi_UBool_FALSE
+else if Signeg then mi.Negative_flag:= Multi_UBool_TRUE
+else mi.Negative_flag:= Multi_UBool_FALSE;
+
+999:
+end;
+
+
+(******************************************)
+function Bin_to_Multi_Int_X4(const v1:ansistring):Multi_Int_X4;
+begin
+{$HINTS OFF} {$WARNINGS OFF}
+Bin_to_Multi_Int_X4(v1,Result);
+{$WARNINGS ON} {$HINTS ON}
+end;
+
+
+(******************************************)
+procedure FromBin(const v1:ansistring; var mi:Multi_Int_X4); overload;
+begin
+Bin_to_Multi_Int_X4(v1,mi);
+end;
+
+
+(******************************************)
+function Multi_Int_X4.FromBin(const v1:ansistring):Multi_Int_X4;
+begin
+{$HINTS OFF} {$WARNINGS OFF}
+bin_to_Multi_Int_X4(v1,Result);
+{$HINTS ON} {$WARNINGS ON}
+end;
+
+
+(******************************************)
+procedure Multi_Int_X4_to_bin(const v1:Multi_Int_X4; var v2:ansistring; LZ:T_Multi_Leading_Zeros);
 var
 	s		:ansistring = '';
-	n		:Multi_int32u;
+	n		:MULTI_INT_1W_S;
 begin
 if	(Not v1.Defined_flag)
 then
@@ -9680,18 +10189,18 @@ then
 	exit;
 	end;
 
-n:= (MULTI_INT_1W_SIZE div 4);
+n:= MULTI_INT_1W_SIZE;
 s:= '';
 
 s:= s
-	+   IntToHex(v1.M_Value[7],n)
-	+   IntToHex(v1.M_Value[6],n)
-	+   IntToHex(v1.M_Value[5],n)
-	+   IntToHex(v1.M_Value[4],n)
-	+   IntToHex(v1.M_Value[3],n)
-	+   IntToHex(v1.M_Value[2],n)
-	+   IntToHex(v1.M_Value[1],n)
-	+   IntToHex(v1.M_Value[0],n)
+	+   IntToBin(v1.M_Value[7],n)
+	+   IntToBin(v1.M_Value[6],n)
+	+   IntToBin(v1.M_Value[5],n)
+	+   IntToBin(v1.M_Value[4],n)
+	+   IntToBin(v1.M_Value[3],n)
+	+   IntToBin(v1.M_Value[2],n)
+	+   IntToBin(v1.M_Value[1],n)
+	+   IntToBin(v1.M_Value[0],n)
 	;
 
 if (LZ = Multi_Trim_Leading_Zeros) then Removeleadingchars(s,['0']);
@@ -9702,10 +10211,10 @@ end;
 
 
 (******************************************)
-function Multi_Int_X4.ToHex(const LZ:T_Multi_Leading_Zeros):ansistring;
+function Multi_Int_X4.Tobin(const LZ:T_Multi_Leading_Zeros):ansistring;
 begin
 {$HINTS OFF} {$WARNINGS OFF}
-Multi_Int_X4_to_hex(self, Result, LZ);
+Multi_Int_X4_to_bin(self, Result, LZ);
 {$WARNINGS ON} {$HINTS ON}
 end;
 
@@ -9751,6 +10260,8 @@ if	(length(v1) > 0) then
 			except
 				on EConvertError do
 					begin
+					Multi_Int_ERROR:= TRUE;
+					mi.Overflow_flag:=TRUE;
 					mi.Defined_flag:= FALSE;
 					if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
 						begin
@@ -9835,6 +10346,63 @@ begin
 {$HINTS OFF} {$WARNINGS OFF}
 hex_to_Multi_Int_X4(v1,Result);
 {$HINTS ON} {$WARNINGS ON}
+end;
+
+
+(******************************************)
+procedure Multi_Int_X4_to_hex(const v1:Multi_Int_X4; var v2:ansistring; LZ:T_Multi_Leading_Zeros);
+var
+	s		:ansistring = '';
+	n		:Multi_int32u;
+begin
+if	(Not v1.Defined_flag)
+then
+	begin
+	v2:='UNDEFINED';
+	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
+		begin
+		Raise EInterror.create('Uninitialised variable');
+		end;
+	exit;
+	end;
+if	(v1.Overflow_flag)
+then
+	begin
+	v2:='OVERFLOW';
+	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
+		begin
+		Raise EInterror.create('Overflow');
+		end;
+	exit;
+	end;
+
+n:= (MULTI_INT_1W_SIZE div 4);
+s:= '';
+
+s:= s
+	+   IntToHex(v1.M_Value[7],n)
+	+   IntToHex(v1.M_Value[6],n)
+	+   IntToHex(v1.M_Value[5],n)
+	+   IntToHex(v1.M_Value[4],n)
+	+   IntToHex(v1.M_Value[3],n)
+	+   IntToHex(v1.M_Value[2],n)
+	+   IntToHex(v1.M_Value[1],n)
+	+   IntToHex(v1.M_Value[0],n)
+	;
+
+if (LZ = Multi_Trim_Leading_Zeros) then Removeleadingchars(s,['0']);
+if	(v1.Negative_flag = Multi_UBool_TRUE) then s:='-' + s;
+if	(s = '') then s:= '0';
+v2:=s;
+end;
+
+
+(******************************************)
+function Multi_Int_X4.ToHex(const LZ:T_Multi_Leading_Zeros):ansistring;
+begin
+{$HINTS OFF} {$WARNINGS OFF}
+Multi_Int_X4_to_hex(self, Result, LZ);
+{$WARNINGS ON} {$HINTS ON}
 end;
 
 
@@ -11655,22 +12223,24 @@ MI.Negative_flag:= v1.Negative_flag;
 if	(v1.Defined_flag = FALSE)
 then
 	begin
+	Multi_Int_ERROR:= TRUE;
+	MI.Defined_flag:= FALSE;
 	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
 		begin
 		Raise EInterror.create('Uninitialised variable');
 		end;
-	MI.Defined_flag:= FALSE;
 	exit;
 	end;
 
 if	(v1.Overflow_flag = TRUE)
 then
 	begin
+	Multi_Int_ERROR:= TRUE;
+	MI.Overflow_flag:= TRUE;
 	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
 		begin
 		Raise EInterror.create('Overflow');
 		end;
-	MI.Overflow_flag:= TRUE;
 	exit;
 	end;
 
@@ -13595,6 +14165,8 @@ if	(length(v1) > 0) then
 		try
 			i:=Hex2Dec(v1[c]);
 			except
+				Multi_Int_ERROR:= TRUE;
+				mi.Overflow_flag:=TRUE;
 				mi.Defined_flag:= FALSE;
 				if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
 					Raise;
@@ -13790,13 +14362,11 @@ if	(length(v1) > 0) then
 	while (c <= e) do
 		begin
 		bit:= (ord(v1[c]) - ord('0'));
-	{$HINTS OFF} {$WARNINGS OFF}
-		if	(bit < 0)
- 		or	(bit > 1)
-	{$WARNINGS ON} {$HINTS ON}
+		if	(bit > 1)
 		then
 			begin
 			Multi_Int_ERROR:= TRUE;
+			mi.Overflow_flag:=TRUE;
 			mi.Defined_flag:= FALSE;
 			if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
 				Raise EInterror.create('Invalid binary digit');
@@ -13881,6 +14451,15 @@ end;
 procedure FromBin(const v1:ansistring; var mi:Multi_Int_XV); overload;
 begin
 Bin_to_Multi_Int_XV(v1,mi);
+end;
+
+
+(******************************************)
+function Multi_Int_XV.FromBin(const v1:ansistring):Multi_Int_XV;
+begin
+{$HINTS OFF} {$WARNINGS OFF}
+bin_to_Multi_Int_XV(v1,Result);
+{$HINTS ON} {$WARNINGS ON}
 end;
 
 
@@ -14125,8 +14704,8 @@ if (Multi_X4_size > mi.M_Value_Size) then
 	Multi_Int_Reset_XV_Size(MI, Multi_X4_size);
 	if	(mi.Overflow) then
 		begin
-		mi.Defined_flag:=FALSE;
 		Multi_Int_ERROR:= TRUE;
+		mi.Defined_flag:=FALSE;
 		if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
 			Raise EInterror.create('Overflow');
 		exit;
@@ -14136,6 +14715,7 @@ if (Multi_X4_size > mi.M_Value_Size) then
 if	(v1.Defined_flag = FALSE)
 then
 	begin
+	Multi_Int_ERROR:= TRUE;
 	MI.Defined_flag:= FALSE;
 	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
 		begin
@@ -14147,8 +14727,8 @@ then
 if	(v1.Overflow_flag = TRUE)
 then
 	begin
-	MI.Overflow_flag:= TRUE;
 	Multi_Int_ERROR:= TRUE;
+	MI.Overflow_flag:= TRUE;
 	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
 		begin
 		Raise EInterror.create('Overflow');
@@ -14215,6 +14795,7 @@ if (Multi_X3_size > mi.M_Value_Size) then
 if	(v1.Defined_flag = FALSE)
 then
 	begin
+	Multi_Int_ERROR:= TRUE;
 	MI.Defined_flag:= FALSE;
 	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
 		begin
@@ -14226,8 +14807,8 @@ then
 if	(v1.Overflow_flag = TRUE)
 then
 	begin
-	MI.Overflow_flag:= TRUE;
 	Multi_Int_ERROR:= TRUE;
+	MI.Overflow_flag:= TRUE;
 	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
 		begin
 		Raise EInterror.create('Overflow');
@@ -14294,6 +14875,7 @@ if (Multi_X2_size > mi.M_Value_Size) then
 if	(v1.Defined_flag = FALSE)
 then
 	begin
+	Multi_Int_ERROR:= TRUE;
 	MI.Defined_flag:= FALSE;
 	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
 		begin
@@ -14305,8 +14887,8 @@ then
 if	(v1.Overflow_flag = TRUE)
 then
 	begin
-	MI.Overflow_flag:= TRUE;
 	Multi_Int_ERROR:= TRUE;
+	MI.Overflow_flag:= TRUE;
 	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
 		begin
 		Raise EInterror.create('Overflow');
