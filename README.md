@@ -13,3 +13,4 @@ Changes in version 4.35:
 - some minor changes to the API, which might require minor changes in calling code
 - exceptional case bug fix in division function
 - more bug fixes in division and subtraction
+- more exception bug fixes
