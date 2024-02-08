@@ -14,3 +14,5 @@ Changes in version 4.35:
 - exceptional case bug fix in division function
 - more bug fixes in division and subtraction
 - more exception bug fixes
+- implement shr and shl operators
+- bug fixes when calling some functions
