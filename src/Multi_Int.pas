@@ -30,6 +30,10 @@ UNIT Multi_Int;
 	{$SAFEFPUEXCEPTIONS ON}
 {$endif}
 
+// This makes procedure and functions inlined
+
+// {$define inline_functions}
+
 // This should be set if you have enabled overflow checking.
 // Turning on overflow checking causes some shift operations to fail,
 // so the code needs to turn off overflow checking for those operations.
@@ -206,6 +210,16 @@ v4.35.03
 -	clean up hints, notes, warnings
 -	exception overflow bug fix in add/subtract_Multi_Int_XV
 -	more exception bug fixes
+
+v4.35.04
+-	re-instate function inlining with a switch
+-	use function out parameters instead of var to eliminate warnings
+-	define shr shl operators
+-	serious bug fix in calling code for some operations var was being referenced
+	instead of copied - for Multi_Int_XV only, others ok
+-	implement shr and shl operators
+-	hide ShiftDown & ShiftUp procedures
+-	more var parameters changed to out
 *)
 
 (* END OF USER OPTIONAL DEFINES *)
@@ -217,7 +231,7 @@ uses	sysutils
 ;
 
 const
-	version = '4.35.03';
+	version = '4.35.04';
 
 const
 
@@ -234,10 +248,6 @@ const
 	Multi_X4_maxi = 7;
 	Multi_X4_maxi_x2 = 15;
 	Multi_X4_size = Multi_X4_maxi + 1;
-
-	Multi_X5_max = 8;
-	Multi_X5_max_x2 = 16;
-	Multi_X5_size = Multi_X4_maxi + 1;
 
 const
 	Multi_INT8_MAXINT = 127;
@@ -353,8 +363,6 @@ T_Multi_UBool	=	record
 						class operator notequal(v1,v2:T_Multi_UBool):Boolean; inline;
 					end;
 
-// T_Aarray_of_MULTI_INT_1W_U	= array of MULTI_INT_1W_U;
-
 Multi_Int_X2	=	record
 					private
 						M_Value			:array[0..Multi_X2_maxi] of MULTI_INT_1W_U;
@@ -362,50 +370,52 @@ Multi_Int_X2	=	record
 						Overflow_flag	:boolean;
 						Defined_flag	:boolean;
 					public
-						function ToStr:ansistring;
-						function ToHex(const LZ:T_Multi_Leading_Zeros=Multi_Trim_Leading_Zeros):ansistring;
-						function ToBin(const LZ:T_Multi_Leading_Zeros=Multi_Trim_Leading_Zeros):ansistring;
-						function FromHex(const v1:ansistring):Multi_Int_X2;
-						function FromBin(const v1:ansistring):Multi_Int_X2;
-						function Overflow:boolean;
-						function Negative:boolean;
-						function Defined:boolean;
-						class operator implicit(const v1:Multi_Int_X2):Multi_int8u;
-						class operator implicit(const v1:Multi_Int_X2):Multi_int8;
-						class operator implicit(const v1:Multi_Int_X2):MULTI_INT_1W_U;
-						class operator implicit(const v1:Multi_Int_X2):MULTI_INT_1W_S;
-						class operator implicit(const v1:Multi_Int_X2):MULTI_INT_2W_U;
-						class operator implicit(const v1:Multi_Int_X2):MULTI_INT_2W_S;
-						class operator implicit(const v1:MULTI_INT_2W_S):Multi_Int_X2;
-						class operator implicit(const v1:MULTI_INT_2W_U):Multi_Int_X2;
+						function ToStr:ansistring;	{$ifdef inline_functions} inline; {$endif}
+						function ToHex(const LZ:T_Multi_Leading_Zeros=Multi_Trim_Leading_Zeros):ansistring;	{$ifdef inline_functions} inline; {$endif}
+						function ToBin(const LZ:T_Multi_Leading_Zeros=Multi_Trim_Leading_Zeros):ansistring;	{$ifdef inline_functions} inline; {$endif}
+						function FromHex(const v1:ansistring):Multi_Int_X2;	{$ifdef inline_functions} inline; {$endif}
+						function FromBin(const v1:ansistring):Multi_Int_X2;	{$ifdef inline_functions} inline; {$endif}
+						function Overflow:boolean;	{$ifdef inline_functions} inline; {$endif}
+						function Negative:boolean;	{$ifdef inline_functions} inline; {$endif}
+						function Defined:boolean;	{$ifdef inline_functions} inline; {$endif}
+						class operator implicit(const v1:Multi_Int_X2):Multi_int8u;	{$ifdef inline_functions} inline; {$endif}
+						class operator implicit(const v1:Multi_Int_X2):Multi_int8;	{$ifdef inline_functions} inline; {$endif}
+						class operator implicit(const v1:Multi_Int_X2):MULTI_INT_1W_U;	{$ifdef inline_functions} inline; {$endif}
+						class operator implicit(const v1:Multi_Int_X2):MULTI_INT_1W_S;	{$ifdef inline_functions} inline; {$endif}
+						class operator implicit(const v1:Multi_Int_X2):MULTI_INT_2W_U;	{$ifdef inline_functions} inline; {$endif}
+						class operator implicit(const v1:Multi_Int_X2):MULTI_INT_2W_S;	{$ifdef inline_functions} inline; {$endif}
+						class operator implicit(const v1:MULTI_INT_2W_S):Multi_Int_X2;	{$ifdef inline_functions} inline; {$endif}
+						class operator implicit(const v1:MULTI_INT_2W_U):Multi_Int_X2;	{$ifdef inline_functions} inline; {$endif}
 					{$ifdef 32bit}
-						class operator implicit(const v1:MULTI_INT_4W_S):Multi_Int_X2;
-						class operator implicit(const v1:MULTI_INT_4W_U):Multi_Int_X2;
+						class operator implicit(const v1:MULTI_INT_4W_S):Multi_Int_X2;	{$ifdef inline_functions} inline; {$endif}
+						class operator implicit(const v1:MULTI_INT_4W_U):Multi_Int_X2;	{$ifdef inline_functions} inline; {$endif}
 					{$endif}
-						class operator implicit(const v1:ansistring):Multi_Int_X2;
-						class operator implicit(const v1:Multi_Int_X2):ansistring;
-						class operator implicit(const v1:Single):Multi_Int_X2;
-						class operator implicit(const v1:Real):Multi_Int_X2;
-						class operator implicit(const v1:Double):Multi_Int_X2;
-						class operator implicit(const v1:Multi_Int_X2):Single;
-						class operator implicit(const v1:Multi_Int_X2):Real;
-						class operator implicit(const v1:Multi_Int_X2):Double;
-						class operator add(const v1,v2:Multi_Int_X2):Multi_Int_X2;
-						class operator subtract(const v1,v2:Multi_Int_X2):Multi_Int_X2;
-						class operator inc(const v1:Multi_Int_X2):Multi_Int_X2;
-						class operator dec(const v1:Multi_Int_X2):Multi_Int_X2;
-						class operator greaterthan(const v1,v2:Multi_Int_X2):Boolean;
-						class operator lessthan(const v1,v2:Multi_Int_X2):Boolean;
-						class operator equal(const v1,v2:Multi_Int_X2):Boolean;
-						class operator notequal(const v1,v2:Multi_Int_X2):Boolean;
-						class operator multiply(const v1,v2:Multi_Int_X2):Multi_Int_X2;
-						class operator intdivide(const v1,v2:Multi_Int_X2):Multi_Int_X2;
-						class operator modulus(const v1,v2:Multi_Int_X2):Multi_Int_X2;
-						class operator xor(const v1,v2:Multi_Int_X2):Multi_Int_X2;
-						class operator -(const v1:Multi_Int_X2):Multi_Int_X2;
-						class operator >=(const v1,v2:Multi_Int_X2):Boolean;
-						class operator <=(const v1,v2:Multi_Int_X2):Boolean;
-						class operator **(const v1:Multi_Int_X2; const P:MULTI_INT_2W_S):Multi_Int_X2;
+						class operator implicit(const v1:ansistring):Multi_Int_X2;	{$ifdef inline_functions} inline; {$endif}
+						class operator implicit(const v1:Multi_Int_X2):ansistring;	{$ifdef inline_functions} inline; {$endif}
+						class operator implicit(const v1:Single):Multi_Int_X2;	{$ifdef inline_functions} inline; {$endif}
+						class operator implicit(const v1:Real):Multi_Int_X2;	{$ifdef inline_functions} inline; {$endif}
+						class operator implicit(const v1:Double):Multi_Int_X2;	{$ifdef inline_functions} inline; {$endif}
+						class operator implicit(const v1:Multi_Int_X2):Single;	{$ifdef inline_functions} inline; {$endif}
+						class operator implicit(const v1:Multi_Int_X2):Real;	{$ifdef inline_functions} inline; {$endif}
+						class operator implicit(const v1:Multi_Int_X2):Double;	{$ifdef inline_functions} inline; {$endif}
+						class operator add(const v1,v2:Multi_Int_X2):Multi_Int_X2;	{$ifdef inline_functions} inline; {$endif}
+						class operator subtract(const v1,v2:Multi_Int_X2):Multi_Int_X2;	{$ifdef inline_functions} inline; {$endif}
+						class operator inc(const v1:Multi_Int_X2):Multi_Int_X2;	{$ifdef inline_functions} inline; {$endif}
+						class operator dec(const v1:Multi_Int_X2):Multi_Int_X2;	{$ifdef inline_functions} inline; {$endif}
+						class operator greaterthan(const v1,v2:Multi_Int_X2):Boolean;	{$ifdef inline_functions} inline; {$endif}
+						class operator lessthan(const v1,v2:Multi_Int_X2):Boolean;	{$ifdef inline_functions} inline; {$endif}
+						class operator equal(const v1,v2:Multi_Int_X2):Boolean;	{$ifdef inline_functions} inline; {$endif}
+						class operator notequal(const v1,v2:Multi_Int_X2):Boolean;	{$ifdef inline_functions} inline; {$endif}
+						class operator multiply(const v1,v2:Multi_Int_X2):Multi_Int_X2;	{$ifdef inline_functions} inline; {$endif}
+						class operator intdivide(const v1,v2:Multi_Int_X2):Multi_Int_X2;	{$ifdef inline_functions} inline; {$endif}
+						class operator modulus(const v1,v2:Multi_Int_X2):Multi_Int_X2;	{$ifdef inline_functions} inline; {$endif}
+						class operator xor(const v1,v2:Multi_Int_X2):Multi_Int_X2;	{$ifdef inline_functions} inline; {$endif}
+						class operator -(const v1:Multi_Int_X2):Multi_Int_X2;	{$ifdef inline_functions} inline; {$endif}
+						class operator >=(const v1,v2:Multi_Int_X2):Boolean;	{$ifdef inline_functions} inline; {$endif}
+						class operator <=(const v1,v2:Multi_Int_X2):Boolean;	{$ifdef inline_functions} inline; {$endif}
+						class operator **(const v1:Multi_Int_X2; const P:MULTI_INT_2W_S):Multi_Int_X2;	{$ifdef inline_functions} inline; {$endif}
+						class operator shr(const v1:Multi_Int_X2; const NBits:MULTI_INT_1W_U):Multi_Int_X2;	{$ifdef inline_functions} inline; {$endif}
+						class operator shl(const v1:Multi_Int_X2; const NBits:MULTI_INT_1W_U):Multi_Int_X2;	{$ifdef inline_functions} inline; {$endif}
 					end;
 
 
@@ -416,51 +426,53 @@ Multi_Int_X3	=	record
 						Overflow_flag	:boolean;
 						Defined_flag	:boolean;
 					public
-						function ToStr:ansistring;
-						function ToHex(const LZ:T_Multi_Leading_Zeros=Multi_Trim_Leading_Zeros):ansistring;
-						function ToBin(const LZ:T_Multi_Leading_Zeros=Multi_Trim_Leading_Zeros):ansistring;
-						function FromHex(const v1:ansistring):Multi_Int_X3;
-						function FromBin(const v1:ansistring):Multi_Int_X3;
-						function Overflow:boolean;
-						function Negative:boolean;
-						function Defined:boolean;
-						class operator implicit(const v1:Multi_Int_X3):Multi_int8u;
-						class operator implicit(const v1:Multi_Int_X3):Multi_int8;
-						class operator implicit(const v1:Multi_Int_X3):MULTI_INT_1W_U;
-						class operator implicit(const v1:Multi_Int_X3):MULTI_INT_1W_S;
-						class operator implicit(const v1:Multi_Int_X3):MULTI_INT_2W_U;
-						class operator implicit(const v1:Multi_Int_X3):MULTI_INT_2W_S;
-						class operator implicit(const v1:MULTI_INT_2W_S):Multi_Int_X3;
-						class operator implicit(const v1:MULTI_INT_2W_U):Multi_Int_X3;
+						function ToStr:ansistring;	{$ifdef inline_functions} inline; {$endif}
+						function ToHex(const LZ:T_Multi_Leading_Zeros=Multi_Trim_Leading_Zeros):ansistring;	{$ifdef inline_functions} inline; {$endif}
+						function ToBin(const LZ:T_Multi_Leading_Zeros=Multi_Trim_Leading_Zeros):ansistring;	{$ifdef inline_functions} inline; {$endif}
+						function FromHex(const v1:ansistring):Multi_Int_X3;	{$ifdef inline_functions} inline; {$endif}
+						function FromBin(const v1:ansistring):Multi_Int_X3;	{$ifdef inline_functions} inline; {$endif}
+						function Overflow:boolean;	{$ifdef inline_functions} inline; {$endif}
+						function Negative:boolean;	{$ifdef inline_functions} inline; {$endif}
+						function Defined:boolean;	{$ifdef inline_functions} inline; {$endif}
+						class operator implicit(const v1:Multi_Int_X3):Multi_int8u;	{$ifdef inline_functions} inline; {$endif}
+						class operator implicit(const v1:Multi_Int_X3):Multi_int8;	{$ifdef inline_functions} inline; {$endif}
+						class operator implicit(const v1:Multi_Int_X3):MULTI_INT_1W_U;	{$ifdef inline_functions} inline; {$endif}
+						class operator implicit(const v1:Multi_Int_X3):MULTI_INT_1W_S;	{$ifdef inline_functions} inline; {$endif}
+						class operator implicit(const v1:Multi_Int_X3):MULTI_INT_2W_U;	{$ifdef inline_functions} inline; {$endif}
+						class operator implicit(const v1:Multi_Int_X3):MULTI_INT_2W_S;	{$ifdef inline_functions} inline; {$endif}
+						class operator implicit(const v1:MULTI_INT_2W_S):Multi_Int_X3;	{$ifdef inline_functions} inline; {$endif}
+						class operator implicit(const v1:MULTI_INT_2W_U):Multi_Int_X3;	{$ifdef inline_functions} inline; {$endif}
 					{$ifdef 32bit}
-						class operator implicit(const v1:MULTI_INT_4W_S):Multi_Int_X3;
-						class operator implicit(const v1:MULTI_INT_4W_U):Multi_Int_X3;
+						class operator implicit(const v1:MULTI_INT_4W_S):Multi_Int_X3;	{$ifdef inline_functions} inline; {$endif}
+						class operator implicit(const v1:MULTI_INT_4W_U):Multi_Int_X3;	{$ifdef inline_functions} inline; {$endif}
 					{$endif}
-						class operator implicit(const v1:Multi_Int_X2):Multi_Int_X3;
-						class operator implicit(const v1:ansistring):Multi_Int_X3;
-						class operator implicit(const v1:Multi_Int_X3):ansistring;
-						class operator implicit(const v1:Single):Multi_Int_X3;
-						class operator implicit(const v1:Real):Multi_Int_X3;
-						class operator implicit(const v1:Double):Multi_Int_X3;
-						class operator implicit(const v1:Multi_Int_X3):Real;
-						class operator implicit(const v1:Multi_Int_X3):Single;
-						class operator implicit(const v1:Multi_Int_X3):Double;
-						class operator add(const v1,v2:Multi_Int_X3):Multi_Int_X3;
-						class operator subtract(const v1,v2:Multi_Int_X3):Multi_Int_X3;
-						class operator inc(const v1:Multi_Int_X3):Multi_Int_X3;
-						class operator dec(const v1:Multi_Int_X3):Multi_Int_X3;
-						class operator greaterthan(const v1,v2:Multi_Int_X3):Boolean;
-						class operator lessthan(const v1,v2:Multi_Int_X3):Boolean;
-						class operator equal(const v1,v2:Multi_Int_X3):Boolean;
-						class operator notequal(const v1,v2:Multi_Int_X3):Boolean;
-						class operator multiply(const v1,v2:Multi_Int_X3):Multi_Int_X3;
-						class operator intdivide(const v1,v2:Multi_Int_X3):Multi_Int_X3;
-						class operator modulus(const v1,v2:Multi_Int_X3):Multi_Int_X3;
-						class operator xor(const v1,v2:Multi_Int_X3):Multi_Int_X3;
-						class operator -(const v1:Multi_Int_X3):Multi_Int_X3;
-						class operator >=(const v1,v2:Multi_Int_X3):Boolean;
-						class operator <=(const v1,v2:Multi_Int_X3):Boolean;
-						class operator **(const v1:Multi_Int_X3; const P:MULTI_INT_2W_S):Multi_Int_X3;
+						class operator implicit(const v1:Multi_Int_X2):Multi_Int_X3;	{$ifdef inline_functions} inline; {$endif}
+						class operator implicit(const v1:ansistring):Multi_Int_X3;	{$ifdef inline_functions} inline; {$endif}
+						class operator implicit(const v1:Multi_Int_X3):ansistring;	{$ifdef inline_functions} inline; {$endif}
+						class operator implicit(const v1:Single):Multi_Int_X3;	{$ifdef inline_functions} inline; {$endif}
+						class operator implicit(const v1:Real):Multi_Int_X3;	{$ifdef inline_functions} inline; {$endif}
+						class operator implicit(const v1:Double):Multi_Int_X3;	{$ifdef inline_functions} inline; {$endif}
+						class operator implicit(const v1:Multi_Int_X3):Real;	{$ifdef inline_functions} inline; {$endif}
+						class operator implicit(const v1:Multi_Int_X3):Single;	{$ifdef inline_functions} inline; {$endif}
+						class operator implicit(const v1:Multi_Int_X3):Double;	{$ifdef inline_functions} inline; {$endif}
+						class operator add(const v1,v2:Multi_Int_X3):Multi_Int_X3;	{$ifdef inline_functions} inline; {$endif}
+						class operator subtract(const v1,v2:Multi_Int_X3):Multi_Int_X3;	{$ifdef inline_functions} inline; {$endif}
+						class operator inc(const v1:Multi_Int_X3):Multi_Int_X3;	{$ifdef inline_functions} inline; {$endif}
+						class operator dec(const v1:Multi_Int_X3):Multi_Int_X3;	{$ifdef inline_functions} inline; {$endif}
+						class operator greaterthan(const v1,v2:Multi_Int_X3):Boolean;	{$ifdef inline_functions} inline; {$endif}
+						class operator lessthan(const v1,v2:Multi_Int_X3):Boolean;	{$ifdef inline_functions} inline; {$endif}
+						class operator equal(const v1,v2:Multi_Int_X3):Boolean;	{$ifdef inline_functions} inline; {$endif}
+						class operator notequal(const v1,v2:Multi_Int_X3):Boolean;	{$ifdef inline_functions} inline; {$endif}
+						class operator multiply(const v1,v2:Multi_Int_X3):Multi_Int_X3;	{$ifdef inline_functions} inline; {$endif}
+						class operator intdivide(const v1,v2:Multi_Int_X3):Multi_Int_X3;	{$ifdef inline_functions} inline; {$endif}
+						class operator modulus(const v1,v2:Multi_Int_X3):Multi_Int_X3;	{$ifdef inline_functions} inline; {$endif}
+						class operator xor(const v1,v2:Multi_Int_X3):Multi_Int_X3;	{$ifdef inline_functions} inline; {$endif}
+						class operator -(const v1:Multi_Int_X3):Multi_Int_X3;	{$ifdef inline_functions} inline; {$endif}
+						class operator >=(const v1,v2:Multi_Int_X3):Boolean;	{$ifdef inline_functions} inline; {$endif}
+						class operator <=(const v1,v2:Multi_Int_X3):Boolean;	{$ifdef inline_functions} inline; {$endif}
+						class operator **(const v1:Multi_Int_X3; const P:MULTI_INT_2W_S):Multi_Int_X3;	{$ifdef inline_functions} inline; {$endif}
+						class operator shr(const v1:Multi_Int_X3; const NBits:MULTI_INT_1W_U):Multi_Int_X3;	{$ifdef inline_functions} inline; {$endif}
+						class operator shl(const v1:Multi_Int_X3; const NBits:MULTI_INT_1W_U):Multi_Int_X3;	{$ifdef inline_functions} inline; {$endif}
 					end;
 
 
@@ -471,52 +483,54 @@ Multi_Int_X4	=	record
 						Overflow_flag	:boolean;
 						Defined_flag	:boolean;
 					public
-						function ToStr:ansistring;
-						function ToHex(const LZ:T_Multi_Leading_Zeros=Multi_Trim_Leading_Zeros):ansistring;
-						function ToBin(const LZ:T_Multi_Leading_Zeros=Multi_Trim_Leading_Zeros):ansistring;
-						function FromHex(const v1:ansistring):Multi_Int_X4;
-						function FromBin(const v1:ansistring):Multi_Int_X4;
-						function Overflow:boolean;
-						function Negative:boolean;
-						function Defined:boolean;
-						class operator implicit(const v1:Multi_Int_X4):Multi_int8u;
-						class operator implicit(const v1:Multi_Int_X4):Multi_int8;
-						class operator implicit(const v1:Multi_Int_X4):MULTI_INT_1W_U;
-						class operator implicit(const v1:Multi_Int_X4):MULTI_INT_1W_S;
-						class operator implicit(const v1:Multi_Int_X4):MULTI_INT_2W_U;
-						class operator implicit(const v1:Multi_Int_X4):MULTI_INT_2W_S;
-						class operator implicit(const v1:MULTI_INT_2W_S):Multi_Int_X4;
-						class operator implicit(const v1:MULTI_INT_2W_U):Multi_Int_X4;
+						function ToStr:ansistring;	{$ifdef inline_functions} inline; {$endif}
+						function ToHex(const LZ:T_Multi_Leading_Zeros=Multi_Trim_Leading_Zeros):ansistring;	{$ifdef inline_functions} inline; {$endif}
+						function ToBin(const LZ:T_Multi_Leading_Zeros=Multi_Trim_Leading_Zeros):ansistring;	{$ifdef inline_functions} inline; {$endif}
+						function FromHex(const v1:ansistring):Multi_Int_X4;	{$ifdef inline_functions} inline; {$endif}
+						function FromBin(const v1:ansistring):Multi_Int_X4;	{$ifdef inline_functions} inline; {$endif}
+						function Overflow:boolean;	{$ifdef inline_functions} inline; {$endif}
+						function Negative:boolean;	{$ifdef inline_functions} inline; {$endif}
+						function Defined:boolean;	{$ifdef inline_functions} inline; {$endif}
+						class operator implicit(const v1:Multi_Int_X4):Multi_int8u;	{$ifdef inline_functions} inline; {$endif}
+						class operator implicit(const v1:Multi_Int_X4):Multi_int8;	{$ifdef inline_functions} inline; {$endif}
+						class operator implicit(const v1:Multi_Int_X4):MULTI_INT_1W_U;	{$ifdef inline_functions} inline; {$endif}
+						class operator implicit(const v1:Multi_Int_X4):MULTI_INT_1W_S;	{$ifdef inline_functions} inline; {$endif}
+						class operator implicit(const v1:Multi_Int_X4):MULTI_INT_2W_U;	{$ifdef inline_functions} inline; {$endif}
+						class operator implicit(const v1:Multi_Int_X4):MULTI_INT_2W_S;	{$ifdef inline_functions} inline; {$endif}
+						class operator implicit(const v1:MULTI_INT_2W_S):Multi_Int_X4;	{$ifdef inline_functions} inline; {$endif}
+						class operator implicit(const v1:MULTI_INT_2W_U):Multi_Int_X4;	{$ifdef inline_functions} inline; {$endif}
 					{$ifdef 32bit}
-						class operator implicit(const v1:MULTI_INT_4W_S):Multi_Int_X4;
-						class operator implicit(const v1:MULTI_INT_4W_U):Multi_Int_X4;
+						class operator implicit(const v1:MULTI_INT_4W_S):Multi_Int_X4;	{$ifdef inline_functions} inline; {$endif}
+						class operator implicit(const v1:MULTI_INT_4W_U):Multi_Int_X4;	{$ifdef inline_functions} inline; {$endif}
 					{$endif}
-						class operator implicit(const v1:Multi_Int_X2):Multi_Int_X4;
-						class operator implicit(const v1:Multi_Int_X3):Multi_Int_X4;
-						class operator implicit(const v1:ansistring):Multi_Int_X4;
-						class operator implicit(const v1:Multi_Int_X4):ansistring;
-						class operator implicit(const v1:Single):Multi_Int_X4;
-						class operator implicit(const v1:Real):Multi_Int_X4;
-						class operator implicit(const v1:Double):Multi_Int_X4;
-						class operator implicit(const v1:Multi_Int_X4):Single;
-						class operator implicit(const v1:Multi_Int_X4):Real;
-						class operator implicit(const v1:Multi_Int_X4):Double;
-						class operator add(const v1,v2:Multi_Int_X4):Multi_Int_X4;
-						class operator subtract(const v1,v2:Multi_Int_X4):Multi_Int_X4;
-						class operator inc(const v1:Multi_Int_X4):Multi_Int_X4;
-						class operator dec(const v1:Multi_Int_X4):Multi_Int_X4;
-						class operator greaterthan(const v1,v2:Multi_Int_X4):Boolean;
-						class operator lessthan(const v1,v2:Multi_Int_X4):Boolean;
-						class operator equal(const v1,v2:Multi_Int_X4):Boolean;
-						class operator notequal(const v1,v2:Multi_Int_X4):Boolean;
-						class operator multiply(const v1,v2:Multi_Int_X4):Multi_Int_X4;
-						class operator intdivide(const v1,v2:Multi_Int_X4):Multi_Int_X4;
-						class operator modulus(const v1,v2:Multi_Int_X4):Multi_Int_X4;
-						class operator xor(const v1,v2:Multi_Int_X4):Multi_Int_X4;
-						class operator -(const v1:Multi_Int_X4):Multi_Int_X4;
-						class operator >=(const v1,v2:Multi_Int_X4):Boolean;
-						class operator <=(const v1,v2:Multi_Int_X4):Boolean;
-						class operator **(const v1:Multi_Int_X4; const P:MULTI_INT_2W_S):Multi_Int_X4;
+						class operator implicit(const v1:Multi_Int_X2):Multi_Int_X4;	{$ifdef inline_functions} inline; {$endif}
+						class operator implicit(const v1:Multi_Int_X3):Multi_Int_X4;	{$ifdef inline_functions} inline; {$endif}
+						class operator implicit(const v1:ansistring):Multi_Int_X4;	{$ifdef inline_functions} inline; {$endif}
+						class operator implicit(const v1:Multi_Int_X4):ansistring;	{$ifdef inline_functions} inline; {$endif}
+						class operator implicit(const v1:Single):Multi_Int_X4;	{$ifdef inline_functions} inline; {$endif}
+						class operator implicit(const v1:Real):Multi_Int_X4;	{$ifdef inline_functions} inline; {$endif}
+						class operator implicit(const v1:Double):Multi_Int_X4;	{$ifdef inline_functions} inline; {$endif}
+						class operator implicit(const v1:Multi_Int_X4):Single;	{$ifdef inline_functions} inline; {$endif}
+						class operator implicit(const v1:Multi_Int_X4):Real;	{$ifdef inline_functions} inline; {$endif}
+						class operator implicit(const v1:Multi_Int_X4):Double;	{$ifdef inline_functions} inline; {$endif}
+						class operator add(const v1,v2:Multi_Int_X4):Multi_Int_X4;	{$ifdef inline_functions} inline; {$endif}
+						class operator subtract(const v1,v2:Multi_Int_X4):Multi_Int_X4;	{$ifdef inline_functions} inline; {$endif}
+						class operator inc(const v1:Multi_Int_X4):Multi_Int_X4;	{$ifdef inline_functions} inline; {$endif}
+						class operator dec(const v1:Multi_Int_X4):Multi_Int_X4;	{$ifdef inline_functions} inline; {$endif}
+						class operator greaterthan(const v1,v2:Multi_Int_X4):Boolean;	{$ifdef inline_functions} inline; {$endif}
+						class operator lessthan(const v1,v2:Multi_Int_X4):Boolean;	{$ifdef inline_functions} inline; {$endif}
+						class operator equal(const v1,v2:Multi_Int_X4):Boolean;	{$ifdef inline_functions} inline; {$endif}
+						class operator notequal(const v1,v2:Multi_Int_X4):Boolean;	{$ifdef inline_functions} inline; {$endif}
+						class operator multiply(const v1,v2:Multi_Int_X4):Multi_Int_X4;	{$ifdef inline_functions} inline; {$endif}
+						class operator intdivide(const v1,v2:Multi_Int_X4):Multi_Int_X4;	{$ifdef inline_functions} inline; {$endif}
+						class operator modulus(const v1,v2:Multi_Int_X4):Multi_Int_X4;	{$ifdef inline_functions} inline; {$endif}
+						class operator xor(const v1,v2:Multi_Int_X4):Multi_Int_X4;	{$ifdef inline_functions} inline; {$endif}
+						class operator -(const v1:Multi_Int_X4):Multi_Int_X4;	{$ifdef inline_functions} inline; {$endif}
+						class operator >=(const v1,v2:Multi_Int_X4):Boolean;	{$ifdef inline_functions} inline; {$endif}
+						class operator <=(const v1,v2:Multi_Int_X4):Boolean;	{$ifdef inline_functions} inline; {$endif}
+						class operator **(const v1:Multi_Int_X4; const P:MULTI_INT_2W_S):Multi_Int_X4;	{$ifdef inline_functions} inline; {$endif}
+						class operator shr(const v1:Multi_Int_X4; const NBits:MULTI_INT_1W_U):Multi_Int_X4;	{$ifdef inline_functions} inline; {$endif}
+						class operator shl(const v1:Multi_Int_X4; const NBits:MULTI_INT_1W_U):Multi_Int_X4;	{$ifdef inline_functions} inline; {$endif}
 					end;
 
 
@@ -528,54 +542,56 @@ Multi_Int_XV	=	record
 						Defined_flag	:boolean;
 						M_Value_Size	:MULTI_INT_1W_S;
 					public
-						procedure init;
-						function ToStr:ansistring;
-						function ToHex(const LZ:T_Multi_Leading_Zeros=Multi_Trim_Leading_Zeros):ansistring;
-						function ToBin(const LZ:T_Multi_Leading_Zeros=Multi_Trim_Leading_Zeros):ansistring;
-						function FromHex(const v1:ansistring):Multi_Int_XV;
-						function FromBin(const v1:ansistring):Multi_Int_XV;
-						function Overflow:boolean;
-						function Negative:boolean;
-						function Defined:boolean;
-						class operator implicit(const v1:Multi_Int_XV):Multi_int8u;
-						class operator implicit(const v1:Multi_Int_XV):Multi_int8;
-						class operator implicit(const v1:Multi_Int_XV):MULTI_INT_1W_U;
-						class operator implicit(const v1:Multi_Int_XV):MULTI_INT_1W_S;
-						class operator implicit(const v1:Multi_Int_XV):MULTI_INT_2W_U;
-						class operator implicit(const v1:Multi_Int_XV):MULTI_INT_2W_S;
-						class operator implicit(const v1:Multi_Int_X2):Multi_Int_XV;
-						class operator implicit(const v1:Multi_Int_X3):Multi_Int_XV;
-						class operator implicit(const v1:Multi_Int_X4):Multi_Int_XV;
-						class operator implicit(const v1:MULTI_INT_2W_S):Multi_Int_XV;
-						class operator implicit(const v1:MULTI_INT_2W_U):Multi_Int_XV;
+						procedure init;	{$ifdef inline_functions} inline; {$endif}
+						function ToStr:ansistring;	{$ifdef inline_functions} inline; {$endif}
+						function ToHex(const LZ:T_Multi_Leading_Zeros=Multi_Trim_Leading_Zeros):ansistring;	{$ifdef inline_functions} inline; {$endif}
+						function ToBin(const LZ:T_Multi_Leading_Zeros=Multi_Trim_Leading_Zeros):ansistring;	{$ifdef inline_functions} inline; {$endif}
+						function FromHex(const v1:ansistring):Multi_Int_XV;	{$ifdef inline_functions} inline; {$endif}
+						function FromBin(const v1:ansistring):Multi_Int_XV;	{$ifdef inline_functions} inline; {$endif}
+						function Overflow:boolean;	{$ifdef inline_functions} inline; {$endif}
+						function Negative:boolean;	{$ifdef inline_functions} inline; {$endif}
+						function Defined:boolean;	{$ifdef inline_functions} inline; {$endif}
+						class operator implicit(const v1:Multi_Int_XV):Multi_int8u;	{$ifdef inline_functions} inline; {$endif}
+						class operator implicit(const v1:Multi_Int_XV):Multi_int8;	{$ifdef inline_functions} inline; {$endif}
+						class operator implicit(const v1:Multi_Int_XV):MULTI_INT_1W_U;	{$ifdef inline_functions} inline; {$endif}
+						class operator implicit(const v1:Multi_Int_XV):MULTI_INT_1W_S;	{$ifdef inline_functions} inline; {$endif}
+						class operator implicit(const v1:Multi_Int_XV):MULTI_INT_2W_U;	{$ifdef inline_functions} inline; {$endif}
+						class operator implicit(const v1:Multi_Int_XV):MULTI_INT_2W_S;	{$ifdef inline_functions} inline; {$endif}
+						class operator implicit(const v1:Multi_Int_X2):Multi_Int_XV;	{$ifdef inline_functions} inline; {$endif}
+						class operator implicit(const v1:Multi_Int_X3):Multi_Int_XV;	{$ifdef inline_functions} inline; {$endif}
+						class operator implicit(const v1:Multi_Int_X4):Multi_Int_XV;	{$ifdef inline_functions} inline; {$endif}
+						class operator implicit(const v1:MULTI_INT_2W_S):Multi_Int_XV;	{$ifdef inline_functions} inline; {$endif}
+						class operator implicit(const v1:MULTI_INT_2W_U):Multi_Int_XV;	{$ifdef inline_functions} inline; {$endif}
 					{$ifdef 32bit}
-						class operator implicit(const v1:MULTI_INT_4W_S):Multi_Int_XV;
-						class operator implicit(const v1:MULTI_INT_4W_U):Multi_Int_XV;
+						class operator implicit(const v1:MULTI_INT_4W_S):Multi_Int_XV;	{$ifdef inline_functions} inline; {$endif}
+						class operator implicit(const v1:MULTI_INT_4W_U):Multi_Int_XV;	{$ifdef inline_functions} inline; {$endif}
 					{$endif}
-						class operator implicit(const v1:ansistring):Multi_Int_XV;
-						class operator implicit(const v1:Multi_Int_XV):ansistring;
-						class operator implicit(const v1:Single):Multi_Int_XV;
-						class operator implicit(const v1:Multi_Int_XV):Single;
-						class operator implicit(const v1:Real):Multi_Int_XV;
-						class operator implicit(const v1:Multi_Int_XV):Real;
-						class operator implicit(const v1:Double):Multi_Int_XV;
-						class operator implicit(const v1:Multi_Int_XV):Double;
-						class operator add(const v1,v2:Multi_Int_XV):Multi_Int_XV;
-						class operator greaterthan(const v1,v2:Multi_Int_XV):Boolean;
-						class operator lessthan(const v1,v2:Multi_Int_XV):Boolean;
-						class operator equal(const v1,v2:Multi_Int_XV):Boolean;
-						class operator notequal(const v1,v2:Multi_Int_XV):Boolean;
-						class operator subtract(const v1,v2:Multi_Int_XV):Multi_Int_XV;
-						class operator inc(const v1:Multi_Int_XV):Multi_Int_XV;
-						class operator dec(const v1:Multi_Int_XV):Multi_Int_XV;
-						class operator xor(const v1,v2:Multi_Int_XV):Multi_Int_XV;
-						class operator multiply(const v1,v2:Multi_Int_XV):Multi_Int_XV;
-						class operator intdivide(const v1,v2:Multi_Int_XV):Multi_Int_XV;
-						class operator modulus(const v1,v2:Multi_Int_XV):Multi_Int_XV;
-						class operator -(const v1:Multi_Int_XV):Multi_Int_XV;
-						class operator >=(const v1,v2:Multi_Int_XV):Boolean;
-						class operator <=(const v1,v2:Multi_Int_XV):Boolean;
-						class operator **(const v1:Multi_Int_XV; const P:MULTI_INT_2W_S):Multi_Int_XV;
+						class operator implicit(const v1:ansistring):Multi_Int_XV;	{$ifdef inline_functions} inline; {$endif}
+						class operator implicit(const v1:Multi_Int_XV):ansistring;	{$ifdef inline_functions} inline; {$endif}
+						class operator implicit(const v1:Single):Multi_Int_XV;	{$ifdef inline_functions} inline; {$endif}
+						class operator implicit(const v1:Multi_Int_XV):Single;	{$ifdef inline_functions} inline; {$endif}
+						class operator implicit(const v1:Real):Multi_Int_XV;	{$ifdef inline_functions} inline; {$endif}
+						class operator implicit(const v1:Multi_Int_XV):Real;	{$ifdef inline_functions} inline; {$endif}
+						class operator implicit(const v1:Double):Multi_Int_XV;	{$ifdef inline_functions} inline; {$endif}
+						class operator implicit(const v1:Multi_Int_XV):Double;	{$ifdef inline_functions} inline; {$endif}
+						class operator add(const v1,v2:Multi_Int_XV):Multi_Int_XV;	{$ifdef inline_functions} inline; {$endif}
+						class operator greaterthan(const v1,v2:Multi_Int_XV):Boolean;	{$ifdef inline_functions} inline; {$endif}
+						class operator lessthan(const v1,v2:Multi_Int_XV):Boolean;	{$ifdef inline_functions} inline; {$endif}
+						class operator equal(const v1,v2:Multi_Int_XV):Boolean;	{$ifdef inline_functions} inline; {$endif}
+						class operator notequal(const v1,v2:Multi_Int_XV):Boolean;	{$ifdef inline_functions} inline; {$endif}
+						class operator subtract(const v1,v2:Multi_Int_XV):Multi_Int_XV;	{$ifdef inline_functions} inline; {$endif}
+						class operator inc(const v1:Multi_Int_XV):Multi_Int_XV;	{$ifdef inline_functions} inline; {$endif}
+						class operator dec(const v1:Multi_Int_XV):Multi_Int_XV;	{$ifdef inline_functions} inline; {$endif}
+						class operator xor(const v1,v2:Multi_Int_XV):Multi_Int_XV;	{$ifdef inline_functions} inline; {$endif}
+						class operator multiply(const v1,v2:Multi_Int_XV):Multi_Int_XV;	{$ifdef inline_functions} inline; {$endif}
+						class operator intdivide(const v1,v2:Multi_Int_XV):Multi_Int_XV;	{$ifdef inline_functions} inline; {$endif}
+						class operator modulus(const v1,v2:Multi_Int_XV):Multi_Int_XV;	{$ifdef inline_functions} inline; {$endif}
+						class operator -(const v1:Multi_Int_XV):Multi_Int_XV;	{$ifdef inline_functions} inline; {$endif}
+						class operator >=(const v1,v2:Multi_Int_XV):Boolean;	{$ifdef inline_functions} inline; {$endif}
+						class operator <=(const v1,v2:Multi_Int_XV):Boolean;	{$ifdef inline_functions} inline; {$endif}
+						class operator **(const v1:Multi_Int_XV; const P:MULTI_INT_2W_S):Multi_Int_XV;	{$ifdef inline_functions} inline; {$endif}
+						class operator shr(const v1:Multi_Int_XV; const NBits:MULTI_INT_1W_U):Multi_Int_XV;	{$ifdef inline_functions} inline; {$endif}
+						class operator shl(const v1:Multi_Int_XV; const NBits:MULTI_INT_1W_U):Multi_Int_XV;	{$ifdef inline_functions} inline; {$endif}
 					end;
 
 var
@@ -586,96 +602,89 @@ Multi_Int_X3_MAXINT							:Multi_Int_X3;
 Multi_Int_X4_MAXINT							:Multi_Int_X4;
 Multi_Int_XV_MAXINT							:Multi_Int_XV;
 
-procedure Multi_Init_Initialisation(const P_Multi_XV_size:MULTI_INT_1W_U = 16);
-procedure Multi_Int_Reset_XV_Size(var v1:Multi_Int_XV ;const S:MULTI_INT_1W_U);
-procedure Multi_Int_Set_XV_Limit(const S:MULTI_INT_1W_U);
-function Multi_Int_XV_Limit:MULTI_INT_1W_U;
-procedure Multi_Int_Reset_X2_Last_Divisor;
-procedure Multi_Int_Reset_X3_Last_Divisor;
-procedure Multi_Int_Reset_X4_Last_Divisor;
-procedure Multi_Int_Reset_XV_Last_Divisor;
+procedure Multi_Init_Initialisation(const P_Multi_XV_size:MULTI_INT_1W_U = 16);	{$ifdef inline_functions} inline; {$endif}
+procedure Multi_Int_Reset_XV_Size(var v1:Multi_Int_XV ;const S:MULTI_INT_1W_U);	{$ifdef inline_functions} inline; {$endif}
+procedure Multi_Int_Set_XV_Limit(const S:MULTI_INT_1W_U);	{$ifdef inline_functions} inline; {$endif}
+function Multi_Int_XV_Limit:MULTI_INT_1W_U;	{$ifdef inline_functions} inline; {$endif}
+procedure Multi_Int_Reset_X2_Last_Divisor;	{$ifdef inline_functions} inline; {$endif}
+procedure Multi_Int_Reset_X3_Last_Divisor;	{$ifdef inline_functions} inline; {$endif}
+procedure Multi_Int_Reset_X4_Last_Divisor;	{$ifdef inline_functions} inline; {$endif}
+procedure Multi_Int_Reset_XV_Last_Divisor;	{$ifdef inline_functions} inline; {$endif}
 
-function Odd(const v1:Multi_Int_XV):boolean; overload;
-function Odd(const v1:Multi_Int_X4):boolean; overload;
-function Odd(const v1:Multi_Int_X3):boolean; overload;
-function Odd(const v1:Multi_Int_X2):boolean; overload;
+function Odd(const v1:Multi_Int_XV):boolean; overload;	{$ifdef inline_functions} inline; {$endif}
+function Odd(const v1:Multi_Int_X4):boolean; overload;	{$ifdef inline_functions} inline; {$endif}
+function Odd(const v1:Multi_Int_X3):boolean; overload;	{$ifdef inline_functions} inline; {$endif}
+function Odd(const v1:Multi_Int_X2):boolean; overload;	{$ifdef inline_functions} inline; {$endif}
 
-function Even(const v1:Multi_Int_XV):boolean; overload;
-function Even(const v1:Multi_Int_X4):boolean; overload;
-function Even(const v1:Multi_Int_X3):boolean; overload;
-function Even(const v1:Multi_Int_X2):boolean; overload;
+function Even(const v1:Multi_Int_XV):boolean; overload;	{$ifdef inline_functions} inline; {$endif}
+function Even(const v1:Multi_Int_X4):boolean; overload;	{$ifdef inline_functions} inline; {$endif}
+function Even(const v1:Multi_Int_X3):boolean; overload;	{$ifdef inline_functions} inline; {$endif}
+function Even(const v1:Multi_Int_X2):boolean; overload;	{$ifdef inline_functions} inline; {$endif}
 
-function Abs(const v1:Multi_Int_X2):Multi_Int_X2; overload;
-function Abs(const v1:Multi_Int_X3):Multi_Int_X3; overload;
-function Abs(const v1:Multi_Int_X4):Multi_Int_X4; overload;
-function Abs(const v1:Multi_Int_XV):Multi_Int_XV; overload;
+function Abs(const v1:Multi_Int_X2):Multi_Int_X2; overload;	{$ifdef inline_functions} inline; {$endif}
+function Abs(const v1:Multi_Int_X3):Multi_Int_X3; overload;	{$ifdef inline_functions} inline; {$endif}
+function Abs(const v1:Multi_Int_X4):Multi_Int_X4; overload;	{$ifdef inline_functions} inline; {$endif}
+function Abs(const v1:Multi_Int_XV):Multi_Int_XV; overload;	{$ifdef inline_functions} inline; {$endif}
 
-procedure SqRoot(const v1:Multi_Int_XV;var VR,VREM:Multi_Int_XV); overload;
-procedure SqRoot(const v1:Multi_Int_X4;var VR,VREM:Multi_Int_X4); overload;
-procedure SqRoot(const v1:Multi_Int_X3;var VR,VREM:Multi_Int_X3); overload;
-procedure SqRoot(const v1:Multi_Int_X2;var VR,VREM:Multi_Int_X2); overload;
+procedure SqRoot(const v1:Multi_Int_XV; out VR,VREM:Multi_Int_XV); overload;	{$ifdef inline_functions} inline; {$endif}
+procedure SqRoot(const v1:Multi_Int_X4; out VR,VREM:Multi_Int_X4); overload;	{$ifdef inline_functions} inline; {$endif}
+procedure SqRoot(const v1:Multi_Int_X3; out VR,VREM:Multi_Int_X3); overload;	{$ifdef inline_functions} inline; {$endif}
+procedure SqRoot(const v1:Multi_Int_X2; out VR,VREM:Multi_Int_X2); overload;	{$ifdef inline_functions} inline; {$endif}
 
-procedure ShiftUp(var v1:Multi_Int_X2; NBits:MULTI_INT_1W_U); overload;
-procedure ShiftDown(var v1:Multi_Int_X2; NBits:MULTI_INT_1W_U); overload;
-procedure ShiftUp(var v1:Multi_Int_X3; NBits:MULTI_INT_1W_U); overload;
-procedure ShiftDown(var v1:Multi_Int_X3; NBits:MULTI_INT_1W_U); overload;
-procedure ShiftUp(var v1:Multi_Int_X4; NBits:MULTI_INT_1W_U); overload;
-procedure ShiftDown(var v1:Multi_Int_X4; NBits:MULTI_INT_1W_U); overload;
-procedure ShiftUp(var v1:Multi_Int_XV; NBits:MULTI_INT_1W_U); overload;
-procedure ShiftDown(var v1:Multi_Int_XV; NBits:MULTI_INT_1W_U); overload;
+(*
+procedure ShiftUp(var v1:Multi_Int_X2; NBits:MULTI_INT_1W_U); overload;	{$ifdef inline_functions} inline; {$endif}
+procedure ShiftDown(var v1:Multi_Int_X2; NBits:MULTI_INT_1W_U); overload;	{$ifdef inline_functions} inline; {$endif}
+procedure ShiftUp(var v1:Multi_Int_X3; NBits:MULTI_INT_1W_U); overload;	{$ifdef inline_functions} inline; {$endif}
+procedure ShiftDown(var v1:Multi_Int_X3; NBits:MULTI_INT_1W_U); overload;	{$ifdef inline_functions} inline; {$endif}
+procedure ShiftUp(var v1:Multi_Int_X4; NBits:MULTI_INT_1W_U); overload;	{$ifdef inline_functions} inline; {$endif}
+procedure ShiftDown(var v1:Multi_Int_X4; NBits:MULTI_INT_1W_U); overload;	{$ifdef inline_functions} inline; {$endif}
+procedure ShiftUp(var v1:Multi_Int_XV; NBits:MULTI_INT_1W_U); overload;	{$ifdef inline_functions} inline; {$endif}
+procedure ShiftDown(var v1:Multi_Int_XV; NBits:MULTI_INT_1W_U); overload;	{$ifdef inline_functions} inline; {$endif}
+*)
 
-procedure RotateUp(Var v1:Multi_Int_X2; NBits:MULTI_INT_1W_U); overload;
-procedure RotateDown(Var v1:Multi_Int_X2; NBits:MULTI_INT_1W_U); overload;
-procedure RotateUp(Var v1:Multi_Int_X3; NBits:MULTI_INT_1W_U); overload;
-procedure RotateDown(Var v1:Multi_Int_X3; NBits:MULTI_INT_1W_U); overload;
-procedure RotateUp(Var v1:Multi_Int_X4; NBits:MULTI_INT_1W_U); overload;
-procedure RotateDown(Var v1:Multi_Int_X4; NBits:MULTI_INT_1W_U); overload;
-procedure RotateUp(Var v1:Multi_Int_XV; NBits:MULTI_INT_1W_U); overload;
-procedure RotateDown(Var v1:Multi_Int_XV; NBits:MULTI_INT_1W_U); overload;
+procedure FromHex(const v1:ansistring; out v2:Multi_Int_X2); overload;	{$ifdef inline_functions} inline; {$endif}
+procedure FromHex(const v1:ansistring; out v2:Multi_Int_X3); overload;	{$ifdef inline_functions} inline; {$endif}
+procedure FromHex(const v1:ansistring; out v2:Multi_Int_X4); overload;	{$ifdef inline_functions} inline; {$endif}
+procedure FromHex(const v1:ansistring; out v2:Multi_Int_XV); overload;	{$ifdef inline_functions} inline; {$endif}
 
-procedure FromHex(const v1:ansistring; var v2:Multi_Int_X2); overload;
-procedure FromHex(const v1:ansistring; var v2:Multi_Int_X3); overload;
-procedure FromHex(const v1:ansistring; var v2:Multi_Int_X4); overload;
-procedure FromHex(const v1:ansistring; var v2:Multi_Int_XV); overload;
+procedure FromBin(const v1:ansistring; out mi:Multi_Int_X2); overload;	{$ifdef inline_functions} inline; {$endif}
+procedure FromBin(const v1:ansistring; out mi:Multi_Int_X3); overload;	{$ifdef inline_functions} inline; {$endif}
+procedure FromBin(const v1:ansistring; out mi:Multi_Int_X4); overload;	{$ifdef inline_functions} inline; {$endif}
+procedure FromBin(const v1:ansistring; out mi:Multi_Int_XV); overload;	{$ifdef inline_functions} inline; {$endif}
 
-procedure FromBin(const v1:ansistring; var mi:Multi_Int_X2); overload;
-procedure FromBin(const v1:ansistring; var mi:Multi_Int_X3); overload;
-procedure FromBin(const v1:ansistring; var mi:Multi_Int_X4); overload;
-procedure FromBin(const v1:ansistring; var mi:Multi_Int_XV); overload;
+function Hex_to_Multi_Int_X2(const v1:ansistring):Multi_Int_X2; overload;	{$ifdef inline_functions} inline; {$endif}
+procedure Hex_to_Multi_Int_X2(const v1:ansistring; out mi:Multi_Int_X2); overload;	{$ifdef inline_functions} inline; {$endif}
+function Hex_to_Multi_Int_X3(const v1:ansistring):Multi_Int_X3; overload;	{$ifdef inline_functions} inline; {$endif}
+procedure Hex_to_Multi_Int_X3(const v1:ansistring; out mi:Multi_Int_X3); overload;	{$ifdef inline_functions} inline; {$endif}
+function Hex_to_Multi_Int_X4(const v1:ansistring):Multi_Int_X4; overload;	{$ifdef inline_functions} inline; {$endif}
+procedure Hex_to_Multi_Int_X4(const v1:ansistring; out mi:Multi_Int_X4); overload;	{$ifdef inline_functions} inline; {$endif}
+function Hex_to_Multi_Int_XV(const v1:ansistring):Multi_Int_XV; overload;	{$ifdef inline_functions} inline; {$endif}
+procedure Hex_to_Multi_Int_XV(const v1:ansistring; out mi:Multi_Int_XV); overload;	{$ifdef inline_functions} inline; {$endif}
 
-function Hex_to_Multi_Int_X2(const v1:ansistring):Multi_Int_X2; overload;
-procedure Hex_to_Multi_Int_X2(const v1:ansistring; var mi:Multi_Int_X2); overload;
-function Hex_to_Multi_Int_X3(const v1:ansistring):Multi_Int_X3; overload;
-procedure Hex_to_Multi_Int_X3(const v1:ansistring; var mi:Multi_Int_X3); overload;
-function Hex_to_Multi_Int_X4(const v1:ansistring):Multi_Int_X4; overload;
-procedure Hex_to_Multi_Int_X4(const v1:ansistring; var mi:Multi_Int_X4); overload;
-function Hex_to_Multi_Int_XV(const v1:ansistring):Multi_Int_XV; overload;
-procedure Hex_to_Multi_Int_XV(const v1:ansistring; var mi:Multi_Int_XV); overload;
+function bin_to_Multi_Int_X2(const v1:ansistring):Multi_Int_X2; overload;	{$ifdef inline_functions} inline; {$endif}
+procedure bin_to_Multi_Int_X2(const v1:ansistring; out mi:Multi_Int_X2); overload;	{$ifdef inline_functions} inline; {$endif}
+function bin_to_Multi_Int_X3(const v1:ansistring):Multi_Int_X3; overload;	{$ifdef inline_functions} inline; {$endif}
+procedure bin_to_Multi_Int_X3(const v1:ansistring; out mi:Multi_Int_X3); overload;	{$ifdef inline_functions} inline; {$endif}
+function bin_to_Multi_Int_X4(const v1:ansistring):Multi_Int_X4; overload;	{$ifdef inline_functions} inline; {$endif}
+procedure bin_to_Multi_Int_X4(const v1:ansistring; out mi:Multi_Int_X4); overload;	{$ifdef inline_functions} inline; {$endif}
+function bin_to_Multi_Int_XV(const v1:ansistring):Multi_Int_XV; overload;	{$ifdef inline_functions} inline; {$endif}
+procedure bin_to_Multi_Int_XV(const v1:ansistring; out mi:Multi_Int_XV); overload;	{$ifdef inline_functions} inline; {$endif}
 
-function bin_to_Multi_Int_X2(const v1:ansistring):Multi_Int_X2; overload;
-procedure bin_to_Multi_Int_X2(const v1:ansistring; var mi:Multi_Int_X2); overload;
-function bin_to_Multi_Int_X3(const v1:ansistring):Multi_Int_X3; overload;
-procedure bin_to_Multi_Int_X3(const v1:ansistring; var mi:Multi_Int_X3); overload;
-function bin_to_Multi_Int_X4(const v1:ansistring):Multi_Int_X4; overload;
-procedure bin_to_Multi_Int_X4(const v1:ansistring; var mi:Multi_Int_X4); overload;
-function bin_to_Multi_Int_XV(const v1:ansistring):Multi_Int_XV; overload;
-procedure bin_to_Multi_Int_XV(const v1:ansistring; var mi:Multi_Int_XV); overload;
+function To_Multi_Int_XV(const v1:Multi_Int_X4):Multi_Int_XV; overload;	{$ifdef inline_functions} inline; {$endif}
+function To_Multi_Int_XV(const v1:Multi_Int_X3):Multi_Int_XV; overload;	{$ifdef inline_functions} inline; {$endif}
+function To_Multi_Int_XV(const v1:Multi_Int_X2):Multi_Int_XV; overload;	{$ifdef inline_functions} inline; {$endif}
 
-function To_Multi_Int_XV(const v1:Multi_Int_X4):Multi_Int_XV; overload;
-function To_Multi_Int_XV(const v1:Multi_Int_X3):Multi_Int_XV; overload;
-function To_Multi_Int_XV(const v1:Multi_Int_X2):Multi_Int_XV; overload;
+function To_Multi_Int_X4(const v1:Multi_Int_XV):Multi_Int_X4; overload;	{$ifdef inline_functions} inline; {$endif}
+function To_Multi_Int_X4(const v1:Multi_Int_X3):Multi_Int_X4; overload;	{$ifdef inline_functions} inline; {$endif}
+function To_Multi_Int_X4(const v1:Multi_Int_X2):Multi_Int_X4; overload;	{$ifdef inline_functions} inline; {$endif}
 
-function To_Multi_Int_X4(const v1:Multi_Int_XV):Multi_Int_X4; overload;
-function To_Multi_Int_X4(const v1:Multi_Int_X3):Multi_Int_X4; overload;
-function To_Multi_Int_X4(const v1:Multi_Int_X2):Multi_Int_X4; overload;
+function To_Multi_Int_X3(const v1:Multi_Int_XV):Multi_Int_X3; overload;	{$ifdef inline_functions} inline; {$endif}
+function To_Multi_Int_X3(const v1:Multi_Int_X4):Multi_Int_X3; overload;	{$ifdef inline_functions} inline; {$endif}
+function To_Multi_Int_X3(const v1:Multi_Int_X2):Multi_Int_X3; overload;	{$ifdef inline_functions} inline; {$endif}
 
-function To_Multi_Int_X3(const v1:Multi_Int_XV):Multi_Int_X3; overload;
-function To_Multi_Int_X3(const v1:Multi_Int_X4):Multi_Int_X3; overload;
-function To_Multi_Int_X3(const v1:Multi_Int_X2):Multi_Int_X3; overload;
-
-function To_Multi_Int_X2(const v1:Multi_Int_XV):Multi_Int_X2; overload;
-function To_Multi_Int_X2(const v1:Multi_Int_X4):Multi_Int_X2; overload;
-function To_Multi_Int_X2(const v1:Multi_Int_X3):Multi_Int_X2; overload;
+function To_Multi_Int_X2(const v1:Multi_Int_XV):Multi_Int_X2; overload;	{$ifdef inline_functions} inline; {$endif}
+function To_Multi_Int_X2(const v1:Multi_Int_X4):Multi_Int_X2; overload;	{$ifdef inline_functions} inline; {$endif}
+function To_Multi_Int_X2(const v1:Multi_Int_X3):Multi_Int_X2; overload;	{$ifdef inline_functions} inline; {$endif}
 
 
 IMPLEMENTATION
@@ -684,6 +693,11 @@ IMPLEMENTATION
 {$Q+}
 {$R+}
 {$endif}
+
+const
+	Multi_X5_max = 8;
+	Multi_X5_max_x2 = 16;
+	Multi_X5_size = Multi_X4_maxi + 1;
 
 type
 
@@ -736,17 +750,17 @@ XV_Last_Remainder	:Multi_Int_XV;
 
 (******************************************)
 
-procedure ShiftUp_NBits_Multi_Int_X3(Var v1:Multi_Int_X3; NBits:MULTI_INT_1W_U); forward;
-procedure ShiftDown_MultiBits_Multi_Int_X3(Var v1:Multi_Int_X3; NBits:MULTI_INT_1W_U); forward;
-procedure ShiftUp_NBits_Multi_Int_X4(Var v1:Multi_Int_X4; NBits:MULTI_INT_1W_U); forward;
-procedure ShiftDown_MultiBits_Multi_Int_X4(Var v1:Multi_Int_X4; NBits:MULTI_INT_1W_U); forward;
-procedure ShiftUp_NBits_Multi_Int_X5(Var v1:Multi_Int_X5; NBits:MULTI_INT_1W_U); forward;
-procedure ShiftDown_MultiBits_Multi_Int_X5(Var v1:Multi_Int_X5; NBits:MULTI_INT_1W_U); forward;
-function To_Multi_Int_X5(const v1:Multi_Int_X4):Multi_Int_X5; forward;
-function Multi_Int_X2_to_X3_multiply(const v1,v2:Multi_Int_X2):Multi_Int_X3; forward;
-function Multi_Int_X3_to_X4_multiply(const v1,v2:Multi_Int_X3):Multi_Int_X4; forward;
-function Multi_Int_X4_to_X5_multiply(const v1,v2:Multi_Int_X4):Multi_Int_X5; forward;
-function To_Multi_Int_X4(const v1:Multi_Int_X5):Multi_Int_X4; forward; overload;
+procedure ShiftUp_NBits_Multi_Int_X3(Var v1:Multi_Int_X3; NBits:MULTI_INT_1W_U); forward;	{$ifdef inline_functions} inline; {$endif}
+procedure ShiftDown_MultiBits_Multi_Int_X3(Var v1:Multi_Int_X3; NBits:MULTI_INT_1W_U); forward;	{$ifdef inline_functions} inline; {$endif}
+procedure ShiftUp_NBits_Multi_Int_X4(Var v1:Multi_Int_X4; NBits:MULTI_INT_1W_U); forward;	{$ifdef inline_functions} inline; {$endif}
+procedure ShiftDown_MultiBits_Multi_Int_X4(Var v1:Multi_Int_X4; NBits:MULTI_INT_1W_U); forward;	{$ifdef inline_functions} inline; {$endif}
+procedure ShiftUp_NBits_Multi_Int_X5(Var v1:Multi_Int_X5; NBits:MULTI_INT_1W_U); forward;	{$ifdef inline_functions} inline; {$endif}
+procedure ShiftDown_MultiBits_Multi_Int_X5(Var v1:Multi_Int_X5; NBits:MULTI_INT_1W_U); forward;	{$ifdef inline_functions} inline; {$endif}
+function To_Multi_Int_X5(const v1:Multi_Int_X4):Multi_Int_X5; forward;	{$ifdef inline_functions} inline; {$endif}
+function Multi_Int_X2_to_X3_multiply(const v1,v2:Multi_Int_X2):Multi_Int_X3; forward;	{$ifdef inline_functions} inline; {$endif}
+function Multi_Int_X3_to_X4_multiply(const v1,v2:Multi_Int_X3):Multi_Int_X4; forward;	{$ifdef inline_functions} inline; {$endif}
+function Multi_Int_X4_to_X5_multiply(const v1,v2:Multi_Int_X4):Multi_Int_X5; forward;	{$ifdef inline_functions} inline; {$endif}
+function To_Multi_Int_X4(const v1:Multi_Int_X5):Multi_Int_X4; forward; overload;	{$ifdef inline_functions} inline; {$endif}
 
 (******************************************)
 procedure	T_Multi_UBool.Init(v:Multi_UBool_Values);
@@ -1130,235 +1144,6 @@ end;
 
 
 (******************************************)
-procedure RotateUp_NBits_Multi_Int_X2(Var v1:Multi_Int_X2; NBits:MULTI_INT_1W_U);
-var	carry_bits_1,
-	carry_bits_2,
-	carry_bits_3,
-	carry_bits_4,
-	carry_bits_mask,
-	NBits_max,
-	NBits_carry	:MULTI_INT_1W_U;
-begin
-if NBits > 0 then
-begin
-
-{$ifdef Overflow_Checks}
-{$Q-}
-{$R-}
-{$endif}
-
-{$ifdef 32bit}
-carry_bits_mask:= $FFFF;
-{$endif}
-{$ifdef 64bit}
-carry_bits_mask:= $FFFFFFFF;
-{$endif}
-
-NBits_max:= MULTI_INT_1W_SIZE;
-
-NBits_carry:= (NBits_max - NBits);
-carry_bits_mask:= (carry_bits_mask << NBits_carry);
-
-if NBits <= NBits_max then
-	begin
-	carry_bits_1:= ((v1.M_Value[0] and carry_bits_mask) >> NBits_carry);
-	v1.M_Value[0]:= (v1.M_Value[0] << NBits);
-
-	carry_bits_2:= ((v1.M_Value[1] and carry_bits_mask) >> NBits_carry);
-	v1.M_Value[1]:= ((v1.M_Value[1] << NBits) OR carry_bits_1);
-
-	carry_bits_3:= ((v1.M_Value[2] and carry_bits_mask) >> NBits_carry);
-	v1.M_Value[2]:= ((v1.M_Value[2] << NBits) OR carry_bits_2);
-
-	carry_bits_4:= ((v1.M_Value[3] and carry_bits_mask) >> NBits_carry);
-	v1.M_Value[3]:= ((v1.M_Value[3] << NBits) OR carry_bits_3);
-
-	v1.M_Value[0]:= (v1.M_Value[0] OR carry_bits_4);
-	end;
-end;
-
-{$ifdef Overflow_Checks}
-{$Q+}
-{$R+}
-{$endif}
-
-end;
-
-
-(******************************************)
-procedure RotateUp_NWords_Multi_Int_X2(Var v1:Multi_Int_X2; NWords:MULTI_INT_1W_U);
-var	n,t	:MULTI_INT_1W_U;
-begin
-if		(NWords > 0)
-and		(NWords <= Multi_X2_maxi) then
-	begin
-	n:= NWords;
-	while (n > 0) do
-		begin
-		t:= v1.M_Value[3];
-		v1.M_Value[3]:= v1.M_Value[2];
-		v1.M_Value[2]:= v1.M_Value[1];
-		v1.M_Value[1]:= v1.M_Value[0];
-		v1.M_Value[0]:= t;
-		DEC(n);
-		end;
-	end;
-end;
-
-
-{******************************************}
-procedure RotateUp_MultiBits_Multi_Int_X2(Var v1:Multi_Int_X2; NBits:MULTI_INT_1W_U);
-var
-NWords_count,
-NBits_count		:MULTI_INT_1W_U;
-
-begin
-if	(Not v1.Defined_flag)
-then
-	begin
-	Multi_Int_ERROR:= TRUE;
-	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
-		begin
-		Raise EInterror.create('Uninitialised variable');
-		end;
-	exit;
-	end;
-
-if (NBits > 0) then
-	begin
-	if (NBits >= MULTI_INT_1W_SIZE) then
-		begin
-		NWords_count:= (NBits DIV MULTI_INT_1W_SIZE);
-		NBits_count:= (NBits MOD MULTI_INT_1W_SIZE);
-		RotateUp_NWords_Multi_Int_X2(v1, NWords_count);
-		end
-	else NBits_count:= NBits;
-	RotateUp_NBits_Multi_Int_X2(v1, NBits_count);
-	end;
-end;
-
-
-(******************************************)
-procedure RotateUp(Var v1:Multi_Int_X2; NBits:MULTI_INT_1W_U); overload;
-begin
-RotateUp_MultiBits_Multi_Int_X2(v1, NBits);
-end;
-
-
-(******************************************)
-procedure RotateDown_NBits_Multi_Int_X2(Var v1:Multi_Int_X2; NBits:MULTI_INT_1W_U);
-var	carry_bits_1,
-	carry_bits_2,
-	carry_bits_3,
-	carry_bits_4,
-	carry_bits_mask,
-	NBits_max,
-	NBits_carry	:MULTI_INT_1W_U;
-begin
-if NBits > 0 then
-begin
-
-{$ifdef Overflow_Checks}
-{$Q-}
-{$R-}
-{$endif}
-
-{$ifdef 32bit}
-carry_bits_mask:= $FFFF;
-{$endif}
-{$ifdef 64bit}
-carry_bits_mask:= $FFFFFFFF;
-{$endif}
-
-NBits_max:= MULTI_INT_1W_SIZE;
-NBits_carry:= (NBits_max - NBits);
-carry_bits_mask:= (carry_bits_mask >> NBits_carry);
-
-if NBits <= NBits_max then
-	begin
-	carry_bits_1:= ((v1.M_Value[3] and carry_bits_mask) << NBits_carry);
-	v1.M_Value[3]:= (v1.M_Value[3] >> NBits);
-
-	carry_bits_2:= ((v1.M_Value[2] and carry_bits_mask) << NBits_carry);
-	v1.M_Value[2]:= ((v1.M_Value[2] >> NBits) OR carry_bits_1);
-
-	carry_bits_3:= ((v1.M_Value[1] and carry_bits_mask) << NBits_carry);
-	v1.M_Value[1]:= ((v1.M_Value[1] >> NBits) OR carry_bits_2);
-
-	carry_bits_4:= ((v1.M_Value[0] and carry_bits_mask) << NBits_carry);
-	v1.M_Value[0]:= ((v1.M_Value[0] >> NBits) OR carry_bits_3);
-
-	v1.M_Value[3]:= (v1.M_Value[3] OR carry_bits_4);
-	end;
-end;
-
-{$ifdef Overflow_Checks}
-{$Q+}
-{$R+}
-{$endif}
-
-end;
-
-
-(******************************************)
-procedure RotateDown_NWords_Multi_Int_X2(Var v1:Multi_Int_X2; NWords:MULTI_INT_1W_U);
-var	n,t	:MULTI_INT_1W_U;
-begin
-if		(NWords > 0)
-and		(NWords <= Multi_X2_maxi) then
-	begin
-	n:= NWords;
-	while (n > 0) do
-		begin
-		t:= v1.M_Value[0];
-		v1.M_Value[0]:= v1.M_Value[1];
-		v1.M_Value[1]:= v1.M_Value[2];
-		v1.M_Value[2]:= v1.M_Value[3];
-		v1.M_Value[3]:= t;
-		DEC(n);
-		end;
-	end;
-end;
-
-
-{******************************************}
-procedure RotateDown_MultiBits_Multi_Int_X2(Var v1:Multi_Int_X2; NBits:MULTI_INT_1W_U);
-var
-NWords_count,
-NBits_count		:MULTI_INT_1W_U;
-
-begin
-if	(Not v1.Defined_flag)
-then
-	begin
-	Multi_Int_ERROR:= TRUE;
-	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
-		begin
-		Raise EInterror.create('Uninitialised variable');
-		end;
-	exit;
-	end;
-
-if (NBits >= MULTI_INT_1W_SIZE) then
-	begin
-	NWords_count:= (NBits DIV MULTI_INT_1W_SIZE);
-	NBits_count:= (NBits MOD MULTI_INT_1W_SIZE);
-	RotateDown_NWords_Multi_Int_X2(v1, NWords_count);
-	end
-else NBits_count:= NBits;
-
-RotateDown_NBits_Multi_Int_X2(v1, NBits_count);
-end;
-
-
-(******************************************)
-procedure RotateDown(Var v1:Multi_Int_X2; NBits:MULTI_INT_1W_U); overload;
-begin
-RotateDown_MultiBits_Multi_Int_X2(v1, NBits);
-end;
-
-
-(******************************************)
 procedure ShiftUp_NBits_Multi_Int_X2(Var v1:Multi_Int_X2; NBits:MULTI_INT_1W_U);
 var	carry_bits_1,
 	carry_bits_2,
@@ -1585,6 +1370,22 @@ ShiftDown_MultiBits_Multi_Int_X2(v1, NBits);
 end;
 
 
+{******************************************}
+class operator Multi_Int_X2.shl(const v1:Multi_Int_X2; const NBits:MULTI_INT_1W_U):Multi_Int_X2;
+begin
+Result:= v1;
+ShiftUp_MultiBits_Multi_Int_X2(Result, NBits);
+end;
+
+
+{******************************************}
+class operator Multi_Int_X2.shr(const v1:Multi_Int_X2; const NBits:MULTI_INT_1W_U):Multi_Int_X2;
+begin
+Result:= v1;
+ShiftDown_MultiBits_Multi_Int_X2(Result, NBits);
+end;
+
+
 (******************************************)
 class operator Multi_Int_X2.<=(const v1,v2:Multi_Int_X2):Boolean;
 begin
@@ -1765,7 +1566,7 @@ end;
 
 
 (******************************************)
-procedure ansistring_to_Multi_Int_X2(const v1:ansistring; var mi:Multi_Int_X2);
+procedure ansistring_to_Multi_Int_X2(const v1:ansistring; out mi:Multi_Int_X2);
 label 999;
 var
 	i,b,c,e		:MULTI_INT_2W_U;
@@ -2001,9 +1802,7 @@ end;
 (******************************************)
 class operator Multi_Int_X2.implicit(const v1:ansistring):Multi_Int_X2;
 begin
-{$HINTS OFF} {$WARNINGS OFF}
 ansistring_to_Multi_Int_X2(v1,Result);
-{$HINTS ON} {$WARNINGS ON}
 end;
 
 
@@ -2071,7 +1870,7 @@ end;
 
 
 (******************************************)
-procedure MULTI_INT_2W_S_to_Multi_Int_X2(const v1:MULTI_INT_2W_S; var mi:Multi_Int_X2);
+procedure MULTI_INT_2W_S_to_Multi_Int_X2(const v1:MULTI_INT_2W_S; out mi:Multi_Int_X2);
 begin
 mi.Overflow_flag:=FALSE;
 mi.Defined_flag:=TRUE;
@@ -2097,14 +1896,12 @@ end;
 (******************************************)
 class operator Multi_Int_X2.implicit(const v1:MULTI_INT_2W_S):Multi_Int_X2;
 begin
-{$HINTS OFF} {$WARNINGS OFF}
 MULTI_INT_2W_S_to_Multi_Int_X2(v1,Result);
-{$HINTS ON} {$WARNINGS ON}
 end;
 
 
 (******************************************)
-procedure MULTI_INT_2W_U_to_Multi_Int_X2(const v1:MULTI_INT_2W_U; var mi:Multi_Int_X2);
+procedure MULTI_INT_2W_U_to_Multi_Int_X2(const v1:MULTI_INT_2W_U; out mi:Multi_Int_X2);
 begin
 mi.Overflow_flag:=FALSE;
 mi.Defined_flag:=TRUE;
@@ -2120,9 +1917,7 @@ end;
 (******************************************)
 class operator Multi_Int_X2.implicit(const v1:MULTI_INT_2W_U):Multi_Int_X2;
 begin
-{$HINTS OFF} {$WARNINGS OFF}
 MULTI_INT_2W_U_to_Multi_Int_X2(v1,Result);
-{$HINTS ON} {$WARNINGS ON}
 end;
 
 
@@ -2138,9 +1933,7 @@ operation_str:= 'Multi_Int_X2.implicit';
 Multi_Int_ERROR:= FALSE;
 
 FloatToDecimal(R_FLOATREC, v1, MULTI_SINGLE_TYPE_PRECISION_DIGITS, 0);
-{$HINTS OFF} {$WARNINGS OFF}
 ansistring_to_Multi_Int_X2(AddCharR('0',AnsiLeftStr(R_FLOATREC.digits,(MULTI_SINGLE_TYPE_PRECISION_DIGITS-1)),R_FLOATREC.Exponent), R);
-{$HINTS ON} {$WARNINGS ON}
 
 if (R.Overflow) then
 	begin
@@ -2171,9 +1964,7 @@ operation_str:= 'Multi_Int_X2.implicit';
 Multi_Int_ERROR:= FALSE;
 
 FloatToDecimal(R_FLOATREC, v1, MULTI_REAL_TYPE_PRECISION_DIGITS, 0);
-{$HINTS OFF} {$WARNINGS OFF}
 ansistring_to_Multi_Int_X2(AddCharR('0',AnsiLeftStr(R_FLOATREC.digits,(MULTI_REAL_TYPE_PRECISION_DIGITS-1)),R_FLOATREC.Exponent), R);
-{$HINTS ON} {$WARNINGS ON}
 
 if (R.Overflow) then
 	begin
@@ -2204,9 +1995,7 @@ operation_str:= 'Multi_Int_X2.implicit';
 Multi_Int_ERROR:= FALSE;
 
 FloatToDecimal(R_FLOATREC, v1, MULTI_DOUBLE_TYPE_PRECISION_DIGITS, 0);
-{$HINTS OFF} {$WARNINGS OFF}
 ansistring_to_Multi_Int_X2(AddCharR('0',AnsiLeftStr(R_FLOATREC.digits,(MULTI_DOUBLE_TYPE_PRECISION_DIGITS-1)),R_FLOATREC.Exponent), R);
-{$HINTS ON} {$WARNINGS ON}
 
 if (R.Overflow) then
 	begin
@@ -2654,7 +2443,7 @@ end;
 
 
 (******************************************)
-procedure bin_to_Multi_Int_X2(const v1:ansistring; var mi:Multi_Int_X2);
+procedure bin_to_Multi_Int_X2(const v1:ansistring; out mi:Multi_Int_X2);
 label 999;
 var
 	n,b,c,e	:MULTI_INT_2W_U;
@@ -2757,14 +2546,12 @@ end;
 (******************************************)
 function Bin_to_Multi_Int_X2(const v1:ansistring):Multi_Int_X2;
 begin
-{$HINTS OFF} {$WARNINGS OFF}
 Bin_to_Multi_Int_X2(v1,Result);
-{$WARNINGS ON} {$HINTS ON}
 end;
 
 
 (******************************************)
-procedure FromBin(const v1:ansistring; var mi:Multi_Int_X2); overload;
+procedure FromBin(const v1:ansistring; out mi:Multi_Int_X2); overload;
 begin
 Bin_to_Multi_Int_X2(v1,mi);
 end;
@@ -2773,14 +2560,12 @@ end;
 (******************************************)
 function Multi_Int_X2.FromBin(const v1:ansistring):Multi_Int_X2;
 begin
-{$HINTS OFF} {$WARNINGS OFF}
 bin_to_Multi_Int_X2(v1,Result);
-{$HINTS ON} {$WARNINGS ON}
 end;
 
 
 (******************************************)
-procedure Multi_Int_X2_to_bin(const v1:Multi_Int_X2; var v2:ansistring; LZ:T_Multi_Leading_Zeros);
+procedure Multi_Int_X2_to_bin(const v1:Multi_Int_X2; out v2:ansistring; LZ:T_Multi_Leading_Zeros);
 var
 	s		:ansistring = '';
 	n		:MULTI_INT_1W_S;
@@ -2826,14 +2611,12 @@ end;
 (******************************************)
 function Multi_Int_X2.Tobin(const LZ:T_Multi_Leading_Zeros):ansistring;
 begin
-{$HINTS OFF} {$WARNINGS OFF}
 Multi_Int_X2_to_bin(self, Result, LZ);
-{$WARNINGS ON} {$HINTS ON}
 end;
 
 
 (******************************************)
-procedure Multi_Int_X2_to_hex(const v1:Multi_Int_X2; var v2:ansistring; LZ:T_Multi_Leading_Zeros);
+procedure Multi_Int_X2_to_hex(const v1:Multi_Int_X2; out v2:ansistring; LZ:T_Multi_Leading_Zeros);
 var
 	s		:ansistring = '';
 	n		:Multi_int32u;
@@ -2880,14 +2663,12 @@ end;
 (******************************************)
 function Multi_Int_X2.ToHex(const LZ:T_Multi_Leading_Zeros):ansistring;
 begin
-{$WARNINGS OFF}
 Multi_Int_X2_to_hex(self, Result, LZ);
-{$WARNINGS ON}
 end;
 
 
 (******************************************)
-procedure hex_to_Multi_Int_X2(const v1:ansistring; var mi:Multi_Int_X2);
+procedure hex_to_Multi_Int_X2(const v1:ansistring; out mi:Multi_Int_X2);
 label 999;
 var
 	n,i,b,c,e
@@ -2992,7 +2773,7 @@ end;
 
 
 (******************************************)
-procedure FromHex(const v1:ansistring; var v2:Multi_Int_X2); overload;
+procedure FromHex(const v1:ansistring; out v2:Multi_Int_X2); overload;
 begin
 hex_to_Multi_Int_X2(v1,v2);
 end;
@@ -3001,23 +2782,19 @@ end;
 (******************************************)
 function Multi_Int_X2.FromHex(const v1:ansistring):Multi_Int_X2;
 begin
-{$HINTS OFF} {$WARNINGS OFF}
 hex_to_Multi_Int_X2(v1,Result);
-{$HINTS ON} {$WARNINGS ON}
 end;
 
 
 (******************************************)
 function Hex_to_Multi_Int_X2(const v1:ansistring):Multi_Int_X2;
 begin
-{$HINTS OFF} {$WARNINGS OFF}
 hex_to_Multi_Int_X2(v1,Result);
-{$HINTS ON} {$WARNINGS ON}
 end;
 
 
 (******************************************)
-procedure Multi_Int_X2_to_ansistring(const v1:Multi_Int_X2; var v2:ansistring);
+procedure Multi_Int_X2_to_ansistring(const v1:Multi_Int_X2; out v2:ansistring);
 var
 	s		:ansistring = '';
 	M_Val	:array[0..Multi_X2_maxi] of MULTI_INT_2W_U;
@@ -3079,18 +2856,14 @@ end;
 (******************************************)
 function Multi_Int_X2.ToStr:ansistring;
 begin
-{$HINTS OFF} {$WARNINGS OFF}
 Multi_Int_X2_to_ansistring(self, Result);
-{$WARNINGS ON} {$HINTS ON}
 end;
 
 
 (******************************************)
 class operator Multi_Int_X2.implicit(const v1:Multi_Int_X2):ansistring;
 begin
-{$HINTS OFF} {$WARNINGS OFF}
 Multi_Int_X2_to_ansistring(v1, Result);
-{$WARNINGS ON} {$HINTS ON}
 end;
 
 
@@ -3554,7 +3327,7 @@ end;
 
 
 (********************v1********************)
-procedure multiply_Multi_Int_X2(const v1,v2:Multi_Int_X2;var Result:Multi_Int_X2);
+procedure multiply_Multi_Int_X2(const v1,v2:Multi_Int_X2;out Result:Multi_Int_X2);
 label	999;
 var
 M_Val		:array[0..Multi_X2_maxi_x2] of MULTI_INT_2W_U;
@@ -3700,9 +3473,7 @@ then
 	exit;
 	end;
 
-{$HINTS OFF} {$WARNINGS OFF}
 multiply_Multi_Int_X2(v1,v2,R);
-{$HINTS ON} {$WARNINGS ON}
 
 if	(R.Negative_flag = Multi_UBool_UNDEF) then
 	if	(v1.Negative_flag = v2.Negative_flag)
@@ -3723,7 +3494,7 @@ end;
 
 
 (*-----------------------*)
-procedure SqRoot(const v1:Multi_Int_X2;var VR,VREM:Multi_Int_X2);
+procedure SqRoot(const v1:Multi_Int_X2; out VR,VREM:Multi_Int_X2);
 var
 D,D2		:MULTI_INT_2W_S;
 HS,LS		:ansistring;
@@ -3797,9 +3568,7 @@ while not finished do
     T:= subtract_Multi_Int_X2(H,L);
     ShiftDown(T,1);
     C:= add_Multi_Int_X2(L,T);
-{$HINTS OFF} {$WARNINGS OFF}
     multiply_Multi_Int_X2(C,C, CC);
-{$HINTS ON} {$WARNINGS ON}
 
 	if	(CC.Overflow)
 	or	ABS_greaterthan_Multi_Int_X2(CC,v1)
@@ -3859,9 +3628,7 @@ else
 		begin
 		if	odd(PT) then
 			begin
-		{$HINTS OFF} {$WARNINGS OFF}
 			multiply_Multi_Int_X2(TV,Y, T);
-		{$HINTS ON} {$WARNINGS ON}
 			if	(T.Overflow_flag)
 			then
 				begin
@@ -3927,7 +3694,7 @@ end;
 
 
 (********************v1********************)
-procedure intdivide_taylor_warruth_X2(const P_dividend,P_dividor:Multi_Int_X2;var P_quotient,P_remainder:Multi_Int_X2);
+procedure intdivide_taylor_warruth_X2(const P_dividend,P_dividor:Multi_Int_X2;out P_quotient,P_remainder:Multi_Int_X2);
 label	AGAIN,9000,9999;
 var
 dividor,
@@ -4024,7 +3791,6 @@ else
 		ShiftUp_NBits_Multi_Int_X3(dividor, shiftup_bits_dividor);
 		end;
 
-	finished:= FALSE;
 	next_word_carry:= 0;
 	word_carry:= 0;
 	dividor_i:= dividor_non_zero_pos;
@@ -4147,9 +3913,7 @@ then
 	Result:= X2_Last_Quotient
 else	// different values than last time
 	begin
-{$HINTS OFF} {$WARNINGS OFF}
 	intdivide_taylor_warruth_X2(v1,v2,Quotient,Remainder);
-{$HINTS ON} {$WARNINGS ON}
 
 	X2_Last_Divisor:= v2;
 	X2_Last_Dividend:= v1;
@@ -4213,9 +3977,7 @@ then
 	Result:= X2_Last_Remainder
 else	// different values than last time
 	begin
-{$HINTS OFF} {$WARNINGS OFF}
 	intdivide_taylor_warruth_X2(v1,v2,Quotient,Remainder);
-{$HINTS ON} {$WARNINGS ON}
 
 	X2_Last_Divisor:= v2;
 	X2_Last_Dividend:= v1;
@@ -4549,260 +4311,6 @@ end;
 
 
 (******************************************)
-procedure RotateUp_NBits_Multi_Int_X3(Var v1:Multi_Int_X3; NBits:MULTI_INT_1W_U);
-var	carry_bits_1,
-	carry_bits_2,
-	carry_bits_3,
-	carry_bits_4,
-	carry_bits_5,
-	carry_bits_6,
-	carry_bits_mask,
-	NBits_max,
-	NBits_carry	:MULTI_INT_1W_U;
-begin
-if NBits > 0 then
-begin
-
-{$ifdef Overflow_Checks}
-{$Q-}
-{$R-}
-{$endif}
-
-{$ifdef 32bit}
-carry_bits_mask:= $FFFF;
-{$endif}
-{$ifdef 64bit}
-carry_bits_mask:= $FFFFFFFF;
-{$endif}
-
-NBits_max:= MULTI_INT_1W_SIZE;
-
-NBits_carry:= (NBits_max - NBits);
-carry_bits_mask:= (carry_bits_mask << NBits_carry);
-
-if NBits <= NBits_max then
-begin
-
-carry_bits_1:= ((v1.M_Value[0] and carry_bits_mask) >> NBits_carry);
-v1.M_Value[0]:= (v1.M_Value[0] << NBits);
-
-carry_bits_2:= ((v1.M_Value[1] and carry_bits_mask) >> NBits_carry);
-v1.M_Value[1]:= ((v1.M_Value[1] << NBits) OR carry_bits_1);
-
-carry_bits_3:= ((v1.M_Value[2] and carry_bits_mask) >> NBits_carry);
-v1.M_Value[2]:= ((v1.M_Value[2] << NBits) OR carry_bits_2);
-
-carry_bits_4:= ((v1.M_Value[3] and carry_bits_mask) >> NBits_carry);
-v1.M_Value[3]:= ((v1.M_Value[3] << NBits) OR carry_bits_3);
-
-carry_bits_5:= ((v1.M_Value[4] and carry_bits_mask) >> NBits_carry);
-v1.M_Value[4]:= ((v1.M_Value[4] << NBits) OR carry_bits_4);
-
-carry_bits_6:= ((v1.M_Value[5] and carry_bits_mask) >> NBits_carry);
-v1.M_Value[5]:= ((v1.M_Value[5] << NBits) OR carry_bits_5);
-
-v1.M_Value[0]:= (v1.M_Value[0] OR carry_bits_6);
-
-end;
-end;
-
-{$ifdef Overflow_Checks}
-{$Q+}
-{$R+}
-{$endif}
-
-end;
-
-
-(******************************************)
-procedure RotateUp_NWords_Multi_Int_X3(Var v1:Multi_Int_X3; NWords:MULTI_INT_1W_U);
-var	n,t	:MULTI_INT_1W_U;
-begin
-if		(NWords > 0)
-and		(NWords <= Multi_X3_maxi) then
-	begin
-	n:= NWords;
-	while (n > 0) do
-		begin
-		t:= v1.M_Value[5];
-		v1.M_Value[5]:= v1.M_Value[4];
-		v1.M_Value[4]:= v1.M_Value[3];
-		v1.M_Value[3]:= v1.M_Value[2];
-		v1.M_Value[2]:= v1.M_Value[1];
-		v1.M_Value[1]:= v1.M_Value[0];
-		v1.M_Value[0]:= t;
-		DEC(n);
-		end;
-	end;
-end;
-
-
-{******************************************}
-procedure RotateUp_MultiBits_Multi_Int_X3(Var v1:Multi_Int_X3; NBits:MULTI_INT_1W_U);
-var
-NWords_count,
-NBits_count		:MULTI_INT_1W_U;
-
-begin
-if	(Not v1.Defined_flag)
-then
-	begin
-	Multi_Int_ERROR:= TRUE;
-	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
-		begin
-		Raise EInterror.create('Uninitialised variable');
-		end;
-	exit;
-	end;
-
-if (NBits > 0) then
-	begin
-	if (NBits >= MULTI_INT_1W_SIZE) then
-		begin
-		NWords_count:= (NBits DIV MULTI_INT_1W_SIZE);
-		NBits_count:= (NBits MOD MULTI_INT_1W_SIZE);
-		RotateUp_NWords_Multi_Int_X3(v1, NWords_count);
-		end
-	else NBits_count:= NBits;
-	RotateUp_NBits_Multi_Int_X3(v1, NBits_count);
-	end;
-end;
-
-
-(******************************************)
-procedure RotateUp(Var v1:Multi_Int_X3; NBits:MULTI_INT_1W_U); overload;
-begin
-RotateUp_MultiBits_Multi_Int_X3(v1, NBits);
-end;
-
-
-(******************************************)
-procedure RotateDown_NBits_Multi_Int_X3(Var v1:Multi_Int_X3; NBits:MULTI_INT_1W_U);
-var	carry_bits_1,
-	carry_bits_2,
-	carry_bits_3,
-	carry_bits_4,
-	carry_bits_5,
-	carry_bits_6,
-	carry_bits_mask,
-	NBits_max,
-	NBits_carry	:MULTI_INT_1W_U;
-begin
-if NBits > 0 then
-begin
-
-{$ifdef Overflow_Checks}
-{$Q-}
-{$R-}
-{$endif}
-
-{$ifdef 32bit}
-carry_bits_mask:= $FFFF;
-{$endif}
-{$ifdef 64bit}
-carry_bits_mask:= $FFFFFFFF;
-{$endif}
-
-NBits_max:= MULTI_INT_1W_SIZE;
-
-NBits_carry:= (NBits_max - NBits);
-carry_bits_mask:= (carry_bits_mask >> NBits_carry);
-
-if NBits <= NBits_max then
-begin
-
-carry_bits_1:= ((v1.M_Value[5] and carry_bits_mask) << NBits_carry);
-v1.M_Value[5]:= (v1.M_Value[5] >> NBits);
-
-carry_bits_2:= ((v1.M_Value[4] and carry_bits_mask) << NBits_carry);
-v1.M_Value[4]:= ((v1.M_Value[4] >> NBits) OR carry_bits_1);
-
-carry_bits_3:= ((v1.M_Value[3] and carry_bits_mask) << NBits_carry);
-v1.M_Value[3]:= ((v1.M_Value[3] >> NBits) OR carry_bits_2);
-
-carry_bits_4:= ((v1.M_Value[2] and carry_bits_mask) << NBits_carry);
-v1.M_Value[2]:= ((v1.M_Value[2] >> NBits) OR carry_bits_3);
-
-carry_bits_5:= ((v1.M_Value[1] and carry_bits_mask) << NBits_carry);
-v1.M_Value[1]:= ((v1.M_Value[1] >> NBits) OR carry_bits_4);
-
-carry_bits_6:= ((v1.M_Value[0] and carry_bits_mask) << NBits_carry);
-v1.M_Value[0]:= ((v1.M_Value[0] >> NBits) OR carry_bits_5);
-
-v1.M_Value[5]:= (v1.M_Value[5] OR carry_bits_6);
-
-end;
-end;
-
-{$ifdef Overflow_Checks}
-{$Q+}
-{$R+}
-{$endif}
-
-end;
-
-
-(******************************************)
-procedure RotateDown_NWords_Multi_Int_X3(Var v1:Multi_Int_X3; NWords:MULTI_INT_1W_U);
-var	n,t	:MULTI_INT_1W_U;
-begin
-if		(NWords > 0)
-and		(NWords <= Multi_X3_maxi) then
-	begin
-	n:= NWords;
-	while (n > 0) do
-		begin
-		t:= v1.M_Value[0];
-		v1.M_Value[0]:= v1.M_Value[1];
-		v1.M_Value[1]:= v1.M_Value[2];
-		v1.M_Value[2]:= v1.M_Value[3];
-		v1.M_Value[3]:= v1.M_Value[4];
-		v1.M_Value[4]:= v1.M_Value[5];
-		v1.M_Value[5]:= t;
-		DEC(n);
-		end;
-	end;
-end;
-
-
-{******************************************}
-procedure RotateDown_MultiBits_Multi_Int_X3(Var v1:Multi_Int_X3; NBits:MULTI_INT_1W_U);
-var
-NWords_count,
-NBits_count		:MULTI_INT_1W_U;
-
-begin
-if	(Not v1.Defined_flag)
-then
-	begin
-	Multi_Int_ERROR:= TRUE;
-	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
-		begin
-		Raise EInterror.create('Uninitialised variable');
-		end;
-	exit;
-	end;
-
-if (NBits >= MULTI_INT_1W_SIZE) then
-	begin
-	NWords_count:= (NBits DIV MULTI_INT_1W_SIZE);
-	NBits_count:= (NBits MOD MULTI_INT_1W_SIZE);
-	RotateDown_NWords_Multi_Int_X3(v1, NWords_count);
-	end
-else NBits_count:= NBits;
-
-RotateDown_NBits_Multi_Int_X3(v1, NBits_count);
-end;
-
-
-(******************************************)
-procedure RotateDown(Var v1:Multi_Int_X3; NBits:MULTI_INT_1W_U); overload;
-begin
-RotateDown_MultiBits_Multi_Int_X3(v1, NBits);
-end;
-
-
-(******************************************)
 procedure ShiftUp_NBits_Multi_Int_X3(Var v1:Multi_Int_X3; NBits:MULTI_INT_1W_U);
 var	carry_bits_1,
 	carry_bits_2,
@@ -5040,6 +4548,22 @@ ShiftDown_MultiBits_Multi_Int_X3(v1, NBits);
 end;
 
 
+{******************************************}
+class operator Multi_Int_X3.shl(const v1:Multi_Int_X3; const NBits:MULTI_INT_1W_U):Multi_Int_X3;
+begin
+Result:= v1;
+ShiftUp_MultiBits_Multi_Int_X3(Result, NBits);
+end;
+
+
+{******************************************}
+class operator Multi_Int_X3.shr(const v1:Multi_Int_X3; const NBits:MULTI_INT_1W_U):Multi_Int_X3;
+begin
+Result:= v1;
+ShiftDown_MultiBits_Multi_Int_X3(Result, NBits);
+end;
+
+
 (******************************************)
 class operator Multi_Int_X3.<=(const v1,v2:Multi_Int_X3):Boolean;
 begin
@@ -5220,7 +4744,7 @@ end;
 
 
 (******************************************)
-procedure ansistring_to_Multi_Int_X3(const v1:ansistring; var mi:Multi_Int_X3);
+procedure ansistring_to_Multi_Int_X3(const v1:ansistring; out mi:Multi_Int_X3);
 label 999;
 var
 	i,b,c,e		:MULTI_INT_2W_U;
@@ -5349,9 +4873,7 @@ end;
 (******************************************)
 class operator Multi_Int_X3.implicit(const v1:ansistring):Multi_Int_X3;
 begin
-{$HINTS OFF} {$WARNINGS OFF}
 ansistring_to_Multi_Int_X3(v1,Result);
-{$HINTS ON} {$WARNINGS ON}
 end;
 
 
@@ -5425,7 +4947,7 @@ end;
 
 
 (******************************************)
-procedure MULTI_INT_2W_S_to_Multi_Int_X3(const v1:MULTI_INT_2W_S; var mi:Multi_Int_X3);
+procedure MULTI_INT_2W_S_to_Multi_Int_X3(const v1:MULTI_INT_2W_S; out mi:Multi_Int_X3);
 begin
 mi.Overflow_flag:=FALSE;
 mi.Defined_flag:=TRUE;
@@ -5452,14 +4974,12 @@ end;
 (******************************************)
 class operator Multi_Int_X3.implicit(const v1:MULTI_INT_2W_S):Multi_Int_X3;
 begin
-{$HINTS OFF} {$WARNINGS OFF}
 MULTI_INT_2W_S_to_Multi_Int_X3(v1,Result);
-{$HINTS ON} {$WARNINGS ON}
 end;
 
 
 (******************************************)
-procedure MULTI_INT_2W_U_to_Multi_Int_X3(const v1:MULTI_INT_2W_U; var mi:Multi_Int_X3);
+procedure MULTI_INT_2W_U_to_Multi_Int_X3(const v1:MULTI_INT_2W_U; out mi:Multi_Int_X3);
 begin
 mi.Overflow_flag:=FALSE;
 mi.Defined_flag:=TRUE;
@@ -5477,9 +4997,7 @@ end;
 (******************************************)
 class operator Multi_Int_X3.implicit(const v1:MULTI_INT_2W_U):Multi_Int_X3;
 begin
-{$HINTS OFF} {$WARNINGS OFF}
 MULTI_INT_2W_U_to_Multi_Int_X3(v1,Result);
-{$HINTS ON} {$WARNINGS ON}
 end;
 
 
@@ -5612,7 +5130,7 @@ end;
 
 
 (******************************************)
-procedure Multi_Int_X2_to_Multi_Int_X3(const v1:Multi_Int_X2; var MI:Multi_Int_X3);
+procedure Multi_Int_X2_to_Multi_Int_X3(const v1:Multi_Int_X2; out MI:Multi_Int_X3);
 var
 	n				:MULTI_INT_1W_U;
 begin
@@ -5662,9 +5180,7 @@ end;
 (******************************************)
 class operator Multi_Int_X3.implicit(const v1:Multi_Int_X2):Multi_Int_X3;
 begin
-{$HINTS OFF} {$WARNINGS OFF}
 Multi_Int_X2_to_Multi_Int_X3(v1,Result);
-{$HINTS ON} {$WARNINGS ON}
 end;
 
 
@@ -5678,9 +5194,7 @@ begin
 Multi_Int_ERROR:= FALSE;
 
 FloatToDecimal(R_FLOATREC, v1, MULTI_SINGLE_TYPE_PRECISION_DIGITS, 0);
-{$HINTS OFF} {$WARNINGS OFF}
 ansistring_to_Multi_Int_X3(AddCharR('0',AnsiLeftStr(R_FLOATREC.digits,(MULTI_SINGLE_TYPE_PRECISION_DIGITS-1)),R_FLOATREC.Exponent), R);
-{$HINTS ON} {$WARNINGS ON}
 
 if (R.Overflow) then
 	begin
@@ -5710,9 +5224,7 @@ begin
 Multi_Int_ERROR:= FALSE;
 
 FloatToDecimal(R_FLOATREC, v1, MULTI_REAL_TYPE_PRECISION_DIGITS, 0);
-{$HINTS OFF} {$WARNINGS OFF}
 ansistring_to_Multi_Int_X3(AddCharR('0',AnsiLeftStr(R_FLOATREC.digits,(MULTI_REAL_TYPE_PRECISION_DIGITS-1)),R_FLOATREC.Exponent), R);
-{$HINTS ON} {$WARNINGS ON}
 
 if (R.Overflow) then
 	begin
@@ -5742,9 +5254,7 @@ begin
 Multi_Int_ERROR:= FALSE;
 
 FloatToDecimal(R_FLOATREC, v1, MULTI_DOUBLE_TYPE_PRECISION_DIGITS, 0);
-{$HINTS OFF} {$WARNINGS OFF}
 ansistring_to_Multi_Int_X3(AddCharR('0',AnsiLeftStr(R_FLOATREC.digits,(MULTI_DOUBLE_TYPE_PRECISION_DIGITS-1)),R_FLOATREC.Exponent), R);
-{$HINTS ON} {$WARNINGS ON}
 
 if (R.Overflow) then
 	begin
@@ -6205,7 +5715,7 @@ end;
 
 
 (******************************************)
-procedure bin_to_Multi_Int_X3(const v1:ansistring; var mi:Multi_Int_X3);
+procedure bin_to_Multi_Int_X3(const v1:ansistring; out mi:Multi_Int_X3);
 label 999;
 var
 	n,b,c,e	:MULTI_INT_2W_U;
@@ -6308,14 +5818,12 @@ end;
 (******************************************)
 function Bin_to_Multi_Int_X3(const v1:ansistring):Multi_Int_X3;
 begin
-{$HINTS OFF} {$WARNINGS OFF}
 Bin_to_Multi_Int_X3(v1,Result);
-{$WARNINGS ON} {$HINTS ON}
 end;
 
 
 (******************************************)
-procedure FromBin(const v1:ansistring; var mi:Multi_Int_X3); overload;
+procedure FromBin(const v1:ansistring; out mi:Multi_Int_X3); overload;
 begin
 Bin_to_Multi_Int_X3(v1,mi);
 end;
@@ -6324,14 +5832,12 @@ end;
 (******************************************)
 function Multi_Int_X3.FromBin(const v1:ansistring):Multi_Int_X3;
 begin
-{$HINTS OFF} {$WARNINGS OFF}
 bin_to_Multi_Int_X3(v1,Result);
-{$HINTS ON} {$WARNINGS ON}
 end;
 
 
 (******************************************)
-procedure Multi_Int_X3_to_bin(const v1:Multi_Int_X3; var v2:ansistring; LZ:T_Multi_Leading_Zeros);
+procedure Multi_Int_X3_to_bin(const v1:Multi_Int_X3; out v2:ansistring; LZ:T_Multi_Leading_Zeros);
 var
 	s		:ansistring = '';
 	n		:MULTI_INT_1W_S;
@@ -6379,14 +5885,12 @@ end;
 (******************************************)
 function Multi_Int_X3.Tobin(const LZ:T_Multi_Leading_Zeros):ansistring;
 begin
-{$HINTS OFF} {$WARNINGS OFF}
 Multi_Int_X3_to_bin(self, Result, LZ);
-{$WARNINGS ON} {$HINTS ON}
 end;
 
 
 (******************************************)
-procedure Multi_Int_X3_to_hex(const v1:Multi_Int_X3; var v2:ansistring; LZ:T_Multi_Leading_Zeros);
+procedure Multi_Int_X3_to_hex(const v1:Multi_Int_X3; out v2:ansistring; LZ:T_Multi_Leading_Zeros);
 var
 	s		:ansistring = '';
 	n		:Multi_int32u;
@@ -6435,14 +5939,12 @@ end;
 (******************************************)
 function Multi_Int_X3.ToHex(const LZ:T_Multi_Leading_Zeros):ansistring;
 begin
-{$HINTS OFF} {$WARNINGS OFF}
 Multi_Int_X3_to_hex(self, Result, LZ);
-{$WARNINGS ON} {$HINTS ON}
 end;
 
 
 (******************************************)
-procedure hex_to_Multi_Int_X3(const v1:ansistring; var mi:Multi_Int_X3);
+procedure hex_to_Multi_Int_X3(const v1:ansistring; out mi:Multi_Int_X3);
 label 999;
 var
 	n,i,b,c,e
@@ -6547,7 +6049,7 @@ end;
 
 
 (******************************************)
-procedure FromHex(const v1:ansistring; var v2:Multi_Int_X3); overload;
+procedure FromHex(const v1:ansistring; out v2:Multi_Int_X3); overload;
 begin
 hex_to_Multi_Int_X3(v1,v2);
 end;
@@ -6556,23 +6058,19 @@ end;
 (******************************************)
 function Multi_Int_X3.FromHex(const v1:ansistring):Multi_Int_X3;
 begin
-{$HINTS OFF} {$WARNINGS OFF}
 hex_to_Multi_Int_X3(v1,Result);
-{$HINTS ON} {$WARNINGS ON}
 end;
 
 
 (******************************************)
 function Hex_to_Multi_Int_X3(const v1:ansistring):Multi_Int_X3;
 begin
-{$HINTS OFF} {$WARNINGS OFF}
 hex_to_Multi_Int_X3(v1,Result);
-{$HINTS ON} {$WARNINGS ON}
 end;
 
 
 (******************************************)
-procedure Multi_Int_X3_to_ansistring(const v1:Multi_Int_X3; var v2:ansistring);
+procedure Multi_Int_X3_to_ansistring(const v1:Multi_Int_X3; out v2:ansistring);
 var
 	s		:ansistring = '';
 	M_Val	:array[0..Multi_X3_maxi] of MULTI_INT_2W_U;
@@ -6644,18 +6142,14 @@ end;
 (******************************************)
 function Multi_Int_X3.ToStr:ansistring;
 begin
-{$HINTS OFF} {$WARNINGS OFF}
 Multi_Int_X3_to_ansistring(self, Result);
-{$WARNINGS ON} {$HINTS ON}
 end;
 
 
 (******************************************)
 class operator Multi_Int_X3.implicit(const v1:Multi_Int_X3):ansistring;
 begin
-{$HINTS OFF} {$WARNINGS OFF}
 Multi_Int_X3_to_ansistring(v1, Result);
-{$WARNINGS ON} {$HINTS ON}
 end;
 
 
@@ -7166,7 +6660,7 @@ end;
 
 
 (*******************v4*********************)
-procedure multiply_Multi_Int_X3(const v1,v2:Multi_Int_X3;var Result:Multi_Int_X3); overload;
+procedure multiply_Multi_Int_X3(const v1,v2:Multi_Int_X3;out Result:Multi_Int_X3); overload;
 label	999;
 var
 M_Val		:array[0..Multi_X3_maxi_x2] of MULTI_INT_2W_U;
@@ -7313,9 +6807,7 @@ then
 	exit;
 	end;
 
-{$HINTS OFF} {$WARNINGS OFF}
 multiply_Multi_Int_X3(v1,v2,R);
-{$HINTS ON} {$WARNINGS ON}
 
 if	(R.Negative_flag = Multi_UBool_UNDEF) then
 	if	(v1.Negative_flag = v2.Negative_flag)
@@ -7364,9 +6856,7 @@ then
 	exit;
 	end;
 
-{$HINTS OFF} {$WARNINGS OFF}
 multiply_Multi_Int_X3(v1,v2,R);
-{$HINTS ON} {$WARNINGS ON}
 
 if	(R.Negative_flag = Multi_UBool_UNDEF) then
 	if	(v1.Negative_flag = v2.Negative_flag)
@@ -7385,7 +6875,7 @@ end;
 
 
 (*-----------------------*)
-procedure SqRoot(const v1:Multi_Int_X3;var VR,VREM:Multi_Int_X3);
+procedure SqRoot(const v1:Multi_Int_X3; out VR,VREM:Multi_Int_X3);
 var
 D,D2		:MULTI_INT_2W_S;
 HS,LS		:ansistring;
@@ -7460,9 +6950,7 @@ while not finished do
     T:= subtract_Multi_Int_X3(H,L);
     ShiftDown(T,1);
     C:= add_Multi_Int_X3(L,T);
-{$HINTS OFF} {$WARNINGS OFF}
     multiply_Multi_Int_X3(C,C, CC);
-{$HINTS ON} {$WARNINGS ON}
 
 	if	(CC.Overflow)
 	or	ABS_greaterthan_Multi_Int_X3(CC,v1)
@@ -7522,9 +7010,7 @@ else
 		begin
 		if	odd(PT) then
 			begin
-		{$HINTS OFF} {$WARNINGS OFF}
 			multiply_Multi_Int_X3(TV,Y, T);
-		{$HINTS ON} {$WARNINGS ON}
 			if	(T.Overflow_flag)
 			then
 				begin
@@ -7590,7 +7076,7 @@ end;
 
 
 (********************v1********************)
-procedure intdivide_taylor_warruth_X3(const P_dividend,P_dividor:Multi_Int_X3;var P_quotient,P_remainder:Multi_Int_X3);
+procedure intdivide_taylor_warruth_X3(const P_dividend,P_dividor:Multi_Int_X3;out P_quotient,P_remainder:Multi_Int_X3);
 label	AGAIN,9000,9999;
 var
 dividor,
@@ -7686,7 +7172,6 @@ else
 		ShiftUp_NBits_Multi_Int_X4(dividor, shiftup_bits_dividor);
 		end;
 
-	finished:= FALSE;
 	next_word_carry:= 0;
 	word_carry:= 0;
 	dividor_i:= dividor_non_zero_pos;
@@ -7809,9 +7294,7 @@ then
 	Result:= X3_Last_Quotient
 else	// different values than last time
 	begin
-{$HINTS OFF} {$WARNINGS OFF}
 	intdivide_taylor_warruth_X3(v1,v2,Quotient,Remainder);
-{$HINTS ON} {$WARNINGS ON}
 
 	X3_Last_Divisor:= v2;
 	X3_Last_Dividend:= v1;
@@ -7875,9 +7358,7 @@ then
 	Result:= X3_Last_Remainder
 else	// different values than last time
 	begin
-{$HINTS OFF} {$WARNINGS OFF}
 	intdivide_taylor_warruth_X3(v1,v2,Quotient,Remainder);
-{$HINTS ON} {$WARNINGS ON}
 
 	X3_Last_Divisor:= v2;
 	X3_Last_Dividend:= v1;
@@ -8243,278 +7724,6 @@ end;
 
 
 (******************************************)
-procedure RotateUp_NBits_Multi_Int_X4(Var v1:Multi_Int_X4; NBits:MULTI_INT_1W_U);
-var	carry_bits_1,
-	carry_bits_2,
-	carry_bits_3,
-	carry_bits_4,
-	carry_bits_5,
-	carry_bits_6,
-	carry_bits_7,
-	carry_bits_8,
-	carry_bits_mask,
-	NBits_max,
-	NBits_carry	:MULTI_INT_1W_U;
-begin
-if NBits > 0 then
-begin
-
-{$ifdef Overflow_Checks}
-{$Q-}
-{$R-}
-{$endif}
-
-{$ifdef 32bit}
-carry_bits_mask:= $FFFF;
-{$endif}
-{$ifdef 64bit}
-carry_bits_mask:= $FFFFFFFF;
-{$endif}
-
-NBits_max:= MULTI_INT_1W_SIZE;
-NBits_carry:= (NBits_max - NBits);
-carry_bits_mask:= (carry_bits_mask << NBits_carry);
-
-if NBits <= NBits_max then
-begin
-
-carry_bits_1:= ((v1.M_Value[0] and carry_bits_mask) >> NBits_carry);
-v1.M_Value[0]:= (v1.M_Value[0] << NBits);
-
-carry_bits_2:= ((v1.M_Value[1] and carry_bits_mask) >> NBits_carry);
-v1.M_Value[1]:= ((v1.M_Value[1] << NBits) OR carry_bits_1);
-
-carry_bits_3:= ((v1.M_Value[2] and carry_bits_mask) >> NBits_carry);
-v1.M_Value[2]:= ((v1.M_Value[2] << NBits) OR carry_bits_2);
-
-carry_bits_4:= ((v1.M_Value[3] and carry_bits_mask) >> NBits_carry);
-v1.M_Value[3]:= ((v1.M_Value[3] << NBits) OR carry_bits_3);
-
-carry_bits_5:= ((v1.M_Value[4] and carry_bits_mask) >> NBits_carry);
-v1.M_Value[4]:= ((v1.M_Value[4] << NBits) OR carry_bits_4);
-
-carry_bits_6:= ((v1.M_Value[5] and carry_bits_mask) >> NBits_carry);
-v1.M_Value[5]:= ((v1.M_Value[5] << NBits) OR carry_bits_5);
-
-carry_bits_7:= ((v1.M_Value[6] and carry_bits_mask) >> NBits_carry);
-v1.M_Value[6]:= ((v1.M_Value[6] << NBits) OR carry_bits_6);
-
-carry_bits_8:= ((v1.M_Value[7] and carry_bits_mask) >> NBits_carry);
-v1.M_Value[7]:= ((v1.M_Value[7] << NBits) OR carry_bits_7);
-
-v1.M_Value[0]:= (v1.M_Value[0] OR carry_bits_8);
-
-end;
-end;
-
-{$ifdef Overflow_Checks}
-{$Q+}
-{$R+}
-{$endif}
-
-end;
-
-
-(******************************************)
-procedure RotateUp_NWords_Multi_Int_X4(Var v1:Multi_Int_X4; NWords:MULTI_INT_1W_U);
-var	n,t	:MULTI_INT_1W_U;
-begin
-if		(NWords > 0)
-and		(NWords <= Multi_X4_maxi) then
-	begin
-	n:= NWords;
-	while (n > 0) do
-		begin
-		t:= v1.M_Value[7];
-		v1.M_Value[7]:= v1.M_Value[6];
-		v1.M_Value[6]:= v1.M_Value[5];
-		v1.M_Value[5]:= v1.M_Value[4];
-		v1.M_Value[4]:= v1.M_Value[3];
-		v1.M_Value[3]:= v1.M_Value[2];
-		v1.M_Value[2]:= v1.M_Value[1];
-		v1.M_Value[1]:= v1.M_Value[0];
-		v1.M_Value[0]:= t;
-		DEC(n);
-		end;
-	end;
-end;
-
-
-{******************************************}
-procedure RotateUp_MultiBits_Multi_Int_X4(Var v1:Multi_Int_X4; NBits:MULTI_INT_1W_U);
-var
-NWords_count,
-NBits_count		:MULTI_INT_1W_U;
-
-begin
-if	(Not v1.Defined_flag)
-then
-	begin
-	Multi_Int_ERROR:= TRUE;
-	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
-		begin
-		Raise EInterror.create('Uninitialised variable');
-		end;
-	exit;
-	end;
-
-if (NBits > 0) then
-	begin
-	if (NBits >= MULTI_INT_1W_SIZE) then
-		begin
-		NWords_count:= (NBits DIV MULTI_INT_1W_SIZE);
-		NBits_count:= (NBits MOD MULTI_INT_1W_SIZE);
-		RotateUp_NWords_Multi_Int_X4(v1, NWords_count);
-		end
-	else NBits_count:= NBits;
-	RotateUp_NBits_Multi_Int_X4(v1, NBits_count);
-	end;
-end;
-
-
-(******************************************)
-procedure RotateUp(Var v1:Multi_Int_X4; NBits:MULTI_INT_1W_U); overload;
-begin
-RotateUp_MultiBits_Multi_Int_X4(v1, NBits);
-end;
-
-
-(******************************************)
-procedure RotateDown_NBits_Multi_Int_X4(Var v1:Multi_Int_X4; NBits:MULTI_INT_1W_U);
-var	carry_bits_1,
-	carry_bits_2,
-	carry_bits_mask,
-	carry_bits_3,
-	carry_bits_4,
-	carry_bits_5,
-	carry_bits_6,
-	carry_bits_7,
-	carry_bits_8,
-	NBits_max,
-	NBits_carry	:MULTI_INT_1W_U;
-begin
-if NBits > 0 then
-begin
-
-{$ifdef Overflow_Checks}
-{$Q-}
-{$R-}
-{$endif}
-
-{$ifdef 32bit}
-carry_bits_mask:= $FFFF;
-{$endif}
-{$ifdef 64bit}
-carry_bits_mask:= $FFFFFFFF;
-{$endif}
-
-NBits_max:= MULTI_INT_1W_SIZE;
-NBits_carry:= (NBits_max - NBits);
-carry_bits_mask:= (carry_bits_mask >> NBits_carry);
-
-if NBits <= NBits_max then
-begin
-
-carry_bits_1:= ((v1.M_Value[7] and carry_bits_mask) << NBits_carry);
-v1.M_Value[7]:= (v1.M_Value[7] >> NBits);
-
-carry_bits_2:= ((v1.M_Value[6] and carry_bits_mask) << NBits_carry);
-v1.M_Value[6]:= ((v1.M_Value[6] >> NBits) OR carry_bits_1);
-
-carry_bits_3:= ((v1.M_Value[5] and carry_bits_mask) << NBits_carry);
-v1.M_Value[5]:= ((v1.M_Value[5] >> NBits) OR carry_bits_2);
-
-carry_bits_4:= ((v1.M_Value[4] and carry_bits_mask) << NBits_carry);
-v1.M_Value[4]:= ((v1.M_Value[4] >> NBits) OR carry_bits_3);
-
-carry_bits_5:= ((v1.M_Value[3] and carry_bits_mask) << NBits_carry);
-v1.M_Value[3]:= ((v1.M_Value[3] >> NBits) OR carry_bits_4);
-
-carry_bits_6:= ((v1.M_Value[2] and carry_bits_mask) << NBits_carry);
-v1.M_Value[2]:= ((v1.M_Value[2] >> NBits) OR carry_bits_5);
-
-carry_bits_7:= ((v1.M_Value[1] and carry_bits_mask) << NBits_carry);
-v1.M_Value[1]:= ((v1.M_Value[1] >> NBits) OR carry_bits_6);
-
-carry_bits_8:= ((v1.M_Value[0] and carry_bits_mask) << NBits_carry);
-v1.M_Value[0]:= ((v1.M_Value[0] >> NBits) OR carry_bits_7);
-
-v1.M_Value[7]:= (v1.M_Value[7] OR carry_bits_8);
-
-end;
-end;
-
-{$ifdef Overflow_Checks}
-{$Q+}
-{$R+}
-{$endif}
-
-end;
-
-
-(******************************************)
-procedure RotateDown_NWords_Multi_Int_X4(Var v1:Multi_Int_X4; NWords:MULTI_INT_1W_U);
-var	n,t	:MULTI_INT_1W_U;
-begin
-if		(NWords > 0)
-and		(NWords <= Multi_X4_maxi) then
-	begin
-	n:= NWords;
-	while (n > 0) do
-		begin
-		t:= v1.M_Value[0];
-		v1.M_Value[0]:= v1.M_Value[1];
-		v1.M_Value[1]:= v1.M_Value[2];
-		v1.M_Value[2]:= v1.M_Value[3];
-		v1.M_Value[3]:= v1.M_Value[4];
-		v1.M_Value[4]:= v1.M_Value[5];
-		v1.M_Value[5]:= v1.M_Value[6];
-		v1.M_Value[6]:= v1.M_Value[7];
-		v1.M_Value[7]:= t;
-		DEC(n);
-		end;
-	end;
-end;
-
-
-{******************************************}
-procedure RotateDown_MultiBits_Multi_Int_X4(Var v1:Multi_Int_X4; NBits:MULTI_INT_1W_U);
-var
-NWords_count,
-NBits_count		:MULTI_INT_1W_U;
-
-begin
-if	(Not v1.Defined_flag)
-then
-	begin
-	Multi_Int_ERROR:= TRUE;
-	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
-		begin
-		Raise EInterror.create('Uninitialised variable');
-		end;
-	exit;
-	end;
-
-if (NBits >= MULTI_INT_1W_SIZE) then
-	begin
-	NWords_count:= (NBits DIV MULTI_INT_1W_SIZE);
-	NBits_count:= (NBits MOD MULTI_INT_1W_SIZE);
-	RotateDown_NWords_Multi_Int_X4(v1, NWords_count);
-	end
-else NBits_count:= NBits;
-
-RotateDown_NBits_Multi_Int_X4(v1, NBits_count);
-end;
-
-
-(******************************************)
-procedure RotateDown(Var v1:Multi_Int_X4; NBits:MULTI_INT_1W_U); overload;
-begin
-RotateDown_MultiBits_Multi_Int_X4(v1, NBits);
-end;
-
-
-(******************************************)
 procedure ShiftUp_NBits_Multi_Int_X4(Var v1:Multi_Int_X4; NBits:MULTI_INT_1W_U);
 var	carry_bits_1,
 	carry_bits_2,
@@ -8770,6 +7979,22 @@ end;
 procedure ShiftDown(Var v1:Multi_Int_X4; NBits:MULTI_INT_1W_U); overload;
 begin
 ShiftDown_MultiBits_Multi_Int_X4(v1, NBits);
+end;
+
+
+{******************************************}
+class operator Multi_Int_X4.shl(const v1:Multi_Int_X4; const NBits:MULTI_INT_1W_U):Multi_Int_X4;
+begin
+Result:= v1;
+ShiftUp_MultiBits_Multi_Int_X4(Result, NBits);
+end;
+
+
+{******************************************}
+class operator Multi_Int_X4.shr(const v1:Multi_Int_X4; const NBits:MULTI_INT_1W_U):Multi_Int_X4;
+begin
+Result:= v1;
+ShiftDown_MultiBits_Multi_Int_X4(Result, NBits);
 end;
 
 
@@ -9084,7 +8309,7 @@ end;
 
 
 (******************************************)
-procedure Multi_Int_X2_to_Multi_Int_X4(const v1:Multi_Int_X2; var MI:Multi_Int_X4);
+procedure Multi_Int_X2_to_Multi_Int_X4(const v1:Multi_Int_X2; out MI:Multi_Int_X4);
 var
 	n				:MULTI_INT_1W_U;
 begin
@@ -9134,14 +8359,12 @@ end;
 (******************************************)
 class operator Multi_Int_X4.implicit(const v1:Multi_Int_X2):Multi_Int_X4;
 begin
-{$HINTS OFF} {$WARNINGS OFF}
 Multi_Int_X2_to_Multi_Int_X4(v1,Result);
-{$HINTS ON} {$WARNINGS ON}
 end;
 
 
 (******************************************)
-procedure Multi_Int_X3_to_Multi_Int_X4(const v1:Multi_Int_X3; var MI:Multi_Int_X4);
+procedure Multi_Int_X3_to_Multi_Int_X4(const v1:Multi_Int_X3; out MI:Multi_Int_X4);
 var
 	n				:MULTI_INT_1W_U;
 begin
@@ -9191,14 +8414,12 @@ end;
 (******************************************)
 class operator Multi_Int_X4.implicit(const v1:Multi_Int_X3):Multi_Int_X4;
 begin
-{$HINTS OFF} {$WARNINGS OFF}
 Multi_Int_X3_to_Multi_Int_X4(v1,Result);
-{$HINTS ON} {$WARNINGS ON}
 end;
 
 
 (******************************************)
-procedure ansistring_to_Multi_Int_X4(const v1:ansistring; var mi:Multi_Int_X4);
+procedure ansistring_to_Multi_Int_X4(const v1:ansistring; out mi:Multi_Int_X4);
 label 999;
 var
 	i,b,c,e		:MULTI_INT_2W_U;
@@ -9346,9 +8567,7 @@ end;
 (******************************************)
 class operator Multi_Int_X4.implicit(const v1:ansistring):Multi_Int_X4;
 begin
-{$HINTS OFF} {$WARNINGS OFF}
 ansistring_to_Multi_Int_X4(v1,Result);
-{$HINTS ON} {$WARNINGS ON}
 end;
 
 
@@ -9425,7 +8644,7 @@ end;
 
 
 (******************************************)
-procedure MULTI_INT_2W_S_to_Multi_Int_X4(const v1:MULTI_INT_2W_S; var mi:Multi_Int_X4);
+procedure MULTI_INT_2W_S_to_Multi_Int_X4(const v1:MULTI_INT_2W_S; out mi:Multi_Int_X4);
 begin
 mi.Overflow_flag:=FALSE;
 mi.Defined_flag:=TRUE;
@@ -9454,14 +8673,12 @@ end;
 (******************************************)
 class operator Multi_Int_X4.implicit(const v1:MULTI_INT_2W_S):Multi_Int_X4;
 begin
-{$HINTS OFF} {$WARNINGS OFF}
 MULTI_INT_2W_S_to_Multi_Int_X4(v1,Result);
-{$HINTS ON} {$WARNINGS ON}
 end;
 
 
 (******************************************)
-procedure MULTI_INT_2W_U_to_Multi_Int_X4(const v1:MULTI_INT_2W_U; var mi:Multi_Int_X4);
+procedure MULTI_INT_2W_U_to_Multi_Int_X4(const v1:MULTI_INT_2W_U; out mi:Multi_Int_X4);
 begin
 mi.Overflow_flag:=FALSE;
 mi.Defined_flag:=TRUE;
@@ -9481,9 +8698,7 @@ end;
 (******************************************)
 class operator Multi_Int_X4.implicit(const v1:MULTI_INT_2W_U):Multi_Int_X4;
 begin
-{$HINTS OFF} {$WARNINGS OFF}
 MULTI_INT_2W_U_to_Multi_Int_X4(v1,Result);
-{$HINTS ON} {$WARNINGS ON}
 end;
 
 
@@ -9497,9 +8712,7 @@ begin
 Multi_Int_ERROR:= FALSE;
 
 FloatToDecimal(R_FLOATREC, v1, MULTI_SINGLE_TYPE_PRECISION_DIGITS, 0);
-{$HINTS OFF} {$WARNINGS OFF}
 ansistring_to_Multi_Int_X4(AddCharR('0',AnsiLeftStr(R_FLOATREC.digits,(MULTI_SINGLE_TYPE_PRECISION_DIGITS-1)),R_FLOATREC.Exponent), R);
-{$HINTS ON} {$WARNINGS ON}
 
 if (R.Overflow) then
 	begin
@@ -9529,9 +8742,7 @@ begin
 Multi_Int_ERROR:= FALSE;
 
 FloatToDecimal(R_FLOATREC, v1, MULTI_REAL_TYPE_PRECISION_DIGITS, 0);
-{$HINTS OFF} {$WARNINGS OFF}
 ansistring_to_Multi_Int_X4(AddCharR('0',AnsiLeftStr(R_FLOATREC.digits,(MULTI_REAL_TYPE_PRECISION_DIGITS-1)),R_FLOATREC.Exponent), R);
-{$HINTS ON} {$WARNINGS ON}
 
 if (R.Overflow) then
 	begin
@@ -9561,9 +8772,7 @@ begin
 Multi_Int_ERROR:= FALSE;
 
 FloatToDecimal(R_FLOATREC, v1, MULTI_DOUBLE_TYPE_PRECISION_DIGITS, 0);
-{$HINTS OFF} {$WARNINGS OFF}
 ansistring_to_Multi_Int_X4(AddCharR('0',AnsiLeftStr(R_FLOATREC.digits,(MULTI_DOUBLE_TYPE_PRECISION_DIGITS-1)),R_FLOATREC.Exponent), R);
-{$HINTS ON} {$WARNINGS ON}
 
 if (R.Overflow) then
 	begin
@@ -10037,7 +9246,7 @@ end;
 
 
 (******************************************)
-procedure bin_to_Multi_Int_X4(const v1:ansistring; var mi:Multi_Int_X4);
+procedure bin_to_Multi_Int_X4(const v1:ansistring; out mi:Multi_Int_X4);
 label 999;
 var
 	n,b,c,e	:MULTI_INT_2W_U;
@@ -10140,14 +9349,12 @@ end;
 (******************************************)
 function Bin_to_Multi_Int_X4(const v1:ansistring):Multi_Int_X4;
 begin
-{$HINTS OFF} {$WARNINGS OFF}
 Bin_to_Multi_Int_X4(v1,Result);
-{$WARNINGS ON} {$HINTS ON}
 end;
 
 
 (******************************************)
-procedure FromBin(const v1:ansistring; var mi:Multi_Int_X4); overload;
+procedure FromBin(const v1:ansistring; out mi:Multi_Int_X4); overload;
 begin
 Bin_to_Multi_Int_X4(v1,mi);
 end;
@@ -10156,14 +9363,12 @@ end;
 (******************************************)
 function Multi_Int_X4.FromBin(const v1:ansistring):Multi_Int_X4;
 begin
-{$HINTS OFF} {$WARNINGS OFF}
 bin_to_Multi_Int_X4(v1,Result);
-{$HINTS ON} {$WARNINGS ON}
 end;
 
 
 (******************************************)
-procedure Multi_Int_X4_to_bin(const v1:Multi_Int_X4; var v2:ansistring; LZ:T_Multi_Leading_Zeros);
+procedure Multi_Int_X4_to_bin(const v1:Multi_Int_X4; out v2:ansistring; LZ:T_Multi_Leading_Zeros);
 var
 	s		:ansistring = '';
 	n		:MULTI_INT_1W_S;
@@ -10213,14 +9418,12 @@ end;
 (******************************************)
 function Multi_Int_X4.Tobin(const LZ:T_Multi_Leading_Zeros):ansistring;
 begin
-{$HINTS OFF} {$WARNINGS OFF}
 Multi_Int_X4_to_bin(self, Result, LZ);
-{$WARNINGS ON} {$HINTS ON}
 end;
 
 
 (******************************************)
-procedure hex_to_Multi_Int_X4(const v1:ansistring; var mi:Multi_Int_X4);
+procedure hex_to_Multi_Int_X4(const v1:ansistring; out mi:Multi_Int_X4);
 label 999;
 var
 	n,i,b,c,e
@@ -10325,7 +9528,7 @@ end;
 
 
 (******************************************)
-procedure FromHex(const v1:ansistring; var v2:Multi_Int_X4); overload;
+procedure FromHex(const v1:ansistring; out v2:Multi_Int_X4); overload;
 begin
 hex_to_Multi_Int_X4(v1,v2);
 end;
@@ -10334,23 +9537,19 @@ end;
 (******************************************)
 function Multi_Int_X4.FromHex(const v1:ansistring):Multi_Int_X4;
 begin
-{$HINTS OFF} {$WARNINGS OFF}
 hex_to_Multi_Int_X4(v1,Result);
-{$HINTS ON} {$WARNINGS ON}
 end;
 
 
 (******************************************)
 function Hex_to_Multi_Int_X4(const v1:ansistring):Multi_Int_X4;
 begin
-{$HINTS OFF} {$WARNINGS OFF}
 hex_to_Multi_Int_X4(v1,Result);
-{$HINTS ON} {$WARNINGS ON}
 end;
 
 
 (******************************************)
-procedure Multi_Int_X4_to_hex(const v1:Multi_Int_X4; var v2:ansistring; LZ:T_Multi_Leading_Zeros);
+procedure Multi_Int_X4_to_hex(const v1:Multi_Int_X4; out v2:ansistring; LZ:T_Multi_Leading_Zeros);
 var
 	s		:ansistring = '';
 	n		:Multi_int32u;
@@ -10400,14 +9599,12 @@ end;
 (******************************************)
 function Multi_Int_X4.ToHex(const LZ:T_Multi_Leading_Zeros):ansistring;
 begin
-{$HINTS OFF} {$WARNINGS OFF}
 Multi_Int_X4_to_hex(self, Result, LZ);
-{$WARNINGS ON} {$HINTS ON}
 end;
 
 
 (******************************************)
-procedure Multi_Int_X4_to_ansistring(const v1:Multi_Int_X4; var v2:ansistring);
+procedure Multi_Int_X4_to_ansistring(const v1:Multi_Int_X4; out v2:ansistring);
 var
 	s		:ansistring = '';
 	M_Val	:array[0..Multi_X4_maxi] of MULTI_INT_2W_U;
@@ -10488,18 +9685,14 @@ end;
 (******************************************)
 function Multi_Int_X4.ToStr:ansistring;
 begin
-{$HINTS OFF} {$WARNINGS OFF}
 Multi_Int_X4_to_ansistring(self, Result);
-{$WARNINGS ON} {$HINTS ON}
 end;
 
 
 (******************************************)
 class operator Multi_Int_X4.implicit(const v1:Multi_Int_X4):ansistring;
 begin
-{$HINTS OFF} {$WARNINGS OFF}
 Multi_Int_X4_to_ansistring(v1, Result);
-{$WARNINGS ON} {$HINTS ON}
 end;
 
 
@@ -11057,7 +10250,7 @@ end;
 
 
 (*******************v4*********************)
-procedure multiply_Multi_Int_X4(const v1,v2:Multi_Int_X4;var Result:Multi_Int_X4); overload;
+procedure multiply_Multi_Int_X4(const v1,v2:Multi_Int_X4;out Result:Multi_Int_X4); overload;
 label	999;
 var
 M_Val		:array[0..Multi_X4_maxi_x2] of MULTI_INT_2W_U;
@@ -11204,9 +10397,7 @@ then
 	exit;
 	end;
 
-{$HINTS OFF} {$WARNINGS OFF}
 multiply_Multi_Int_X4(v1,v2,R);
-{$HINTS ON} {$WARNINGS ON}
 
 if	(R.Negative_flag = Multi_UBool_UNDEF) then
 	if	(v1.Negative_flag = v2.Negative_flag)
@@ -11256,9 +10447,7 @@ then
 	exit;
 	end;
 
-{$HINTS OFF} {$WARNINGS OFF}
 multiply_Multi_Int_X4(v1,v2,R);
-{$HINTS ON} {$WARNINGS ON}
 
 if	(R.Negative_flag = Multi_UBool_UNDEF) then
 	if	(v1.Negative_flag = v2.Negative_flag)
@@ -11277,7 +10466,7 @@ end;
 
 
 (****************************)
-procedure SqRoot(const v1:Multi_Int_X4;var VR,VREM:Multi_Int_X4);
+procedure SqRoot(const v1:Multi_Int_X4; out VR,VREM:Multi_Int_X4);
 var
 D,D2		:MULTI_INT_2W_S;
 HS,LS		:ansistring;
@@ -11351,9 +10540,7 @@ while not finished do
     T:= subtract_Multi_Int_X4(H,L);
     ShiftDown(T,1);
     C:= add_Multi_Int_X4(L,T);
-{$HINTS OFF} {$WARNINGS OFF}
     multiply_Multi_Int_X4(C,C, CC);
-{$HINTS ON} {$WARNINGS ON}
 
 	if	(CC.Overflow)
 	or	ABS_greaterthan_Multi_Int_X4(CC,v1)
@@ -11413,9 +10600,7 @@ else
 		begin
 		if	odd(PT) then
 			begin
-		{$HINTS OFF} {$WARNINGS OFF}
 			multiply_Multi_Int_X4(TV,Y, T);
-		{$HINTS ON} {$WARNINGS ON}
 			if	(T.Overflow_flag)
 			then
 				begin
@@ -11458,7 +10643,6 @@ else
 		end;
 {$WARNINGS OFF} {$HINTS OFF}
 	multiply_Multi_Int_X4(TV,Y, R);
-{$HINTS ON} {$WARNINGS ON}
 
 	if	(R.Overflow_flag)
 	then
@@ -11484,7 +10668,7 @@ end;
 
 
 (********************v1********************)
-procedure intdivide_taylor_warruth_X4(const P_dividend,P_dividor:Multi_Int_X4;var P_quotient,P_remainder:Multi_Int_X4);
+procedure intdivide_taylor_warruth_X4(const P_dividend,P_dividor:Multi_Int_X4;out P_quotient,P_remainder:Multi_Int_X4);
 label	AGAIN,9000,9999;
 var
 dividor,
@@ -11580,7 +10764,6 @@ else
 		ShiftUp_NBits_Multi_Int_X5(dividor, shiftup_bits_dividor);
 		end;
 
-	finished:= FALSE;
 	next_word_carry:= 0;
 	word_carry:= 0;
 	dividor_i:= dividor_non_zero_pos;
@@ -11703,9 +10886,7 @@ then
 	Result:= X4_Last_Quotient
 else	// different values than last time
 	begin
-{$HINTS OFF} {$WARNINGS OFF}
 	intdivide_taylor_warruth_X4(v1,v2,Quotient,Remainder);
-{$HINTS ON} {$WARNINGS ON}
 
 	X4_Last_Divisor:= v2;
 	X4_Last_Dividend:= v1;
@@ -11768,9 +10949,7 @@ then
 	Result:= X4_Last_Remainder
 else	// different values than last time
 	begin
-{$HINTS OFF} {$WARNINGS OFF}
 	intdivide_taylor_warruth_X4(v1,v2,Quotient,Remainder);
-{$HINTS ON} {$WARNINGS ON}
 
 	X4_Last_Divisor:= v2;
 	X4_Last_Dividend:= v1;
@@ -12184,7 +11363,7 @@ end;
 
 
 (******************************************)
-procedure MULTI_INT_2W_U_to_Multi_Int_X5(const v1:MULTI_INT_2W_U; var mi:Multi_Int_X5);
+procedure MULTI_INT_2W_U_to_Multi_Int_X5(const v1:MULTI_INT_2W_U; out mi:Multi_Int_X5);
 begin
 mi.Overflow_flag:=FALSE;
 mi.Defined_flag:=TRUE;
@@ -12205,9 +11384,7 @@ end;
 (******************************************)
 class operator Multi_Int_X5.implicit(const v1:MULTI_INT_2W_U):Multi_Int_X5;
 begin
-{$HINTS OFF} {$WARNINGS OFF}
 MULTI_INT_2W_U_to_Multi_Int_X5(v1,Result);
-{$HINTS ON} {$WARNINGS ON}
 end;
 
 
@@ -12262,18 +11439,14 @@ end;
 (******************************************)
 class operator Multi_Int_X5.implicit(const v1:Multi_Int_X4):Multi_Int_X5;
 begin
-{$HINTS OFF} {$WARNINGS OFF}
 Multi_Int_X4_to_Multi_Int_X5(v1,Result);
-{$HINTS ON} {$WARNINGS ON}
 end;
 
 
 (******************************************)
 function To_Multi_Int_X5(const v1:Multi_Int_X4):Multi_Int_X5;
 begin
-{$HINTS OFF} {$WARNINGS OFF}
 Multi_Int_X4_to_Multi_Int_X5(v1,Result);
-{$HINTS ON} {$WARNINGS ON}
 end;
 
 
@@ -12319,7 +11492,7 @@ end;
 
 
 (*******************v4*********************)
-procedure multiply_Multi_Int_X5(const v1,v2:Multi_Int_X5;var Result:Multi_Int_X5); overload;
+procedure multiply_Multi_Int_X5(const v1,v2:Multi_Int_X5;out Result:Multi_Int_X5); overload;
 label	999;
 var
 M_Val		:array[0..Multi_X5_max_x2] of MULTI_INT_2W_U;
@@ -12466,9 +11639,7 @@ then
 	exit;
 	end;
 
-{$HINTS OFF} {$WARNINGS OFF}
 multiply_Multi_Int_X5(v1,v2,R);
-{$HINTS ON} {$WARNINGS ON}
 
 if	(R.Negative_flag = Multi_UBool_UNDEF) then
 	if	(v1.Negative_flag = v2.Negative_flag)
@@ -12518,9 +11689,7 @@ then
 	exit;
 	end;
 
-{$HINTS OFF} {$WARNINGS OFF}
 multiply_Multi_Int_X5(v1,v2,R);
-{$HINTS ON} {$WARNINGS ON}
 
 if	(R.Negative_flag = Multi_UBool_UNDEF) then
 	if	(v1.Negative_flag = v2.Negative_flag)
@@ -12887,6 +12056,84 @@ self.Negative_flag:= Multi_UBool_FALSE;
 self.Overflow_flag:= FALSE;
 self.Defined_flag:= FALSE;
 end;
+
+
+(******************************************)
+procedure Multi_Int_XV_to_Multi_Int_XV(const v1:Multi_Int_XV; var MI:Multi_Int_XV);
+var
+	n				:MULTI_INT_1W_U;
+begin
+MI.init;
+if (v1.M_Value_Size > mi.M_Value_Size) then
+	begin
+	Multi_Int_Reset_XV_Size(MI, Multi_XV_size);
+	if	(mi.Overflow) then
+		begin
+		Multi_Int_ERROR:= TRUE;
+		mi.Defined_flag:=FALSE;
+		if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
+			Raise EInterror.create('Overflow');
+		exit;
+		end;
+	end;
+
+if	(v1.Defined_flag = FALSE)
+then
+	begin
+	Multi_Int_ERROR:= TRUE;
+	MI.Defined_flag:= FALSE;
+	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
+		begin
+		Raise EInterror.create('Uninitialised variable');
+		end;
+	exit;
+	end;
+
+if	(v1.Overflow_flag = TRUE)
+then
+	begin
+	Multi_Int_ERROR:= TRUE;
+	MI.Overflow_flag:= TRUE;
+	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
+		begin
+		Raise EInterror.create('Overflow');
+		end;
+	exit;
+	end;
+
+MI.Overflow_flag:= v1.Overflow_flag;
+MI.Defined_flag:= v1.Defined_flag;
+MI.Negative_flag:= v1.Negative_flag;
+
+n:= 0;
+while (n < v1.M_Value_Size) do
+	begin
+	MI.M_Value[n]:= v1.M_Value[n];
+	inc(n);
+	end;
+
+while (n < MI.M_Value_Size) do
+	begin
+	MI.M_Value[n]:= 0;
+	inc(n);
+	end;
+end;
+
+
+(******************************************)
+{
+class operator Multi_Int_XV.:=(const v1:Multi_Int_XV):Multi_Int_XV;
+begin
+Multi_Int_XV_to_Multi_Int_XV(v1,Result);
+end;
+
+
+(******************************************)
+function To_Multi_Int_XV(const v1:Multi_Int_XV):Multi_Int_XV;
+begin
+Multi_Int_XV_to_Multi_Int_XV(v1,Result);
+end;
+}
 
 
 (******************************************)
@@ -13346,120 +12593,12 @@ ShiftUp_MultiBits_Multi_Int_XV(v1, NBits);
 end;
 
 
-(******************************************)
-procedure RotateUp_NBits_Multi_Int_XV(var v1:Multi_Int_XV; NBits:MULTI_INT_1W_U);
-var	carry_bits_1,
-	carry_bits_2,
-	carry_bits_mask,
-	NBits_max,
-	NBits_carry	:MULTI_INT_1W_U;
-	n			:integer;
-begin
-if NBits > 0 then
-begin
-
-{$ifdef Overflow_Checks}
-{$Q-}
-{$R-}
-{$endif}
-
-{$ifdef 32bit}
-carry_bits_mask:= $FFFF;
-{$endif}
-{$ifdef 64bit}
-carry_bits_mask:= $FFFFFFFF;
-{$endif}
-
-NBits_max:= MULTI_INT_1W_SIZE;
-NBits_carry:= (NBits_max - NBits);
-carry_bits_mask:= (carry_bits_mask << NBits_carry);
-
-if NBits <= NBits_max then
-	begin
-	carry_bits_1:= ((v1.M_Value[0] and carry_bits_mask) >> NBits_carry);
-	v1.M_Value[0]:= (v1.M_Value[0] << NBits);
-
-	n:=1;
-	while (n < v1.M_Value_Size) do
-		begin
-		carry_bits_2:= ((v1.M_Value[n] and carry_bits_mask) >> NBits_carry);
-		v1.M_Value[n]:= ((v1.M_Value[n] << NBits) OR carry_bits_1);
-		carry_bits_1:= carry_bits_2;
-		inc(n);
-		end;
-
-	v1.M_Value[0]:= (v1.M_Value[0] OR carry_bits_1);
-	end;
-end;
-
-{$ifdef Overflow_Checks}
-{$Q+}
-{$R+}
-{$endif}
-
-end;
-
-
-(******************************************)
-procedure RotateUp_NWords_Multi_Int_XV(var v1:Multi_Int_XV; NWords:MULTI_INT_1W_U);
-var	i,n,t	:MULTI_INT_1W_U;
-begin
-if		(NWords > 0)
-and		(NWords <= Multi_XV_maxi) then
-	begin
-	n:= NWords;
-	while (n > 0) do
-		begin
-		i:= (v1.M_Value_Size - 1);
-		t:= v1.M_Value[i];
-		while (i > 0) do
-			begin
-			v1.M_Value[i]:= v1.M_Value[i-1];
-			dec(i);
-			end;
-		v1.M_Value[i]:= t;
-		DEC(n);
-		end;
-	end;
-end;
-
-
 {******************************************}
-procedure RotateUp_MultiBits_Multi_Int_XV(var v1:Multi_Int_XV; NBits:MULTI_INT_1W_U);
-var
-NWords_count,
-NBits_count		:MULTI_INT_1W_U;
-
+class operator Multi_Int_XV.shl(const v1:Multi_Int_XV; const NBits:MULTI_INT_1W_U):Multi_Int_XV;
 begin
-if	(Not v1.Defined_flag)
-then
-	begin
-	Multi_Int_ERROR:= TRUE;
-	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
-		begin
-		Raise EInterror.create('Uninitialised variable');
-		end;
-	exit;
-	end;
-
-if (NBits > 0) then
-	begin
-	if (NBits >= MULTI_INT_1W_SIZE) then
-		begin
-		NWords_count:= (NBits DIV MULTI_INT_1W_SIZE);
-		NBits_count:= (NBits MOD MULTI_INT_1W_SIZE);
-		RotateUp_NWords_Multi_Int_XV(v1, NWords_count);
-		end
-	else NBits_count:= NBits;
-	RotateUp_NBits_Multi_Int_XV(v1, NBits_count);
-	end;
-end;
-
-
-(******************************************)
-procedure RotateUp(var v1:Multi_Int_XV; NBits:MULTI_INT_1W_U); overload;
-begin
-RotateUp_MultiBits_Multi_Int_XV(v1, NBits);
+// Result:= v1;								// this causes problems in calling code
+Multi_Int_XV_to_Multi_Int_XV(v1, Result);	// if not done, causes problems in calling code
+ShiftUp_MultiBits_Multi_Int_XV(Result, NBits);
 end;
 
 
@@ -13578,122 +12717,12 @@ ShiftDown_MultiBits_Multi_Int_XV(v1, NBits);
 end;
 
 
-(******************************************)
-procedure RotateDown_NBits_Multi_Int_XV(var v1:Multi_Int_XV; NBits:MULTI_INT_1W_U);
-var	carry_bits_1,
-	carry_bits_2,
-	carry_bits_mask,
-	NBits_max,
-	NBits_carry	:MULTI_INT_1W_U;
-	n			:integer;
-begin
-if NBits > 0 then
-begin
-
-{$ifdef Overflow_Checks}
-{$Q-}
-{$R-}
-{$endif}
-
-{$ifdef 32bit}
-carry_bits_mask:= $FFFF;
-{$endif}
-{$ifdef 64bit}
-carry_bits_mask:= $FFFFFFFF;
-{$endif}
-
-NBits_max:= MULTI_INT_1W_SIZE;
-NBits_carry:= (NBits_max - NBits);
-carry_bits_mask:= (carry_bits_mask >> NBits_carry);
-
-if NBits <= NBits_max then
-	begin
-	n:= (v1.M_Value_Size - 1);
-	carry_bits_1:= ((v1.M_Value[n] and carry_bits_mask) << NBits_carry);
-	v1.M_Value[n]:= (v1.M_Value[n] >> NBits);
-
-	dec(n);
-	while (n >= 0) do
-		begin
-		carry_bits_2:= ((v1.M_Value[n] and carry_bits_mask) << NBits_carry);
-		v1.M_Value[n]:= ((v1.M_Value[n] >> NBits) OR carry_bits_1);
-		carry_bits_1:= carry_bits_2;
-		dec(n);
-		end;
-
-	v1.M_Value[Multi_XV_maxi]:= (v1.M_Value[Multi_XV_maxi] OR carry_bits_1);
-
-	end;
-end;
-
-{$ifdef Overflow_Checks}
-{$Q+}
-{$R+}
-{$endif}
-
-end;
-
-
-(******************************************)
-procedure RotateDown_NWords_Multi_Int_XV(var v1:Multi_Int_XV; NWords:MULTI_INT_1W_U);
-var	i,n,t	:MULTI_INT_1W_U;
-begin
-if		(NWords > 0)
-and		(NWords <= Multi_XV_maxi) then
-	begin
-	n:= NWords;
-	while (n > 0) do
-		begin
-		i:=0;
-		t:= v1.M_Value[i];
-		while (i < (v1.M_Value_Size - 1)) do
-			begin
-			v1.M_Value[i]:= v1.M_Value[i+1];
-			inc(i);
-			end;
-		v1.M_Value[i]:= t;
-		DEC(n);
-		end;
-	end;
-end;
-
-
 {******************************************}
-procedure RotateDown_MultiBits_Multi_Int_XV(var v1:Multi_Int_XV; NBits:MULTI_INT_1W_U);
-var
-NWords_count,
-NBits_count		:MULTI_INT_1W_U;
-
+class operator Multi_Int_XV.shr(const v1:Multi_Int_XV; const NBits:MULTI_INT_1W_U):Multi_Int_XV;
 begin
-if	(Not v1.Defined_flag)
-then
-	begin
-	Multi_Int_ERROR:= TRUE;
-	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
-		begin
-		Raise EInterror.create('Uninitialised variable');
-		end;
-	exit;
-	end;
-
-if (NBits > 0) then
-	begin
-	if (NBits >= MULTI_INT_1W_SIZE) then
-		begin
-		NWords_count:= (NBits DIV MULTI_INT_1W_SIZE);
-		NBits_count:= (NBits MOD MULTI_INT_1W_SIZE);
-		RotateDown_NWords_Multi_Int_XV(v1, NWords_count);
-		end
-	else NBits_count:= NBits;
-	RotateDown_NBits_Multi_Int_XV(v1, NBits_count);
-	end;
-end;
-
-
-(******************************************)
-procedure RotateDown(var v1:Multi_Int_XV; NBits:MULTI_INT_1W_U); overload;
-begin
-RotateDown_MultiBits_Multi_Int_XV(v1, NBits);
+// Result:= v1;								// this causes problems in calling code
+Multi_Int_XV_to_Multi_Int_XV(v1, Result);	// if not done, causes problems in calling code
+ShiftDown_MultiBits_Multi_Int_XV(Result, NBits);
 end;
 
 
@@ -13914,7 +12943,7 @@ end;
 
 
 (******************************************)
-procedure ansistring_to_Multi_Int_XV(const v1:ansistring; var mi:Multi_Int_XV);
+procedure ansistring_to_Multi_Int_XV(const v1:ansistring; out mi:Multi_Int_XV);
 label 999;
 var
 	n,i,b,c,e,s	:MULTI_INT_2W_U;
@@ -13925,9 +12954,7 @@ var
 begin
 Multi_Int_ERROR:= FALSE;
 s:= Multi_XV_size;
-{$HINTS OFF} {$WARNINGS OFF}
 setlength(M_Val, s);
-{$HINTS ON} {$WARNINGS ON}
 mi:= 0;
 mi.Overflow_flag:=FALSE;
 mi.Defined_flag:= TRUE;
@@ -14035,9 +13062,7 @@ end;
 (******************************************)
 class operator Multi_Int_XV.implicit(const v1:ansistring):Multi_Int_XV;
 begin
-{$HINTS OFF} {$WARNINGS OFF}
 ansistring_to_Multi_Int_XV(v1,Result);
-{$WARNINGS ON} {$HINTS ON}
 end;
 
 
@@ -14072,9 +13097,7 @@ then
 	exit;
 	end;
 
-{$HINTS OFF} {$WARNINGS OFF}
 setlength(M_Val, v1.M_Value_Size);
-{$HINTS ON} {$WARNINGS ON}
 
 n:=0;
 while (n < v1.M_Value_Size) do
@@ -14108,23 +13131,19 @@ end;
 (******************************************)
 function Multi_Int_XV.ToStr:ansistring;
 begin
-{$HINTS OFF} {$WARNINGS OFF}
 Multi_Int_XV_to_ansistring(self, Result);
-{$WARNINGS ON} {$HINTS ON}
 end;
 
 
 (******************************************)
 class operator Multi_Int_XV.implicit(const v1:Multi_Int_XV):ansistring;
 begin
-{$HINTS OFF} {$WARNINGS OFF}
 Multi_Int_XV_to_ansistring(v1, Result);
-{$WARNINGS ON} {$HINTS ON}
 end;
 
 
 (******************************************)
-procedure hex_to_Multi_Int_XV(const v1:ansistring; var mi:Multi_Int_XV);
+procedure hex_to_Multi_Int_XV(const v1:ansistring; out mi:Multi_Int_XV);
 label 999;
 var
 	n,i,b,c,e,s	:MULTI_INT_2W_U;
@@ -14135,9 +13154,7 @@ var
 begin
 Multi_Int_ERROR:= FALSE;
 s:= Multi_XV_size;
-{$HINTS OFF} {$WARNINGS OFF}
 setlength(M_Val, s);
-{$HINTS ON} {$WARNINGS ON}
 mi:= 0;
 mi.Overflow_flag:=FALSE;
 mi.Defined_flag:= TRUE;
@@ -14241,23 +13258,19 @@ end;
 (******************************************)
 function Hex_to_Multi_Int_XV(const v1:ansistring):Multi_Int_XV;
 begin
-{$HINTS OFF} {$WARNINGS OFF}
 hex_to_Multi_Int_XV(v1,Result);
-{$WARNINGS ON} {$HINTS ON}
 end;
 
 
 (******************************************)
 function Multi_Int_XV.FromHex(const v1:ansistring):Multi_Int_XV;
 begin
-{$HINTS OFF} {$WARNINGS OFF}
 hex_to_Multi_Int_XV(v1,Result);
-{$WARNINGS ON} {$HINTS ON}
 end;
 
 
 (******************************************)
-procedure FromHex(const v1:ansistring; var v2:Multi_Int_XV); overload;
+procedure FromHex(const v1:ansistring; out v2:Multi_Int_XV); overload;
 begin
 hex_to_Multi_Int_XV(v1,v2);
 end;
@@ -14315,14 +13328,12 @@ end;
 (******************************************)
 function Multi_Int_XV.ToHex(const LZ:T_Multi_Leading_Zeros):ansistring;
 begin
-{$HINTS OFF} {$WARNINGS OFF}
 Multi_Int_XV_to_hex(self, Result, LZ);
-{$WARNINGS ON} {$HINTS ON}
 end;
 
 
 (******************************************)
-procedure Bin_to_Multi_Int_XV(const v1:ansistring; var mi:Multi_Int_XV);
+procedure Bin_to_Multi_Int_XV(const v1:ansistring; out mi:Multi_Int_XV);
 label 999;
 var
 	n,b,c,e,s	:MULTI_INT_2W_U;
@@ -14334,9 +13345,7 @@ var
 begin
 Multi_Int_ERROR:= FALSE;
 s:= Multi_XV_size;
-{$HINTS OFF} {$WARNINGS OFF}
 setlength(M_Val, s);
-{$HINTS ON} {$WARNINGS ON}
 mi:= 0;
 mi.Overflow_flag:=FALSE;
 mi.Defined_flag:= TRUE;
@@ -14441,14 +13450,12 @@ end;
 (******************************************)
 function Bin_to_Multi_Int_XV(const v1:ansistring):Multi_Int_XV;
 begin
-{$HINTS OFF} {$WARNINGS OFF}
 Bin_to_Multi_Int_XV(v1,Result);
-{$WARNINGS ON} {$HINTS ON}
 end;
 
 
 (******************************************)
-procedure FromBin(const v1:ansistring; var mi:Multi_Int_XV); overload;
+procedure FromBin(const v1:ansistring; out mi:Multi_Int_XV); overload;
 begin
 Bin_to_Multi_Int_XV(v1,mi);
 end;
@@ -14457,9 +13464,7 @@ end;
 (******************************************)
 function Multi_Int_XV.FromBin(const v1:ansistring):Multi_Int_XV;
 begin
-{$HINTS OFF} {$WARNINGS OFF}
 bin_to_Multi_Int_XV(v1,Result);
-{$HINTS ON} {$WARNINGS ON}
 end;
 
 
@@ -14512,14 +13517,12 @@ end;
 (******************************************)
 function Multi_Int_XV.ToBin(const LZ:T_Multi_Leading_Zeros):ansistring;
 begin
-{$HINTS OFF} {$WARNINGS OFF}
 Multi_Int_XV_to_bin(self, Result, LZ);
-{$WARNINGS ON} {$HINTS ON}
 end;
 
 
 (******************************************)
-procedure MULTI_INT_2W_S_to_Multi_Int_XV(const v1:MULTI_INT_2W_S; var mi:Multi_Int_XV);
+procedure MULTI_INT_2W_S_to_Multi_Int_XV(const v1:MULTI_INT_2W_S; out mi:Multi_Int_XV);
 var
 	n				:MULTI_INT_2W_U;
 begin
@@ -14552,14 +13555,12 @@ end;
 (******************************************)
 class operator Multi_Int_XV.implicit(const v1:MULTI_INT_2W_S):Multi_Int_XV;
 begin
-{$HINTS OFF} {$WARNINGS OFF}
 MULTI_INT_2W_S_to_Multi_Int_XV(v1,Result);
-{$WARNINGS ON} {$HINTS ON}
 end;
 
 
 (******************************************)
-procedure MULTI_INT_2W_U_to_Multi_Int_XV(const v1:MULTI_INT_2W_U; var mi:Multi_Int_XV);
+procedure MULTI_INT_2W_U_to_Multi_Int_XV(const v1:MULTI_INT_2W_U; out mi:Multi_Int_XV);
 var
 	n				:MULTI_INT_2W_U;
 begin
@@ -14583,9 +13584,7 @@ end;
 (******************************************)
 class operator Multi_Int_XV.implicit(const v1:MULTI_INT_2W_U):Multi_Int_XV;
 begin
-{$HINTS OFF} {$WARNINGS OFF}
 MULTI_INT_2W_U_to_Multi_Int_XV(v1,Result);
-{$WARNINGS ON} {$HINTS ON}
 end;
 
 
@@ -14758,18 +13757,14 @@ end;
 (******************************************)
 class operator Multi_Int_XV.implicit(const v1:Multi_Int_X4):Multi_Int_XV;
 begin
-{$HINTS OFF} {$WARNINGS OFF}
 Multi_Int_X4_to_Multi_Int_XV(v1,Result);
-{$WARNINGS ON} {$HINTS ON}
 end;
 
 
 (******************************************)
 function To_Multi_Int_XV(const v1:Multi_Int_X4):Multi_Int_XV;
 begin
-{$HINTS OFF} {$WARNINGS OFF}
 Multi_Int_X4_to_Multi_Int_XV(v1,Result);
-{$WARNINGS ON} {$HINTS ON}
 end;
 
 
@@ -14838,18 +13833,14 @@ end;
 (******************************************)
 class operator Multi_Int_XV.implicit(const v1:Multi_Int_X3):Multi_Int_XV;
 begin
-{$HINTS OFF} {$WARNINGS OFF}
 Multi_Int_X3_to_Multi_Int_XV(v1,Result);
-{$WARNINGS ON} {$HINTS ON}
 end;
 
 
 (******************************************)
 function To_Multi_Int_XV(const v1:Multi_Int_X3):Multi_Int_XV;
 begin
-{$HINTS OFF} {$WARNINGS OFF}
 Multi_Int_X3_to_Multi_Int_XV(v1,Result);
-{$WARNINGS ON} {$HINTS ON}
 end;
 
 
@@ -14918,18 +13909,14 @@ end;
 (******************************************)
 class operator Multi_Int_XV.implicit(const v1:Multi_Int_X2):Multi_Int_XV;
 begin
-{$HINTS OFF} {$WARNINGS OFF}
 Multi_Int_X2_to_Multi_Int_XV(v1,Result);
-{$WARNINGS ON} {$HINTS ON}
 end;
 
 
 (******************************************)
 function To_Multi_Int_XV(const v1:Multi_Int_X2):Multi_Int_XV;
 begin
-{$HINTS OFF} {$WARNINGS OFF}
 Multi_Int_X2_to_Multi_Int_XV(v1,Result);
-{$WARNINGS ON} {$HINTS ON}
 end;
 
 
@@ -15186,9 +14173,7 @@ begin
 Multi_Int_ERROR:= FALSE;
 
 FloatToDecimal(R_FLOATREC, v1, MULTI_SINGLE_TYPE_PRECISION_DIGITS, 0);
-{$HINTS OFF} {$WARNINGS OFF}
 ansistring_to_Multi_Int_XV(AddCharR('0',AnsiLeftStr(R_FLOATREC.digits,(MULTI_SINGLE_TYPE_PRECISION_DIGITS-1)),R_FLOATREC.Exponent), R);
-{$HINTS ON} {$WARNINGS ON}
 
 if (R.Overflow) then
 	begin
@@ -15218,9 +14203,7 @@ begin
 Multi_Int_ERROR:= FALSE;
 
 FloatToDecimal(R_FLOATREC, v1, MULTI_REAL_TYPE_PRECISION_DIGITS, 0);
-{$HINTS OFF} {$WARNINGS OFF}
 ansistring_to_Multi_Int_XV(AddCharR('0',AnsiLeftStr(R_FLOATREC.digits,(MULTI_REAL_TYPE_PRECISION_DIGITS-1)),R_FLOATREC.Exponent), R);
-{$HINTS ON} {$WARNINGS ON}
 
 if (R.Overflow) then
 	begin
@@ -15250,9 +14233,7 @@ begin
 Multi_Int_ERROR:= FALSE;
 
 FloatToDecimal(R_FLOATREC, v1, MULTI_DOUBLE_TYPE_PRECISION_DIGITS, 0);
-{$HINTS OFF} {$WARNINGS OFF}
 ansistring_to_Multi_Int_XV(AddCharR('0',AnsiLeftStr(R_FLOATREC.digits,(MULTI_DOUBLE_TYPE_PRECISION_DIGITS-1)),R_FLOATREC.Exponent), R);
-{$HINTS ON} {$WARNINGS ON}
 
 if (R.Overflow) then
 	begin
@@ -15616,9 +14597,7 @@ s2:= v2.M_Value_Size;
 s:= s1;
 if (s1 < s2) then s:= s2;
 ss:= (s+1);
-{$HINTS OFF} {$WARNINGS OFF}
 setlength(M_Val, ss);
-{$HINTS ON} {$WARNINGS ON}
 
 tv1:= v1.M_Value[0];
 tv2:= v2.M_Value[0];
@@ -15706,9 +14685,7 @@ s2:= v2.M_Value_Size;
 s:= s1;
 if (s1 < s2) then s:= s2;
 ss:= (s+1);
-{$HINTS OFF} {$WARNINGS OFF}
 setlength(M_Val, ss);
-{$HINTS ON} {$WARNINGS ON}
 
 M_Val[0]:=(v1.M_Value[0] - v2.M_Value[0]);
 if	M_Val[0] < 0 then
@@ -16184,7 +15161,7 @@ end;
 
 
 (*******************v4*********************)
-procedure multiply_Multi_Int_XV(const v1,v2:Multi_Int_XV;var Result:Multi_Int_XV); overload;
+procedure multiply_Multi_Int_XV(const v1,v2:Multi_Int_XV;out Result:Multi_Int_XV); overload;
 label	999;
 var
 i,j,k,
@@ -16199,18 +15176,13 @@ begin
 s1:= v1.M_Value_Size;
 s2:= v2.M_Value_Size;
 ss:= (s1 + s2);
-{$HINTS OFF} {$WARNINGS OFF}
 setlength(M_Val, ss);
-{$HINTS ON} {$WARNINGS ON}
 
 Result.init;
 Result:= 0;
 Result.Overflow_flag:=FALSE;
 Result.Defined_flag:=TRUE;
 Result.Negative_flag:=Multi_UBool_UNDEF;
-
-i:=0;
-repeat M_Val[i]:= 0; INC(i); until (i >= ss);
 
 // skip leading zeros in v2
 zf:= FALSE;
@@ -16382,7 +15354,7 @@ end;
 
 
 (*************************)
-procedure SqRoot(const v1:Multi_Int_XV;var VR,VREM:Multi_Int_XV);
+procedure SqRoot(const v1:Multi_Int_XV; out VR,VREM:Multi_Int_XV);
 var
 D,D2		:MULTI_INT_2W_S;
 HS,LS		:ansistring;
@@ -16455,7 +15427,8 @@ finished:= FALSE;
 while not finished do
 	begin
     T:= subtract_Multi_Int_XV(H,L);
-    ShiftDown(T,1);
+    // ShiftDown(T,1);
+	ShiftDown_MultiBits_Multi_Int_XV(T, 1);
     C:= add_Multi_Int_XV(L,T);
 
     multiply_Multi_Int_XV(C,C, CC);
@@ -16469,8 +15442,6 @@ while not finished do
 		else
 			begin
 			finished:= TRUE;
-			// multiply_Multi_Int_XV(C,C, T);
-			// VREM:= subtract_Multi_Int_XV(v1,T);
 			VREM:= 0;
 			end
 		end
@@ -16542,9 +15513,7 @@ else
 		begin
 		if	odd(PT) then
 			begin
-		{$HINTS OFF} {$WARNINGS OFF}
 			multiply_Multi_Int_XV(TV,Y, T);
-		{$HINTS ON} {$WARNINGS ON}
 			if	(T.Overflow_flag)
 			then
 				begin
@@ -16610,13 +15579,14 @@ end;
 
 
 (********************v0********************)
-procedure intdivide_taylor_warruth_XV(const P_dividend,P_dividor:Multi_Int_XV;var P_quotient,P_remainder:Multi_Int_XV);
+procedure intdivide_taylor_warruth_XV(const P_dividend,P_dividor:Multi_Int_XV;out P_quotient,P_remainder:Multi_Int_XV);
 label	AGAIN,9000,9999;
 var
 dividor,
 quotient,
 dividend,
-next_dividend	:Multi_Int_XV;
+next_dividend
+			:Multi_Int_XV;
 
 dividend_i,
 dividend_s,
@@ -16642,10 +15612,6 @@ next_word_carry
 finished		:boolean;
 
 begin
-// dividend:= 0;
-// next_dividend:= 0;
-// dividor:= 0;
-// quotient:= 0;
 P_quotient:= 0;
 P_remainder:= 0;
 
@@ -16748,7 +15714,6 @@ else
 		ShiftUp_NBits_Multi_Int_XV(dividor, shiftup_bits_dividor);
 		end;
 
-	finished:= FALSE;
 	next_word_carry:= 0;
 	word_carry:= 0;
 	dividor_i:= dividor_non_zero_pos;
@@ -16790,6 +15755,7 @@ else
 						goto AGAIN;
 					end;
 				end;
+
 			quotient:= 0;
 			if (quotient.M_Value_Size < div_s) then
 				begin
@@ -16886,9 +15852,7 @@ then
 	Result:= XV_Last_Quotient
 else	// different values than last time
 	begin
-{$HINTS OFF} {$WARNINGS OFF}
 	intdivide_taylor_warruth_XV(v1,v2,Quotient,Remainder);
-{$HINTS ON} {$WARNINGS ON}
 
 	XV_Last_Divisor:= v2;
 	XV_Last_Dividend:= v1;
@@ -16951,9 +15915,7 @@ then
 	Result:= XV_Last_Remainder
 else	// different values than last time
 	begin
-{$HINTS OFF} {$WARNINGS OFF}
 	intdivide_taylor_warruth_XV(v1,v2,Quotient,Remainder);
-{$HINTS ON} {$WARNINGS ON}
 
 	XV_Last_Divisor:= v2;
 	XV_Last_Dividend:= v1;
