@@ -225,7 +225,7 @@ begin
 start_time:= GetTickCount64;
 
 MV_i:= Multi_Int_XV_MAXINT;
-ShiftDown(MV_i, 7);
+MV_i:= (MV_i >> 7);
 
 MV_j:= '1000000000011100000000041070000000050653';
 
@@ -253,10 +253,10 @@ writeln(Format('time elapsed is %f seconds for %d iterations of divide with %d b
 start_time:= GetTickCount64;
 
 MV_i:= Multi_Int_XV_MAXINT;
-ShiftDown(MV_i, 131);
+MV_i:= (MV_i >> 131);
 
 MV_j:= Multi_Int_X4_MAXINT;
-ShiftDown(MV_j, 131);
+MV_j:= (MV_j >> 131);
 
 i:=0;
 while (i < (MV_MUL_ITERATIONS div 2)) do
@@ -282,10 +282,10 @@ writeln(Format('time elapsed is %f seconds for %d iterations of multiply with %d
 start_time:= GetTickCount64;
 
 MV_i:= Multi_Int_XV_MAXINT;
-ShiftDown(MV_i, 7);
+MV_i:= (MV_i >> 7);
 
 MV_j:= Multi_Int_XV_MAXINT;
-ShiftDown(MV_j, 11);
+MV_j:= (MV_j >> 7);
 
 i:=0;
 while (i < (MV_SUB_ITERATIONS div 2)) do

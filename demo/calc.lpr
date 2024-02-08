@@ -79,17 +79,11 @@ else
 		else if	(ParamStr(2) = 'xor') then
 			begin MK:= Mi Xor Mj; op:= 'XOR'; end
 
-		else if	(ParamStr(2) = 'rotu') then
-			begin Mk:=Mi; RotateUp(Mk, MULTI_INT_1W_U(Mj)); op:= 'ROTU'; end
-
-		else if	(ParamStr(2) = 'rotd') then
-			begin Mk:=Mi; RotateDown(Mk, MULTI_INT_1W_U(Mj)); op:= 'ROTD'; end
-
 		else if	(ParamStr(2) = 'shu') then
-			begin Mk:=Mi; ShiftUp(Mk, MULTI_INT_1W_U(Mj)); op:= 'SHU'; end
+			begin Mk:= (Mi << MULTI_INT_1W_U(Mj)); op:= 'SHU'; end
 
 		else if	(ParamStr(2) = 'shd') then
-			begin Mk:=Mi; ShiftDown(Mk, MULTI_INT_1W_U(Mj)); op:= 'SHD'; end
+			begin Mk:= (Mi >> MULTI_INT_1W_U(Mj)); op:= 'SHD'; end
 
 		else if	(ParamStr(2) = 'sqr') then
 			begin
