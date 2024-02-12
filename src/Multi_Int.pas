@@ -8,7 +8,9 @@ UNIT Multi_Int;
 // If you want to take this code and copyright it yourself, feel free.
 (******************************************************************************)
 
-{$MODE DELPHI}
+// {$MODE DELPHI}
+{$MODE OBJFPC}
+{$MODESWITCH ADVANCEDRECORDS}
 
 {$MODESWITCH NESTEDCOMMENTS+}
 
@@ -220,6 +222,9 @@ v4.35.04
 -	implement shr and shl operators
 -	hide ShiftDown & ShiftUp procedures
 -	more var parameters changed to out
+
+v4.36.00
+-	now works in OBJFPC mode with ADVANCEDRECORDS switch
 *)
 
 (* END OF USER OPTIONAL DEFINES *)
@@ -231,7 +236,7 @@ uses	sysutils
 ;
 
 const
-	version = '4.35.04';
+	version = '4.36.00';
 
 const
 
@@ -355,12 +360,12 @@ T_Multi_UBool	=	record
 					public
 						procedure	Init(v:Multi_UBool_Values); inline;
 						function	ToStr:string; inline;
-						class operator implicit(v:boolean):T_Multi_UBool; inline;
-						class operator implicit(v:T_Multi_UBool):Boolean; inline;
-						class operator implicit(v:Multi_UBool_Values):T_Multi_UBool; inline;
-						class operator implicit(v:T_Multi_UBool):Multi_UBool_Values; inline;
-						class operator equal(v1,v2:T_Multi_UBool):Boolean; inline;
-						class operator notequal(v1,v2:T_Multi_UBool):Boolean; inline;
+						class operator :=(v:boolean):T_Multi_UBool; inline;
+						class operator :=(v:T_Multi_UBool):Boolean; inline;
+						class operator :=(v:Multi_UBool_Values):T_Multi_UBool; inline;
+						class operator :=(v:T_Multi_UBool):Multi_UBool_Values; inline;
+						class operator =(v1,v2:T_Multi_UBool):Boolean; inline;
+						class operator <>(v1,v2:T_Multi_UBool):Boolean; inline;
 					end;
 
 Multi_Int_X2	=	record
@@ -378,37 +383,37 @@ Multi_Int_X2	=	record
 						function Overflow:boolean;	{$ifdef inline_functions} inline; {$endif}
 						function Negative:boolean;	{$ifdef inline_functions} inline; {$endif}
 						function Defined:boolean;	{$ifdef inline_functions} inline; {$endif}
-						class operator implicit(const v1:Multi_Int_X2):Multi_int8u;	{$ifdef inline_functions} inline; {$endif}
-						class operator implicit(const v1:Multi_Int_X2):Multi_int8;	{$ifdef inline_functions} inline; {$endif}
-						class operator implicit(const v1:Multi_Int_X2):MULTI_INT_1W_U;	{$ifdef inline_functions} inline; {$endif}
-						class operator implicit(const v1:Multi_Int_X2):MULTI_INT_1W_S;	{$ifdef inline_functions} inline; {$endif}
-						class operator implicit(const v1:Multi_Int_X2):MULTI_INT_2W_U;	{$ifdef inline_functions} inline; {$endif}
-						class operator implicit(const v1:Multi_Int_X2):MULTI_INT_2W_S;	{$ifdef inline_functions} inline; {$endif}
-						class operator implicit(const v1:MULTI_INT_2W_S):Multi_Int_X2;	{$ifdef inline_functions} inline; {$endif}
-						class operator implicit(const v1:MULTI_INT_2W_U):Multi_Int_X2;	{$ifdef inline_functions} inline; {$endif}
+						class operator :=(const v1:Multi_Int_X2):Multi_int8u;	{$ifdef inline_functions} inline; {$endif}
+						class operator :=(const v1:Multi_Int_X2):Multi_int8;	{$ifdef inline_functions} inline; {$endif}
+						class operator :=(const v1:Multi_Int_X2):MULTI_INT_1W_U;	{$ifdef inline_functions} inline; {$endif}
+						class operator :=(const v1:Multi_Int_X2):MULTI_INT_1W_S;	{$ifdef inline_functions} inline; {$endif}
+						class operator :=(const v1:Multi_Int_X2):MULTI_INT_2W_U;	{$ifdef inline_functions} inline; {$endif}
+						class operator :=(const v1:Multi_Int_X2):MULTI_INT_2W_S;	{$ifdef inline_functions} inline; {$endif}
+						class operator :=(const v1:MULTI_INT_2W_S):Multi_Int_X2;	{$ifdef inline_functions} inline; {$endif}
+						class operator :=(const v1:MULTI_INT_2W_U):Multi_Int_X2;	{$ifdef inline_functions} inline; {$endif}
 					{$ifdef 32bit}
-						class operator implicit(const v1:MULTI_INT_4W_S):Multi_Int_X2;	{$ifdef inline_functions} inline; {$endif}
-						class operator implicit(const v1:MULTI_INT_4W_U):Multi_Int_X2;	{$ifdef inline_functions} inline; {$endif}
+						class operator :=(const v1:MULTI_INT_4W_S):Multi_Int_X2;	{$ifdef inline_functions} inline; {$endif}
+						class operator :=(const v1:MULTI_INT_4W_U):Multi_Int_X2;	{$ifdef inline_functions} inline; {$endif}
 					{$endif}
-						class operator implicit(const v1:ansistring):Multi_Int_X2;	{$ifdef inline_functions} inline; {$endif}
-						class operator implicit(const v1:Multi_Int_X2):ansistring;	{$ifdef inline_functions} inline; {$endif}
-						class operator implicit(const v1:Single):Multi_Int_X2;	{$ifdef inline_functions} inline; {$endif}
-						class operator implicit(const v1:Real):Multi_Int_X2;	{$ifdef inline_functions} inline; {$endif}
-						class operator implicit(const v1:Double):Multi_Int_X2;	{$ifdef inline_functions} inline; {$endif}
-						class operator implicit(const v1:Multi_Int_X2):Single;	{$ifdef inline_functions} inline; {$endif}
-						class operator implicit(const v1:Multi_Int_X2):Real;	{$ifdef inline_functions} inline; {$endif}
-						class operator implicit(const v1:Multi_Int_X2):Double;	{$ifdef inline_functions} inline; {$endif}
-						class operator add(const v1,v2:Multi_Int_X2):Multi_Int_X2;	{$ifdef inline_functions} inline; {$endif}
-						class operator subtract(const v1,v2:Multi_Int_X2):Multi_Int_X2;	{$ifdef inline_functions} inline; {$endif}
+						class operator :=(const v1:ansistring):Multi_Int_X2;	{$ifdef inline_functions} inline; {$endif}
+						class operator :=(const v1:Multi_Int_X2):ansistring;	{$ifdef inline_functions} inline; {$endif}
+						class operator :=(const v1:Single):Multi_Int_X2;	{$ifdef inline_functions} inline; {$endif}
+						class operator :=(const v1:Real):Multi_Int_X2;	{$ifdef inline_functions} inline; {$endif}
+						class operator :=(const v1:Double):Multi_Int_X2;	{$ifdef inline_functions} inline; {$endif}
+						class operator :=(const v1:Multi_Int_X2):Single;	{$ifdef inline_functions} inline; {$endif}
+						class operator :=(const v1:Multi_Int_X2):Real;	{$ifdef inline_functions} inline; {$endif}
+						class operator :=(const v1:Multi_Int_X2):Double;	{$ifdef inline_functions} inline; {$endif}
+						class operator +(const v1,v2:Multi_Int_X2):Multi_Int_X2;	{$ifdef inline_functions} inline; {$endif}
+						class operator -(const v1,v2:Multi_Int_X2):Multi_Int_X2;	{$ifdef inline_functions} inline; {$endif}
 						class operator inc(const v1:Multi_Int_X2):Multi_Int_X2;	{$ifdef inline_functions} inline; {$endif}
 						class operator dec(const v1:Multi_Int_X2):Multi_Int_X2;	{$ifdef inline_functions} inline; {$endif}
-						class operator greaterthan(const v1,v2:Multi_Int_X2):Boolean;	{$ifdef inline_functions} inline; {$endif}
-						class operator lessthan(const v1,v2:Multi_Int_X2):Boolean;	{$ifdef inline_functions} inline; {$endif}
-						class operator equal(const v1,v2:Multi_Int_X2):Boolean;	{$ifdef inline_functions} inline; {$endif}
-						class operator notequal(const v1,v2:Multi_Int_X2):Boolean;	{$ifdef inline_functions} inline; {$endif}
-						class operator multiply(const v1,v2:Multi_Int_X2):Multi_Int_X2;	{$ifdef inline_functions} inline; {$endif}
-						class operator intdivide(const v1,v2:Multi_Int_X2):Multi_Int_X2;	{$ifdef inline_functions} inline; {$endif}
-						class operator modulus(const v1,v2:Multi_Int_X2):Multi_Int_X2;	{$ifdef inline_functions} inline; {$endif}
+						class operator >(const v1,v2:Multi_Int_X2):Boolean;	{$ifdef inline_functions} inline; {$endif}
+						class operator <(const v1,v2:Multi_Int_X2):Boolean;	{$ifdef inline_functions} inline; {$endif}
+						class operator =(const v1,v2:Multi_Int_X2):Boolean;	{$ifdef inline_functions} inline; {$endif}
+						class operator <>(const v1,v2:Multi_Int_X2):Boolean;	{$ifdef inline_functions} inline; {$endif}
+						class operator *(const v1,v2:Multi_Int_X2):Multi_Int_X2;	{$ifdef inline_functions} inline; {$endif}
+						class operator div(const v1,v2:Multi_Int_X2):Multi_Int_X2;	{$ifdef inline_functions} inline; {$endif}
+						class operator mod(const v1,v2:Multi_Int_X2):Multi_Int_X2;	{$ifdef inline_functions} inline; {$endif}
 						class operator xor(const v1,v2:Multi_Int_X2):Multi_Int_X2;	{$ifdef inline_functions} inline; {$endif}
 						class operator -(const v1:Multi_Int_X2):Multi_Int_X2;	{$ifdef inline_functions} inline; {$endif}
 						class operator >=(const v1,v2:Multi_Int_X2):Boolean;	{$ifdef inline_functions} inline; {$endif}
@@ -434,38 +439,38 @@ Multi_Int_X3	=	record
 						function Overflow:boolean;	{$ifdef inline_functions} inline; {$endif}
 						function Negative:boolean;	{$ifdef inline_functions} inline; {$endif}
 						function Defined:boolean;	{$ifdef inline_functions} inline; {$endif}
-						class operator implicit(const v1:Multi_Int_X3):Multi_int8u;	{$ifdef inline_functions} inline; {$endif}
-						class operator implicit(const v1:Multi_Int_X3):Multi_int8;	{$ifdef inline_functions} inline; {$endif}
-						class operator implicit(const v1:Multi_Int_X3):MULTI_INT_1W_U;	{$ifdef inline_functions} inline; {$endif}
-						class operator implicit(const v1:Multi_Int_X3):MULTI_INT_1W_S;	{$ifdef inline_functions} inline; {$endif}
-						class operator implicit(const v1:Multi_Int_X3):MULTI_INT_2W_U;	{$ifdef inline_functions} inline; {$endif}
-						class operator implicit(const v1:Multi_Int_X3):MULTI_INT_2W_S;	{$ifdef inline_functions} inline; {$endif}
-						class operator implicit(const v1:MULTI_INT_2W_S):Multi_Int_X3;	{$ifdef inline_functions} inline; {$endif}
-						class operator implicit(const v1:MULTI_INT_2W_U):Multi_Int_X3;	{$ifdef inline_functions} inline; {$endif}
+						class operator :=(const v1:Multi_Int_X3):Multi_int8u;	{$ifdef inline_functions} inline; {$endif}
+						class operator :=(const v1:Multi_Int_X3):Multi_int8;	{$ifdef inline_functions} inline; {$endif}
+						class operator :=(const v1:Multi_Int_X3):MULTI_INT_1W_U;	{$ifdef inline_functions} inline; {$endif}
+						class operator :=(const v1:Multi_Int_X3):MULTI_INT_1W_S;	{$ifdef inline_functions} inline; {$endif}
+						class operator :=(const v1:Multi_Int_X3):MULTI_INT_2W_U;	{$ifdef inline_functions} inline; {$endif}
+						class operator :=(const v1:Multi_Int_X3):MULTI_INT_2W_S;	{$ifdef inline_functions} inline; {$endif}
+						class operator :=(const v1:MULTI_INT_2W_S):Multi_Int_X3;	{$ifdef inline_functions} inline; {$endif}
+						class operator :=(const v1:MULTI_INT_2W_U):Multi_Int_X3;	{$ifdef inline_functions} inline; {$endif}
 					{$ifdef 32bit}
-						class operator implicit(const v1:MULTI_INT_4W_S):Multi_Int_X3;	{$ifdef inline_functions} inline; {$endif}
-						class operator implicit(const v1:MULTI_INT_4W_U):Multi_Int_X3;	{$ifdef inline_functions} inline; {$endif}
+						class operator :=(const v1:MULTI_INT_4W_S):Multi_Int_X3;	{$ifdef inline_functions} inline; {$endif}
+						class operator :=(const v1:MULTI_INT_4W_U):Multi_Int_X3;	{$ifdef inline_functions} inline; {$endif}
 					{$endif}
-						class operator implicit(const v1:Multi_Int_X2):Multi_Int_X3;	{$ifdef inline_functions} inline; {$endif}
-						class operator implicit(const v1:ansistring):Multi_Int_X3;	{$ifdef inline_functions} inline; {$endif}
-						class operator implicit(const v1:Multi_Int_X3):ansistring;	{$ifdef inline_functions} inline; {$endif}
-						class operator implicit(const v1:Single):Multi_Int_X3;	{$ifdef inline_functions} inline; {$endif}
-						class operator implicit(const v1:Real):Multi_Int_X3;	{$ifdef inline_functions} inline; {$endif}
-						class operator implicit(const v1:Double):Multi_Int_X3;	{$ifdef inline_functions} inline; {$endif}
-						class operator implicit(const v1:Multi_Int_X3):Real;	{$ifdef inline_functions} inline; {$endif}
-						class operator implicit(const v1:Multi_Int_X3):Single;	{$ifdef inline_functions} inline; {$endif}
-						class operator implicit(const v1:Multi_Int_X3):Double;	{$ifdef inline_functions} inline; {$endif}
-						class operator add(const v1,v2:Multi_Int_X3):Multi_Int_X3;	{$ifdef inline_functions} inline; {$endif}
-						class operator subtract(const v1,v2:Multi_Int_X3):Multi_Int_X3;	{$ifdef inline_functions} inline; {$endif}
+						class operator :=(const v1:Multi_Int_X2):Multi_Int_X3;	{$ifdef inline_functions} inline; {$endif}
+						class operator :=(const v1:ansistring):Multi_Int_X3;	{$ifdef inline_functions} inline; {$endif}
+						class operator :=(const v1:Multi_Int_X3):ansistring;	{$ifdef inline_functions} inline; {$endif}
+						class operator :=(const v1:Single):Multi_Int_X3;	{$ifdef inline_functions} inline; {$endif}
+						class operator :=(const v1:Real):Multi_Int_X3;	{$ifdef inline_functions} inline; {$endif}
+						class operator :=(const v1:Double):Multi_Int_X3;	{$ifdef inline_functions} inline; {$endif}
+						class operator :=(const v1:Multi_Int_X3):Real;	{$ifdef inline_functions} inline; {$endif}
+						class operator :=(const v1:Multi_Int_X3):Single;	{$ifdef inline_functions} inline; {$endif}
+						class operator :=(const v1:Multi_Int_X3):Double;	{$ifdef inline_functions} inline; {$endif}
+						class operator +(const v1,v2:Multi_Int_X3):Multi_Int_X3;	{$ifdef inline_functions} inline; {$endif}
+						class operator -(const v1,v2:Multi_Int_X3):Multi_Int_X3;	{$ifdef inline_functions} inline; {$endif}
 						class operator inc(const v1:Multi_Int_X3):Multi_Int_X3;	{$ifdef inline_functions} inline; {$endif}
 						class operator dec(const v1:Multi_Int_X3):Multi_Int_X3;	{$ifdef inline_functions} inline; {$endif}
-						class operator greaterthan(const v1,v2:Multi_Int_X3):Boolean;	{$ifdef inline_functions} inline; {$endif}
-						class operator lessthan(const v1,v2:Multi_Int_X3):Boolean;	{$ifdef inline_functions} inline; {$endif}
-						class operator equal(const v1,v2:Multi_Int_X3):Boolean;	{$ifdef inline_functions} inline; {$endif}
-						class operator notequal(const v1,v2:Multi_Int_X3):Boolean;	{$ifdef inline_functions} inline; {$endif}
-						class operator multiply(const v1,v2:Multi_Int_X3):Multi_Int_X3;	{$ifdef inline_functions} inline; {$endif}
-						class operator intdivide(const v1,v2:Multi_Int_X3):Multi_Int_X3;	{$ifdef inline_functions} inline; {$endif}
-						class operator modulus(const v1,v2:Multi_Int_X3):Multi_Int_X3;	{$ifdef inline_functions} inline; {$endif}
+						class operator >(const v1,v2:Multi_Int_X3):Boolean;	{$ifdef inline_functions} inline; {$endif}
+						class operator <(const v1,v2:Multi_Int_X3):Boolean;	{$ifdef inline_functions} inline; {$endif}
+						class operator =(const v1,v2:Multi_Int_X3):Boolean;	{$ifdef inline_functions} inline; {$endif}
+						class operator <>(const v1,v2:Multi_Int_X3):Boolean;	{$ifdef inline_functions} inline; {$endif}
+						class operator *(const v1,v2:Multi_Int_X3):Multi_Int_X3;	{$ifdef inline_functions} inline; {$endif}
+						class operator div(const v1,v2:Multi_Int_X3):Multi_Int_X3;	{$ifdef inline_functions} inline; {$endif}
+						class operator mod(const v1,v2:Multi_Int_X3):Multi_Int_X3;	{$ifdef inline_functions} inline; {$endif}
 						class operator xor(const v1,v2:Multi_Int_X3):Multi_Int_X3;	{$ifdef inline_functions} inline; {$endif}
 						class operator -(const v1:Multi_Int_X3):Multi_Int_X3;	{$ifdef inline_functions} inline; {$endif}
 						class operator >=(const v1,v2:Multi_Int_X3):Boolean;	{$ifdef inline_functions} inline; {$endif}
@@ -491,39 +496,39 @@ Multi_Int_X4	=	record
 						function Overflow:boolean;	{$ifdef inline_functions} inline; {$endif}
 						function Negative:boolean;	{$ifdef inline_functions} inline; {$endif}
 						function Defined:boolean;	{$ifdef inline_functions} inline; {$endif}
-						class operator implicit(const v1:Multi_Int_X4):Multi_int8u;	{$ifdef inline_functions} inline; {$endif}
-						class operator implicit(const v1:Multi_Int_X4):Multi_int8;	{$ifdef inline_functions} inline; {$endif}
-						class operator implicit(const v1:Multi_Int_X4):MULTI_INT_1W_U;	{$ifdef inline_functions} inline; {$endif}
-						class operator implicit(const v1:Multi_Int_X4):MULTI_INT_1W_S;	{$ifdef inline_functions} inline; {$endif}
-						class operator implicit(const v1:Multi_Int_X4):MULTI_INT_2W_U;	{$ifdef inline_functions} inline; {$endif}
-						class operator implicit(const v1:Multi_Int_X4):MULTI_INT_2W_S;	{$ifdef inline_functions} inline; {$endif}
-						class operator implicit(const v1:MULTI_INT_2W_S):Multi_Int_X4;	{$ifdef inline_functions} inline; {$endif}
-						class operator implicit(const v1:MULTI_INT_2W_U):Multi_Int_X4;	{$ifdef inline_functions} inline; {$endif}
+						class operator :=(const v1:Multi_Int_X4):Multi_int8u;	{$ifdef inline_functions} inline; {$endif}
+						class operator :=(const v1:Multi_Int_X4):Multi_int8;	{$ifdef inline_functions} inline; {$endif}
+						class operator :=(const v1:Multi_Int_X4):MULTI_INT_1W_U;	{$ifdef inline_functions} inline; {$endif}
+						class operator :=(const v1:Multi_Int_X4):MULTI_INT_1W_S;	{$ifdef inline_functions} inline; {$endif}
+						class operator :=(const v1:Multi_Int_X4):MULTI_INT_2W_U;	{$ifdef inline_functions} inline; {$endif}
+						class operator :=(const v1:Multi_Int_X4):MULTI_INT_2W_S;	{$ifdef inline_functions} inline; {$endif}
+						class operator :=(const v1:MULTI_INT_2W_S):Multi_Int_X4;	{$ifdef inline_functions} inline; {$endif}
+						class operator :=(const v1:MULTI_INT_2W_U):Multi_Int_X4;	{$ifdef inline_functions} inline; {$endif}
 					{$ifdef 32bit}
-						class operator implicit(const v1:MULTI_INT_4W_S):Multi_Int_X4;	{$ifdef inline_functions} inline; {$endif}
-						class operator implicit(const v1:MULTI_INT_4W_U):Multi_Int_X4;	{$ifdef inline_functions} inline; {$endif}
+						class operator :=(const v1:MULTI_INT_4W_S):Multi_Int_X4;	{$ifdef inline_functions} inline; {$endif}
+						class operator :=(const v1:MULTI_INT_4W_U):Multi_Int_X4;	{$ifdef inline_functions} inline; {$endif}
 					{$endif}
-						class operator implicit(const v1:Multi_Int_X2):Multi_Int_X4;	{$ifdef inline_functions} inline; {$endif}
-						class operator implicit(const v1:Multi_Int_X3):Multi_Int_X4;	{$ifdef inline_functions} inline; {$endif}
-						class operator implicit(const v1:ansistring):Multi_Int_X4;	{$ifdef inline_functions} inline; {$endif}
-						class operator implicit(const v1:Multi_Int_X4):ansistring;	{$ifdef inline_functions} inline; {$endif}
-						class operator implicit(const v1:Single):Multi_Int_X4;	{$ifdef inline_functions} inline; {$endif}
-						class operator implicit(const v1:Real):Multi_Int_X4;	{$ifdef inline_functions} inline; {$endif}
-						class operator implicit(const v1:Double):Multi_Int_X4;	{$ifdef inline_functions} inline; {$endif}
-						class operator implicit(const v1:Multi_Int_X4):Single;	{$ifdef inline_functions} inline; {$endif}
-						class operator implicit(const v1:Multi_Int_X4):Real;	{$ifdef inline_functions} inline; {$endif}
-						class operator implicit(const v1:Multi_Int_X4):Double;	{$ifdef inline_functions} inline; {$endif}
-						class operator add(const v1,v2:Multi_Int_X4):Multi_Int_X4;	{$ifdef inline_functions} inline; {$endif}
-						class operator subtract(const v1,v2:Multi_Int_X4):Multi_Int_X4;	{$ifdef inline_functions} inline; {$endif}
+						class operator :=(const v1:Multi_Int_X2):Multi_Int_X4;	{$ifdef inline_functions} inline; {$endif}
+						class operator :=(const v1:Multi_Int_X3):Multi_Int_X4;	{$ifdef inline_functions} inline; {$endif}
+						class operator :=(const v1:ansistring):Multi_Int_X4;	{$ifdef inline_functions} inline; {$endif}
+						class operator :=(const v1:Multi_Int_X4):ansistring;	{$ifdef inline_functions} inline; {$endif}
+						class operator :=(const v1:Single):Multi_Int_X4;	{$ifdef inline_functions} inline; {$endif}
+						class operator :=(const v1:Real):Multi_Int_X4;	{$ifdef inline_functions} inline; {$endif}
+						class operator :=(const v1:Double):Multi_Int_X4;	{$ifdef inline_functions} inline; {$endif}
+						class operator :=(const v1:Multi_Int_X4):Single;	{$ifdef inline_functions} inline; {$endif}
+						class operator :=(const v1:Multi_Int_X4):Real;	{$ifdef inline_functions} inline; {$endif}
+						class operator :=(const v1:Multi_Int_X4):Double;	{$ifdef inline_functions} inline; {$endif}
+						class operator +(const v1,v2:Multi_Int_X4):Multi_Int_X4;	{$ifdef inline_functions} inline; {$endif}
+						class operator -(const v1,v2:Multi_Int_X4):Multi_Int_X4;	{$ifdef inline_functions} inline; {$endif}
 						class operator inc(const v1:Multi_Int_X4):Multi_Int_X4;	{$ifdef inline_functions} inline; {$endif}
 						class operator dec(const v1:Multi_Int_X4):Multi_Int_X4;	{$ifdef inline_functions} inline; {$endif}
-						class operator greaterthan(const v1,v2:Multi_Int_X4):Boolean;	{$ifdef inline_functions} inline; {$endif}
-						class operator lessthan(const v1,v2:Multi_Int_X4):Boolean;	{$ifdef inline_functions} inline; {$endif}
-						class operator equal(const v1,v2:Multi_Int_X4):Boolean;	{$ifdef inline_functions} inline; {$endif}
-						class operator notequal(const v1,v2:Multi_Int_X4):Boolean;	{$ifdef inline_functions} inline; {$endif}
-						class operator multiply(const v1,v2:Multi_Int_X4):Multi_Int_X4;	{$ifdef inline_functions} inline; {$endif}
-						class operator intdivide(const v1,v2:Multi_Int_X4):Multi_Int_X4;	{$ifdef inline_functions} inline; {$endif}
-						class operator modulus(const v1,v2:Multi_Int_X4):Multi_Int_X4;	{$ifdef inline_functions} inline; {$endif}
+						class operator >(const v1,v2:Multi_Int_X4):Boolean;	{$ifdef inline_functions} inline; {$endif}
+						class operator <(const v1,v2:Multi_Int_X4):Boolean;	{$ifdef inline_functions} inline; {$endif}
+						class operator =(const v1,v2:Multi_Int_X4):Boolean;	{$ifdef inline_functions} inline; {$endif}
+						class operator <>(const v1,v2:Multi_Int_X4):Boolean;	{$ifdef inline_functions} inline; {$endif}
+						class operator *(const v1,v2:Multi_Int_X4):Multi_Int_X4;	{$ifdef inline_functions} inline; {$endif}
+						class operator div(const v1,v2:Multi_Int_X4):Multi_Int_X4;	{$ifdef inline_functions} inline; {$endif}
+						class operator mod(const v1,v2:Multi_Int_X4):Multi_Int_X4;	{$ifdef inline_functions} inline; {$endif}
 						class operator xor(const v1,v2:Multi_Int_X4):Multi_Int_X4;	{$ifdef inline_functions} inline; {$endif}
 						class operator -(const v1:Multi_Int_X4):Multi_Int_X4;	{$ifdef inline_functions} inline; {$endif}
 						class operator >=(const v1,v2:Multi_Int_X4):Boolean;	{$ifdef inline_functions} inline; {$endif}
@@ -551,41 +556,41 @@ Multi_Int_XV	=	record
 						function Overflow:boolean;	{$ifdef inline_functions} inline; {$endif}
 						function Negative:boolean;	{$ifdef inline_functions} inline; {$endif}
 						function Defined:boolean;	{$ifdef inline_functions} inline; {$endif}
-						class operator implicit(const v1:Multi_Int_XV):Multi_int8u;	{$ifdef inline_functions} inline; {$endif}
-						class operator implicit(const v1:Multi_Int_XV):Multi_int8;	{$ifdef inline_functions} inline; {$endif}
-						class operator implicit(const v1:Multi_Int_XV):MULTI_INT_1W_U;	{$ifdef inline_functions} inline; {$endif}
-						class operator implicit(const v1:Multi_Int_XV):MULTI_INT_1W_S;	{$ifdef inline_functions} inline; {$endif}
-						class operator implicit(const v1:Multi_Int_XV):MULTI_INT_2W_U;	{$ifdef inline_functions} inline; {$endif}
-						class operator implicit(const v1:Multi_Int_XV):MULTI_INT_2W_S;	{$ifdef inline_functions} inline; {$endif}
-						class operator implicit(const v1:Multi_Int_X2):Multi_Int_XV;	{$ifdef inline_functions} inline; {$endif}
-						class operator implicit(const v1:Multi_Int_X3):Multi_Int_XV;	{$ifdef inline_functions} inline; {$endif}
-						class operator implicit(const v1:Multi_Int_X4):Multi_Int_XV;	{$ifdef inline_functions} inline; {$endif}
-						class operator implicit(const v1:MULTI_INT_2W_S):Multi_Int_XV;	{$ifdef inline_functions} inline; {$endif}
-						class operator implicit(const v1:MULTI_INT_2W_U):Multi_Int_XV;	{$ifdef inline_functions} inline; {$endif}
+						class operator :=(const v1:Multi_Int_XV):Multi_int8u;	{$ifdef inline_functions} inline; {$endif}
+						class operator :=(const v1:Multi_Int_XV):Multi_int8;	{$ifdef inline_functions} inline; {$endif}
+						class operator :=(const v1:Multi_Int_XV):MULTI_INT_1W_U;	{$ifdef inline_functions} inline; {$endif}
+						class operator :=(const v1:Multi_Int_XV):MULTI_INT_1W_S;	{$ifdef inline_functions} inline; {$endif}
+						class operator :=(const v1:Multi_Int_XV):MULTI_INT_2W_U;	{$ifdef inline_functions} inline; {$endif}
+						class operator :=(const v1:Multi_Int_XV):MULTI_INT_2W_S;	{$ifdef inline_functions} inline; {$endif}
+						class operator :=(const v1:Multi_Int_X2):Multi_Int_XV;	{$ifdef inline_functions} inline; {$endif}
+						class operator :=(const v1:Multi_Int_X3):Multi_Int_XV;	{$ifdef inline_functions} inline; {$endif}
+						class operator :=(const v1:Multi_Int_X4):Multi_Int_XV;	{$ifdef inline_functions} inline; {$endif}
+						class operator :=(const v1:MULTI_INT_2W_S):Multi_Int_XV;	{$ifdef inline_functions} inline; {$endif}
+						class operator :=(const v1:MULTI_INT_2W_U):Multi_Int_XV;	{$ifdef inline_functions} inline; {$endif}
 					{$ifdef 32bit}
-						class operator implicit(const v1:MULTI_INT_4W_S):Multi_Int_XV;	{$ifdef inline_functions} inline; {$endif}
-						class operator implicit(const v1:MULTI_INT_4W_U):Multi_Int_XV;	{$ifdef inline_functions} inline; {$endif}
+						class operator :=(const v1:MULTI_INT_4W_S):Multi_Int_XV;	{$ifdef inline_functions} inline; {$endif}
+						class operator :=(const v1:MULTI_INT_4W_U):Multi_Int_XV;	{$ifdef inline_functions} inline; {$endif}
 					{$endif}
-						class operator implicit(const v1:ansistring):Multi_Int_XV;	{$ifdef inline_functions} inline; {$endif}
-						class operator implicit(const v1:Multi_Int_XV):ansistring;	{$ifdef inline_functions} inline; {$endif}
-						class operator implicit(const v1:Single):Multi_Int_XV;	{$ifdef inline_functions} inline; {$endif}
-						class operator implicit(const v1:Multi_Int_XV):Single;	{$ifdef inline_functions} inline; {$endif}
-						class operator implicit(const v1:Real):Multi_Int_XV;	{$ifdef inline_functions} inline; {$endif}
-						class operator implicit(const v1:Multi_Int_XV):Real;	{$ifdef inline_functions} inline; {$endif}
-						class operator implicit(const v1:Double):Multi_Int_XV;	{$ifdef inline_functions} inline; {$endif}
-						class operator implicit(const v1:Multi_Int_XV):Double;	{$ifdef inline_functions} inline; {$endif}
-						class operator add(const v1,v2:Multi_Int_XV):Multi_Int_XV;	{$ifdef inline_functions} inline; {$endif}
-						class operator greaterthan(const v1,v2:Multi_Int_XV):Boolean;	{$ifdef inline_functions} inline; {$endif}
-						class operator lessthan(const v1,v2:Multi_Int_XV):Boolean;	{$ifdef inline_functions} inline; {$endif}
-						class operator equal(const v1,v2:Multi_Int_XV):Boolean;	{$ifdef inline_functions} inline; {$endif}
-						class operator notequal(const v1,v2:Multi_Int_XV):Boolean;	{$ifdef inline_functions} inline; {$endif}
-						class operator subtract(const v1,v2:Multi_Int_XV):Multi_Int_XV;	{$ifdef inline_functions} inline; {$endif}
+						class operator :=(const v1:ansistring):Multi_Int_XV;	{$ifdef inline_functions} inline; {$endif}
+						class operator :=(const v1:Multi_Int_XV):ansistring;	{$ifdef inline_functions} inline; {$endif}
+						class operator :=(const v1:Single):Multi_Int_XV;	{$ifdef inline_functions} inline; {$endif}
+						class operator :=(const v1:Multi_Int_XV):Single;	{$ifdef inline_functions} inline; {$endif}
+						class operator :=(const v1:Real):Multi_Int_XV;	{$ifdef inline_functions} inline; {$endif}
+						class operator :=(const v1:Multi_Int_XV):Real;	{$ifdef inline_functions} inline; {$endif}
+						class operator :=(const v1:Double):Multi_Int_XV;	{$ifdef inline_functions} inline; {$endif}
+						class operator :=(const v1:Multi_Int_XV):Double;	{$ifdef inline_functions} inline; {$endif}
+						class operator +(const v1,v2:Multi_Int_XV):Multi_Int_XV;	{$ifdef inline_functions} inline; {$endif}
+						class operator >(const v1,v2:Multi_Int_XV):Boolean;	{$ifdef inline_functions} inline; {$endif}
+						class operator <(const v1,v2:Multi_Int_XV):Boolean;	{$ifdef inline_functions} inline; {$endif}
+						class operator =(const v1,v2:Multi_Int_XV):Boolean;	{$ifdef inline_functions} inline; {$endif}
+						class operator <>(const v1,v2:Multi_Int_XV):Boolean;	{$ifdef inline_functions} inline; {$endif}
+						class operator -(const v1,v2:Multi_Int_XV):Multi_Int_XV;	{$ifdef inline_functions} inline; {$endif}
 						class operator inc(const v1:Multi_Int_XV):Multi_Int_XV;	{$ifdef inline_functions} inline; {$endif}
 						class operator dec(const v1:Multi_Int_XV):Multi_Int_XV;	{$ifdef inline_functions} inline; {$endif}
 						class operator xor(const v1,v2:Multi_Int_XV):Multi_Int_XV;	{$ifdef inline_functions} inline; {$endif}
-						class operator multiply(const v1,v2:Multi_Int_XV):Multi_Int_XV;	{$ifdef inline_functions} inline; {$endif}
-						class operator intdivide(const v1,v2:Multi_Int_XV):Multi_Int_XV;	{$ifdef inline_functions} inline; {$endif}
-						class operator modulus(const v1,v2:Multi_Int_XV):Multi_Int_XV;	{$ifdef inline_functions} inline; {$endif}
+						class operator *(const v1,v2:Multi_Int_XV):Multi_Int_XV;	{$ifdef inline_functions} inline; {$endif}
+						class operator div(const v1,v2:Multi_Int_XV):Multi_Int_XV;	{$ifdef inline_functions} inline; {$endif}
+						class operator mod(const v1,v2:Multi_Int_XV):Multi_Int_XV;	{$ifdef inline_functions} inline; {$endif}
 						class operator -(const v1:Multi_Int_XV):Multi_Int_XV;	{$ifdef inline_functions} inline; {$endif}
 						class operator >=(const v1,v2:Multi_Int_XV):Boolean;	{$ifdef inline_functions} inline; {$endif}
 						class operator <=(const v1,v2:Multi_Int_XV):Boolean;	{$ifdef inline_functions} inline; {$endif}
@@ -711,12 +716,12 @@ Multi_Int_X5	=	record
 						Defined_flag	:boolean;
 					public
 						function Negative:boolean;
-						class operator implicit(const v1:MULTI_INT_2W_U):Multi_Int_X5;
-						class operator implicit(const v1:Multi_Int_X4):Multi_Int_X5;
+						class operator :=(const v1:MULTI_INT_2W_U):Multi_Int_X5;
+						class operator :=(const v1:Multi_Int_X4):Multi_Int_X5;
 						class operator >=(const v1,v2:Multi_Int_X5):Boolean;
-						class operator greaterthan(const v1,v2:Multi_Int_X5):Boolean;
-						class operator multiply(const v1,v2:Multi_Int_X5):Multi_Int_X5;
-						class operator subtract(const v1,v2:Multi_Int_X5):Multi_Int_X5;
+						class operator >(const v1,v2:Multi_Int_X5):Boolean;
+						class operator *(const v1,v2:Multi_Int_X5):Multi_Int_X5;
+						class operator -(const v1,v2:Multi_Int_X5):Multi_Int_X5;
 					end;
 
 
@@ -777,35 +782,35 @@ else if (B_Value = Multi_UBool_FALSE) then Result:= 'FALSE'
 else Result:= 'UNDEFINED';
 end;
 
-class operator T_Multi_UBool.implicit(v:Multi_UBool_Values):T_Multi_UBool;
+class operator T_Multi_UBool.:=(v:Multi_UBool_Values):T_Multi_UBool;
 begin
 Result.B_Value:= v;
 end;
 
-class operator T_Multi_UBool.implicit(v:T_Multi_UBool):Multi_UBool_Values;
+class operator T_Multi_UBool.:=(v:T_Multi_UBool):Multi_UBool_Values;
 begin
 Result:= v.B_Value;
 end;
 
-class operator T_Multi_UBool.implicit(v:Boolean):T_Multi_UBool;
+class operator T_Multi_UBool.:=(v:Boolean):T_Multi_UBool;
 begin
 if v then Result.B_Value:= Multi_UBool_TRUE
 else Result.B_Value:= Multi_UBool_FALSE;
 end;
 
-class operator T_Multi_UBool.implicit(v:T_Multi_UBool):Boolean;
+class operator T_Multi_UBool.:=(v:T_Multi_UBool):Boolean;
 begin
 if (v.B_Value = Multi_UBool_TRUE) then Result:= TRUE
 else Result:= FALSE;
 end;
 
-class operator T_Multi_UBool.equal(v1,v2:T_Multi_UBool):Boolean;
+class operator T_Multi_UBool.=(v1,v2:T_Multi_UBool):Boolean;
 begin
 if (v1.B_Value = v2.B_Value) then Result:= TRUE
 else Result:= FALSE;
 end;
 
-class operator T_Multi_UBool.notequal(v1,v2:T_Multi_UBool):Boolean;
+class operator T_Multi_UBool.<>(v1,v2:T_Multi_UBool):Boolean;
 begin
 if (v1.B_Value <> v2.B_Value) then Result:= TRUE
 else Result:= FALSE;
@@ -1453,7 +1458,7 @@ end;
 
 
 (******************************************)
-class operator Multi_Int_X2.greaterthan(const v1,v2:Multi_Int_X2):Boolean;
+class operator Multi_Int_X2.>(const v1,v2:Multi_Int_X2):Boolean;
 begin
 if	(Not v1.Defined_flag)
 or	(Not v2.Defined_flag)
@@ -1486,7 +1491,7 @@ end;
 
 
 (******************************************)
-class operator Multi_Int_X2.lessthan(const v1,v2:Multi_Int_X2):Boolean;
+class operator Multi_Int_X2.<(const v1,v2:Multi_Int_X2):Boolean;
 begin
 if	(Not v1.Defined_flag)
 or	(Not v2.Defined_flag)
@@ -1516,7 +1521,7 @@ end;
 
 
 (******************************************)
-class operator Multi_Int_X2.equal(const v1,v2:Multi_Int_X2):Boolean;
+class operator Multi_Int_X2.=(const v1,v2:Multi_Int_X2):Boolean;
 begin
 if	(Not v1.Defined_flag)
 or	(Not v2.Defined_flag)
@@ -1541,7 +1546,7 @@ end;
 
 
 (******************************************)
-class operator Multi_Int_X2.notequal(const v1,v2:Multi_Int_X2):Boolean;
+class operator Multi_Int_X2.<>(const v1,v2:Multi_Int_X2):Boolean;
 begin
 if	(Not v1.Defined_flag)
 or	(Not v2.Defined_flag)
@@ -1800,7 +1805,7 @@ end;
 
 
 (******************************************)
-class operator Multi_Int_X2.implicit(const v1:ansistring):Multi_Int_X2;
+class operator Multi_Int_X2.:=(const v1:ansistring):Multi_Int_X2;
 begin
 ansistring_to_Multi_Int_X2(v1,Result);
 end;
@@ -1833,7 +1838,7 @@ end;
 
 
 (******************************************)
-class operator Multi_Int_X2.implicit(const v1:MULTI_INT_4W_S):Multi_Int_X2;
+class operator Multi_Int_X2.:=(const v1:MULTI_INT_4W_S):Multi_Int_X2;
 begin
 MULTI_INT_4W_S_to_Multi_Int_X2(v1,Result);
 end;
@@ -1862,7 +1867,7 @@ end;
 
 
 (******************************************)
-class operator Multi_Int_X2.implicit(const v1:MULTI_INT_4W_U):Multi_Int_X2;
+class operator Multi_Int_X2.:=(const v1:MULTI_INT_4W_U):Multi_Int_X2;
 begin
 MULTI_INT_4W_U_to_Multi_Int_X2(v1,Result);
 end;
@@ -1894,7 +1899,7 @@ end;
 
 
 (******************************************)
-class operator Multi_Int_X2.implicit(const v1:MULTI_INT_2W_S):Multi_Int_X2;
+class operator Multi_Int_X2.:=(const v1:MULTI_INT_2W_S):Multi_Int_X2;
 begin
 MULTI_INT_2W_S_to_Multi_Int_X2(v1,Result);
 end;
@@ -1915,7 +1920,7 @@ end;
 
 
 (******************************************)
-class operator Multi_Int_X2.implicit(const v1:MULTI_INT_2W_U):Multi_Int_X2;
+class operator Multi_Int_X2.:=(const v1:MULTI_INT_2W_U):Multi_Int_X2;
 begin
 MULTI_INT_2W_U_to_Multi_Int_X2(v1,Result);
 end;
@@ -1923,7 +1928,7 @@ end;
 
 (******************************************)
 // WARNING Float to Multi_Int type conversion loses some precision
-class operator Multi_Int_X2.implicit(const v1:Single):Multi_Int_X2;
+class operator Multi_Int_X2.:=(const v1:Single):Multi_Int_X2;
 var
 R			:Multi_Int_X2;
 R_FLOATREC	:TFloatRec;
@@ -1954,7 +1959,7 @@ end;
 
 (******************************************)
 // WARNING Float to Multi_Int type conversion loses some precision
-class operator Multi_Int_X2.implicit(const v1:Real):Multi_Int_X2;
+class operator Multi_Int_X2.:=(const v1:Real):Multi_Int_X2;
 var
 R			:Multi_Int_X2;
 R_FLOATREC	:TFloatRec;
@@ -1985,7 +1990,7 @@ end;
 
 (******************************************)
 // WARNING Float to Multi_Int type conversion loses some precision
-class operator Multi_Int_X2.implicit(const v1:Double):Multi_Int_X2;
+class operator Multi_Int_X2.:=(const v1:Double):Multi_Int_X2;
 var
 R			:Multi_Int_X2;
 R_FLOATREC	:TFloatRec;
@@ -2015,7 +2020,7 @@ end;
 
 
 (******************************************)
-class operator Multi_Int_X2.implicit(const v1:Multi_Int_X2):Single;
+class operator Multi_Int_X2.:=(const v1:Multi_Int_X2):Single;
 var
 R,V,M		:Single;
 i			:MULTI_INT_1W_U;
@@ -2085,7 +2090,7 @@ end;
 
 
 (******************************************)
-class operator Multi_Int_X2.implicit(const v1:Multi_Int_X2):Real;
+class operator Multi_Int_X2.:=(const v1:Multi_Int_X2):Real;
 var
 	R,V,M	:Real;
 	i		:MULTI_INT_1W_U;
@@ -2155,7 +2160,7 @@ end;
 
 
 (******************************************)
-class operator Multi_Int_X2.implicit(const v1:Multi_Int_X2):Double;
+class operator Multi_Int_X2.:=(const v1:Multi_Int_X2):Double;
 var
 	R,V,M	:Double;
 	i		:MULTI_INT_1W_U;
@@ -2225,7 +2230,7 @@ end;
 
 
 {******************************************}
-class operator Multi_Int_X2.implicit(const v1:Multi_Int_X2):MULTI_INT_2W_S;
+class operator Multi_Int_X2.:=(const v1:Multi_Int_X2):MULTI_INT_2W_S;
 var	R	:MULTI_INT_2W_U;
 begin
 Multi_Int_ERROR:= FALSE;
@@ -2263,7 +2268,7 @@ end;
 
 
 {******************************************}
-class operator Multi_Int_X2.implicit(const v1:Multi_Int_X2):MULTI_INT_2W_U;
+class operator Multi_Int_X2.:=(const v1:Multi_Int_X2):MULTI_INT_2W_U;
 var	R	:MULTI_INT_2W_U;
 begin
 Multi_Int_ERROR:= FALSE;
@@ -2299,7 +2304,7 @@ end;
 
 
 {******************************************}
-class operator Multi_Int_X2.implicit(const v1:Multi_Int_X2):MULTI_INT_1W_S;
+class operator Multi_Int_X2.:=(const v1:Multi_Int_X2):MULTI_INT_1W_S;
 var	R	:MULTI_INT_2W_U;
 begin
 Multi_Int_ERROR:= FALSE;
@@ -2337,7 +2342,7 @@ end;
 
 
 {******************************************}
-class operator Multi_Int_X2.implicit(const v1:Multi_Int_X2):MULTI_INT_1W_U;
+class operator Multi_Int_X2.:=(const v1:Multi_Int_X2):MULTI_INT_1W_U;
 var	R	:MULTI_INT_2W_U;
 begin
 Multi_Int_ERROR:= FALSE;
@@ -2373,7 +2378,7 @@ end;
 
 
 {******************************************}
-class operator Multi_Int_X2.implicit(const v1:Multi_Int_X2):Multi_int8u;
+class operator Multi_Int_X2.:=(const v1:Multi_Int_X2):Multi_int8u;
 begin
 Multi_Int_ERROR:= FALSE;
 if	(Not v1.Defined_flag)
@@ -2408,7 +2413,7 @@ end;
 
 
 {******************************************}
-class operator Multi_Int_X2.implicit(const v1:Multi_Int_X2):Multi_int8;
+class operator Multi_Int_X2.:=(const v1:Multi_Int_X2):Multi_int8;
 begin
 Multi_Int_ERROR:= FALSE;
 if	(Not v1.Defined_flag)
@@ -2861,7 +2866,7 @@ end;
 
 
 (******************************************)
-class operator Multi_Int_X2.implicit(const v1:Multi_Int_X2):ansistring;
+class operator Multi_Int_X2.:=(const v1:Multi_Int_X2):ansistring;
 begin
 Multi_Int_X2_to_ansistring(v1, Result);
 end;
@@ -3081,7 +3086,7 @@ end;
 
 
 (******************************************)
-class operator Multi_Int_X2.add(const v1,v2:Multi_Int_X2):Multi_Int_X2;
+class operator Multi_Int_X2.+(const v1,v2:Multi_Int_X2):Multi_Int_X2;
 Var	Neg:T_Multi_UBool;
 begin
 if	(Not v1.Defined_flag)
@@ -3228,7 +3233,7 @@ end;
 
 
 (******************************************)
-class operator Multi_Int_X2.subtract(const v1,v2:Multi_Int_X2):Multi_Int_X2;
+class operator Multi_Int_X2.-(const v1,v2:Multi_Int_X2):Multi_Int_X2;
 Var	Neg:Multi_UBool_Values;
 begin
 if	(Not v1.Defined_flag)
@@ -3444,7 +3449,7 @@ end;
 
 
 (******************************************)
-class operator Multi_Int_X2.multiply(const v1,v2:Multi_Int_X2):Multi_Int_X2;
+class operator Multi_Int_X2.*(const v1,v2:Multi_Int_X2):Multi_Int_X2;
 var	  R:Multi_Int_X2;
 begin
 if	(Not v1.Defined_flag)
@@ -3873,7 +3878,7 @@ end;
 
 
 (******************************************)
-class operator Multi_Int_X2.intdivide(const v1,v2:Multi_Int_X2):Multi_Int_X2;
+class operator Multi_Int_X2.div(const v1,v2:Multi_Int_X2):Multi_Int_X2;
 var
 Remainder,
 Quotient	:Multi_Int_X2;
@@ -3937,7 +3942,7 @@ end;
 
 
 (******************************************)
-class operator Multi_Int_X2.modulus(const v1,v2:Multi_Int_X2):Multi_Int_X2;
+class operator Multi_Int_X2.mod(const v1,v2:Multi_Int_X2):Multi_Int_X2;
 var
 Remainder,
 Quotient	:Multi_Int_X2;
@@ -4631,7 +4636,7 @@ end;
 
 
 (******************************************)
-class operator Multi_Int_X3.greaterthan(const v1,v2:Multi_Int_X3):Boolean;
+class operator Multi_Int_X3.>(const v1,v2:Multi_Int_X3):Boolean;
 begin
 if	(Not v1.Defined_flag)
 or	(Not v2.Defined_flag)
@@ -4664,7 +4669,7 @@ end;
 
 
 (******************************************)
-class operator Multi_Int_X3.lessthan(const v1,v2:Multi_Int_X3):Boolean;
+class operator Multi_Int_X3.<(const v1,v2:Multi_Int_X3):Boolean;
 begin
 if	(Not v1.Defined_flag)
 or	(Not v2.Defined_flag)
@@ -4694,7 +4699,7 @@ end;
 
 
 (******************************************)
-class operator Multi_Int_X3.equal(const v1,v2:Multi_Int_X3):Boolean;
+class operator Multi_Int_X3.=(const v1,v2:Multi_Int_X3):Boolean;
 begin
 if	(Not v1.Defined_flag)
 or	(Not v2.Defined_flag)
@@ -4719,7 +4724,7 @@ end;
 
 
 (******************************************)
-class operator Multi_Int_X3.notequal(const v1,v2:Multi_Int_X3):Boolean;
+class operator Multi_Int_X3.<>(const v1,v2:Multi_Int_X3):Boolean;
 begin
 if	(Not v1.Defined_flag)
 or	(Not v2.Defined_flag)
@@ -4871,7 +4876,7 @@ end;
 
 
 (******************************************)
-class operator Multi_Int_X3.implicit(const v1:ansistring):Multi_Int_X3;
+class operator Multi_Int_X3.:=(const v1:ansistring):Multi_Int_X3;
 begin
 ansistring_to_Multi_Int_X3(v1,Result);
 end;
@@ -4907,7 +4912,7 @@ end;
 
 
 (******************************************)
-class operator Multi_Int_X3.implicit(const v1:MULTI_INT_4W_S):Multi_Int_X3;
+class operator Multi_Int_X3.:=(const v1:MULTI_INT_4W_S):Multi_Int_X3;
 begin
 MULTI_INT_4W_S_to_Multi_Int_X3(v1,Result);
 end;
@@ -4939,7 +4944,7 @@ end;
 
 
 (******************************************)
-class operator Multi_Int_X3.implicit(const v1:MULTI_INT_4W_U):Multi_Int_X3;
+class operator Multi_Int_X3.:=(const v1:MULTI_INT_4W_U):Multi_Int_X3;
 begin
 MULTI_INT_4W_U_to_Multi_Int_X3(v1,Result);
 end;
@@ -4972,7 +4977,7 @@ end;
 
 
 (******************************************)
-class operator Multi_Int_X3.implicit(const v1:MULTI_INT_2W_S):Multi_Int_X3;
+class operator Multi_Int_X3.:=(const v1:MULTI_INT_2W_S):Multi_Int_X3;
 begin
 MULTI_INT_2W_S_to_Multi_Int_X3(v1,Result);
 end;
@@ -4995,7 +5000,7 @@ end;
 
 
 (******************************************)
-class operator Multi_Int_X3.implicit(const v1:MULTI_INT_2W_U):Multi_Int_X3;
+class operator Multi_Int_X3.:=(const v1:MULTI_INT_2W_U):Multi_Int_X3;
 begin
 MULTI_INT_2W_U_to_Multi_Int_X3(v1,Result);
 end;
@@ -5178,7 +5183,7 @@ end;
 
 
 (******************************************)
-class operator Multi_Int_X3.implicit(const v1:Multi_Int_X2):Multi_Int_X3;
+class operator Multi_Int_X3.:=(const v1:Multi_Int_X2):Multi_Int_X3;
 begin
 Multi_Int_X2_to_Multi_Int_X3(v1,Result);
 end;
@@ -5186,7 +5191,7 @@ end;
 
 (******************************************)
 // WARNING Float to Multi_Int type conversion loses some precision
-class operator Multi_Int_X3.implicit(const v1:Single):Multi_Int_X3;
+class operator Multi_Int_X3.:=(const v1:Single):Multi_Int_X3;
 var
 R			:Multi_Int_X3;
 R_FLOATREC	:TFloatRec;
@@ -5215,7 +5220,7 @@ end;
 
 (******************************************)
 // WARNING Float to Multi_Int type conversion loses some precision
-class operator Multi_Int_X3.implicit(const v1:Real):Multi_Int_X3;
+class operator Multi_Int_X3.:=(const v1:Real):Multi_Int_X3;
 var
 R			:Multi_Int_X3;
 R_FLOATREC	:TFloatRec;
@@ -5245,7 +5250,7 @@ end;
 
 (******************************************)
 // WARNING Float to Multi_Int type conversion loses some precision
-class operator Multi_Int_X3.implicit(const v1:Double):Multi_Int_X3;
+class operator Multi_Int_X3.:=(const v1:Double):Multi_Int_X3;
 var
 R			:Multi_Int_X3;
 R_FLOATREC	:TFloatRec;
@@ -5274,7 +5279,7 @@ end;
 
 
 (******************************************)
-class operator Multi_Int_X3.implicit(const v1:Multi_Int_X3):Single;
+class operator Multi_Int_X3.:=(const v1:Multi_Int_X3):Single;
 var
 R,V,M		:Single;
 i			:MULTI_INT_1W_U;
@@ -5344,7 +5349,7 @@ end;
 
 
 (******************************************)
-class operator Multi_Int_X3.implicit(const v1:Multi_Int_X3):Real;
+class operator Multi_Int_X3.:=(const v1:Multi_Int_X3):Real;
 var
 	R,V,M	:Real;
 	i		:MULTI_INT_1W_U;
@@ -5414,7 +5419,7 @@ end;
 
 
 (******************************************)
-class operator Multi_Int_X3.implicit(const v1:Multi_Int_X3):Double;
+class operator Multi_Int_X3.:=(const v1:Multi_Int_X3):Double;
 var
 	R,V,M	:Double;
 	i		:MULTI_INT_1W_U;
@@ -5484,7 +5489,7 @@ end;
 
 
 (******************************************)
-class operator Multi_Int_X3.implicit(const v1:Multi_Int_X3):MULTI_INT_2W_S;
+class operator Multi_Int_X3.:=(const v1:Multi_Int_X3):MULTI_INT_2W_S;
 var	R	:MULTI_INT_2W_U;
 begin
 Multi_Int_ERROR:= FALSE;
@@ -5524,7 +5529,7 @@ end;
 
 
 (******************************************)
-class operator Multi_Int_X3.implicit(const v1:Multi_Int_X3):MULTI_INT_2W_U;
+class operator Multi_Int_X3.:=(const v1:Multi_Int_X3):MULTI_INT_2W_U;
 var	R	:MULTI_INT_2W_U;
 begin
 Multi_Int_ERROR:= FALSE;
@@ -5561,7 +5566,7 @@ end;
 
 
 (******************************************)
-class operator Multi_Int_X3.implicit(const v1:Multi_Int_X3):MULTI_INT_1W_S;
+class operator Multi_Int_X3.:=(const v1:Multi_Int_X3):MULTI_INT_1W_S;
 var	R	:MULTI_INT_2W_U;
 begin
 Multi_Int_ERROR:= FALSE;
@@ -5601,7 +5606,7 @@ end;
 
 
 (******************************************)
-class operator Multi_Int_X3.implicit(const v1:Multi_Int_X3):MULTI_INT_1W_U;
+class operator Multi_Int_X3.:=(const v1:Multi_Int_X3):MULTI_INT_1W_U;
 var	R	:MULTI_INT_2W_U;
 begin
 Multi_Int_ERROR:= FALSE;
@@ -5640,7 +5645,7 @@ end;
 
 
 {******************************************}
-class operator Multi_Int_X3.implicit(const v1:Multi_Int_X3):Multi_int8u;
+class operator Multi_Int_X3.:=(const v1:Multi_Int_X3):Multi_int8u;
 (* var	R	:Multi_int8u; *)
 begin
 Multi_Int_ERROR:= FALSE;
@@ -5678,7 +5683,7 @@ end;
 
 
 {******************************************}
-class operator Multi_Int_X3.implicit(const v1:Multi_Int_X3):Multi_int8;
+class operator Multi_Int_X3.:=(const v1:Multi_Int_X3):Multi_int8;
 (* var	R	:Multi_int8; *)
 begin
 Multi_Int_ERROR:= FALSE;
@@ -6147,7 +6152,7 @@ end;
 
 
 (******************************************)
-class operator Multi_Int_X3.implicit(const v1:Multi_Int_X3):ansistring;
+class operator Multi_Int_X3.:=(const v1:Multi_Int_X3):ansistring;
 begin
 Multi_Int_X3_to_ansistring(v1, Result);
 end;
@@ -6414,7 +6419,7 @@ end;
 
 
 (******************************************)
-class operator Multi_Int_X3.add(const v1,v2:Multi_Int_X3):Multi_Int_X3;
+class operator Multi_Int_X3.+(const v1,v2:Multi_Int_X3):Multi_Int_X3;
 Var	Neg:T_Multi_UBool;
 begin
 if	(Not v1.Defined_flag)
@@ -6561,7 +6566,7 @@ end;
 
 
 (******************************************)
-class operator Multi_Int_X3.subtract(const v1,v2:Multi_Int_X3):Multi_Int_X3;
+class operator Multi_Int_X3.-(const v1,v2:Multi_Int_X3):Multi_Int_X3;
 Var	Neg:Multi_UBool_Values;
 begin
 if	(Not v1.Defined_flag)
@@ -6777,7 +6782,7 @@ end;
 
 
 (******************************************)
-class operator Multi_Int_X3.multiply(const v1,v2:Multi_Int_X3):Multi_Int_X3;
+class operator Multi_Int_X3.*(const v1,v2:Multi_Int_X3):Multi_Int_X3;
 var	  R:Multi_Int_X3;
 begin
 if	(Not v1.Defined_flag)
@@ -7254,7 +7259,7 @@ end;
 
 
 (******************************************)
-class operator Multi_Int_X3.intdivide(const v1,v2:Multi_Int_X3):Multi_Int_X3;
+class operator Multi_Int_X3.div(const v1,v2:Multi_Int_X3):Multi_Int_X3;
 var
 Remainder,
 Quotient	:Multi_Int_X3;
@@ -7318,7 +7323,7 @@ end;
 
 
 (******************************************)
-class operator Multi_Int_X3.modulus(const v1,v2:Multi_Int_X3):Multi_Int_X3;
+class operator Multi_Int_X3.mod(const v1,v2:Multi_Int_X3):Multi_Int_X3;
 var
 Remainder,
 Quotient	:Multi_Int_X3;
@@ -8065,7 +8070,7 @@ end;
 
 
 (******************************************)
-class operator Multi_Int_X4.greaterthan(const v1,v2:Multi_Int_X4):Boolean;
+class operator Multi_Int_X4.>(const v1,v2:Multi_Int_X4):Boolean;
 begin
 if	(Not v1.Defined_flag)
 or	(Not v2.Defined_flag)
@@ -8098,7 +8103,7 @@ end;
 
 
 (******************************************)
-class operator Multi_Int_X4.lessthan(const v1,v2:Multi_Int_X4):Boolean;
+class operator Multi_Int_X4.<(const v1,v2:Multi_Int_X4):Boolean;
 begin
 if	(Not v1.Defined_flag)
 or	(Not v2.Defined_flag)
@@ -8128,7 +8133,7 @@ end;
 
 
 (******************************************)
-class operator Multi_Int_X4.equal(const v1,v2:Multi_Int_X4):Boolean;
+class operator Multi_Int_X4.=(const v1,v2:Multi_Int_X4):Boolean;
 begin
 if	(Not v1.Defined_flag)
 or	(Not v2.Defined_flag)
@@ -8153,7 +8158,7 @@ end;
 
 
 (******************************************)
-class operator Multi_Int_X4.notequal(const v1,v2:Multi_Int_X4):Boolean;
+class operator Multi_Int_X4.<>(const v1,v2:Multi_Int_X4):Boolean;
 begin
 if	(Not v1.Defined_flag)
 or	(Not v2.Defined_flag)
@@ -8357,7 +8362,7 @@ end;
 
 
 (******************************************)
-class operator Multi_Int_X4.implicit(const v1:Multi_Int_X2):Multi_Int_X4;
+class operator Multi_Int_X4.:=(const v1:Multi_Int_X2):Multi_Int_X4;
 begin
 Multi_Int_X2_to_Multi_Int_X4(v1,Result);
 end;
@@ -8412,7 +8417,7 @@ end;
 
 
 (******************************************)
-class operator Multi_Int_X4.implicit(const v1:Multi_Int_X3):Multi_Int_X4;
+class operator Multi_Int_X4.:=(const v1:Multi_Int_X3):Multi_Int_X4;
 begin
 Multi_Int_X3_to_Multi_Int_X4(v1,Result);
 end;
@@ -8565,7 +8570,7 @@ end;
 
 
 (******************************************)
-class operator Multi_Int_X4.implicit(const v1:ansistring):Multi_Int_X4;
+class operator Multi_Int_X4.:=(const v1:ansistring):Multi_Int_X4;
 begin
 ansistring_to_Multi_Int_X4(v1,Result);
 end;
@@ -8603,7 +8608,7 @@ end;
 
 
 (******************************************)
-class operator Multi_Int_X4.implicit(const v1:MULTI_INT_4W_S):Multi_Int_X4;
+class operator Multi_Int_X4.:=(const v1:MULTI_INT_4W_S):Multi_Int_X4;
 begin
 MULTI_INT_4W_S_to_Multi_Int_X4(v1,Result);
 end;
@@ -8636,7 +8641,7 @@ end;
 
 
 (******************************************)
-class operator Multi_Int_X4.implicit(const v1:MULTI_INT_4W_U):Multi_Int_X4;
+class operator Multi_Int_X4.:=(const v1:MULTI_INT_4W_U):Multi_Int_X4;
 begin
 MULTI_INT_4W_U_to_Multi_Int_X4(v1,Result);
 end;
@@ -8671,7 +8676,7 @@ end;
 
 
 (******************************************)
-class operator Multi_Int_X4.implicit(const v1:MULTI_INT_2W_S):Multi_Int_X4;
+class operator Multi_Int_X4.:=(const v1:MULTI_INT_2W_S):Multi_Int_X4;
 begin
 MULTI_INT_2W_S_to_Multi_Int_X4(v1,Result);
 end;
@@ -8696,7 +8701,7 @@ end;
 
 
 (******************************************)
-class operator Multi_Int_X4.implicit(const v1:MULTI_INT_2W_U):Multi_Int_X4;
+class operator Multi_Int_X4.:=(const v1:MULTI_INT_2W_U):Multi_Int_X4;
 begin
 MULTI_INT_2W_U_to_Multi_Int_X4(v1,Result);
 end;
@@ -8704,7 +8709,7 @@ end;
 
 (******************************************)
 // WARNING Float to Multi_Int type conversion loses some precision
-class operator Multi_Int_X4.implicit(const v1:Single):Multi_Int_X4;
+class operator Multi_Int_X4.:=(const v1:Single):Multi_Int_X4;
 var
 R			:Multi_Int_X4;
 R_FLOATREC	:TFloatRec;
@@ -8733,7 +8738,7 @@ end;
 
 (******************************************)
 // WARNING Float to Multi_Int type conversion loses some precision
-class operator Multi_Int_X4.implicit(const v1:Real):Multi_Int_X4;
+class operator Multi_Int_X4.:=(const v1:Real):Multi_Int_X4;
 var
 R			:Multi_Int_X4;
 R_FLOATREC	:TFloatRec;
@@ -8763,7 +8768,7 @@ end;
 
 (******************************************)
 // WARNING Float to Multi_Int type conversion loses some precision
-class operator Multi_Int_X4.implicit(const v1:Double):Multi_Int_X4;
+class operator Multi_Int_X4.:=(const v1:Double):Multi_Int_X4;
 var
 R			:Multi_Int_X4;
 R_FLOATREC	:TFloatRec;
@@ -8793,7 +8798,7 @@ end;
 
 (******************************************)
 // WARNING Float to Multi_Int type conversion loses some precision
-class operator Multi_Int_X4.implicit(const v1:Multi_Int_X4):Single;
+class operator Multi_Int_X4.:=(const v1:Multi_Int_X4):Single;
 var
 R,V,M		:Single;
 i			:MULTI_INT_1W_U;
@@ -8863,7 +8868,7 @@ end;
 
 
 (******************************************)
-class operator Multi_Int_X4.implicit(const v1:Multi_Int_X4):Real;
+class operator Multi_Int_X4.:=(const v1:Multi_Int_X4):Real;
 var
 	R,V,M	:Real;
 	i		:MULTI_INT_1W_U;
@@ -8933,7 +8938,7 @@ end;
 
 
 (******************************************)
-class operator Multi_Int_X4.implicit(const v1:Multi_Int_X4):Double;
+class operator Multi_Int_X4.:=(const v1:Multi_Int_X4):Double;
 var
 	R,V,M	:Double;
 	i		:MULTI_INT_1W_U;
@@ -9003,7 +9008,7 @@ end;
 
 
 (******************************************)
-class operator Multi_Int_X4.implicit(const v1:Multi_Int_X4):MULTI_INT_2W_S;
+class operator Multi_Int_X4.:=(const v1:Multi_Int_X4):MULTI_INT_2W_S;
 var	R	:MULTI_INT_2W_U;
 begin
 if	(Not v1.Defined_flag)
@@ -9043,7 +9048,7 @@ end;
 
 
 (******************************************)
-class operator Multi_Int_X4.implicit(const v1:Multi_Int_X4):MULTI_INT_2W_U;
+class operator Multi_Int_X4.:=(const v1:Multi_Int_X4):MULTI_INT_2W_U;
 var	R	:MULTI_INT_2W_U;
 begin
 Multi_Int_ERROR:= FALSE;
@@ -9083,7 +9088,7 @@ end;
 
 
 (******************************************)
-class operator Multi_Int_X4.implicit(const v1:Multi_Int_X4):MULTI_INT_1W_S;
+class operator Multi_Int_X4.:=(const v1:Multi_Int_X4):MULTI_INT_1W_S;
 var	R	:MULTI_INT_2W_U;
 begin
 Multi_Int_ERROR:= FALSE;
@@ -9125,7 +9130,7 @@ end;
 
 
 (******************************************)
-class operator Multi_Int_X4.implicit(const v1:Multi_Int_X4):MULTI_INT_1W_U;
+class operator Multi_Int_X4.:=(const v1:Multi_Int_X4):MULTI_INT_1W_U;
 var	R	:MULTI_INT_2W_U;
 begin
 Multi_Int_ERROR:= FALSE;
@@ -9166,7 +9171,7 @@ end;
 
 
 {******************************************}
-class operator Multi_Int_X4.implicit(const v1:Multi_Int_X4):Multi_int8u;
+class operator Multi_Int_X4.:=(const v1:Multi_Int_X4):Multi_int8u;
 (* var	R	:Multi_int8u; *)
 begin
 Multi_Int_ERROR:= FALSE;
@@ -9206,7 +9211,7 @@ end;
 
 
 {******************************************}
-class operator Multi_Int_X4.implicit(const v1:Multi_Int_X4):Multi_int8;
+class operator Multi_Int_X4.:=(const v1:Multi_Int_X4):Multi_int8;
 (* var	R	:Multi_int8u; *)
 begin
 Multi_Int_ERROR:= FALSE;
@@ -9690,7 +9695,7 @@ end;
 
 
 (******************************************)
-class operator Multi_Int_X4.implicit(const v1:Multi_Int_X4):ansistring;
+class operator Multi_Int_X4.:=(const v1:Multi_Int_X4):ansistring;
 begin
 Multi_Int_X4_to_ansistring(v1, Result);
 end;
@@ -10004,7 +10009,7 @@ end;
 
 
 (******************************************)
-class operator Multi_Int_X4.add(const v1,v2:Multi_Int_X4):Multi_Int_X4;
+class operator Multi_Int_X4.+(const v1,v2:Multi_Int_X4):Multi_Int_X4;
 Var	Neg:T_Multi_UBool;
 begin
 if	(Not v1.Defined_flag)
@@ -10085,7 +10090,7 @@ end;
 
 
 (******************************************)
-class operator Multi_Int_X4.subtract(const v1,v2:Multi_Int_X4):Multi_Int_X4;
+class operator Multi_Int_X4.-(const v1,v2:Multi_Int_X4):Multi_Int_X4;
 Var	Neg:Multi_UBool_Values;
 begin
 if	(Not v1.Defined_flag)
@@ -10367,7 +10372,7 @@ end;
 
 
 (******************************************)
-class operator Multi_Int_X4.multiply(const v1,v2:Multi_Int_X4):Multi_Int_X4;
+class operator Multi_Int_X4.*(const v1,v2:Multi_Int_X4):Multi_Int_X4;
 var	  R:Multi_Int_X4;
 begin
 if	(Not v1.Defined_flag)
@@ -10846,7 +10851,7 @@ end;
 
 
 (******************************************)
-class operator Multi_Int_X4.intdivide(const v1,v2:Multi_Int_X4):Multi_Int_X4;
+class operator Multi_Int_X4.div(const v1,v2:Multi_Int_X4):Multi_Int_X4;
 var
 	Remainder,
 	Quotient	:Multi_Int_X4;
@@ -10910,7 +10915,7 @@ end;
 
 
 (******************************************)
-class operator Multi_Int_X4.modulus(const v1,v2:Multi_Int_X4):Multi_Int_X4;
+class operator Multi_Int_X4.mod(const v1,v2:Multi_Int_X4):Multi_Int_X4;
 var
 Remainder,
 Quotient	:Multi_Int_X4;
@@ -11101,7 +11106,7 @@ end;
 
 
 (******************************************)
-class operator Multi_Int_X5.greaterthan(const v1,v2:Multi_Int_X5):Boolean;
+class operator Multi_Int_X5.>(const v1,v2:Multi_Int_X5):Boolean;
 begin
 if	(Not v1.Defined_flag)
 or	(Not v2.Defined_flag)
@@ -11382,7 +11387,7 @@ end;
 
 
 (******************************************)
-class operator Multi_Int_X5.implicit(const v1:MULTI_INT_2W_U):Multi_Int_X5;
+class operator Multi_Int_X5.:=(const v1:MULTI_INT_2W_U):Multi_Int_X5;
 begin
 MULTI_INT_2W_U_to_Multi_Int_X5(v1,Result);
 end;
@@ -11437,7 +11442,7 @@ end;
 
 
 (******************************************)
-class operator Multi_Int_X5.implicit(const v1:Multi_Int_X4):Multi_Int_X5;
+class operator Multi_Int_X5.:=(const v1:Multi_Int_X4):Multi_Int_X5;
 begin
 Multi_Int_X4_to_Multi_Int_X5(v1,Result);
 end;
@@ -11609,7 +11614,7 @@ end;
 
 
 (******************************************)
-class operator Multi_Int_X5.multiply(const v1,v2:Multi_Int_X5):Multi_Int_X5;
+class operator Multi_Int_X5.*(const v1,v2:Multi_Int_X5):Multi_Int_X5;
 var	  R:Multi_Int_X5;
 begin
 if	(Not v1.Defined_flag)
@@ -11937,7 +11942,7 @@ end;
 
 
 (******************************************)
-class operator Multi_Int_X5.subtract(const v1,v2:Multi_Int_X5):Multi_Int_X5;
+class operator Multi_Int_X5.-(const v1,v2:Multi_Int_X5):Multi_Int_X5;
 Var	Neg:Multi_UBool_Values;
 begin
 if	(Not v1.Defined_flag)
@@ -12727,7 +12732,7 @@ end;
 
 
 (******************************************)
-class operator Multi_Int_XV.greaterthan(const v1,v2:Multi_Int_XV):Boolean;
+class operator Multi_Int_XV.>(const v1,v2:Multi_Int_XV):Boolean;
 begin
 if	(Not v1.Defined_flag)
 or	(Not v2.Defined_flag)
@@ -12760,7 +12765,7 @@ end;
 
 
 (******************************************)
-class operator Multi_Int_XV.lessthan(const v1,v2:Multi_Int_XV):Boolean;
+class operator Multi_Int_XV.<(const v1,v2:Multi_Int_XV):Boolean;
 begin
 if	(Not v1.Defined_flag)
 or	(Not v2.Defined_flag)
@@ -12827,7 +12832,7 @@ end;
 
 
 (******************************************)
-class operator Multi_Int_XV.equal(const v1,v2:Multi_Int_XV):Boolean;
+class operator Multi_Int_XV.=(const v1,v2:Multi_Int_XV):Boolean;
 begin
 if	(Not v1.Defined_flag)
 or	(Not v2.Defined_flag)
@@ -12852,7 +12857,7 @@ end;
 
 
 (******************************************)
-class operator Multi_Int_XV.notequal(const v1,v2:Multi_Int_XV):Boolean;
+class operator Multi_Int_XV.<>(const v1,v2:Multi_Int_XV):Boolean;
 begin
 if	(Not v1.Defined_flag)
 or	(Not v2.Defined_flag)
@@ -13060,7 +13065,7 @@ end;
 
 
 (******************************************)
-class operator Multi_Int_XV.implicit(const v1:ansistring):Multi_Int_XV;
+class operator Multi_Int_XV.:=(const v1:ansistring):Multi_Int_XV;
 begin
 ansistring_to_Multi_Int_XV(v1,Result);
 end;
@@ -13136,7 +13141,7 @@ end;
 
 
 (******************************************)
-class operator Multi_Int_XV.implicit(const v1:Multi_Int_XV):ansistring;
+class operator Multi_Int_XV.:=(const v1:Multi_Int_XV):ansistring;
 begin
 Multi_Int_XV_to_ansistring(v1, Result);
 end;
@@ -13553,7 +13558,7 @@ end;
 
 
 (******************************************)
-class operator Multi_Int_XV.implicit(const v1:MULTI_INT_2W_S):Multi_Int_XV;
+class operator Multi_Int_XV.:=(const v1:MULTI_INT_2W_S):Multi_Int_XV;
 begin
 MULTI_INT_2W_S_to_Multi_Int_XV(v1,Result);
 end;
@@ -13582,7 +13587,7 @@ end;
 
 
 (******************************************)
-class operator Multi_Int_XV.implicit(const v1:MULTI_INT_2W_U):Multi_Int_XV;
+class operator Multi_Int_XV.:=(const v1:MULTI_INT_2W_U):Multi_Int_XV;
 begin
 MULTI_INT_2W_U_to_Multi_Int_XV(v1,Result);
 end;
@@ -13637,7 +13642,7 @@ end;
 
 
 (******************************************)
-class operator Multi_Int_XV.implicit(const v1:MULTI_INT_4W_S):Multi_Int_XV;
+class operator Multi_Int_XV.:=(const v1:MULTI_INT_4W_S):Multi_Int_XV;
 begin
 MULTI_INT_4W_S_to_Multi_Int_XV(v1,Result);
 end;
@@ -13685,7 +13690,7 @@ end;
 
 
 (******************************************)
-class operator Multi_Int_XV.implicit(const v1:MULTI_INT_4W_U):Multi_Int_XV;
+class operator Multi_Int_XV.:=(const v1:MULTI_INT_4W_U):Multi_Int_XV;
 begin
 MULTI_INT_4W_U_to_Multi_Int_XV(v1,Result);
 end;
@@ -13755,7 +13760,7 @@ end;
 
 
 (******************************************)
-class operator Multi_Int_XV.implicit(const v1:Multi_Int_X4):Multi_Int_XV;
+class operator Multi_Int_XV.:=(const v1:Multi_Int_X4):Multi_Int_XV;
 begin
 Multi_Int_X4_to_Multi_Int_XV(v1,Result);
 end;
@@ -13831,7 +13836,7 @@ end;
 
 
 (******************************************)
-class operator Multi_Int_XV.implicit(const v1:Multi_Int_X3):Multi_Int_XV;
+class operator Multi_Int_XV.:=(const v1:Multi_Int_X3):Multi_Int_XV;
 begin
 Multi_Int_X3_to_Multi_Int_XV(v1,Result);
 end;
@@ -13907,7 +13912,7 @@ end;
 
 
 (******************************************)
-class operator Multi_Int_XV.implicit(const v1:Multi_Int_X2):Multi_Int_XV;
+class operator Multi_Int_XV.:=(const v1:Multi_Int_X2):Multi_Int_XV;
 begin
 Multi_Int_X2_to_Multi_Int_XV(v1,Result);
 end;
@@ -13921,7 +13926,7 @@ end;
 
 
 (******************************************)
-class operator Multi_Int_XV.implicit(const v1:Multi_Int_XV):Single;
+class operator Multi_Int_XV.:=(const v1:Multi_Int_XV):Single;
 var
 R,V,M		:Single;
 i			:MULTI_INT_1W_U;
@@ -14002,7 +14007,7 @@ end;
 
 
 (******************************************)
-class operator Multi_Int_XV.implicit(const v1:Multi_Int_XV):Real;
+class operator Multi_Int_XV.:=(const v1:Multi_Int_XV):Real;
 var
 	R,V,M	:Real;
 	i		:MULTI_INT_1W_U;
@@ -14083,7 +14088,7 @@ end;
 
 
 (******************************************)
-class operator Multi_Int_XV.implicit(const v1:Multi_Int_XV):Double;
+class operator Multi_Int_XV.:=(const v1:Multi_Int_XV):Double;
 var
 	R,V,M	:Double;
 	i		:MULTI_INT_1W_U;
@@ -14165,7 +14170,7 @@ end;
 
 (******************************************)
 // WARNING Float type to Multi_Int type conversion loses some precision
-class operator Multi_Int_XV.implicit(const v1:Single):Multi_Int_XV;
+class operator Multi_Int_XV.:=(const v1:Single):Multi_Int_XV;
 var
 R			:Multi_Int_XV;
 R_FLOATREC	:TFloatRec;
@@ -14194,7 +14199,7 @@ end;
 
 (******************************************)
 // WARNING Float type to Multi_Int type conversion loses some precision
-class operator Multi_Int_XV.implicit(const v1:Real):Multi_Int_XV;
+class operator Multi_Int_XV.:=(const v1:Real):Multi_Int_XV;
 var
 R			:Multi_Int_XV;
 R_FLOATREC	:TFloatRec;
@@ -14224,7 +14229,7 @@ end;
 
 (******************************************)
 // WARNING Float type to Multi_Int type conversion loses some precision
-class operator Multi_Int_XV.implicit(const v1:Double):Multi_Int_XV;
+class operator Multi_Int_XV.:=(const v1:Double):Multi_Int_XV;
 var
 R			:Multi_Int_XV;
 R_FLOATREC	:TFloatRec;
@@ -14253,7 +14258,7 @@ end;
 
 
 (******************************************)
-class operator Multi_Int_XV.implicit(const v1:Multi_Int_XV):MULTI_INT_2W_S;
+class operator Multi_Int_XV.:=(const v1:Multi_Int_XV):MULTI_INT_2W_S;
 var
 	R	:MULTI_INT_2W_U;
 	n	:MULTI_INT_1W_U;
@@ -14314,7 +14319,7 @@ end;
 
 
 (******************************************)
-class operator Multi_Int_XV.implicit(const v1:Multi_Int_XV):MULTI_INT_2W_U;
+class operator Multi_Int_XV.:=(const v1:Multi_Int_XV):MULTI_INT_2W_U;
 var
 	R	:MULTI_INT_2W_U;
 	n	:MULTI_INT_1W_U;
@@ -14374,7 +14379,7 @@ end;
 
 
 (******************************************)
-class operator Multi_Int_XV.implicit(const v1:Multi_Int_XV):MULTI_INT_1W_S;
+class operator Multi_Int_XV.:=(const v1:Multi_Int_XV):MULTI_INT_1W_S;
 var
 	R	:MULTI_INT_2W_U;
 	n	:MULTI_INT_1W_U;
@@ -14436,7 +14441,7 @@ end;
 
 
 (******************************************)
-class operator Multi_Int_XV.implicit(const v1:Multi_Int_XV):MULTI_INT_1W_U;
+class operator Multi_Int_XV.:=(const v1:Multi_Int_XV):MULTI_INT_1W_U;
 var
 	R	:MULTI_INT_2W_U;
 	n	:MULTI_INT_1W_U;
@@ -14497,7 +14502,7 @@ end;
 
 
 {******************************************}
-class operator Multi_Int_XV.implicit(const v1:Multi_Int_XV):Multi_int8u;
+class operator Multi_Int_XV.:=(const v1:Multi_Int_XV):Multi_int8u;
 begin
 Multi_Int_ERROR:= FALSE;
 if	(Not v1.Defined_flag)
@@ -14540,7 +14545,7 @@ end;
 
 
 {******************************************}
-class operator Multi_Int_XV.implicit(const v1:Multi_Int_XV):Multi_int8;
+class operator Multi_Int_XV.:=(const v1:Multi_Int_XV):Multi_int8;
 begin
 Multi_Int_ERROR:= FALSE;
 if	(Not v1.Defined_flag)
@@ -14757,7 +14762,7 @@ end;
 
 
 (******************************************)
-class operator Multi_Int_XV.add(const v1,v2:Multi_Int_XV):Multi_Int_XV;
+class operator Multi_Int_XV.+(const v1,v2:Multi_Int_XV):Multi_Int_XV;
 Var	Neg:T_Multi_UBool;
 begin
 if	(Not v1.Defined_flag)
@@ -14903,7 +14908,7 @@ end;
 
 
 (******************************************)
-class operator Multi_Int_XV.subtract(const v1,v2:Multi_Int_XV):Multi_Int_XV;
+class operator Multi_Int_XV.-(const v1,v2:Multi_Int_XV):Multi_Int_XV;
 Var	Neg:Multi_UBool_Values;
 begin
 if	(Not v1.Defined_flag)
@@ -15304,7 +15309,7 @@ end;
 
 
 (******************************************)
-class operator Multi_Int_XV.multiply(const v1,v2:Multi_Int_XV):Multi_Int_XV;
+class operator Multi_Int_XV.*(const v1,v2:Multi_Int_XV):Multi_Int_XV;
 var	  R:Multi_Int_XV;
 begin
 if	(Not v1.Defined_flag)
@@ -15813,7 +15818,7 @@ end;
 
 
 (******************************************)
-class operator Multi_Int_XV.intdivide(const v1,v2:Multi_Int_XV):Multi_Int_XV;
+class operator Multi_Int_XV.div(const v1,v2:Multi_Int_XV):Multi_Int_XV;
 var
 Remainder,
 Quotient	:Multi_Int_XV;
@@ -15876,7 +15881,7 @@ end;
 
 
 (******************************************)
-class operator Multi_Int_XV.modulus(const v1,v2:Multi_Int_XV):Multi_Int_XV;
+class operator Multi_Int_XV.mod(const v1,v2:Multi_Int_XV):Multi_Int_XV;
 var
 Remainder,
 Quotient	:Multi_Int_XV;
