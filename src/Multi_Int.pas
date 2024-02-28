@@ -225,6 +225,12 @@ v4.35.04
 
 v4.36.00
 -	now works in OBJFPC mode with ADVANCEDRECORDS switch
+
+v4.37.00
+-	Not And Or operations for Multi_Int_X2
+-	Not And Or operations for Multi_Int_X3, X4, XV
+-	Bug fix in XOR functions exception message
+-	XOR functions raise exception for negative operands
 *)
 
 (* END OF USER OPTIONAL DEFINES *)
@@ -236,7 +242,7 @@ uses	sysutils
 ;
 
 const
-	version = '4.36.00';
+	version = '4.36.01';
 
 const
 
@@ -366,6 +372,13 @@ T_Multi_UBool	=	record
 						class operator :=(v:T_Multi_UBool):Multi_UBool_Values; inline;
 						class operator =(v1,v2:T_Multi_UBool):Boolean; inline;
 						class operator <>(v1,v2:T_Multi_UBool):Boolean; inline;
+						class operator or(v1,v2:T_Multi_UBool):Boolean; inline;
+						class operator or(v1:T_Multi_UBool;v2:Boolean):Boolean; inline;
+						class operator or(v1:Boolean; v2:T_Multi_UBool):Boolean; inline;
+						class operator and(v1,v2:T_Multi_UBool):Boolean; inline;
+						class operator and(v1:T_Multi_UBool;v2:Boolean):Boolean; inline;
+						class operator and(v1:Boolean; v2:T_Multi_UBool):Boolean; inline;
+						class operator not(v1:T_Multi_UBool):Boolean; inline;
 					end;
 
 Multi_Int_X2	=	record
@@ -415,6 +428,9 @@ Multi_Int_X2	=	record
 						class operator div(const v1,v2:Multi_Int_X2):Multi_Int_X2;	{$ifdef inline_functions} inline; {$endif}
 						class operator mod(const v1,v2:Multi_Int_X2):Multi_Int_X2;	{$ifdef inline_functions} inline; {$endif}
 						class operator xor(const v1,v2:Multi_Int_X2):Multi_Int_X2;	{$ifdef inline_functions} inline; {$endif}
+						class operator or(const v1,v2:Multi_Int_X2):Multi_Int_X2;	{$ifdef inline_functions} inline; {$endif}
+						class operator and(const v1,v2:Multi_Int_X2):Multi_Int_X2;	{$ifdef inline_functions} inline; {$endif}
+						class operator not(const v1:Multi_Int_X2):Multi_Int_X2;	{$ifdef inline_functions} inline; {$endif}
 						class operator -(const v1:Multi_Int_X2):Multi_Int_X2;	{$ifdef inline_functions} inline; {$endif}
 						class operator >=(const v1,v2:Multi_Int_X2):Boolean;	{$ifdef inline_functions} inline; {$endif}
 						class operator <=(const v1,v2:Multi_Int_X2):Boolean;	{$ifdef inline_functions} inline; {$endif}
@@ -472,6 +488,9 @@ Multi_Int_X3	=	record
 						class operator div(const v1,v2:Multi_Int_X3):Multi_Int_X3;	{$ifdef inline_functions} inline; {$endif}
 						class operator mod(const v1,v2:Multi_Int_X3):Multi_Int_X3;	{$ifdef inline_functions} inline; {$endif}
 						class operator xor(const v1,v2:Multi_Int_X3):Multi_Int_X3;	{$ifdef inline_functions} inline; {$endif}
+						class operator or(const v1,v2:Multi_Int_X3):Multi_Int_X3;	{$ifdef inline_functions} inline; {$endif}
+						class operator and(const v1,v2:Multi_Int_X3):Multi_Int_X3;	{$ifdef inline_functions} inline; {$endif}
+						class operator not(const v1:Multi_Int_X3):Multi_Int_X3;	{$ifdef inline_functions} inline; {$endif}
 						class operator -(const v1:Multi_Int_X3):Multi_Int_X3;	{$ifdef inline_functions} inline; {$endif}
 						class operator >=(const v1,v2:Multi_Int_X3):Boolean;	{$ifdef inline_functions} inline; {$endif}
 						class operator <=(const v1,v2:Multi_Int_X3):Boolean;	{$ifdef inline_functions} inline; {$endif}
@@ -530,6 +549,9 @@ Multi_Int_X4	=	record
 						class operator div(const v1,v2:Multi_Int_X4):Multi_Int_X4;	{$ifdef inline_functions} inline; {$endif}
 						class operator mod(const v1,v2:Multi_Int_X4):Multi_Int_X4;	{$ifdef inline_functions} inline; {$endif}
 						class operator xor(const v1,v2:Multi_Int_X4):Multi_Int_X4;	{$ifdef inline_functions} inline; {$endif}
+						class operator or(const v1,v2:Multi_Int_X4):Multi_Int_X4;	{$ifdef inline_functions} inline; {$endif}
+						class operator and(const v1,v2:Multi_Int_X4):Multi_Int_X4;	{$ifdef inline_functions} inline; {$endif}
+						class operator not(const v1:Multi_Int_X4):Multi_Int_X4;	{$ifdef inline_functions} inline; {$endif}
 						class operator -(const v1:Multi_Int_X4):Multi_Int_X4;	{$ifdef inline_functions} inline; {$endif}
 						class operator >=(const v1,v2:Multi_Int_X4):Boolean;	{$ifdef inline_functions} inline; {$endif}
 						class operator <=(const v1,v2:Multi_Int_X4):Boolean;	{$ifdef inline_functions} inline; {$endif}
@@ -587,10 +609,13 @@ Multi_Int_XV	=	record
 						class operator -(const v1,v2:Multi_Int_XV):Multi_Int_XV;	{$ifdef inline_functions} inline; {$endif}
 						class operator inc(const v1:Multi_Int_XV):Multi_Int_XV;	{$ifdef inline_functions} inline; {$endif}
 						class operator dec(const v1:Multi_Int_XV):Multi_Int_XV;	{$ifdef inline_functions} inline; {$endif}
-						class operator xor(const v1,v2:Multi_Int_XV):Multi_Int_XV;	{$ifdef inline_functions} inline; {$endif}
 						class operator *(const v1,v2:Multi_Int_XV):Multi_Int_XV;	{$ifdef inline_functions} inline; {$endif}
 						class operator div(const v1,v2:Multi_Int_XV):Multi_Int_XV;	{$ifdef inline_functions} inline; {$endif}
 						class operator mod(const v1,v2:Multi_Int_XV):Multi_Int_XV;	{$ifdef inline_functions} inline; {$endif}
+						class operator xor(const v1,v2:Multi_Int_XV):Multi_Int_XV;	{$ifdef inline_functions} inline; {$endif}
+						class operator or(const v1,v2:Multi_Int_XV):Multi_Int_XV;	{$ifdef inline_functions} inline; {$endif}
+						class operator and(const v1,v2:Multi_Int_XV):Multi_Int_XV;	{$ifdef inline_functions} inline; {$endif}
+						class operator not(const v1:Multi_Int_XV):Multi_Int_XV;	{$ifdef inline_functions} inline; {$endif}
 						class operator -(const v1:Multi_Int_XV):Multi_Int_XV;	{$ifdef inline_functions} inline; {$endif}
 						class operator >=(const v1,v2:Multi_Int_XV):Boolean;	{$ifdef inline_functions} inline; {$endif}
 						class operator <=(const v1,v2:Multi_Int_XV):Boolean;	{$ifdef inline_functions} inline; {$endif}
@@ -813,6 +838,61 @@ end;
 class operator T_Multi_UBool.<>(v1,v2:T_Multi_UBool):Boolean;
 begin
 if (v1.B_Value <> v2.B_Value) then Result:= TRUE
+else Result:= FALSE;
+end;
+
+class operator T_Multi_UBool.or(v1,v2:T_Multi_UBool):Boolean;
+begin
+if	(v1.B_Value = Multi_UBool_TRUE)
+or	(v2.B_Value = Multi_UBool_TRUE)
+then Result:= TRUE
+else Result:= FALSE;
+end;
+
+class operator T_Multi_UBool.or(v1:T_Multi_UBool;v2:Boolean):Boolean;
+begin
+if	(v1.B_Value = Multi_UBool_TRUE)
+or	(v2)
+then Result:= TRUE
+else Result:= FALSE;
+end;
+
+class operator T_Multi_UBool.or(v1:Boolean;v2:T_Multi_UBool):Boolean;
+begin
+if	(v1)
+or	(v2.B_Value = Multi_UBool_TRUE)
+then Result:= TRUE
+else Result:= FALSE;
+end;
+
+class operator T_Multi_UBool.and(v1,v2:T_Multi_UBool):Boolean;
+begin
+if	(v1.B_Value = Multi_UBool_TRUE)
+and	(v2.B_Value = Multi_UBool_TRUE)
+then Result:= TRUE
+else Result:= FALSE;
+end;
+
+class operator T_Multi_UBool.and(v1:T_Multi_UBool;v2:Boolean):Boolean;
+begin
+if	(v1.B_Value = Multi_UBool_TRUE)
+and	(v2)
+then Result:= TRUE
+else Result:= FALSE;
+end;
+
+class operator T_Multi_UBool.and(v1:Boolean; v2:T_Multi_UBool):Boolean;
+begin
+if	(v1)
+and	(v2.B_Value = Multi_UBool_TRUE)
+then Result:= TRUE
+else Result:= FALSE;
+end;
+
+class operator T_Multi_UBool.not(v1:T_Multi_UBool):Boolean;
+begin
+if	(v1.B_Value = Multi_UBool_TRUE) then Result:= FALSE
+else if (v1.B_Value = Multi_UBool_FALSE) then Result:= TRUE
 else Result:= FALSE;
 end;
 
@@ -2888,15 +2968,137 @@ then
 	exit;
 	end;
 
-Result.M_Value[0]:=(v1.M_Value[0] xor v2.M_Value[0]);
-Result.M_Value[1]:=(v1.M_Value[1] xor v2.M_Value[1]);
-Result.M_Value[2]:=(v1.M_Value[2] xor v2.M_Value[2]);
-Result.M_Value[3]:=(v1.M_Value[3] xor v2.M_Value[3]);
+Result.M_Value[0]:= (v1.M_Value[0] xor v2.M_Value[0]);
+Result.M_Value[1]:= (v1.M_Value[1] xor v2.M_Value[1]);
+Result.M_Value[2]:= (v1.M_Value[2] xor v2.M_Value[2]);
+Result.M_Value[3]:= (v1.M_Value[3] xor v2.M_Value[3]);
 Result.Defined_flag:=TRUE;
+Result.Negative_flag:= Multi_UBool_FALSE;
+
 Result.Overflow_flag:=FALSE;
-if (v1.Negative_flag = v2.Negative_flag)
-then Result.Negative_flag:= Multi_UBool_FALSE
-else Result.Negative_flag:= Multi_UBool_TRUE;
+if	(v1.Negative)
+or	(v2.Negative)
+then
+	begin
+	Result.Overflow_flag:= TRUE;
+	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
+		begin
+		Raise EInterror.create('Bitwise operation on negative value');
+		end;
+	exit;
+	end;
+end;
+
+
+(******************************************)
+class operator Multi_Int_X2.or(const v1,v2:Multi_Int_X2):Multi_Int_X2;
+begin
+if	(Not v1.Defined_flag)
+or	(Not v2.Defined_flag)
+then
+	begin
+	Result:=0;
+	Result.Defined_flag:= FALSE;
+	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
+		begin
+		Raise EInterror.create('Uninitialised variable');
+		end;
+	exit;
+	end;
+
+Result.M_Value[0]:= (v1.M_Value[0] or v2.M_Value[0]);
+Result.M_Value[1]:= (v1.M_Value[1] or v2.M_Value[1]);
+Result.M_Value[2]:= (v1.M_Value[2] or v2.M_Value[2]);
+Result.M_Value[3]:= (v1.M_Value[3] or v2.M_Value[3]);
+Result.Defined_flag:=TRUE;
+Result.Negative_flag:= Multi_UBool_FALSE;
+
+Result.Overflow_flag:=FALSE;
+if	(v1.Negative)
+or	(v2.Negative)
+then
+	begin
+	Result.Overflow_flag:= TRUE;
+	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
+		begin
+		Raise EInterror.create('Bitwise operation on negative value');
+		end;
+	exit;
+	end;
+end;
+
+
+(******************************************)
+class operator Multi_Int_X2.and(const v1,v2:Multi_Int_X2):Multi_Int_X2;
+begin
+if	(Not v1.Defined_flag)
+or	(Not v2.Defined_flag)
+then
+	begin
+	Result:=0;
+	Result.Defined_flag:= FALSE;
+	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
+		begin
+		Raise EInterror.create('Uninitialised variable');
+		end;
+	exit;
+	end;
+
+Result.M_Value[0]:= (v1.M_Value[0] and v2.M_Value[0]);
+Result.M_Value[1]:= (v1.M_Value[1] and v2.M_Value[1]);
+Result.M_Value[2]:= (v1.M_Value[2] and v2.M_Value[2]);
+Result.M_Value[3]:= (v1.M_Value[3] and v2.M_Value[3]);
+Result.Defined_flag:=TRUE;
+Result.Negative_flag:= Multi_UBool_FALSE;
+
+Result.Overflow_flag:=FALSE;
+if	(v1.Negative)
+or	(v2.Negative)
+then
+	begin
+	Result.Overflow_flag:= TRUE;
+	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
+		begin
+		Raise EInterror.create('Bitwise operation on negative value');
+		end;
+	exit;
+	end;
+end;
+
+
+(******************************************)
+class operator Multi_Int_X2.not(const v1:Multi_Int_X2):Multi_Int_X2;
+begin
+if	(Not v1.Defined_flag)
+then
+	begin
+	Result:=0;
+	Result.Defined_flag:= FALSE;
+	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
+		begin
+		Raise EInterror.create('Uninitialised variable');
+		end;
+	exit;
+	end;
+
+Result.M_Value[0]:= (not v1.M_Value[0]);
+Result.M_Value[1]:= (not v1.M_Value[1]);
+Result.M_Value[2]:= (not v1.M_Value[2]);
+Result.M_Value[3]:= (not v1.M_Value[3]);
+Result.Defined_flag:=TRUE;
+Result.Negative_flag:= Multi_UBool_FALSE;
+
+Result.Overflow_flag:=FALSE;
+if	(v1.Negative)
+then
+	begin
+	Result.Overflow_flag:= TRUE;
+	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
+		begin
+		Raise EInterror.create('Bitwise operation on negative value');
+		end;
+	exit;
+	end;
 end;
 
 
@@ -6174,17 +6376,145 @@ then
 	exit;
 	end;
 
-Result.M_Value[0]:=(v1.M_Value[0] xor v2.M_Value[0]);
-Result.M_Value[1]:=(v1.M_Value[1] xor v2.M_Value[1]);
-Result.M_Value[2]:=(v1.M_Value[2] xor v2.M_Value[2]);
-Result.M_Value[3]:=(v1.M_Value[3] xor v2.M_Value[3]);
-Result.M_Value[4]:=(v1.M_Value[4] xor v2.M_Value[4]);
-Result.M_Value[5]:=(v1.M_Value[5] xor v2.M_Value[5]);
+Result.M_Value[0]:= (v1.M_Value[0] xor v2.M_Value[0]);
+Result.M_Value[1]:= (v1.M_Value[1] xor v2.M_Value[1]);
+Result.M_Value[2]:= (v1.M_Value[2] xor v2.M_Value[2]);
+Result.M_Value[3]:= (v1.M_Value[3] xor v2.M_Value[3]);
+Result.M_Value[4]:= (v1.M_Value[4] xor v2.M_Value[4]);
+Result.M_Value[5]:= (v1.M_Value[5] xor v2.M_Value[5]);
 Result.Defined_flag:=TRUE;
+Result.Negative_flag:= Multi_UBool_FALSE;
+
 Result.Overflow_flag:=FALSE;
-if (v1.Negative_flag = v2.Negative_flag)
-then Result.Negative_flag:= Multi_UBool_FALSE
-else Result.Negative_flag:= Multi_UBool_TRUE;
+if	(v1.Negative)
+or	(v2.Negative)
+then
+	begin
+	Result.Overflow_flag:= TRUE;
+	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
+		begin
+		Raise EInterror.create('Bitwise operation on negative value');
+		end;
+	exit;
+	end;
+end;
+
+
+(******************************************)
+class operator Multi_Int_X3.or(const v1,v2:Multi_Int_X3):Multi_Int_X3;
+begin
+if	(Not v1.Defined_flag)
+or	(Not v2.Defined_flag)
+then
+	begin
+	Result:=0;
+	Result.Defined_flag:= FALSE;
+	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
+		begin
+		Raise EInterror.create('Uninitialised variable');
+		end;
+	exit;
+	end;
+
+Result.M_Value[0]:= (v1.M_Value[0] or v2.M_Value[0]);
+Result.M_Value[1]:= (v1.M_Value[1] or v2.M_Value[1]);
+Result.M_Value[2]:= (v1.M_Value[2] or v2.M_Value[2]);
+Result.M_Value[3]:= (v1.M_Value[3] or v2.M_Value[3]);
+Result.M_Value[4]:= (v1.M_Value[4] or v2.M_Value[4]);
+Result.M_Value[5]:= (v1.M_Value[5] or v2.M_Value[5]);
+Result.Defined_flag:=TRUE;
+Result.Negative_flag:= Multi_UBool_FALSE;
+
+Result.Overflow_flag:=FALSE;
+if	(v1.Negative)
+or	(v2.Negative)
+then
+	begin
+	Result.Overflow_flag:= TRUE;
+	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
+		begin
+		Raise EInterror.create('Bitwise operation on negative value');
+		end;
+	exit;
+	end;
+end;
+
+
+(******************************************)
+class operator Multi_Int_X3.and(const v1,v2:Multi_Int_X3):Multi_Int_X3;
+begin
+if	(Not v1.Defined_flag)
+or	(Not v2.Defined_flag)
+then
+	begin
+	Result:=0;
+	Result.Defined_flag:= FALSE;
+	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
+		begin
+		Raise EInterror.create('Uninitialised variable');
+		end;
+	exit;
+	end;
+
+Result.M_Value[0]:= (v1.M_Value[0] and v2.M_Value[0]);
+Result.M_Value[1]:= (v1.M_Value[1] and v2.M_Value[1]);
+Result.M_Value[2]:= (v1.M_Value[2] and v2.M_Value[2]);
+Result.M_Value[3]:= (v1.M_Value[3] and v2.M_Value[3]);
+Result.M_Value[4]:= (v1.M_Value[4] and v2.M_Value[4]);
+Result.M_Value[5]:= (v1.M_Value[5] and v2.M_Value[5]);
+Result.Defined_flag:=TRUE;
+Result.Negative_flag:= Multi_UBool_FALSE;
+
+Result.Overflow_flag:=FALSE;
+if	(v1.Negative)
+or	(v2.Negative)
+then
+	begin
+	Result.Overflow_flag:= TRUE;
+	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
+		begin
+		Raise EInterror.create('Bitwise operation on negative value');
+		end;
+	exit;
+	end;
+end;
+
+
+(******************************************)
+class operator Multi_Int_X3.not(const v1:Multi_Int_X3):Multi_Int_X3;
+begin
+if	(Not v1.Defined_flag)
+then
+	begin
+	Result:=0;
+	Result.Defined_flag:= FALSE;
+	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
+		begin
+		Raise EInterror.create('Uninitialised variable');
+		end;
+	exit;
+	end;
+
+Result.M_Value[0]:= (not v1.M_Value[0]);
+Result.M_Value[1]:= (not v1.M_Value[1]);
+Result.M_Value[2]:= (not v1.M_Value[2]);
+Result.M_Value[3]:= (not v1.M_Value[3]);
+Result.M_Value[4]:= (not v1.M_Value[4]);
+Result.M_Value[5]:= (not v1.M_Value[5]);
+Result.Defined_flag:=TRUE;
+Result.Negative_flag:= Multi_UBool_FALSE;
+
+Result.Overflow_flag:=FALSE;
+if	(v1.Negative)
+then
+	begin
+	Result.Overflow_flag:= TRUE;
+	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
+		begin
+		Raise EInterror.create('Bitwise operation on negative value');
+		end;
+	exit;
+	end;
 end;
 
 
@@ -9727,10 +10057,147 @@ Result.M_Value[6]:=(v1.M_Value[6] xor v2.M_Value[6]);
 Result.M_Value[7]:=(v1.M_Value[7] xor v2.M_Value[7]);
 
 Result.Defined_flag:=TRUE;
+Result.Negative_flag:= Multi_UBool_FALSE;
+
 Result.Overflow_flag:=FALSE;
-if (v1.Negative_flag = v2.Negative_flag)
-then Result.Negative_flag:= Multi_UBool_FALSE
-else Result.Negative_flag:= Multi_UBool_TRUE;
+if	(v1.Negative)
+or	(v2.Negative)
+then
+	begin
+	Result.Overflow_flag:= TRUE;
+	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
+		begin
+		Raise EInterror.create('Bitwise operation on negative value');
+		end;
+	exit;
+	end;
+end;
+
+
+(******************************************)
+class operator Multi_Int_X4.or(const v1,v2:Multi_Int_X4):Multi_Int_X4;
+begin
+if	(Not v1.Defined_flag)
+or	(Not v2.Defined_flag)
+then
+	begin
+	Result:=0;
+	Result.Defined_flag:= FALSE;
+	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
+		begin
+		Raise EInterror.create('Uninitialised variable');
+		end;
+	exit;
+	end;
+
+Result.M_Value[0]:= (v1.M_Value[0] or v2.M_Value[0]);
+Result.M_Value[1]:= (v1.M_Value[1] or v2.M_Value[1]);
+Result.M_Value[2]:= (v1.M_Value[2] or v2.M_Value[2]);
+Result.M_Value[3]:= (v1.M_Value[3] or v2.M_Value[3]);
+Result.M_Value[4]:= (v1.M_Value[4] or v2.M_Value[4]);
+Result.M_Value[5]:= (v1.M_Value[5] or v2.M_Value[5]);
+Result.M_Value[6]:= (v1.M_Value[6] or v2.M_Value[6]);
+Result.M_Value[7]:= (v1.M_Value[7] or v2.M_Value[7]);
+
+Result.Defined_flag:=TRUE;
+Result.Negative_flag:= Multi_UBool_FALSE;
+
+Result.Overflow_flag:=FALSE;
+if	(v1.Negative)
+or	(v2.Negative)
+then
+	begin
+	Result.Overflow_flag:= TRUE;
+	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
+		begin
+		Raise EInterror.create('Bitwise operation on negative value');
+		end;
+	exit;
+	end;
+end;
+
+
+(******************************************)
+class operator Multi_Int_X4.and(const v1,v2:Multi_Int_X4):Multi_Int_X4;
+begin
+if	(Not v1.Defined_flag)
+or	(Not v2.Defined_flag)
+then
+	begin
+	Result:=0;
+	Result.Defined_flag:= FALSE;
+	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
+		begin
+		Raise EInterror.create('Uninitialised variable');
+		end;
+	exit;
+	end;
+
+Result.M_Value[0]:= (v1.M_Value[0] and v2.M_Value[0]);
+Result.M_Value[1]:= (v1.M_Value[1] and v2.M_Value[1]);
+Result.M_Value[2]:= (v1.M_Value[2] and v2.M_Value[2]);
+Result.M_Value[3]:= (v1.M_Value[3] and v2.M_Value[3]);
+Result.M_Value[4]:= (v1.M_Value[4] and v2.M_Value[4]);
+Result.M_Value[5]:= (v1.M_Value[5] and v2.M_Value[5]);
+Result.M_Value[6]:= (v1.M_Value[6] and v2.M_Value[6]);
+Result.M_Value[7]:= (v1.M_Value[7] and v2.M_Value[7]);
+
+Result.Defined_flag:=TRUE;
+Result.Negative_flag:= Multi_UBool_FALSE;
+
+Result.Overflow_flag:=FALSE;
+if	(v1.Negative)
+or	(v2.Negative)
+then
+	begin
+	Result.Overflow_flag:= TRUE;
+	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
+		begin
+		Raise EInterror.create('Bitwise operation on negative value');
+		end;
+	exit;
+	end;
+end;
+
+
+(******************************************)
+class operator Multi_Int_X4.not(const v1:Multi_Int_X4):Multi_Int_X4;
+begin
+if	(Not v1.Defined_flag)
+then
+	begin
+	Result:=0;
+	Result.Defined_flag:= FALSE;
+	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
+		begin
+		Raise EInterror.create('Uninitialised variable');
+		end;
+	exit;
+	end;
+
+Result.M_Value[0]:= (not v1.M_Value[0]);
+Result.M_Value[1]:= (not v1.M_Value[1]);
+Result.M_Value[2]:= (not v1.M_Value[2]);
+Result.M_Value[3]:= (not v1.M_Value[3]);
+Result.M_Value[4]:= (not v1.M_Value[4]);
+Result.M_Value[5]:= (not v1.M_Value[5]);
+Result.M_Value[6]:= (not v1.M_Value[6]);
+Result.M_Value[7]:= (not v1.M_Value[7]);
+
+Result.Defined_flag:=TRUE;
+Result.Negative_flag:= Multi_UBool_FALSE;
+
+Result.Overflow_flag:=FALSE;
+if	(v1.Negative)
+then
+	begin
+	Result.Overflow_flag:= TRUE;
+	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
+		begin
+		Raise EInterror.create('Bitwise operation on negative value');
+		end;
+	exit;
+	end;
 end;
 
 
@@ -15124,7 +15591,7 @@ then
 	Multi_Int_ERROR:= TRUE;
 	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
 		begin
-		Raise EIntOverflow.create('Overflow on multiply');
+		Raise EIntOverflow.create('Overflow on XOR');
 		end;
 	exit;
 	end;
@@ -15156,10 +15623,252 @@ while (i < s) do
 	end;
 
 Result.Defined_flag:=TRUE;
+Result.Negative_flag:= FALSE;
+
 Result.Overflow_flag:=FALSE;
-if (v1.Negative_flag = v2.Negative_flag)
-then Result.Negative_flag:= Multi_UBool_FALSE
-else Result.Negative_flag:= Multi_UBool_TRUE;
+if	(v1.Negative)
+or	(v2.Negative)
+then
+	begin
+	Result.Overflow_flag:= TRUE;
+	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
+		begin
+		Raise EInterror.create('Bitwise operation on negative value');
+		end;
+	exit;
+	end;
+
+999:
+end;
+
+
+(******************************************)
+class operator Multi_Int_XV.or(const v1,v2:Multi_Int_XV):Multi_Int_XV;
+label 999;
+var
+i,s1,s2,s	:MULTI_INT_1W_S;
+tv1,tv2		:MULTI_INT_2W_U;
+begin
+if	(Not v1.Defined_flag)
+or	(Not v2.Defined_flag)
+then
+	begin
+	Result:=0;
+	Result.Defined_flag:= FALSE;
+	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
+		begin
+		Raise EInterror.create('Uninitialised variable');
+		end;
+	exit;
+	end;
+if	(v1.Overflow_flag or v2.Overflow_flag)
+then
+	begin
+	Result:= 0;
+	Result.Overflow_flag:=TRUE;
+	Result.Defined_flag:=TRUE;
+	Multi_Int_ERROR:= TRUE;
+	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
+		begin
+		Raise EIntOverflow.create('Overflow on bitwise OR');
+		end;
+	exit;
+	end;
+
+s1:= v1.M_Value_Size;
+s2:= v2.M_Value_Size;
+s:= s1;
+if (s1 < s2) then s:= s2;
+
+Result.init;
+if (s > Result.M_Value_Size) then
+	begin
+	Multi_Int_Reset_XV_Size(Result, s);
+	if (Result.Overflow) then
+		begin
+		Multi_Int_ERROR:= TRUE;
+		Result.Defined_flag:=FALSE;
+		goto 999;
+		end;
+	end;
+
+i:=0;
+while (i < s) do
+	begin
+	if	(i < s1) then tv1:= v1.M_Value[i] else tv1:= 0;
+	if	(i < s2) then tv2:= v2.M_Value[i] else tv2:= 0;
+	Result.M_Value[i]:=(tv1 or tv2);
+	Inc(i);
+	end;
+
+Result.Defined_flag:=TRUE;
+Result.Negative_flag:= FALSE;
+
+Result.Overflow_flag:=FALSE;
+if	(v1.Negative)
+or	(v2.Negative)
+then
+	begin
+	Result.Overflow_flag:= TRUE;
+	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
+		begin
+		Raise EInterror.create('Bitwise operation on negative value');
+		end;
+	exit;
+	end;
+
+999:
+end;
+
+
+(******************************************)
+class operator Multi_Int_XV.and(const v1,v2:Multi_Int_XV):Multi_Int_XV;
+label 999;
+var
+i,s1,s2,s	:MULTI_INT_1W_S;
+tv1,tv2		:MULTI_INT_2W_U;
+begin
+if	(Not v1.Defined_flag)
+or	(Not v2.Defined_flag)
+then
+	begin
+	Result:=0;
+	Result.Defined_flag:= FALSE;
+	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
+		begin
+		Raise EInterror.create('Uninitialised variable');
+		end;
+	exit;
+	end;
+if	(v1.Overflow_flag or v2.Overflow_flag)
+then
+	begin
+	Result:= 0;
+	Result.Overflow_flag:=TRUE;
+	Result.Defined_flag:=TRUE;
+	Multi_Int_ERROR:= TRUE;
+	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
+		begin
+		Raise EIntOverflow.create('Overflow on bitwise AND');
+		end;
+	exit;
+	end;
+
+s1:= v1.M_Value_Size;
+s2:= v2.M_Value_Size;
+s:= s1;
+if (s1 < s2) then s:= s2;
+
+Result.init;
+if (s > Result.M_Value_Size) then
+	begin
+	Multi_Int_Reset_XV_Size(Result, s);
+	if (Result.Overflow) then
+		begin
+		Multi_Int_ERROR:= TRUE;
+		Result.Defined_flag:=FALSE;
+		goto 999;
+		end;
+	end;
+
+i:=0;
+while (i < s) do
+	begin
+	if	(i < s1) then tv1:= v1.M_Value[i] else tv1:= 0;
+	if	(i < s2) then tv2:= v2.M_Value[i] else tv2:= 0;
+	Result.M_Value[i]:=(tv1 and tv2);
+	Inc(i);
+	end;
+
+Result.Defined_flag:=TRUE;
+Result.Negative_flag:= FALSE;
+
+Result.Overflow_flag:=FALSE;
+if	(v1.Negative)
+or	(v2.Negative)
+then
+	begin
+	Result.Overflow_flag:= TRUE;
+	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
+		begin
+		Raise EInterror.create('Bitwise operation on negative value');
+		end;
+	exit;
+	end;
+
+999:
+end;
+
+
+(******************************************)
+class operator Multi_Int_XV.not(const v1:Multi_Int_XV):Multi_Int_XV;
+label 999;
+var
+i,s1,s	:MULTI_INT_1W_S;
+tv1		:MULTI_INT_2W_U;
+begin
+if	(Not v1.Defined_flag)
+then
+	begin
+	Result:=0;
+	Result.Defined_flag:= FALSE;
+	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
+		begin
+		Raise EInterror.create('Uninitialised variable');
+		end;
+	exit;
+	end;
+if	(v1.Overflow_flag)
+then
+	begin
+	Result:= 0;
+	Result.Overflow_flag:=TRUE;
+	Result.Defined_flag:=TRUE;
+	Multi_Int_ERROR:= TRUE;
+	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
+		begin
+		Raise EIntOverflow.create('Overflow on bitwise NOT');
+		end;
+	exit;
+	end;
+
+s1:= v1.M_Value_Size;
+s:= s1;
+
+Result.init;
+if (s > Result.M_Value_Size) then
+	begin
+	Multi_Int_Reset_XV_Size(Result, s);
+	if (Result.Overflow) then
+		begin
+		Multi_Int_ERROR:= TRUE;
+		Result.Defined_flag:=FALSE;
+		goto 999;
+		end;
+	end;
+
+i:=0;
+while (i < s) do
+	begin
+	if	(i < s1) then tv1:= v1.M_Value[i] else tv1:= 0;
+	Result.M_Value[i]:= (not tv1);
+	Inc(i);
+	end;
+
+Result.Defined_flag:=TRUE;
+Result.Negative_flag:= FALSE;
+
+Result.Overflow_flag:=FALSE;
+if	(v1.Negative)
+then
+	begin
+	Result.Overflow_flag:= TRUE;
+	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
+		begin
+		Raise EInterror.create('Bitwise operation on negative value');
+		end;
+	exit;
+	end;
 
 999:
 end;
