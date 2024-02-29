@@ -231,6 +231,7 @@ v4.37.00
 -	Not And Or operations for Multi_Int_X3, X4, XV
 -	Bug fix in XOR functions exception message
 -	XOR functions raise exception for negative operands
+-	Tidy-up/simplify overflow exception messages
 *)
 
 (* END OF USER OPTIONAL DEFINES *)
@@ -242,7 +243,7 @@ uses	sysutils
 ;
 
 const
-	version = '4.36.01';
+	version = '4.36.00';
 
 const
 
@@ -1729,7 +1730,7 @@ if	(length(v1) > 0) then
 			mi.Overflow_flag:=TRUE;
 			if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
 				begin
-				Raise EIntOverflow.create('Overflow on ansistring conversion');
+				Raise EIntOverflow.create('Overflow');
 				end;
 			goto 999;
 			end;
@@ -2012,9 +2013,7 @@ class operator Multi_Int_X2.:=(const v1:Single):Multi_Int_X2;
 var
 R			:Multi_Int_X2;
 R_FLOATREC	:TFloatRec;
-var operation_str	:ansistring;
 begin
-operation_str:= 'Multi_Int_X2.implicit';
 Multi_Int_ERROR:= FALSE;
 
 FloatToDecimal(R_FLOATREC, v1, MULTI_SINGLE_TYPE_PRECISION_DIGITS, 0);
@@ -2027,7 +2026,7 @@ if (R.Overflow) then
 	Result.Negative_flag:= Multi_UBool_UNDEF;
 	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
 		begin
-		Raise EIntOverflow.create('Overflow on Single to Multi_Int conversion on ' + operation_str);
+		Raise EIntOverflow.create('Overflow');
 		end;
 	exit;
 	end;
@@ -2043,9 +2042,7 @@ class operator Multi_Int_X2.:=(const v1:Real):Multi_Int_X2;
 var
 R			:Multi_Int_X2;
 R_FLOATREC	:TFloatRec;
-	operation_str	:ansistring;
 begin
-operation_str:= 'Multi_Int_X2.implicit';
 Multi_Int_ERROR:= FALSE;
 
 FloatToDecimal(R_FLOATREC, v1, MULTI_REAL_TYPE_PRECISION_DIGITS, 0);
@@ -2058,7 +2055,7 @@ if (R.Overflow) then
 	Result.Negative_flag:= Multi_UBool_UNDEF;
 	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
 		begin
-		Raise EIntOverflow.create('Overflow on Real to Multi_Int conversion on ' + operation_str);
+		Raise EIntOverflow.create('Overflow');
 		end;
 	exit;
 	end;
@@ -2074,9 +2071,8 @@ class operator Multi_Int_X2.:=(const v1:Double):Multi_Int_X2;
 var
 R			:Multi_Int_X2;
 R_FLOATREC	:TFloatRec;
-	operation_str	:ansistring;
+
 begin
-operation_str:= 'Multi_Int_X2.implicit';
 Multi_Int_ERROR:= FALSE;
 
 FloatToDecimal(R_FLOATREC, v1, MULTI_DOUBLE_TYPE_PRECISION_DIGITS, 0);
@@ -2089,7 +2085,7 @@ if (R.Overflow) then
 	Result.Negative_flag:= Multi_UBool_UNDEF;
 	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
 		begin
-		Raise EIntOverflow.create('Overflow on Double to Multi_Int conversion on ' + operation_str);
+		Raise EIntOverflow.create('Overflow');
 		end;
 	exit;
 	end;
@@ -2141,7 +2137,7 @@ do
 				Multi_Int_ERROR:= TRUE;
 				if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
 					begin
-					Raise EIntOverflow.create('Overflow on Multi_Int to Single conversion');
+					Raise EIntOverflow.create('Overflow');
 					end;
 				end;
 			end;
@@ -2157,7 +2153,7 @@ do
 			Multi_Int_ERROR:= TRUE;
 			if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
 				begin
-				Raise EIntOverflow.create('Overflow on Multi_Int to Single conversion');
+				Raise EIntOverflow.create('Overflow');
 				end;
 			end;
 		end;
@@ -2211,7 +2207,7 @@ do
 				Multi_Int_ERROR:= TRUE;
 				if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
 					begin
-					Raise EIntOverflow.create('Overflow on Multi_Int to Real conversion');
+					Raise EIntOverflow.create('Overflow');
 					end;
 				end;
 			end;
@@ -2227,7 +2223,7 @@ do
 			Multi_Int_ERROR:= TRUE;
 			if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
 				begin
-				Raise EIntOverflow.create('Overflow on Multi_Int to Real conversion');
+				Raise EIntOverflow.create('Overflow');
 				end;
 			end;
 		end;
@@ -2281,7 +2277,7 @@ do
 				Multi_Int_ERROR:= TRUE;
 				if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
 					begin
-					Raise EIntOverflow.create('Overflow on Multi_Int to Double conversion');
+					Raise EIntOverflow.create('Overflow');
 					end;
 				end;
 			end;
@@ -2297,7 +2293,7 @@ do
 			Multi_Int_ERROR:= TRUE;
 			if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
 				begin
-				Raise EIntOverflow.create('Overflow on Multi_Int to Double conversion');
+				Raise EIntOverflow.create('Overflow');
 				end;
 			end;
 		end;
@@ -2602,7 +2598,7 @@ if	(length(v1) > 0) then
 			Multi_Int_ERROR:= TRUE;
 			if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
 				begin
-				Raise EIntOverflow.create('Overflow on string conversion');
+				Raise EIntOverflow.create('Overflow');
 				end;
 			goto 999;
 			end;
@@ -2831,7 +2827,7 @@ if	(length(v1) > 0) then
 			mi.Overflow_flag:=TRUE;
 			if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
 				begin
-				Raise EIntOverflow.create('Overflow on string conversion');
+				Raise EIntOverflow.create('Overflow');
 				end;
 			goto 999;
 			end;
@@ -3247,7 +3243,7 @@ then
 	Result.Overflow_flag:= v1.Overflow_flag;
 	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
 		begin
-		Raise EIntOverflow.create('Overflow on inc');
+		Raise EIntOverflow.create('Overflow');
 		end;
 	exit;
 	end;
@@ -3313,7 +3309,7 @@ then
 	Result.Defined_flag:=TRUE;
 	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
 		begin
-		Raise EIntOverflow.create('Overflow on add');
+		Raise EIntOverflow.create('Overflow');
 		end;
 	exit;
 	end;
@@ -3395,7 +3391,7 @@ then
 	Result.Overflow_flag:= v1.Overflow_flag;
 	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
 		begin
-		Raise EIntOverflow.create('Overflow on inc');
+		Raise EIntOverflow.create('Overflow');
 		end;
 	exit;
 	end;
@@ -3460,7 +3456,7 @@ then
 	Result.Defined_flag:=TRUE;
 	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
 		begin
-		Raise EIntOverflow.create('Overflow on subtract');
+		Raise EIntOverflow.create('Overflow');
 		end;
 	exit;
 	end;
@@ -3675,7 +3671,7 @@ then
 	Result.Defined_flag:=TRUE;
 	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
 		begin
-		Raise EIntOverflow.create('Overflow on multiply');
+		Raise EIntOverflow.create('Overflow');
 		end;
 	exit;
 	end;
@@ -3694,7 +3690,7 @@ if	R.Overflow_flag then
 	Multi_Int_ERROR:= TRUE;
 	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
 		begin
-		Raise EIntOverflow.create('Overflow on multiply');
+		Raise EIntOverflow.create('Overflow');
 		end;
 	end;
 end;
@@ -3732,7 +3728,7 @@ then
 	VREM.Defined_flag:= FALSE;
 	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
 		begin
-		Raise EIntOverflow.create('Overflow on Dec');
+		Raise EIntOverflow.create('Overflow');
 		end;
 	exit;
 	end;
@@ -3747,7 +3743,7 @@ then
 	VREM.Defined_flag:= FALSE;
 	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
 		begin
-		Raise EIntOverflow.create('SqRoot is Negative');
+		Raise EIntOverflow.create('Overflow');
 		end;
 	exit;
 	end;
@@ -3845,7 +3841,7 @@ else
 				Result.Overflow_flag:= TRUE;
 				if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
 					begin
-					Raise EIntOverflow.create('Overflow on Power');
+					Raise EIntOverflow.create('Overflow');
 					end;
 				exit;
 				end;
@@ -3867,7 +3863,7 @@ else
 			Result.Overflow_flag:= TRUE;
 			if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
 				begin
-				Raise EIntOverflow.create('Overflow on Power');
+				Raise EIntOverflow.create('Overflow');
 				end;
 			exit;
 			end;
@@ -3886,7 +3882,7 @@ else
 		Result.Overflow_flag:= TRUE;
 		if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
 			begin
-			Raise EIntOverflow.create('Overflow on Power');
+			Raise EIntOverflow.create('Overflow');
 			end;
 		exit;
 		end;
@@ -4107,7 +4103,7 @@ then
 	Result.Defined_flag:=TRUE;
 	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
 		begin
-		Raise EIntOverflow.create('Overflow on divide');
+		Raise EIntOverflow.create('Overflow');
 		end;
 	exit;
 	end;
@@ -4137,7 +4133,7 @@ then
 	Multi_Int_ERROR:= TRUE;
 	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
 		begin
-		Raise EIntOverflow.create('Overflow on divide');
+		Raise EIntOverflow.create('Overflow');
 		end;
 	end;
 end;
@@ -4171,7 +4167,7 @@ then
 	Result.Defined_flag:=TRUE;
 	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
 		begin
-		Raise EIntOverflow.create('Overflow on modulus');
+		Raise EIntOverflow.create('Overflow');
 		end;
 	exit;
 	end;
@@ -4201,7 +4197,7 @@ then
 	Multi_Int_ERROR:= TRUE;
 	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
 		begin
-		Raise EIntOverflow.create('Overflow on divide');
+		Raise EIntOverflow.create('Overflow');
 		end;
 	end;
 end;
@@ -5045,7 +5041,7 @@ if	(length(v1) > 0) then
 			mi.Overflow_flag:=TRUE;
 			if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
 				begin
-				Raise EIntOverflow.create('Overflow on string conversion');
+				Raise EIntOverflow.create('Overflow');
 				end;
 			goto 999;
 			end;
@@ -5410,7 +5406,7 @@ if (R.Overflow) then
 	Result.Negative_flag:= Multi_UBool_UNDEF;
 	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
 		begin
-		Raise EIntOverflow.create('Overflow on Single to Multi_Int conversion');
+		Raise EIntOverflow.create('Overflow');
 		end;
 	exit;
 	end;
@@ -5440,7 +5436,7 @@ if (R.Overflow) then
 	Result.Negative_flag:= Multi_UBool_UNDEF;
 	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
 		begin
-		Raise EIntOverflow.create('Overflow on Real to Multi_Int conversion');
+		Raise EIntOverflow.create('Overflow');
 		end;
 	exit;
 	end;
@@ -5470,7 +5466,7 @@ if (R.Overflow) then
 	Result.Negative_flag:= Multi_UBool_UNDEF;
 	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
 		begin
-		Raise EIntOverflow.create('Overflow on Double to Multi_Int conversion');
+		Raise EIntOverflow.create('Overflow');
 		end;
 	exit;
 	end;
@@ -5522,7 +5518,7 @@ do
 				Multi_Int_ERROR:= TRUE;
 				if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
 					begin
-					Raise EIntOverflow.create('Overflow on Multi_Int to Single conversion');
+					Raise EIntOverflow.create('Overflow');
 					end;
 				end;
 			end;
@@ -5538,7 +5534,7 @@ do
 			Multi_Int_ERROR:= TRUE;
 			if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
 				begin
-				Raise EIntOverflow.create('Overflow on Multi_Int to Single conversion');
+				Raise EIntOverflow.create('Overflow');
 				end;
 			end;
 		end;
@@ -5592,7 +5588,7 @@ do
 				Multi_Int_ERROR:= TRUE;
 				if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
 					begin
-					Raise EIntOverflow.create('Overflow on Multi_Int to Real conversion');
+					Raise EIntOverflow.create('Overflow');
 					end;
 				end;
 			end;
@@ -5608,7 +5604,7 @@ do
 			Multi_Int_ERROR:= TRUE;
 			if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
 				begin
-				Raise EIntOverflow.create('Overflow on Multi_Int to Real conversion');
+				Raise EIntOverflow.create('Overflow');
 				end;
 			end;
 		end;
@@ -5662,7 +5658,7 @@ do
 				Multi_Int_ERROR:= TRUE;
 				if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
 					begin
-					Raise EIntOverflow.create('Overflow on Multi_Int to Double conversion');
+					Raise EIntOverflow.create('Overflow');
 					end;
 				end;
 			end;
@@ -5678,7 +5674,7 @@ do
 			Multi_Int_ERROR:= TRUE;
 			if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
 				begin
-				Raise EIntOverflow.create('Overflow on Multi_Int to Double conversion');
+				Raise EIntOverflow.create('Overflow');
 				end;
 			end;
 		end;
@@ -5996,7 +5992,7 @@ if	(length(v1) > 0) then
 			Multi_Int_ERROR:= TRUE;
 			if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
 				begin
-				Raise EIntOverflow.create('Overflow on string conversion');
+				Raise EIntOverflow.create('Overflow');
 				end;
 			goto 999;
 			end;
@@ -6229,7 +6225,7 @@ if	(length(v1) > 0) then
 			mi.Overflow_flag:=TRUE;
 			if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
 				begin
-				Raise EIntOverflow.create('Overflow on hex string conversion');
+				Raise EIntOverflow.create('Overflow');
 				end;
 			goto 999;
 			end;
@@ -6708,7 +6704,7 @@ then
 	Result.Overflow_flag:= v1.Overflow_flag;
 	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
 		begin
-		Raise EIntOverflow.create('Overflow on inc');
+		Raise EIntOverflow.create('Overflow');
 		end;
 	exit;
 	end;
@@ -6738,11 +6734,11 @@ else
 	end;
 
 if (Result.Overflow_flag = TRUE) then
-		begin
-		Multi_Int_ERROR:= TRUE;
-		if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
-			Raise EIntOverflow.create('Overflow');
-		end;
+	begin
+	Multi_Int_ERROR:= TRUE;
+	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
+		Raise EIntOverflow.create('Overflow');
+	end;
 
 if	(Result.Negative_flag = Multi_UBool_UNDEF) then Result.Negative_flag:= Neg;
 end;
@@ -6774,7 +6770,7 @@ then
 	Result.Defined_flag:=TRUE;
 	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
 		begin
-		Raise EIntOverflow.create('Overflow on add');
+		Raise EIntOverflow.create('Overflow');
 		end;
 	exit;
 	end;
@@ -6856,7 +6852,7 @@ then
 	Multi_Int_ERROR:= TRUE;
 	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
 		begin
-		Raise EIntOverflow.create('Overflow on inc');
+		Raise EIntOverflow.create('Overflow');
 		end;
 	exit;
 	end;
@@ -6921,7 +6917,7 @@ then
 	Multi_Int_ERROR:= TRUE;
 	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
 		begin
-		Raise EIntOverflow.create('Overflow on subtract');
+		Raise EIntOverflow.create('Overflow');
 		end;
 	exit;
 	end;
@@ -7137,7 +7133,7 @@ then
 	Multi_Int_ERROR:= TRUE;
 	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
 		begin
-		Raise EIntOverflow.create('Overflow on multiply');
+		Raise EIntOverflow.create('Overflow');
 		end;
 	exit;
 	end;
@@ -7186,7 +7182,7 @@ then
 	Multi_Int_ERROR:= TRUE;
 	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
 		begin
-		Raise EIntOverflow.create('Overflow on multiply');
+		Raise EIntOverflow.create('Overflow');
 		end;
 	exit;
 	end;
@@ -7242,7 +7238,7 @@ then
 	Multi_Int_ERROR:= TRUE;
 	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
 		begin
-		Raise EIntOverflow.create('Overflow on Dec');
+		Raise EIntOverflow.create('Overflow');
 		end;
 	exit;
 	end;
@@ -7257,7 +7253,7 @@ then
 	Multi_Int_ERROR:= TRUE;
 	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
 		begin
-		Raise EIntOverflow.create('SqRoot is Negative_flag');
+		Raise EIntOverflow.create('Overflow');
 		end;
 	exit;
 	end;
@@ -7355,7 +7351,7 @@ else
 				Multi_Int_ERROR:= TRUE;
 				if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
 					begin
-					Raise EIntOverflow.create('Overflow on Power');
+					Raise EIntOverflow.create('Overflow');
 					end;
 				exit;
 				end;
@@ -7377,7 +7373,7 @@ else
 			Multi_Int_ERROR:= TRUE;
 			if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
 				begin
-				Raise EIntOverflow.create('Overflow on Power');
+				Raise EIntOverflow.create('Overflow');
 				end;
 			exit;
 			end;
@@ -7396,7 +7392,7 @@ else
 		Multi_Int_ERROR:= TRUE;
 		if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
 			begin
-			Raise EIntOverflow.create('Overflow on Power');
+			Raise EIntOverflow.create('Overflow');
 			end;
 		exit;
 		end;
@@ -7616,7 +7612,7 @@ then
 	Multi_Int_ERROR:= TRUE;
 	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
 		begin
-		Raise EIntOverflow.create('Overflow on divide');
+		Raise EIntOverflow.create('Overflow');
 		end;
 	exit;
 	end;
@@ -7646,7 +7642,7 @@ then
 	Multi_Int_ERROR:= TRUE;
 	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
 		begin
-		Raise EIntOverflow.create('Overflow on divide');
+		Raise EIntOverflow.create('Overflow');
 		end;
 	end;
 end;
@@ -7680,7 +7676,7 @@ then
 	Multi_Int_ERROR:= TRUE;
 	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
 		begin
-		Raise EIntOverflow.create('Overflow on modulus');
+		Raise EIntOverflow.create('Overflow');
 		end;
 	exit;
 	end;
@@ -7710,7 +7706,7 @@ then
 	Multi_Int_ERROR:= TRUE;
 	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
 		begin
-		Raise EIntOverflow.create('Overflow on divide');
+		Raise EIntOverflow.create('Overflow');
 		end;
 	end;
 end;
@@ -8864,7 +8860,7 @@ if	(length(v1) > 0) then
 			Multi_Int_ERROR:= TRUE;
 			if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
 				begin
-				Raise EIntOverflow.create('Overflow on string conversion');
+				Raise EIntOverflow.create('Overflow');
 				end;
 			goto 999;
 			end;
@@ -9056,7 +9052,7 @@ if (R.Overflow) then
 	Result.Negative_flag:= Multi_UBool_UNDEF;
 	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
 		begin
-		Raise EIntOverflow.create('Overflow on Single to Multi_Int conversion');
+		Raise EIntOverflow.create('Overflow');
 		end;
 	exit;
 	end;
@@ -9086,7 +9082,7 @@ if (R.Overflow) then
 	Result.Negative_flag:= Multi_UBool_UNDEF;
 	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
 		begin
-		Raise EIntOverflow.create('Overflow on Real to Multi_Int conversion');
+		Raise EIntOverflow.create('Overflow');
 		end;
 	exit;
 	end;
@@ -9116,7 +9112,7 @@ if (R.Overflow) then
 	Result.Negative_flag:= Multi_UBool_UNDEF;
 	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
 		begin
-		Raise EIntOverflow.create('Overflow on Double to Multi_Int conversion');
+		Raise EIntOverflow.create('Overflow');
 		end;
 	exit;
 	end;
@@ -9169,7 +9165,7 @@ do
 				Multi_Int_ERROR:= TRUE;
 				if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
 					begin
-					Raise EIntOverflow.create('Overflow on Multi_Int to Single conversion');
+					Raise EIntOverflow.create('Overflow');
 					end;
 				end;
 			end;
@@ -9185,7 +9181,7 @@ do
 			Multi_Int_ERROR:= TRUE;
 			if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
 				begin
-				Raise EIntOverflow.create('Overflow on Multi_Int to Single conversion');
+				Raise EIntOverflow.create('Overflow');
 				end;
 			end;
 		end;
@@ -9239,7 +9235,7 @@ do
 				Multi_Int_ERROR:= TRUE;
 				if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
 					begin
-					Raise EIntOverflow.create('Overflow on Multi_Int to Real conversion');
+					Raise EIntOverflow.create('Overflow');
 					end;
 				end;
 			end;
@@ -9255,7 +9251,7 @@ do
 			Multi_Int_ERROR:= TRUE;
 			if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
 				begin
-				Raise EIntOverflow.create('Overflow on Multi_Int to Real conversion');
+				Raise EIntOverflow.create('Overflow');
 				end;
 			end;
 		end;
@@ -9309,7 +9305,7 @@ do
 				Multi_Int_ERROR:= TRUE;
 				if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
 					begin
-					Raise EIntOverflow.create('Overflow on Multi_Int to Double conversion');
+					Raise EIntOverflow.create('Overflow');
 					end;
 				end;
 			end;
@@ -9325,7 +9321,7 @@ do
 			Multi_Int_ERROR:= TRUE;
 			if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
 				begin
-				Raise EIntOverflow.create('Overflow on Multi_Int to Double conversion');
+				Raise EIntOverflow.create('Overflow');
 				end;
 			end;
 		end;
@@ -9655,7 +9651,7 @@ if	(length(v1) > 0) then
 			Multi_Int_ERROR:= TRUE;
 			if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
 				begin
-				Raise EIntOverflow.create('Overflow on string conversion');
+				Raise EIntOverflow.create('Overflow');
 				end;
 			goto 999;
 			end;
@@ -9836,7 +9832,7 @@ if	(length(v1) > 0) then
 			Multi_Int_ERROR:= TRUE;
 			if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
 				begin
-				Raise EIntOverflow.create('Overflow on string conversion');
+				Raise EIntOverflow.create('Overflow');
 				end;
 			goto 999;
 			end;
@@ -10435,7 +10431,7 @@ then
 	Multi_Int_ERROR:= TRUE;
 	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
 		begin
-		Raise EIntOverflow.create('Overflow on inc');
+		Raise EIntOverflow.create('Overflow');
 		end;
 	exit;
 	end;
@@ -10501,7 +10497,7 @@ then
 	Multi_Int_ERROR:= TRUE;
 	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
 		begin
-		Raise EIntOverflow.create('Overflow on add');
+		Raise EIntOverflow.create('Overflow');
 		end;
 	exit;
 	end;
@@ -10582,7 +10578,7 @@ then
 	Multi_Int_ERROR:= TRUE;
 	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
 		begin
-		Raise EIntOverflow.create('Overflow on subtract');
+		Raise EIntOverflow.create('Overflow');
 		end;
 	exit;
 	end;
@@ -10673,7 +10669,7 @@ then
 	Multi_Int_ERROR:= TRUE;
 	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
 		begin
-		Raise EIntOverflow.create('Overflow on inc');
+		Raise EIntOverflow.create('Overflow');
 		end;
 	exit;
 	end;
@@ -10864,7 +10860,7 @@ then
 	Multi_Int_ERROR:= TRUE;
 	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
 		begin
-		Raise EIntOverflow.create('Overflow on multiply');
+		Raise EIntOverflow.create('Overflow');
 		end;
 	exit;
 	end;
@@ -10914,7 +10910,7 @@ then
 	Multi_Int_ERROR:= TRUE;
 	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
 		begin
-		Raise EIntOverflow.create('Overflow on multiply');
+		Raise EIntOverflow.create('Overflow');
 		end;
 	exit;
 	end;
@@ -10969,7 +10965,7 @@ then
 	Multi_Int_ERROR:= TRUE;
 	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
 		begin
-		Raise EIntOverflow.create('Overflow on Dec');
+		Raise EIntOverflow.create('Overflow');
 		end;
 	exit;
 	end;
@@ -10984,7 +10980,7 @@ then
 	Multi_Int_ERROR:= TRUE;
 	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
 		begin
-		Raise EIntOverflow.create('SqRoot is Negative_flag');
+		Raise EIntOverflow.create('Overflow');
 		end;
 	exit;
 	end;
@@ -11082,7 +11078,7 @@ else
 				Multi_Int_ERROR:= TRUE;
 				if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
 					begin
-					Raise EIntOverflow.create('Overflow on Power');
+					Raise EIntOverflow.create('Overflow');
 					end;
 				exit;
 				end;
@@ -11104,7 +11100,7 @@ else
 			Multi_Int_ERROR:= TRUE;
 			if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
 				begin
-				Raise EIntOverflow.create('Overflow on Power');
+				Raise EIntOverflow.create('Overflow');
 				end;
 			exit;
 			end;
@@ -11125,7 +11121,7 @@ else
 		Multi_Int_ERROR:= TRUE;
 		if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
 			begin
-			Raise EIntOverflow.create('Overflow on Power');
+			Raise EIntOverflow.create('Overflow');
 			end;
 		exit;
 		end;
@@ -11345,7 +11341,7 @@ then
 	Multi_Int_ERROR:= TRUE;
 	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
 		begin
-		Raise EIntOverflow.create('Overflow on divide');
+		Raise EIntOverflow.create('Overflow');
 		end;
 	exit;
 	end;
@@ -11375,7 +11371,7 @@ then
 	Multi_Int_ERROR:= TRUE;
 	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
 		begin
-		Raise EIntOverflow.create('Overflow on divide');
+		Raise EIntOverflow.create('Overflow');
 		end;
 	end;
 end;
@@ -11408,7 +11404,7 @@ then
 	Multi_Int_ERROR:= TRUE;
 	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
 		begin
-		Raise EIntOverflow.create('Overflow on modulus');
+		Raise EIntOverflow.create('Overflow');
 		end;
 	exit;
 	end;
@@ -11438,7 +11434,7 @@ then
 	Multi_Int_ERROR:= TRUE;
 	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
 		begin
-		Raise EIntOverflow.create('Overflow on divide');
+		Raise EIntOverflow.create('Overflow');
 		end;
 	end;
 end;
@@ -12106,7 +12102,7 @@ then
 	Multi_Int_ERROR:= TRUE;
 	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
 		begin
-		Raise EIntOverflow.create('Overflow on multiply');
+		Raise EIntOverflow.create('Overflow');
 		end;
 	exit;
 	end;
@@ -12156,7 +12152,7 @@ then
 	Multi_Int_ERROR:= TRUE;
 	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
 		begin
-		Raise EIntOverflow.create('Overflow on multiply');
+		Raise EIntOverflow.create('Overflow');
 		end;
 	exit;
 	end;
@@ -12434,7 +12430,7 @@ then
 	Multi_Int_ERROR:= TRUE;
 	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
 		begin
-		Raise EIntOverflow.create('Overflow on subtract');
+		Raise EIntOverflow.create('Overflow');
 		end;
 	exit;
 	end;
@@ -12650,7 +12646,7 @@ if	(S > Multi_XV_limit) then
 	Multi_Int_ERROR:= TRUE;
 	{
 	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
-		Raise EIntOverflow.create('Overflow on Multi_Int_Reset_XV_Size');
+		Raise EIntOverflow.create('Overflow');
 	}
 	exit;
 	end;
@@ -14416,7 +14412,7 @@ then
 	Multi_Int_ERROR:= TRUE;
 	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
 		begin
-		Raise EIntOverflow.create('Overflow on inc');
+		Raise EIntOverflow.create('Overflow');
 		end;
 	exit;
 	end;
@@ -14445,7 +14441,7 @@ do
 				Multi_Int_ERROR:= TRUE;
 				if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
 					begin
-					Raise EIntOverflow.create('Overflow on Multi_Int to Single conversion');
+					Raise EIntOverflow.create('Overflow');
 					end;
 				end;
 			end;
@@ -14461,7 +14457,7 @@ do
 			Multi_Int_ERROR:= TRUE;
 			if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
 				begin
-				Raise EIntOverflow.create('Overflow on Multi_Int to Single conversion');
+				Raise EIntOverflow.create('Overflow');
 				end;
 			end;
 		end;
@@ -14497,7 +14493,7 @@ then
 	Multi_Int_ERROR:= TRUE;
 	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
 		begin
-		Raise EIntOverflow.create('Overflow on inc');
+		Raise EIntOverflow.create('Overflow');
 		end;
 	exit;
 	end;
@@ -14526,7 +14522,7 @@ do
 				Multi_Int_ERROR:= TRUE;
 				if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
 					begin
-					Raise EIntOverflow.create('Overflow on Multi_Int to Real conversion');
+					Raise EIntOverflow.create('Overflow');
 					end;
 				end;
 			end;
@@ -14542,7 +14538,7 @@ do
 			Multi_Int_ERROR:= TRUE;
 			if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
 				begin
-				Raise EIntOverflow.create('Overflow on Multi_Int to Real conversion');
+				Raise EIntOverflow.create('Overflow');
 				end;
 			end;
 		end;
@@ -14578,7 +14574,7 @@ then
 	Multi_Int_ERROR:= TRUE;
 	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
 		begin
-		Raise EIntOverflow.create('Overflow on inc');
+		Raise EIntOverflow.create('Overflow');
 		end;
 	exit;
 	end;
@@ -14607,7 +14603,7 @@ do
 				Multi_Int_ERROR:= TRUE;
 				if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
 					begin
-					Raise EIntOverflow.create('Overflow on Multi_Int to Double conversion');
+					Raise EIntOverflow.create('Overflow');
 					end;
 				end;
 			end;
@@ -14623,7 +14619,7 @@ do
 			Multi_Int_ERROR:= TRUE;
 			if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
 				begin
-				Raise EIntOverflow.create('Overflow on Multi_Int to Double conversion');
+				Raise EIntOverflow.create('Overflow');
 				end;
 			end;
 		end;
@@ -14654,7 +14650,7 @@ if (R.Overflow) then
 	Multi_Int_ERROR:= TRUE;
 	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
 		begin
-		Raise EIntOverflow.create('Overflow on single to Multi_Int conversion');
+		Raise EIntOverflow.create('Overflow');
 		end;
 	exit;
 	end;
@@ -14684,7 +14680,7 @@ if (R.Overflow) then
 	Result.Negative_flag:= Multi_UBool_UNDEF;
 	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
 		begin
-		Raise EIntOverflow.create('Overflow on Real to Multi_Int conversion');
+		Raise EIntOverflow.create('Overflow');
 		end;
 	exit;
 	end;
@@ -14714,7 +14710,7 @@ if (R.Overflow) then
 	Result.Negative_flag:= Multi_UBool_UNDEF;
 	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
 		begin
-		Raise EIntOverflow.create('Overflow on Double to Multi_Int conversion');
+		Raise EIntOverflow.create('Overflow');
 		end;
 	exit;
 	end;
@@ -14749,7 +14745,7 @@ then
 	Multi_Int_ERROR:= TRUE;
 	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
 		begin
-		Raise EIntOverflow.create('Overflow on inc');
+		Raise EIntOverflow.create('Overflow');
 		end;
 	exit;
 	end;
@@ -14810,7 +14806,7 @@ then
 	Multi_Int_ERROR:= TRUE;
 	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
 		begin
-		Raise EIntOverflow.create('Overflow on inc');
+		Raise EIntOverflow.create('Overflow');
 		end;
 	exit;
 	end;
@@ -14870,7 +14866,7 @@ then
 	Multi_Int_ERROR:= TRUE;
 	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
 		begin
-		Raise EIntOverflow.create('Overflow on inc');
+		Raise EIntOverflow.create('Overflow');
 		end;
 	exit;
 	end;
@@ -14933,7 +14929,7 @@ then
 	Multi_Int_ERROR:= TRUE;
 	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
 		begin
-		Raise EIntOverflow.create('Overflow on inc');
+		Raise EIntOverflow.create('Overflow');
 		end;
 	exit;
 	end;
@@ -14990,7 +14986,7 @@ then
 	Multi_Int_ERROR:= TRUE;
 	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
 		begin
-		Raise EIntOverflow.create('Overflow on inc');
+		Raise EIntOverflow.create('Overflow');
 		end;
 	exit;
 	end;
@@ -15033,7 +15029,7 @@ then
 	Multi_Int_ERROR:= TRUE;
 	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
 		begin
-		Raise EIntOverflow.create('Overflow on inc');
+		Raise EIntOverflow.create('Overflow');
 		end;
 	exit;
 	end;
@@ -15253,7 +15249,7 @@ then
 	Multi_Int_ERROR:= TRUE;
 	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
 		begin
-		Raise EIntOverflow.create('Overflow on add');
+		Raise EIntOverflow.create('Overflow');
 		end;
 	exit;
 	end;
@@ -15334,7 +15330,7 @@ then
 	Multi_Int_ERROR:= TRUE;
 	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
 		begin
-		Raise EIntOverflow.create('Overflow on inc');
+		Raise EIntOverflow.create('Overflow');
 		end;
 	exit;
 	end;
@@ -15399,7 +15395,7 @@ then
 	Multi_Int_ERROR:= TRUE;
 	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
 		begin
-		Raise EIntOverflow.create('Overflow on subtract');
+		Raise EIntOverflow.create('Overflow');
 		end;
 	exit;
 	end;
@@ -15489,7 +15485,7 @@ then
 	Multi_Int_ERROR:= TRUE;
 	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
 		begin
-		Raise EIntOverflow.create('Overflow on inc');
+		Raise EIntOverflow.create('Overflow');
 		end;
 	exit;
 	end;
@@ -15552,7 +15548,7 @@ then
 	Multi_Int_ERROR:= TRUE;
 	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
 		begin
-		Raise EIntOverflow.create('Overflow on unary minus');
+		Raise EIntOverflow.create('Overflow');
 		end;
 	exit;
 	end;
@@ -15591,7 +15587,7 @@ then
 	Multi_Int_ERROR:= TRUE;
 	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
 		begin
-		Raise EIntOverflow.create('Overflow on XOR');
+		Raise EIntOverflow.create('Overflow');
 		end;
 	exit;
 	end;
@@ -15670,7 +15666,7 @@ then
 	Multi_Int_ERROR:= TRUE;
 	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
 		begin
-		Raise EIntOverflow.create('Overflow on bitwise OR');
+		Raise EIntOverflow.create('Overflow');
 		end;
 	exit;
 	end;
@@ -15749,7 +15745,7 @@ then
 	Multi_Int_ERROR:= TRUE;
 	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
 		begin
-		Raise EIntOverflow.create('Overflow on bitwise AND');
+		Raise EIntOverflow.create('Overflow');
 		end;
 	exit;
 	end;
@@ -15827,7 +15823,7 @@ then
 	Multi_Int_ERROR:= TRUE;
 	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
 		begin
-		Raise EIntOverflow.create('Overflow on bitwise NOT');
+		Raise EIntOverflow.create('Overflow');
 		end;
 	exit;
 	end;
@@ -16042,7 +16038,7 @@ then
 	Multi_Int_ERROR:= TRUE;
 	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
 		begin
-		Raise EIntOverflow.create('Overflow on multiply');
+		Raise EIntOverflow.create('Overflow');
 		end;
 	exit;
 	end;
@@ -16098,7 +16094,7 @@ then
 	Multi_Int_ERROR:= TRUE;
 	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
 		begin
-		Raise EIntOverflow.create('Overflow on Dec');
+		Raise EIntOverflow.create('Overflow');
 		end;
 	exit;
 	end;
@@ -16113,7 +16109,7 @@ then
 	Multi_Int_ERROR:= TRUE;
 	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
 		begin
-		Raise EIntOverflow.create('SqRoot is Negative_flag');
+		Raise EIntOverflow.create('Overflow');
 		end;
 	exit;
 	end;
@@ -16211,7 +16207,7 @@ then
 	Multi_Int_ERROR:= TRUE;
 	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
 		begin
-		Raise EIntOverflow.create('Overflow on power');
+		Raise EIntOverflow.create('Overflow');
 		end;
 	exit;
 	end;
@@ -16237,7 +16233,7 @@ else
 				Multi_Int_ERROR:= TRUE;
 				if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
 					begin
-					Raise EIntOverflow.create('Overflow on Power');
+					Raise EIntOverflow.create('Overflow');
 					end;
 				exit;
 				end;
@@ -16259,7 +16255,7 @@ else
 			Multi_Int_ERROR:= TRUE;
 			if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
 				begin
-				Raise EIntOverflow.create('Overflow on Power');
+				Raise EIntOverflow.create('Overflow');
 				end;
 			exit;
 			end;
@@ -16278,7 +16274,7 @@ else
 		Multi_Int_ERROR:= TRUE;
 		if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
 			begin
-			Raise EIntOverflow.create('Overflow on Power');
+			Raise EIntOverflow.create('Overflow');
 			end;
 		exit;
 		end;
@@ -16553,7 +16549,7 @@ then
 	Multi_Int_ERROR:= TRUE;
 	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
 		begin
-		Raise EIntOverflow.create('Overflow on divide');
+		Raise EIntOverflow.create('Overflow');
 		end;
 	exit;
 	end;
@@ -16583,7 +16579,7 @@ then
 	Multi_Int_ERROR:= TRUE;
 	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
 		begin
-		Raise EIntOverflow.create('Overflow on divide');
+		Raise EIntOverflow.create('Overflow');
 		end;
 	end;
 end;
@@ -16616,7 +16612,7 @@ then
 	Multi_Int_ERROR:= TRUE;
 	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
 		begin
-		Raise EIntOverflow.create('Overflow on modulus');
+		Raise EIntOverflow.create('Overflow');
 		end;
 	exit;
 	end;
@@ -16647,7 +16643,7 @@ then
 	Multi_Int_ERROR:= TRUE;
 	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
 		begin
-		Raise EIntOverflow.create('Overflow on divide');
+		Raise EIntOverflow.create('Overflow');
 		end;
 	end;
 end;
