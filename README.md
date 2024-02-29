@@ -10,3 +10,4 @@ This should be considered a beta development version.
 Changes in version 4.37:
 - Bitwise NOT AND OR functions
 - Bug fixes in XOR function
+- Tidy-up/simplify overflow exception messages
