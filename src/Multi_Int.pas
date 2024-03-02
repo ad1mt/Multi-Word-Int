@@ -232,6 +232,7 @@ v4.37.00
 -	Bug fix in XOR functions exception message
 -	XOR functions raise exception for negative operands
 -	Tidy-up/simplify overflow exception messages
+-	Re-instate "lost" negative functions
 *)
 
 (* END OF USER OPTIONAL DEFINES *)
@@ -243,7 +244,7 @@ uses	sysutils
 ;
 
 const
-	version = '4.36.00';
+	version = '4.37.00';
 
 const
 
@@ -656,6 +657,11 @@ function Abs(const v1:Multi_Int_X2):Multi_Int_X2; overload;	{$ifdef inline_funct
 function Abs(const v1:Multi_Int_X3):Multi_Int_X3; overload;	{$ifdef inline_functions} inline; {$endif}
 function Abs(const v1:Multi_Int_X4):Multi_Int_X4; overload;	{$ifdef inline_functions} inline; {$endif}
 function Abs(const v1:Multi_Int_XV):Multi_Int_XV; overload;	{$ifdef inline_functions} inline; {$endif}
+
+function Negative(const v1:Multi_Int_X2):boolean; overload;
+function Negative(const v1:Multi_Int_X3):boolean; overload;
+function Negative(const v1:Multi_Int_X4):boolean; overload;
+function Negative(const v1:Multi_Int_XV):boolean; overload;
 
 procedure SqRoot(const v1:Multi_Int_XV; out VR,VREM:Multi_Int_XV); overload;	{$ifdef inline_functions} inline; {$endif}
 procedure SqRoot(const v1:Multi_Int_X4; out VR,VREM:Multi_Int_X4); overload;	{$ifdef inline_functions} inline; {$endif}
