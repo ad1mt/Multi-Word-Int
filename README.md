@@ -11,3 +11,4 @@ Changes in version 4.37:
 - Bitwise NOT AND OR functions
 - Bug fixes in XOR function
 - Tidy-up/simplify overflow exception messages
+- Re-instate "lost" Negative function
