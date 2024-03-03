@@ -230,9 +230,12 @@ v4.37.00
 -	Not And Or operations for Multi_Int_X2
 -	Not And Or operations for Multi_Int_X3, X4, XV
 -	Bug fix in XOR functions exception message
--	XOR functions raise exception for negative operands
+-	Bitwise functions raise exception for negative operands
 -	Tidy-up/simplify overflow exception messages
 -	Re-instate "lost" negative functions
+
+v4.37.01
+-	Bitwise functions no longer raise exceptions for negative operands
 *)
 
 (* END OF USER OPTIONAL DEFINES *)
@@ -244,7 +247,7 @@ uses	sysutils
 ;
 
 const
-	version = '4.37.00';
+	version = '4.37.01';
 
 const
 
@@ -2975,20 +2978,10 @@ Result.M_Value[1]:= (v1.M_Value[1] xor v2.M_Value[1]);
 Result.M_Value[2]:= (v1.M_Value[2] xor v2.M_Value[2]);
 Result.M_Value[3]:= (v1.M_Value[3] xor v2.M_Value[3]);
 Result.Defined_flag:=TRUE;
-Result.Negative_flag:= Multi_UBool_FALSE;
 
-Result.Overflow_flag:=FALSE;
-if	(v1.Negative)
-or	(v2.Negative)
-then
-	begin
-	Result.Overflow_flag:= TRUE;
-	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
-		begin
-		Raise EInterror.create('Bitwise operation on negative value');
-		end;
-	exit;
-	end;
+Result.Negative_flag:= Multi_UBool_FALSE;
+if	(v1.Negative <> v2.Negative)
+then Result.Negative_flag:= Multi_UBool_TRUE;
 end;
 
 
@@ -3013,20 +3006,10 @@ Result.M_Value[1]:= (v1.M_Value[1] or v2.M_Value[1]);
 Result.M_Value[2]:= (v1.M_Value[2] or v2.M_Value[2]);
 Result.M_Value[3]:= (v1.M_Value[3] or v2.M_Value[3]);
 Result.Defined_flag:=TRUE;
-Result.Negative_flag:= Multi_UBool_FALSE;
 
-Result.Overflow_flag:=FALSE;
-if	(v1.Negative)
-or	(v2.Negative)
-then
-	begin
-	Result.Overflow_flag:= TRUE;
-	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
-		begin
-		Raise EInterror.create('Bitwise operation on negative value');
-		end;
-	exit;
-	end;
+Result.Negative_flag:= Multi_UBool_FALSE;
+if v1.Negative and v2.Negative
+then Result.Negative_flag:= Multi_UBool_TRUE;
 end;
 
 
@@ -3051,20 +3034,10 @@ Result.M_Value[1]:= (v1.M_Value[1] and v2.M_Value[1]);
 Result.M_Value[2]:= (v1.M_Value[2] and v2.M_Value[2]);
 Result.M_Value[3]:= (v1.M_Value[3] and v2.M_Value[3]);
 Result.Defined_flag:=TRUE;
-Result.Negative_flag:= Multi_UBool_FALSE;
 
-Result.Overflow_flag:=FALSE;
-if	(v1.Negative)
-or	(v2.Negative)
-then
-	begin
-	Result.Overflow_flag:= TRUE;
-	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
-		begin
-		Raise EInterror.create('Bitwise operation on negative value');
-		end;
-	exit;
-	end;
+Result.Negative_flag:= Multi_UBool_FALSE;
+if v1.Negative and v2.Negative
+then Result.Negative_flag:= Multi_UBool_TRUE;
 end;
 
 
@@ -3088,19 +3061,10 @@ Result.M_Value[1]:= (not v1.M_Value[1]);
 Result.M_Value[2]:= (not v1.M_Value[2]);
 Result.M_Value[3]:= (not v1.M_Value[3]);
 Result.Defined_flag:=TRUE;
-Result.Negative_flag:= Multi_UBool_FALSE;
 
-Result.Overflow_flag:=FALSE;
-if	(v1.Negative)
-then
-	begin
-	Result.Overflow_flag:= TRUE;
-	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
-		begin
-		Raise EInterror.create('Bitwise operation on negative value');
-		end;
-	exit;
-	end;
+Result.Negative_flag:=  Multi_UBool_TRUE;
+if v1.Negative
+then Result.Negative_flag:= Multi_UBool_FALSE;
 end;
 
 
@@ -6385,20 +6349,10 @@ Result.M_Value[3]:= (v1.M_Value[3] xor v2.M_Value[3]);
 Result.M_Value[4]:= (v1.M_Value[4] xor v2.M_Value[4]);
 Result.M_Value[5]:= (v1.M_Value[5] xor v2.M_Value[5]);
 Result.Defined_flag:=TRUE;
-Result.Negative_flag:= Multi_UBool_FALSE;
 
-Result.Overflow_flag:=FALSE;
-if	(v1.Negative)
-or	(v2.Negative)
-then
-	begin
-	Result.Overflow_flag:= TRUE;
-	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
-		begin
-		Raise EInterror.create('Bitwise operation on negative value');
-		end;
-	exit;
-	end;
+Result.Negative_flag:= Multi_UBool_FALSE;
+if	(v1.Negative <> v2.Negative)
+then Result.Negative_flag:= Multi_UBool_TRUE;
 end;
 
 
@@ -6425,20 +6379,10 @@ Result.M_Value[3]:= (v1.M_Value[3] or v2.M_Value[3]);
 Result.M_Value[4]:= (v1.M_Value[4] or v2.M_Value[4]);
 Result.M_Value[5]:= (v1.M_Value[5] or v2.M_Value[5]);
 Result.Defined_flag:=TRUE;
-Result.Negative_flag:= Multi_UBool_FALSE;
 
-Result.Overflow_flag:=FALSE;
-if	(v1.Negative)
-or	(v2.Negative)
-then
-	begin
-	Result.Overflow_flag:= TRUE;
-	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
-		begin
-		Raise EInterror.create('Bitwise operation on negative value');
-		end;
-	exit;
-	end;
+Result.Negative_flag:= Multi_UBool_FALSE;
+if v1.Negative and v2.Negative
+then Result.Negative_flag:= Multi_UBool_TRUE;
 end;
 
 
@@ -6465,20 +6409,10 @@ Result.M_Value[3]:= (v1.M_Value[3] and v2.M_Value[3]);
 Result.M_Value[4]:= (v1.M_Value[4] and v2.M_Value[4]);
 Result.M_Value[5]:= (v1.M_Value[5] and v2.M_Value[5]);
 Result.Defined_flag:=TRUE;
-Result.Negative_flag:= Multi_UBool_FALSE;
 
-Result.Overflow_flag:=FALSE;
-if	(v1.Negative)
-or	(v2.Negative)
-then
-	begin
-	Result.Overflow_flag:= TRUE;
-	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
-		begin
-		Raise EInterror.create('Bitwise operation on negative value');
-		end;
-	exit;
-	end;
+Result.Negative_flag:= Multi_UBool_FALSE;
+if v1.Negative and v2.Negative
+then Result.Negative_flag:= Multi_UBool_TRUE;
 end;
 
 
@@ -6504,19 +6438,10 @@ Result.M_Value[3]:= (not v1.M_Value[3]);
 Result.M_Value[4]:= (not v1.M_Value[4]);
 Result.M_Value[5]:= (not v1.M_Value[5]);
 Result.Defined_flag:=TRUE;
-Result.Negative_flag:= Multi_UBool_FALSE;
 
-Result.Overflow_flag:=FALSE;
-if	(v1.Negative)
-then
-	begin
-	Result.Overflow_flag:= TRUE;
-	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
-		begin
-		Raise EInterror.create('Bitwise operation on negative value');
-		end;
-	exit;
-	end;
+Result.Negative_flag:=  Multi_UBool_TRUE;
+if v1.Negative
+then Result.Negative_flag:= Multi_UBool_FALSE;
 end;
 
 
@@ -10057,22 +9982,11 @@ Result.M_Value[4]:=(v1.M_Value[4] xor v2.M_Value[4]);
 Result.M_Value[5]:=(v1.M_Value[5] xor v2.M_Value[5]);
 Result.M_Value[6]:=(v1.M_Value[6] xor v2.M_Value[6]);
 Result.M_Value[7]:=(v1.M_Value[7] xor v2.M_Value[7]);
-
 Result.Defined_flag:=TRUE;
-Result.Negative_flag:= Multi_UBool_FALSE;
 
-Result.Overflow_flag:=FALSE;
-if	(v1.Negative)
-or	(v2.Negative)
-then
-	begin
-	Result.Overflow_flag:= TRUE;
-	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
-		begin
-		Raise EInterror.create('Bitwise operation on negative value');
-		end;
-	exit;
-	end;
+Result.Negative_flag:= Multi_UBool_FALSE;
+if	(v1.Negative <> v2.Negative)
+then Result.Negative_flag:= Multi_UBool_TRUE;
 end;
 
 
@@ -10102,20 +10016,10 @@ Result.M_Value[6]:= (v1.M_Value[6] or v2.M_Value[6]);
 Result.M_Value[7]:= (v1.M_Value[7] or v2.M_Value[7]);
 
 Result.Defined_flag:=TRUE;
-Result.Negative_flag:= Multi_UBool_FALSE;
 
-Result.Overflow_flag:=FALSE;
-if	(v1.Negative)
-or	(v2.Negative)
-then
-	begin
-	Result.Overflow_flag:= TRUE;
-	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
-		begin
-		Raise EInterror.create('Bitwise operation on negative value');
-		end;
-	exit;
-	end;
+Result.Negative_flag:= Multi_UBool_FALSE;
+if v1.Negative and v2.Negative
+then Result.Negative_flag:= Multi_UBool_TRUE;
 end;
 
 
@@ -10145,20 +10049,10 @@ Result.M_Value[6]:= (v1.M_Value[6] and v2.M_Value[6]);
 Result.M_Value[7]:= (v1.M_Value[7] and v2.M_Value[7]);
 
 Result.Defined_flag:=TRUE;
-Result.Negative_flag:= Multi_UBool_FALSE;
 
-Result.Overflow_flag:=FALSE;
-if	(v1.Negative)
-or	(v2.Negative)
-then
-	begin
-	Result.Overflow_flag:= TRUE;
-	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
-		begin
-		Raise EInterror.create('Bitwise operation on negative value');
-		end;
-	exit;
-	end;
+Result.Negative_flag:= Multi_UBool_FALSE;
+if v1.Negative and v2.Negative
+then Result.Negative_flag:= Multi_UBool_TRUE;
 end;
 
 
@@ -10187,19 +10081,10 @@ Result.M_Value[6]:= (not v1.M_Value[6]);
 Result.M_Value[7]:= (not v1.M_Value[7]);
 
 Result.Defined_flag:=TRUE;
-Result.Negative_flag:= Multi_UBool_FALSE;
 
-Result.Overflow_flag:=FALSE;
-if	(v1.Negative)
-then
-	begin
-	Result.Overflow_flag:= TRUE;
-	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
-		begin
-		Raise EInterror.create('Bitwise operation on negative value');
-		end;
-	exit;
-	end;
+Result.Negative_flag:=  Multi_UBool_TRUE;
+if v1.Negative
+then Result.Negative_flag:= Multi_UBool_FALSE;
 end;
 
 
@@ -15625,20 +15510,10 @@ while (i < s) do
 	end;
 
 Result.Defined_flag:=TRUE;
-Result.Negative_flag:= FALSE;
 
-Result.Overflow_flag:=FALSE;
-if	(v1.Negative)
-or	(v2.Negative)
-then
-	begin
-	Result.Overflow_flag:= TRUE;
-	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
-		begin
-		Raise EInterror.create('Bitwise operation on negative value');
-		end;
-	exit;
-	end;
+Result.Negative_flag:= Multi_UBool_FALSE;
+if	(v1.Negative <> v2.Negative)
+then Result.Negative_flag:= Multi_UBool_TRUE;
 
 999:
 end;
@@ -15704,20 +15579,10 @@ while (i < s) do
 	end;
 
 Result.Defined_flag:=TRUE;
-Result.Negative_flag:= FALSE;
 
-Result.Overflow_flag:=FALSE;
-if	(v1.Negative)
-or	(v2.Negative)
-then
-	begin
-	Result.Overflow_flag:= TRUE;
-	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
-		begin
-		Raise EInterror.create('Bitwise operation on negative value');
-		end;
-	exit;
-	end;
+Result.Negative_flag:= Multi_UBool_FALSE;
+if v1.Negative and v2.Negative
+then Result.Negative_flag:= Multi_UBool_TRUE;
 
 999:
 end;
@@ -15783,20 +15648,10 @@ while (i < s) do
 	end;
 
 Result.Defined_flag:=TRUE;
-Result.Negative_flag:= FALSE;
 
-Result.Overflow_flag:=FALSE;
-if	(v1.Negative)
-or	(v2.Negative)
-then
-	begin
-	Result.Overflow_flag:= TRUE;
-	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
-		begin
-		Raise EInterror.create('Bitwise operation on negative value');
-		end;
-	exit;
-	end;
+Result.Negative_flag:= Multi_UBool_FALSE;
+if v1.Negative and v2.Negative
+then Result.Negative_flag:= Multi_UBool_TRUE;
 
 999:
 end;
@@ -15858,19 +15713,10 @@ while (i < s) do
 	end;
 
 Result.Defined_flag:=TRUE;
-Result.Negative_flag:= FALSE;
 
-Result.Overflow_flag:=FALSE;
-if	(v1.Negative)
-then
-	begin
-	Result.Overflow_flag:= TRUE;
-	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
-		begin
-		Raise EInterror.create('Bitwise operation on negative value');
-		end;
-	exit;
-	end;
+Result.Negative_flag:=  Multi_UBool_TRUE;
+if v1.Negative
+then Result.Negative_flag:= Multi_UBool_FALSE;
 
 999:
 end;
