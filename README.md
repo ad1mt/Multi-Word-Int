@@ -12,3 +12,5 @@ Changes in version 4.37:
 - Bug fixes in XOR function
 - Tidy-up/simplify overflow exception messages
 - Re-instate "lost" Negative function
+- bitwise operations no longer generate an exception for negative values
+  
