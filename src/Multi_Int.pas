@@ -33,19 +33,15 @@ UNIT Multi_Int;
 {$endif}
 
 // This makes procedure and functions inlined
-
 // {$define inline_functions}
 
-// This should be set if you have enabled overflow checking.
-// Turning on overflow checking causes some shift operations to fail,
-// so the code needs to turn off overflow checking for those operations.
-// This define tells the code that it needs to turn overflow checking
-// back on again after the shift operation.
-// NB this option does not turn on overflow checking for you,
-// if you wish to turn on overflow checking, you still need to do this
-// in the usual way.
+// This switch tells the source that Range-Checking is turned on
+// Only required for the 32-bit compiler/target
+// This define enables a workaround for a compiler bug, which only manifests
+// in the 32-bit compiler/target, only with 16-bit integers and
+// only for shl operations
 
-// {$define Overflow_Checks}
+// {$define range_checking_enabled}
 
 (******************************************************************************)
 (*
@@ -236,6 +232,12 @@ v4.37.00
 
 v4.37.01
 -	Bitwise functions no longer raise exceptions for negative operands
+
+v4.37.02
+-	Bug fixes in binary to decimal conversion
+-	Bug fixes in Multi_Int_XV not and or
+-	Remove conditionals to enable/disable overflow checking
+-	Workaround for Range-Checking bug (hopefully temporary)
 *)
 
 (* END OF USER OPTIONAL DEFINES *)
@@ -247,7 +249,7 @@ uses	sysutils
 ;
 
 const
-	version = '4.37.01';
+	version = '4.37.02';
 
 const
 
@@ -729,11 +731,6 @@ function To_Multi_Int_X2(const v1:Multi_Int_X3):Multi_Int_X2; overload;	{$ifdef 
 
 IMPLEMENTATION
 
-{$ifdef Overflow_Checks}
-{$Q+}
-{$R+}
-{$endif}
-
 const
 	Multi_X5_max = 8;
 	Multi_X5_max_x2 = 16;
@@ -1149,19 +1146,9 @@ end;
 (******************************************)
 function Multi_Int_X2_Odd(const v1:Multi_Int_X2):boolean;
 var	bit1_mask	:MULTI_INT_1W_U;
+
 begin
-
-{$ifdef Overflow_Checks}
-{$Q-}
-{$R-}
-{$endif}
-
-{$ifdef 32bit}
 bit1_mask:= $1;
-{$endif}
-{$ifdef 64bit}
-bit1_mask:= $1;
-{$endif}
 
 if ((v1.M_Value[0] and bit1_mask) = bit1_mask)
 then Result:= TRUE
@@ -1176,11 +1163,6 @@ then
 		Raise EInterror.create('Uninitialised variable');
 		end;
 	end;
-
-{$ifdef Overflow_Checks}
-{$Q+}
-{$R+}
-{$endif}
 
 end;
 
@@ -1197,17 +1179,7 @@ function Multi_Int_X2_Even(const v1:Multi_Int_X2):boolean; overload;
 var	bit1_mask	:MULTI_INT_1W_U;
 begin
 
-{$ifdef Overflow_Checks}
-{$Q-}
-{$R-}
-{$endif}
-
-{$ifdef 32bit}
 bit1_mask:= $1;
-{$endif}
-{$ifdef 64bit}
-bit1_mask:= $1;
-{$endif}
 
 if ((v1.M_Value[0] and bit1_mask) = bit1_mask)
 then Result:= FALSE
@@ -1222,11 +1194,6 @@ then
 		Raise EInterror.create('Uninitialised variable');
 		end;
 	end;
-
-{$ifdef Overflow_Checks}
-{$Q+}
-{$R+}
-{$endif}
 
 end;
 
@@ -1247,52 +1214,34 @@ var	carry_bits_1,
 	NBits_carry	:MULTI_INT_1W_U;
 begin
 if NBits > 0 then
-begin
+	begin
 
-{$ifdef Overflow_Checks}
-{$Q-}
-{$R-}
-{$endif}
+	{$ifdef 32bit}
+	carry_bits_mask:= $FFFF;
+	{$endif}
+	{$ifdef 64bit}
+	carry_bits_mask:= $FFFFFFFF;
+	{$endif}
 
-{$ifdef 32bit}
-carry_bits_mask:= $FFFF;
-{$endif}
-{$ifdef 64bit}
-carry_bits_mask:= $FFFFFFFF;
-{$endif}
+	NBits_max:= MULTI_INT_1W_SIZE;
+	NBits_carry:= (NBits_max - NBits);
 
-NBits_max:= MULTI_INT_1W_SIZE;
-NBits_carry:= (NBits_max - NBits);
+	carry_bits_mask:= (carry_bits_mask << NBits_carry);
 
-{$Q-}
-{$R-}
-carry_bits_mask:= (carry_bits_mask << NBits_carry);
-{$ifdef Overflow_Checks}
-{$Q+}
-{$R+}
-{$endif}
+	if NBits <= NBits_max then
+		begin
+		carry_bits_1:= ((v1.M_Value[0] and carry_bits_mask) >> NBits_carry);
+		v1.M_Value[0]:= (v1.M_Value[0] << NBits);
 
-if NBits <= NBits_max then
-begin
+		carry_bits_2:= ((v1.M_Value[1] and carry_bits_mask) >> NBits_carry);
+		v1.M_Value[1]:= ((v1.M_Value[1] << NBits) OR carry_bits_1);
 
-carry_bits_1:= ((v1.M_Value[0] and carry_bits_mask) >> NBits_carry);
-v1.M_Value[0]:= (v1.M_Value[0] << NBits);
+		carry_bits_1:= ((v1.M_Value[2] and carry_bits_mask) >> NBits_carry);
+		v1.M_Value[2]:= ((v1.M_Value[2] << NBits) OR carry_bits_2);
 
-carry_bits_2:= ((v1.M_Value[1] and carry_bits_mask) >> NBits_carry);
-v1.M_Value[1]:= ((v1.M_Value[1] << NBits) OR carry_bits_1);
-
-carry_bits_1:= ((v1.M_Value[2] and carry_bits_mask) >> NBits_carry);
-v1.M_Value[2]:= ((v1.M_Value[2] << NBits) OR carry_bits_2);
-
-v1.M_Value[3]:= ((v1.M_Value[3] << NBits) OR carry_bits_1);
-
-end;
-end;
-
-{$ifdef Overflow_Checks}
-{$Q+}
-{$R+}
-{$endif}
+		v1.M_Value[3]:= ((v1.M_Value[3] << NBits) OR carry_bits_1);
+		end;
+	end;
 
 end;
 
@@ -1364,46 +1313,34 @@ var	carry_bits_1,
 	NBits_max,
 	NBits_carry	:MULTI_INT_1W_U;
 begin
+
 if NBits > 0 then
-begin
+	begin
+	{$ifdef 32bit}
+	carry_bits_mask:= $FFFF;
+	{$endif}
+	{$ifdef 64bit}
+	carry_bits_mask:= $FFFFFFFF;
+	{$endif}
 
-{$ifdef Overflow_Checks}
-{$Q-}
-{$R-}
-{$endif}
+	NBits_max:= MULTI_INT_1W_SIZE;
+	NBits_carry:= (NBits_max - NBits);
+	carry_bits_mask:= (carry_bits_mask >> NBits_carry);
 
-{$ifdef 32bit}
-carry_bits_mask:= $FFFF;
-{$endif}
-{$ifdef 64bit}
-carry_bits_mask:= $FFFFFFFF;
-{$endif}
+	if NBits <= NBits_max then
+		begin
+		carry_bits_1:= ((v1.M_Value[3] and carry_bits_mask) << NBits_carry);
+		v1.M_Value[3]:= (v1.M_Value[3] >> NBits);
 
-NBits_max:= MULTI_INT_1W_SIZE;
-NBits_carry:= (NBits_max - NBits);
-carry_bits_mask:= (carry_bits_mask >> NBits_carry);
+		carry_bits_2:= ((v1.M_Value[2] and carry_bits_mask) << NBits_carry);
+		v1.M_Value[2]:= ((v1.M_Value[2] >> NBits) OR carry_bits_1);
 
-if NBits <= NBits_max then
-begin
+		carry_bits_1:= ((v1.M_Value[1] and carry_bits_mask) << NBits_carry);
+		v1.M_Value[1]:= ((v1.M_Value[1] >> NBits) OR carry_bits_2);
 
-carry_bits_1:= ((v1.M_Value[3] and carry_bits_mask) << NBits_carry);
-v1.M_Value[3]:= (v1.M_Value[3] >> NBits);
-
-carry_bits_2:= ((v1.M_Value[2] and carry_bits_mask) << NBits_carry);
-v1.M_Value[2]:= ((v1.M_Value[2] >> NBits) OR carry_bits_1);
-
-carry_bits_1:= ((v1.M_Value[1] and carry_bits_mask) << NBits_carry);
-v1.M_Value[1]:= ((v1.M_Value[1] >> NBits) OR carry_bits_2);
-
-v1.M_Value[0]:= ((v1.M_Value[0] >> NBits) OR carry_bits_1);
-
-end;
-end;
-
-{$ifdef Overflow_Checks}
-{$Q+}
-{$R+}
-{$endif}
+		v1.M_Value[0]:= ((v1.M_Value[0] >> NBits) OR carry_bits_1);
+		end;
+	end;
 
 end;
 
@@ -2537,7 +2474,7 @@ procedure bin_to_Multi_Int_X2(const v1:ansistring; out mi:Multi_Int_X2);
 label 999;
 var
 	n,b,c,e	:MULTI_INT_2W_U;
-	bit			:MULTI_INT_1W_U;
+	bit			:MULTI_INT_1W_S;
 	M_Val		:array[0..Multi_X2_maxi] of MULTI_INT_2W_U;
 	Signeg,
 	Zeroneg,
@@ -2570,6 +2507,7 @@ if	(length(v1) > 0) then
 		begin
 		bit:= (ord(v1[c]) - ord('0'));
 		if	(bit > 1)
+		or	(bit < 0)
 		then
 			begin
 			Multi_Int_ERROR:= TRUE;
@@ -2761,8 +2699,7 @@ end;
 procedure hex_to_Multi_Int_X2(const v1:ansistring; out mi:Multi_Int_X2);
 label 999;
 var
-	n,i,b,c,e
-				:MULTI_INT_2W_U;
+	n,i,b,c,e	:MULTI_INT_2W_U;
 	M_Val		:array[0..Multi_X2_maxi] of MULTI_INT_2W_U;
 	Signeg,
 	Zeroneg,
@@ -4352,11 +4289,6 @@ function Multi_Int_X3_Odd(const v1:Multi_Int_X3):boolean;
 var	bit1_mask	:MULTI_INT_1W_U;
 begin
 
-{$ifdef Overflow_Checks}
-{$Q-}
-{$R-}
-{$endif}
-
 {$ifdef 32bit}
 bit1_mask:= $1;
 {$endif}
@@ -4378,11 +4310,6 @@ then
 		end;
 	end;
 
-{$ifdef Overflow_Checks}
-{$Q+}
-{$R+}
-{$endif}
-
 end;
 
 
@@ -4397,11 +4324,6 @@ end;
 function Multi_Int_X3_Even(const v1:Multi_Int_X3):boolean;
 var	bit1_mask	:MULTI_INT_1W_U;
 begin
-
-{$ifdef Overflow_Checks}
-{$Q-}
-{$R-}
-{$endif}
 
 {$ifdef 32bit}
 bit1_mask:= $1;
@@ -4423,11 +4345,6 @@ then
 		Raise EInterror.create('Uninitialised variable');
 		end;
 	end;
-
-{$ifdef Overflow_Checks}
-{$Q+}
-{$R+}
-{$endif}
 
 end;
 
@@ -4494,11 +4411,6 @@ begin
 if NBits > 0 then
 begin
 
-{$ifdef Overflow_Checks}
-{$Q-}
-{$R-}
-{$endif}
-
 {$ifdef 32bit}
 carry_bits_mask:= $FFFF;
 {$endif}
@@ -4533,11 +4445,6 @@ v1.M_Value[5]:= ((v1.M_Value[5] << NBits) OR carry_bits_1);
 
 end;
 end;
-
-{$ifdef Overflow_Checks}
-{$Q+}
-{$R+}
-{$endif}
 
 end;
 
@@ -4636,11 +4543,6 @@ begin
 if NBits > 0 then
 begin
 
-{$ifdef Overflow_Checks}
-{$Q-}
-{$R-}
-{$endif}
-
 {$ifdef 32bit}
 carry_bits_mask:= $FFFF;
 {$endif}
@@ -4675,11 +4577,6 @@ v1.M_Value[0]:= ((v1.M_Value[0] >> NBits) OR carry_bits_1);
 
 end;
 end;
-
-{$ifdef Overflow_Checks}
-{$Q+}
-{$R+}
-{$endif}
 
 end;
 
@@ -5892,7 +5789,7 @@ procedure bin_to_Multi_Int_X3(const v1:ansistring; out mi:Multi_Int_X3);
 label 999;
 var
 	n,b,c,e	:MULTI_INT_2W_U;
-	bit			:MULTI_INT_1W_U;
+	bit			:MULTI_INT_1W_S;
 	M_Val		:array[0..Multi_X3_maxi] of MULTI_INT_2W_U;
 	Signeg,
 	Zeroneg,
@@ -5925,6 +5822,7 @@ if	(length(v1) > 0) then
 		begin
 		bit:= (ord(v1[c]) - ord('0'));
 		if	(bit > 1)
+		or	(bit < 0)
 		then
 			begin
 			Multi_Int_ERROR:= TRUE;
@@ -6120,8 +6018,7 @@ end;
 procedure hex_to_Multi_Int_X3(const v1:ansistring; out mi:Multi_Int_X3);
 label 999;
 var
-	n,i,b,c,e
-				:MULTI_INT_2W_U;
+	n,i,b,c,e	:MULTI_INT_2W_U;
 	M_Val		:array[0..Multi_X3_maxi] of MULTI_INT_2W_U;
 	Signeg,
 	Zeroneg,
@@ -7854,11 +7751,6 @@ function Multi_Int_X4_Odd(const v1:Multi_Int_X4):boolean;
 var	bit1_mask	:MULTI_INT_1W_U;
 begin
 
-{$ifdef Overflow_Checks}
-{$Q-}
-{$R-}
-{$endif}
-
 {$ifdef 32bit}
 bit1_mask:= $1;
 {$endif}
@@ -7880,11 +7772,6 @@ then
 		end;
 	end;
 
-{$ifdef Overflow_Checks}
-{$Q+}
-{$R+}
-{$endif}
-
 end;
 
 
@@ -7899,11 +7786,6 @@ end;
 function Multi_Int_X4_Even(const v1:Multi_Int_X4):boolean;
 var	bit1_mask	:MULTI_INT_1W_U;
 begin
-
-{$ifdef Overflow_Checks}
-{$Q-}
-{$R-}
-{$endif}
 
 {$ifdef 32bit}
 bit1_mask:= $1;
@@ -7925,11 +7807,6 @@ then
 		Raise EInterror.create('Uninitialised variable');
 		end;
 	end;
-
-{$ifdef Overflow_Checks}
-{$Q+}
-{$R+}
-{$endif}
 
 end;
 
@@ -7996,11 +7873,6 @@ begin
 if NBits > 0 then
 begin
 
-{$ifdef Overflow_Checks}
-{$Q-}
-{$R-}
-{$endif}
-
 {$ifdef 32bit}
 carry_bits_mask:= $FFFF;
 {$endif}
@@ -8011,13 +7883,7 @@ carry_bits_mask:= $FFFFFFFF;
 NBits_max:= MULTI_INT_1W_SIZE;
 NBits_carry:= (NBits_max - NBits);
 
-{$Q-}
-{$R-}
 carry_bits_mask:= (carry_bits_mask << NBits_carry);
-{$ifdef Overflow_Checks}
-{$Q+}
-{$R+}
-{$endif}
 
 if NBits <= NBits_max then
 begin
@@ -8047,11 +7913,6 @@ v1.M_Value[7]:= ((v1.M_Value[7] << NBits) OR carry_bits_1);
 
 end;
 end;
-
-{$ifdef Overflow_Checks}
-{$Q+}
-{$R+}
-{$endif}
 
 end;
 
@@ -8090,11 +7951,6 @@ var	carry_bits_1,
 begin
 if NBits > 0 then
 begin
-
-{$ifdef Overflow_Checks}
-{$Q-}
-{$R-}
-{$endif}
 
 {$ifdef 32bit}
 carry_bits_mask:= $FFFF;
@@ -8135,11 +7991,6 @@ v1.M_Value[0]:= ((v1.M_Value[0] >> NBits) OR carry_bits_1);
 
 end;
 end;
-
-{$ifdef Overflow_Checks}
-{$Q+}
-{$R+}
-{$endif}
 
 end;
 
@@ -9512,7 +9363,7 @@ procedure bin_to_Multi_Int_X4(const v1:ansistring; out mi:Multi_Int_X4);
 label 999;
 var
 	n,b,c,e	:MULTI_INT_2W_U;
-	bit			:MULTI_INT_1W_U;
+	bit			:MULTI_INT_1W_S;
 	M_Val		:array[0..Multi_X4_maxi] of MULTI_INT_2W_U;
 	Signeg,
 	Zeroneg,
@@ -9545,6 +9396,7 @@ if	(length(v1) > 0) then
 		begin
 		bit:= (ord(v1[c]) - ord('0'));
 		if	(bit > 1)
+		or	(bit < 0)
 		then
 			begin
 			Multi_Int_ERROR:= TRUE;
@@ -9688,8 +9540,7 @@ end;
 procedure hex_to_Multi_Int_X4(const v1:ansistring; out mi:Multi_Int_X4);
 label 999;
 var
-	n,i,b,c,e
-				:MULTI_INT_2W_U;
+	n,i,b,c,e	:MULTI_INT_2W_U;
 	M_Val		:array[0..Multi_X4_maxi] of MULTI_INT_2W_U;
 	Signeg,
 	Zeroneg,
@@ -11536,11 +11387,6 @@ begin
 if NBits > 0 then
 begin
 
-{$ifdef Overflow_Checks}
-{$Q-}
-{$R-}
-{$endif}
-
 {$ifdef 32bit}
 carry_bits_mask:= $FFFF;
 {$endif}
@@ -11551,13 +11397,7 @@ carry_bits_mask:= $FFFFFFFF;
 NBits_max:= MULTI_INT_1W_SIZE;
 NBits_carry:= (NBits_max - NBits);
 
-{$Q-}
-{$R-}
 carry_bits_mask:= (carry_bits_mask << NBits_carry);
-{$ifdef Overflow_Checks}
-{$Q+}
-{$R+}
-{$endif}
 
 if NBits <= NBits_max then
 begin
@@ -11591,11 +11431,6 @@ v1.M_Value[8]:= ((v1.M_Value[8] << NBits) OR carry_bits_2);
 end;
 end;
 
-{$ifdef Overflow_Checks}
-{$Q+}
-{$R+}
-{$endif}
-
 end;
 
 
@@ -11609,11 +11444,6 @@ var	carry_bits_1,
 begin
 if NBits > 0 then
 begin
-
-{$ifdef Overflow_Checks}
-{$Q-}
-{$R-}
-{$endif}
 
 {$ifdef 32bit}
 carry_bits_mask:= $FFFF;
@@ -11657,11 +11487,6 @@ v1.M_Value[0]:= ((v1.M_Value[0] >> NBits) OR carry_bits_1);
 
 end;
 end;
-
-{$ifdef Overflow_Checks}
-{$Q+}
-{$R+}
-{$endif}
 
 end;
 
@@ -12741,11 +12566,6 @@ function Multi_Int_XV_Odd(const v1:Multi_Int_XV):boolean;
 var	bit1_mask	:MULTI_INT_1W_U;
 begin
 
-{$ifdef Overflow_Checks}
-{$Q-}
-{$R-}
-{$endif}
-
 {$ifdef 32bit}
 bit1_mask:= $1;
 {$endif}
@@ -12767,11 +12587,6 @@ then
 		end;
 	end;
 
-{$ifdef Overflow_Checks}
-{$Q+}
-{$R+}
-{$endif}
-
 end;
 
 
@@ -12786,11 +12601,6 @@ end;
 function Multi_Int_XV_Even(const v1:Multi_Int_XV):boolean;
 var	bit1_mask	:MULTI_INT_1W_U;
 begin
-
-{$ifdef Overflow_Checks}
-{$Q-}
-{$R-}
-{$endif}
 
 {$ifdef 32bit}
 bit1_mask:= $1;
@@ -12812,11 +12622,6 @@ then
 		Raise EInterror.create('Uninitialised variable');
 		end;
 	end;
-
-{$ifdef Overflow_Checks}
-{$Q+}
-{$R+}
-{$endif}
 
 end;
 
@@ -12840,11 +12645,6 @@ begin
 if NBits > 0 then
 begin
 
-{$ifdef Overflow_Checks}
-{$Q-}
-{$R-}
-{$endif}
-
 {$ifdef 32bit}
 carry_bits_mask:= $FFFF;
 {$endif}
@@ -12855,24 +12655,55 @@ carry_bits_mask:= $FFFFFFFF;
 NBits_max:= MULTI_INT_1W_SIZE;
 NBits_carry:= (NBits_max - NBits);
 
-{$Q-}
-{$R-}
+{$ifdef 32bit}
+	{$ifdef range_checking_enabled}
+    	{$R-}
+    {$endif}
+{$endif}
 carry_bits_mask:= (carry_bits_mask << NBits_carry);
-{$ifdef Overflow_Checks}
-{$Q+}
-{$R+}
+{$ifdef 32bit}
+	{$ifdef range_checking_enabled}
+    	{$R+}
+    {$endif}
 {$endif}
 
 if NBits <= NBits_max then
 	begin
 	carry_bits_1:= ((v1.M_Value[0] and carry_bits_mask) >> NBits_carry);
+
+{$ifdef 32bit}
+	{$ifdef range_checking_enabled}
+    	{$R-}
+    {$endif}
+{$endif}
+
 	v1.M_Value[0]:= (v1.M_Value[0] << NBits);
+
+{$ifdef 32bit}
+	{$ifdef range_checking_enabled}
+    	{$R+}
+    {$endif}
+{$endif}
 
 	n:=1;
 	while (n < (v1.M_Value_Size-1)) do
 		begin
 		carry_bits_2:= ((v1.M_Value[n] and carry_bits_mask) >> NBits_carry);
+
+{$ifdef 32bit}
+	{$ifdef range_checking_enabled}
+    	{$R-}
+    {$endif}
+{$endif}
+
 		v1.M_Value[n]:= ((v1.M_Value[n] << NBits) OR carry_bits_1);
+
+{$ifdef 32bit}
+	{$ifdef range_checking_enabled}
+    	{$R+}
+    {$endif}
+{$endif}
+
 		carry_bits_1:= carry_bits_2;
 		inc(n);
 		end;
@@ -12881,11 +12712,6 @@ if NBits <= NBits_max then
 
 	end;
 end;
-
-{$ifdef Overflow_Checks}
-{$Q+}
-{$R+}
-{$endif}
 
 end;
 
@@ -12973,11 +12799,6 @@ begin
 if NBits > 0 then
 begin
 
-{$ifdef Overflow_Checks}
-{$Q-}
-{$R-}
-{$endif}
-
 {$ifdef 32bit}
 carry_bits_mask:= $FFFF;
 {$endif}
@@ -13007,11 +12828,6 @@ if NBits <= NBits_max then
 	v1.M_Value[n]:= ((v1.M_Value[n] >> NBits) OR carry_bits_1);
 	end;
 end;
-
-{$ifdef Overflow_Checks}
-{$Q+}
-{$R+}
-{$endif}
 
 end;
 
@@ -13696,7 +13512,7 @@ procedure Bin_to_Multi_Int_XV(const v1:ansistring; out mi:Multi_Int_XV);
 label 999;
 var
 	n,b,c,e,s	:MULTI_INT_2W_U;
-	bit			:MULTI_INT_1W_U;
+	bit			:MULTI_INT_1W_S;
 	M_Val		:array of MULTI_INT_2W_U;
 	Signeg,
 	Zeroneg,
@@ -13731,6 +13547,7 @@ if	(length(v1) > 0) then
 		begin
 		bit:= (ord(v1[c]) - ord('0'));
 		if	(bit > 1)
+		or	(bit < 0)
 		then
 			begin
 			Multi_Int_ERROR:= TRUE;
@@ -15455,7 +15272,7 @@ class operator Multi_Int_XV.xor(const v1,v2:Multi_Int_XV):Multi_Int_XV;
 label 999;
 var
 i,s1,s2,s	:MULTI_INT_1W_S;
-tv1,tv2		:MULTI_INT_2W_U;
+tv1,tv2		:MULTI_INT_1W_U;
 begin
 if	(Not v1.Defined_flag)
 or	(Not v2.Defined_flag)
@@ -15524,7 +15341,7 @@ class operator Multi_Int_XV.or(const v1,v2:Multi_Int_XV):Multi_Int_XV;
 label 999;
 var
 i,s1,s2,s	:MULTI_INT_1W_S;
-tv1,tv2		:MULTI_INT_2W_U;
+tv1,tv2		:MULTI_INT_1W_U;
 begin
 if	(Not v1.Defined_flag)
 or	(Not v2.Defined_flag)
@@ -15593,7 +15410,7 @@ class operator Multi_Int_XV.and(const v1,v2:Multi_Int_XV):Multi_Int_XV;
 label 999;
 var
 i,s1,s2,s	:MULTI_INT_1W_S;
-tv1,tv2		:MULTI_INT_2W_U;
+tv1,tv2		:MULTI_INT_1W_U;
 begin
 if	(Not v1.Defined_flag)
 or	(Not v2.Defined_flag)
@@ -15662,7 +15479,7 @@ class operator Multi_Int_XV.not(const v1:Multi_Int_XV):Multi_Int_XV;
 label 999;
 var
 i,s1,s	:MULTI_INT_1W_S;
-tv1		:MULTI_INT_2W_U;
+tv1		:MULTI_INT_1W_U;
 begin
 if	(Not v1.Defined_flag)
 then
