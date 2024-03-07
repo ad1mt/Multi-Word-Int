@@ -13,4 +13,4 @@ Changes in version 4.37:
 - Tidy-up/simplify overflow exception messages
 - Re-instate "lost" Negative function
 - bitwise operations no longer generate an exception for negative values
-  
+- workaround for a problem with exceptions when range-checking is enabled on the 32-bit compiler
