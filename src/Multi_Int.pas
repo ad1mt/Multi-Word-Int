@@ -12650,8 +12650,8 @@ NBits_carry:= (NBits_max - NBits);
 
 {$ifdef 32bit}
 carry_bits_mask_2w:= carry_bits_mask;
-carry_bits_mask_2w: (carry_bits_mask_2w << NBits_carry);
-carry_bits_mask:= carry_bits_mask_2w;
+carry_bits_mask_2w:= (carry_bits_mask_2w << NBits_carry);
+carry_bits_mask:= MULTI_INT_1W_U(carry_bits_mask_2w mod MULTI_INT_1W_U_MAXINT_1);
 {$else}
 carry_bits_mask:= (carry_bits_mask << NBits_carry);
 {$endif}
@@ -12663,7 +12663,7 @@ if NBits <= NBits_max then
 	// v1.M_Value[0]:= (v1.M_Value[0] << NBits);
 	carry_bits_mask_2w:= v1.M_Value[0];
     carry_bits_mask_2w:= (carry_bits_mask_2w << NBits);
-    v1.M_Value[0]:= carry_bits_mask_2w;
+    v1.M_Value[0]:= MULTI_INT_1W_U(carry_bits_mask_2w mod MULTI_INT_1W_U_MAXINT_1);
 	{$else}
 	v1.M_Value[0]:= (v1.M_Value[0] << NBits);
 	{$endif}
@@ -12677,7 +12677,7 @@ if NBits <= NBits_max then
 		// v1.M_Value[n]:= ((v1.M_Value[n] << NBits) OR carry_bits_1);
 		carry_bits_mask_2w:= v1.M_Value[n];
         carry_bits_mask_2w:= ((carry_bits_mask_2w  << NBits) OR carry_bits_1);
-        v1.M_Value[n]:= carry_bits_mask_2w;
+        v1.M_Value[n]:= MULTI_INT_1W_U(carry_bits_mask_2w mod MULTI_INT_1W_U_MAXINT_1);
 		{$else}
 		v1.M_Value[n]:= ((v1.M_Value[n] << NBits) OR carry_bits_1);
 		{$endif}
