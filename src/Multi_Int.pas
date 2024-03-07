@@ -35,14 +35,6 @@ UNIT Multi_Int;
 // This makes procedure and functions inlined
 // {$define inline_functions}
 
-// This switch tells the source that Range-Checking is turned on
-// Only required for the 32-bit compiler/target
-// This define enables a workaround for a compiler bug, which only manifests
-// in the 32-bit compiler/target, only with 16-bit integers and
-// only for shl operations
-
-// {$define range_checking_enabled}
-
 (******************************************************************************)
 (*
 v4.23B
@@ -238,6 +230,9 @@ v4.37.02
 -	Bug fixes in Multi_Int_XV not and or
 -	Remove conditionals to enable/disable overflow checking
 -	Workaround for Range-Checking bug (hopefully temporary)
+
+v4.37.03
+-	Fix for bitshift bug
 *)
 
 (* END OF USER OPTIONAL DEFINES *)
@@ -249,7 +244,7 @@ uses	sysutils
 ;
 
 const
-	version = '4.37.02';
+	version = '4.37.03';
 
 const
 
@@ -12602,12 +12597,7 @@ function Multi_Int_XV_Even(const v1:Multi_Int_XV):boolean;
 var	bit1_mask	:MULTI_INT_1W_U;
 begin
 
-{$ifdef 32bit}
 bit1_mask:= $1;
-{$endif}
-{$ifdef 64bit}
-bit1_mask:= $1;
-{$endif}
 
 if ((v1.M_Value[0] and bit1_mask) = bit1_mask)
 then Result:= FALSE
@@ -12641,14 +12631,17 @@ var	carry_bits_1,
 	NBits_max,
 	NBits_carry	:MULTI_INT_1W_U;
 	n			:MULTI_INT_1W_U;
+{$ifdef 32bit}
+carry_bits_mask_2w	:MULTI_INT_2W_U;
+{$endif}
+
 begin
 if NBits > 0 then
 begin
 
 {$ifdef 32bit}
 carry_bits_mask:= $FFFF;
-{$endif}
-{$ifdef 64bit}
+{$else}
 carry_bits_mask:= $FFFFFFFF;
 {$endif}
 
@@ -12656,53 +12649,38 @@ NBits_max:= MULTI_INT_1W_SIZE;
 NBits_carry:= (NBits_max - NBits);
 
 {$ifdef 32bit}
-	{$ifdef range_checking_enabled}
-    	{$R-}
-    {$endif}
-{$endif}
+carry_bits_mask_2w:= carry_bits_mask;
+carry_bits_mask_2w: (carry_bits_mask_2w << NBits_carry);
+carry_bits_mask:= carry_bits_mask_2w;
+{$else}
 carry_bits_mask:= (carry_bits_mask << NBits_carry);
-{$ifdef 32bit}
-	{$ifdef range_checking_enabled}
-    	{$R+}
-    {$endif}
 {$endif}
 
 if NBits <= NBits_max then
 	begin
 	carry_bits_1:= ((v1.M_Value[0] and carry_bits_mask) >> NBits_carry);
-
-{$ifdef 32bit}
-	{$ifdef range_checking_enabled}
-    	{$R-}
-    {$endif}
-{$endif}
-
+	{$ifdef 32bit}
+	// v1.M_Value[0]:= (v1.M_Value[0] << NBits);
+	carry_bits_mask_2w:= v1.M_Value[0];
+    carry_bits_mask_2w:= (carry_bits_mask_2w << NBits);
+    v1.M_Value[0]:= carry_bits_mask_2w;
+	{$else}
 	v1.M_Value[0]:= (v1.M_Value[0] << NBits);
-
-{$ifdef 32bit}
-	{$ifdef range_checking_enabled}
-    	{$R+}
-    {$endif}
-{$endif}
+	{$endif}
 
 	n:=1;
 	while (n < (v1.M_Value_Size-1)) do
 		begin
 		carry_bits_2:= ((v1.M_Value[n] and carry_bits_mask) >> NBits_carry);
 
-{$ifdef 32bit}
-	{$ifdef range_checking_enabled}
-    	{$R-}
-    {$endif}
-{$endif}
-
+		{$ifdef 32bit}
+		// v1.M_Value[n]:= ((v1.M_Value[n] << NBits) OR carry_bits_1);
+		carry_bits_mask_2w:= v1.M_Value[n];
+        carry_bits_mask_2w:= ((carry_bits_mask_2w  << NBits) OR carry_bits_1);
+        v1.M_Value[n]:= carry_bits_mask_2w;
+		{$else}
 		v1.M_Value[n]:= ((v1.M_Value[n] << NBits) OR carry_bits_1);
-
-{$ifdef 32bit}
-	{$ifdef range_checking_enabled}
-    	{$R+}
-    {$endif}
-{$endif}
+		{$endif}
 
 		carry_bits_1:= carry_bits_2;
 		inc(n);
