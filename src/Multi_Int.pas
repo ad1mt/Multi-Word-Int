@@ -236,7 +236,7 @@ v4.37.03
 
 v4.37.04
 -	inline "wrapper" functions & procedures
--	more bitshift bug fixes - unfinished
+-	more bitshift bug fixes
 *)
 
 (* END OF USER OPTIONAL DEFINES *)
@@ -672,17 +672,6 @@ procedure SqRoot(const v1:Multi_Int_X4; out VR,VREM:Multi_Int_X4); overload;	{$i
 procedure SqRoot(const v1:Multi_Int_X3; out VR,VREM:Multi_Int_X3); overload;	{$ifdef inline_functions} inline; {$endif}
 procedure SqRoot(const v1:Multi_Int_X2; out VR,VREM:Multi_Int_X2); overload;	{$ifdef inline_functions} inline; {$endif}
 
-(*
-procedure ShiftUp(var v1:Multi_Int_X2; NBits:MULTI_INT_1W_U); overload;	{$ifdef inline_functions} inline; {$endif}
-procedure ShiftDown(var v1:Multi_Int_X2; NBits:MULTI_INT_1W_U); overload;	{$ifdef inline_functions} inline; {$endif}
-procedure ShiftUp(var v1:Multi_Int_X3; NBits:MULTI_INT_1W_U); overload;	{$ifdef inline_functions} inline; {$endif}
-procedure ShiftDown(var v1:Multi_Int_X3; NBits:MULTI_INT_1W_U); overload;	{$ifdef inline_functions} inline; {$endif}
-procedure ShiftUp(var v1:Multi_Int_X4; NBits:MULTI_INT_1W_U); overload;	{$ifdef inline_functions} inline; {$endif}
-procedure ShiftDown(var v1:Multi_Int_X4; NBits:MULTI_INT_1W_U); overload;	{$ifdef inline_functions} inline; {$endif}
-procedure ShiftUp(var v1:Multi_Int_XV; NBits:MULTI_INT_1W_U); overload;	{$ifdef inline_functions} inline; {$endif}
-procedure ShiftDown(var v1:Multi_Int_XV; NBits:MULTI_INT_1W_U); overload;	{$ifdef inline_functions} inline; {$endif}
-*)
-
 procedure FromHex(const v1:ansistring; out v2:Multi_Int_X2); overload;	{$ifdef inline_functions} inline; {$endif}
 procedure FromHex(const v1:ansistring; out v2:Multi_Int_X3); overload;	{$ifdef inline_functions} inline; {$endif}
 procedure FromHex(const v1:ansistring; out v2:Multi_Int_X4); overload;	{$ifdef inline_functions} inline; {$endif}
@@ -693,22 +682,14 @@ procedure FromBin(const v1:ansistring; out mi:Multi_Int_X3); overload;	{$ifdef i
 procedure FromBin(const v1:ansistring; out mi:Multi_Int_X4); overload;	{$ifdef inline_functions} inline; {$endif}
 procedure FromBin(const v1:ansistring; out mi:Multi_Int_XV); overload;	{$ifdef inline_functions} inline; {$endif}
 
-function Hex_to_Multi_Int_X2(const v1:ansistring):Multi_Int_X2; overload;	{$ifdef inline_functions} inline; {$endif}
 procedure Hex_to_Multi_Int_X2(const v1:ansistring; out mi:Multi_Int_X2); overload;	{$ifdef inline_functions} inline; {$endif}
-function Hex_to_Multi_Int_X3(const v1:ansistring):Multi_Int_X3; overload;	{$ifdef inline_functions} inline; {$endif}
 procedure Hex_to_Multi_Int_X3(const v1:ansistring; out mi:Multi_Int_X3); overload;	{$ifdef inline_functions} inline; {$endif}
-function Hex_to_Multi_Int_X4(const v1:ansistring):Multi_Int_X4; overload;	{$ifdef inline_functions} inline; {$endif}
 procedure Hex_to_Multi_Int_X4(const v1:ansistring; out mi:Multi_Int_X4); overload;	{$ifdef inline_functions} inline; {$endif}
-function Hex_to_Multi_Int_XV(const v1:ansistring):Multi_Int_XV; overload;	{$ifdef inline_functions} inline; {$endif}
 procedure Hex_to_Multi_Int_XV(const v1:ansistring; out mi:Multi_Int_XV); overload;	{$ifdef inline_functions} inline; {$endif}
 
-function bin_to_Multi_Int_X2(const v1:ansistring):Multi_Int_X2; overload;	{$ifdef inline_functions} inline; {$endif}
 procedure bin_to_Multi_Int_X2(const v1:ansistring; out mi:Multi_Int_X2); overload;	{$ifdef inline_functions} inline; {$endif}
-function bin_to_Multi_Int_X3(const v1:ansistring):Multi_Int_X3; overload;	{$ifdef inline_functions} inline; {$endif}
 procedure bin_to_Multi_Int_X3(const v1:ansistring; out mi:Multi_Int_X3); overload;	{$ifdef inline_functions} inline; {$endif}
-function bin_to_Multi_Int_X4(const v1:ansistring):Multi_Int_X4; overload;	{$ifdef inline_functions} inline; {$endif}
 procedure bin_to_Multi_Int_X4(const v1:ansistring; out mi:Multi_Int_X4); overload;	{$ifdef inline_functions} inline; {$endif}
-function bin_to_Multi_Int_XV(const v1:ansistring):Multi_Int_XV; overload;	{$ifdef inline_functions} inline; {$endif}
 procedure bin_to_Multi_Int_XV(const v1:ansistring; out mi:Multi_Int_XV); overload;	{$ifdef inline_functions} inline; {$endif}
 
 function To_Multi_Int_XV(const v1:Multi_Int_X4):Multi_Int_XV; overload;	{$ifdef inline_functions} inline; {$endif}
@@ -732,6 +713,7 @@ IMPLEMENTATION
 
 const
 	Multi_X5_max = 8;
+	Multi_X5_maxi = 7;
 	Multi_X5_max_x2 = 16;
 	Multi_X5_size = Multi_X4_maxi + 1;
 
@@ -1031,7 +1013,7 @@ end;
 
 
 (******************************************)
-function ABS_notequal_Multi_Int_X2(const v1,v2:Multi_Int_X2):Boolean; inline;
+function ABS_notequal_Multi_Int_X2(const v1,v2:Multi_Int_X2):Boolean;
 begin
 Result:= (not ABS_equal_Multi_Int_X2(v1,v2));
 end;
@@ -1118,7 +1100,7 @@ end;
 
 
 (******************************************)
-function Abs(const v1:Multi_Int_X2):Multi_Int_X2; overload; inline;
+function Abs(const v1:Multi_Int_X2):Multi_Int_X2; overload;
 begin
 Result:= v1;
 Result.Negative_flag:= Multi_UBool_FALSE;
@@ -1167,14 +1149,14 @@ end;
 
 
 (******************************************)
-function Odd(const v1:Multi_Int_X2):boolean; overload; inline;
+function Odd(const v1:Multi_Int_X2):boolean; overload;
 begin
 Result:= Multi_Int_X2_Odd(v1);
 end;
 
 
 (******************************************)
-function Multi_Int_X2_Even(const v1:Multi_Int_X2):boolean; overload; inline;
+function Multi_Int_X2_Even(const v1:Multi_Int_X2):boolean; inline;
 var	bit1_mask	:MULTI_INT_1W_U;
 begin
 
@@ -1198,7 +1180,7 @@ end;
 
 
 (******************************************)
-function Even(const v1:Multi_Int_X2):boolean; overload; inline;
+function Even(const v1:Multi_Int_X2):boolean; overload;
 begin
 Result:= Multi_Int_X2_Even(v1);
 end;
@@ -1349,13 +1331,6 @@ if (NBits > 0) then
 end;
 
 
-{******************************************}
-procedure ShiftUp(var v1:Multi_Int_X2; NBits:MULTI_INT_1W_U); overload; inline;
-begin
-ShiftUp_MultiBits_Multi_Int_X2(v1, NBits);
-end;
-
-
 (******************************************)
 procedure ShiftDown_NBits_Multi_Int_X2(Var v1:Multi_Int_X2; NBits:MULTI_INT_1W_U);
 var	carry_bits_1,
@@ -1400,19 +1375,26 @@ end;
 procedure ShiftDown_NWords_Multi_Int_X2(Var v1:Multi_Int_X2; NWords:MULTI_INT_1W_U);
 var	n	:MULTI_INT_1W_U;
 begin
-if		(NWords > 0)
-and		(NWords <= Multi_X2_maxi) then
-	begin
-	n:= NWords;
-	while (n > 0) do
+if	(NWords > 0) then
+	if	(NWords <= Multi_X2_maxi) then
 		begin
-		v1.M_Value[0]:= v1.M_Value[1];
-		v1.M_Value[1]:= v1.M_Value[2];
-		v1.M_Value[2]:= v1.M_Value[3];
+		n:= NWords;
+		while (n > 0) do
+			begin
+			v1.M_Value[0]:= v1.M_Value[1];
+			v1.M_Value[1]:= v1.M_Value[2];
+			v1.M_Value[2]:= v1.M_Value[3];
+			v1.M_Value[3]:= 0;
+			DEC(n);
+			end;
+		end
+	else
+		begin
+		v1.M_Value[0]:= 0;
+		v1.M_Value[1]:= 0;
+		v1.M_Value[2]:= 0;
 		v1.M_Value[3]:= 0;
-		DEC(n);
 		end;
-	end;
 end;
 
 
@@ -1447,14 +1429,7 @@ end;
 
 
 {******************************************}
-procedure ShiftDown(Var v1:Multi_Int_X2; NBits:MULTI_INT_1W_U); overload; inline;
-begin
-ShiftDown_MultiBits_Multi_Int_X2(v1, NBits);
-end;
-
-
-{******************************************}
-class operator Multi_Int_X2.shl(const v1:Multi_Int_X2; const NBits:MULTI_INT_1W_U):Multi_Int_X2; inline;
+class operator Multi_Int_X2.shl(const v1:Multi_Int_X2; const NBits:MULTI_INT_1W_U):Multi_Int_X2;
 begin
 Result:= v1;
 ShiftUp_MultiBits_Multi_Int_X2(Result, NBits);
@@ -1462,7 +1437,7 @@ end;
 
 
 {******************************************}
-class operator Multi_Int_X2.shr(const v1:Multi_Int_X2; const NBits:MULTI_INT_1W_U):Multi_Int_X2; inline;
+class operator Multi_Int_X2.shr(const v1:Multi_Int_X2; const NBits:MULTI_INT_1W_U):Multi_Int_X2;
 begin
 Result:= v1;
 ShiftDown_MultiBits_Multi_Int_X2(Result, NBits);
@@ -1649,7 +1624,7 @@ end;
 
 
 (******************************************)
-procedure ansistring_to_Multi_Int_X2(const v1:ansistring; out mi:Multi_Int_X2);
+procedure ansistring_to_Multi_Int_X2(const v1:ansistring; out mi:Multi_Int_X2); inline;
 label 999;
 var
 	i,b,c,e		:MULTI_INT_2W_U;
@@ -1883,7 +1858,7 @@ end;
 
 
 (******************************************)
-class operator Multi_Int_X2.:=(const v1:ansistring):Multi_Int_X2; inline;
+class operator Multi_Int_X2.:=(const v1:ansistring):Multi_Int_X2;
 begin
 ansistring_to_Multi_Int_X2(v1,Result);
 end;
@@ -1891,10 +1866,9 @@ end;
 
 {$ifdef 32bit}
 (******************************************)
-procedure MULTI_INT_4W_S_to_Multi_Int_X2(const v1:MULTI_INT_4W_S; var mi:Multi_Int_X2);
+procedure MULTI_INT_4W_S_to_Multi_Int_X2(const v1:MULTI_INT_4W_S; out mi:Multi_Int_X2); inline;
 var
 v	:MULTI_INT_4W_U;
-n	:MULTI_INT_2W_U;
 begin
 mi.Overflow_flag:=FALSE;
 mi.Defined_flag:=TRUE;
@@ -1916,17 +1890,16 @@ end;
 
 
 (******************************************)
-class operator Multi_Int_X2.:=(const v1:MULTI_INT_4W_S):Multi_Int_X2; inline;
+class operator Multi_Int_X2.:=(const v1:MULTI_INT_4W_S):Multi_Int_X2;
 begin
 MULTI_INT_4W_S_to_Multi_Int_X2(v1,Result);
 end;
 
 
 (******************************************)
-procedure MULTI_INT_4W_U_to_Multi_Int_X2(const v1:MULTI_INT_4W_U; var mi:Multi_Int_X2);
+procedure MULTI_INT_4W_U_to_Multi_Int_X2(const v1:MULTI_INT_4W_U; out mi:Multi_Int_X2); inline;
 var
 v	:MULTI_INT_4W_U;
-n	:MULTI_INT_2W_U;
 begin
 mi.Overflow_flag:=FALSE;
 mi.Defined_flag:=TRUE;
@@ -1945,7 +1918,7 @@ end;
 
 
 (******************************************)
-class operator Multi_Int_X2.:=(const v1:MULTI_INT_4W_U):Multi_Int_X2; inline;
+class operator Multi_Int_X2.:=(const v1:MULTI_INT_4W_U):Multi_Int_X2;
 begin
 MULTI_INT_4W_U_to_Multi_Int_X2(v1,Result);
 end;
@@ -1953,7 +1926,7 @@ end;
 
 
 (******************************************)
-procedure MULTI_INT_2W_S_to_Multi_Int_X2(const v1:MULTI_INT_2W_S; out mi:Multi_Int_X2);
+procedure MULTI_INT_2W_S_to_Multi_Int_X2(const v1:MULTI_INT_2W_S; out mi:Multi_Int_X2); inline;
 begin
 mi.Overflow_flag:=FALSE;
 mi.Defined_flag:=TRUE;
@@ -1977,14 +1950,14 @@ end;
 
 
 (******************************************)
-class operator Multi_Int_X2.:=(const v1:MULTI_INT_2W_S):Multi_Int_X2; inline;
+class operator Multi_Int_X2.:=(const v1:MULTI_INT_2W_S):Multi_Int_X2;
 begin
 MULTI_INT_2W_S_to_Multi_Int_X2(v1,Result);
 end;
 
 
 (******************************************)
-procedure MULTI_INT_2W_U_to_Multi_Int_X2(const v1:MULTI_INT_2W_U; out mi:Multi_Int_X2);
+procedure MULTI_INT_2W_U_to_Multi_Int_X2(const v1:MULTI_INT_2W_U; out mi:Multi_Int_X2); inline;
 begin
 mi.Overflow_flag:=FALSE;
 mi.Defined_flag:=TRUE;
@@ -1998,7 +1971,7 @@ end;
 
 
 (******************************************)
-class operator Multi_Int_X2.:=(const v1:MULTI_INT_2W_U):Multi_Int_X2; inline;
+class operator Multi_Int_X2.:=(const v1:MULTI_INT_2W_U):Multi_Int_X2;
 begin
 MULTI_INT_2W_U_to_Multi_Int_X2(v1,Result);
 end;
@@ -2521,7 +2494,7 @@ end;
 
 
 (******************************************)
-procedure bin_to_Multi_Int_X2(const v1:ansistring; out mi:Multi_Int_X2);
+procedure bin_to_Multi_Int_X2(const v1:ansistring; out mi:Multi_Int_X2); inline;
 label 999;
 var
 	n,b,c,e	:MULTI_INT_2W_U;
@@ -2623,28 +2596,21 @@ end;
 
 
 (******************************************)
-function Bin_to_Multi_Int_X2(const v1:ansistring):Multi_Int_X2; inline;
-begin
-Bin_to_Multi_Int_X2(v1,Result);
-end;
-
-
-(******************************************)
-procedure FromBin(const v1:ansistring; out mi:Multi_Int_X2); overload; inline;
+procedure FromBin(const v1:ansistring; out mi:Multi_Int_X2); overload;
 begin
 Bin_to_Multi_Int_X2(v1,mi);
 end;
 
 
 (******************************************)
-function Multi_Int_X2.FromBin(const v1:ansistring):Multi_Int_X2; inline;
+function Multi_Int_X2.FromBin(const v1:ansistring):Multi_Int_X2;
 begin
 bin_to_Multi_Int_X2(v1,Result);
 end;
 
 
 (******************************************)
-procedure Multi_Int_X2_to_bin(const v1:Multi_Int_X2; out v2:ansistring; LZ:T_Multi_Leading_Zeros);
+procedure Multi_Int_X2_to_bin(const v1:Multi_Int_X2; out v2:ansistring; LZ:T_Multi_Leading_Zeros); inline;
 var
 	s		:ansistring = '';
 	n		:MULTI_INT_1W_S;
@@ -2688,14 +2654,14 @@ end;
 
 
 (******************************************)
-function Multi_Int_X2.Tobin(const LZ:T_Multi_Leading_Zeros):ansistring; inline;
+function Multi_Int_X2.Tobin(const LZ:T_Multi_Leading_Zeros):ansistring;
 begin
 Multi_Int_X2_to_bin(self, Result, LZ);
 end;
 
 
 (******************************************)
-procedure Multi_Int_X2_to_hex(const v1:Multi_Int_X2; out v2:ansistring; LZ:T_Multi_Leading_Zeros);
+procedure Multi_Int_X2_to_hex(const v1:Multi_Int_X2; out v2:ansistring; LZ:T_Multi_Leading_Zeros); inline;
 var
 	s		:ansistring = '';
 	n		:Multi_int32u;
@@ -2740,14 +2706,14 @@ end;
 
 
 (******************************************)
-function Multi_Int_X2.ToHex(const LZ:T_Multi_Leading_Zeros):ansistring; inline;
+function Multi_Int_X2.ToHex(const LZ:T_Multi_Leading_Zeros):ansistring;
 begin
 Multi_Int_X2_to_hex(self, Result, LZ);
 end;
 
 
 (******************************************)
-procedure hex_to_Multi_Int_X2(const v1:ansistring; out mi:Multi_Int_X2);
+procedure hex_to_Multi_Int_X2(const v1:ansistring; out mi:Multi_Int_X2); inline;
 label 999;
 var
 	n,i,b,c,e	:MULTI_INT_2W_U;
@@ -2851,28 +2817,21 @@ end;
 
 
 (******************************************)
-procedure FromHex(const v1:ansistring; out v2:Multi_Int_X2); overload; inline;
+procedure FromHex(const v1:ansistring; out v2:Multi_Int_X2); overload;
 begin
 hex_to_Multi_Int_X2(v1,v2);
 end;
 
 
 (******************************************)
-function Multi_Int_X2.FromHex(const v1:ansistring):Multi_Int_X2; inline;
+function Multi_Int_X2.FromHex(const v1:ansistring):Multi_Int_X2;
 begin
 hex_to_Multi_Int_X2(v1,Result);
 end;
 
 
 (******************************************)
-function Hex_to_Multi_Int_X2(const v1:ansistring):Multi_Int_X2; inline;
-begin
-hex_to_Multi_Int_X2(v1,Result);
-end;
-
-
-(******************************************)
-procedure Multi_Int_X2_to_ansistring(const v1:Multi_Int_X2; out v2:ansistring);
+procedure Multi_Int_X2_to_ansistring(const v1:Multi_Int_X2; out v2:ansistring); inline;
 var
 	s		:ansistring = '';
 	M_Val	:array[0..Multi_X2_maxi] of MULTI_INT_2W_U;
@@ -2932,14 +2891,14 @@ end;
 
 
 (******************************************)
-function Multi_Int_X2.ToStr:ansistring; inline;
+function Multi_Int_X2.ToStr:ansistring;
 begin
 Multi_Int_X2_to_ansistring(self, Result);
 end;
 
 
 (******************************************)
-class operator Multi_Int_X2.:=(const v1:Multi_Int_X2):ansistring; inline;
+class operator Multi_Int_X2.:=(const v1:Multi_Int_X2):ansistring;
 begin
 Multi_Int_X2_to_ansistring(v1, Result);
 end;
@@ -3727,7 +3686,7 @@ finished:= FALSE;
 while not finished do
 	begin
     T:= subtract_Multi_Int_X2(H,L);
-    ShiftDown(T,1);
+    ShiftDown_NBits_Multi_Int_X2(T,1);
     C:= add_Multi_Int_X2(L,T);
     multiply_Multi_Int_X2(C,C, CC);
 
@@ -4318,7 +4277,7 @@ end;
 
 
 (******************************************)
-function Abs(const v1:Multi_Int_X3):Multi_Int_X3; overload; inline;
+function Abs(const v1:Multi_Int_X3):Multi_Int_X3; overload;
 begin
 Result:= v1;
 Result.Negative_flag:= Multi_UBool_FALSE;
@@ -4336,7 +4295,7 @@ end;
 
 
 (******************************************)
-function Multi_Int_X3_Odd(const v1:Multi_Int_X3):boolean; inline;
+function Multi_Int_X3_Odd(const v1:Multi_Int_X3):boolean;
 var	bit1_mask	:MULTI_INT_1W_U;
 begin
 
@@ -4360,7 +4319,7 @@ end;
 
 
 (******************************************)
-function Odd(const v1:Multi_Int_X3):boolean; overload; inline;
+function Odd(const v1:Multi_Int_X3):boolean; overload;
 begin
 Result:= Multi_Int_X3_Odd(v1);
 end;
@@ -4391,7 +4350,7 @@ end;
 
 
 (******************************************)
-function Even(const v1:Multi_Int_X3):boolean; overload; inline;
+function Even(const v1:Multi_Int_X3):boolean; overload;
 begin
 Result:= Multi_Int_X3_Even(v1);
 end;
@@ -4570,21 +4529,30 @@ end;
 procedure ShiftDown_NWords_Multi_Int_X3(Var v1:Multi_Int_X3; NWords:MULTI_INT_1W_U);
 var	n	:MULTI_INT_1W_U;
 begin
-if		(NWords > 0)
-and		(NWords <= Multi_X3_maxi) then
-	begin
-	n:= NWords;
-	while (n > 0) do
+if	(NWords > 0) then
+	if	(NWords <= Multi_X3_maxi) then
 		begin
-		v1.M_Value[0]:= v1.M_Value[1];
-		v1.M_Value[1]:= v1.M_Value[2];
-		v1.M_Value[2]:= v1.M_Value[3];
-		v1.M_Value[3]:= v1.M_Value[4];
-		v1.M_Value[4]:= v1.M_Value[5];
+		n:= NWords;
+		while (n > 0) do
+			begin
+			v1.M_Value[0]:= v1.M_Value[1];
+			v1.M_Value[1]:= v1.M_Value[2];
+			v1.M_Value[2]:= v1.M_Value[3];
+			v1.M_Value[3]:= v1.M_Value[4];
+			v1.M_Value[4]:= v1.M_Value[5];
+			v1.M_Value[5]:= 0;
+			DEC(n);
+			end;
+		end
+	else
+		begin
+		v1.M_Value[0]:= 0;
+		v1.M_Value[1]:= 0;
+		v1.M_Value[2]:= 0;
+		v1.M_Value[3]:= 0;
+		v1.M_Value[4]:= 0;
 		v1.M_Value[5]:= 0;
-		DEC(n);
 		end;
-	end;
 end;
 
 
@@ -4617,13 +4585,6 @@ if (NBits > 0) then
 	else NBits_count:= NBits;
 	ShiftUp_NBits_Multi_Int_X3(v1, NBits_count);
 	end;
-end;
-
-
-{******************************************}
-procedure ShiftUp(Var v1:Multi_Int_X3; NBits:MULTI_INT_1W_U); overload; inline;
-begin
-ShiftUp_MultiBits_Multi_Int_X3(v1, NBits);
 end;
 
 
@@ -4707,14 +4668,7 @@ end;
 
 
 {******************************************}
-procedure ShiftDown(Var v1:Multi_Int_X3; NBits:MULTI_INT_1W_U); overload; inline;
-begin
-ShiftDown_MultiBits_Multi_Int_X3(v1, NBits);
-end;
-
-
-{******************************************}
-class operator Multi_Int_X3.shl(const v1:Multi_Int_X3; const NBits:MULTI_INT_1W_U):Multi_Int_X3; inline;
+class operator Multi_Int_X3.shl(const v1:Multi_Int_X3; const NBits:MULTI_INT_1W_U):Multi_Int_X3;
 begin
 Result:= v1;
 ShiftUp_MultiBits_Multi_Int_X3(Result, NBits);
@@ -4722,7 +4676,7 @@ end;
 
 
 {******************************************}
-class operator Multi_Int_X3.shr(const v1:Multi_Int_X3; const NBits:MULTI_INT_1W_U):Multi_Int_X3; inline;
+class operator Multi_Int_X3.shr(const v1:Multi_Int_X3; const NBits:MULTI_INT_1W_U):Multi_Int_X3;
 begin
 Result:= v1;
 ShiftDown_MultiBits_Multi_Int_X3(Result, NBits);
@@ -4909,7 +4863,7 @@ end;
 
 
 (******************************************)
-procedure ansistring_to_Multi_Int_X3(const v1:ansistring; out mi:Multi_Int_X3);
+procedure ansistring_to_Multi_Int_X3(const v1:ansistring; out mi:Multi_Int_X3); inline;
 label 999;
 var
 	i,b,c,e		:MULTI_INT_2W_U;
@@ -5036,7 +4990,7 @@ end;
 
 
 (******************************************)
-class operator Multi_Int_X3.:=(const v1:ansistring):Multi_Int_X3; inline;
+class operator Multi_Int_X3.:=(const v1:ansistring):Multi_Int_X3;
 begin
 ansistring_to_Multi_Int_X3(v1,Result);
 end;
@@ -5044,10 +4998,9 @@ end;
 
 {$ifdef 32bit}
 (******************************************)
-procedure MULTI_INT_4W_S_to_Multi_Int_X3(const v1:MULTI_INT_4W_S; var mi:Multi_Int_X3);
+procedure MULTI_INT_4W_S_to_Multi_Int_X3(const v1:MULTI_INT_4W_S; out mi:Multi_Int_X3); inline;
 var
 v	:MULTI_INT_4W_U;
-n	:MULTI_INT_2W_U;
 begin
 mi.Overflow_flag:=FALSE;
 mi.Defined_flag:=TRUE;
@@ -5072,17 +5025,16 @@ end;
 
 
 (******************************************)
-class operator Multi_Int_X3.:=(const v1:MULTI_INT_4W_S):Multi_Int_X3; inline;
+class operator Multi_Int_X3.:=(const v1:MULTI_INT_4W_S):Multi_Int_X3;
 begin
 MULTI_INT_4W_S_to_Multi_Int_X3(v1,Result);
 end;
 
 
 (******************************************)
-procedure MULTI_INT_4W_U_to_Multi_Int_X3(const v1:MULTI_INT_4W_U; var mi:Multi_Int_X3);
+procedure MULTI_INT_4W_U_to_Multi_Int_X3(const v1:MULTI_INT_4W_U; out mi:Multi_Int_X3); inline;
 var
 v	:MULTI_INT_4W_U;
-n	:MULTI_INT_2W_U;
 begin
 mi.Overflow_flag:=FALSE;
 mi.Defined_flag:=TRUE;
@@ -5104,7 +5056,7 @@ end;
 
 
 (******************************************)
-class operator Multi_Int_X3.:=(const v1:MULTI_INT_4W_U):Multi_Int_X3; inline;
+class operator Multi_Int_X3.:=(const v1:MULTI_INT_4W_U):Multi_Int_X3;
 begin
 MULTI_INT_4W_U_to_Multi_Int_X3(v1,Result);
 end;
@@ -5112,7 +5064,7 @@ end;
 
 
 (******************************************)
-procedure MULTI_INT_2W_S_to_Multi_Int_X3(const v1:MULTI_INT_2W_S; out mi:Multi_Int_X3);
+procedure MULTI_INT_2W_S_to_Multi_Int_X3(const v1:MULTI_INT_2W_S; out mi:Multi_Int_X3); inline;
 begin
 mi.Overflow_flag:=FALSE;
 mi.Defined_flag:=TRUE;
@@ -5137,14 +5089,14 @@ end;
 
 
 (******************************************)
-class operator Multi_Int_X3.:=(const v1:MULTI_INT_2W_S):Multi_Int_X3; inline;
+class operator Multi_Int_X3.:=(const v1:MULTI_INT_2W_S):Multi_Int_X3;
 begin
 MULTI_INT_2W_S_to_Multi_Int_X3(v1,Result);
 end;
 
 
 (******************************************)
-procedure MULTI_INT_2W_U_to_Multi_Int_X3(const v1:MULTI_INT_2W_U; out mi:Multi_Int_X3);
+procedure MULTI_INT_2W_U_to_Multi_Int_X3(const v1:MULTI_INT_2W_U; out mi:Multi_Int_X3); inline;
 begin
 mi.Overflow_flag:=FALSE;
 mi.Defined_flag:=TRUE;
@@ -5160,7 +5112,7 @@ end;
 
 
 (******************************************)
-class operator Multi_Int_X3.:=(const v1:MULTI_INT_2W_U):Multi_Int_X3; inline;
+class operator Multi_Int_X3.:=(const v1:MULTI_INT_2W_U):Multi_Int_X3;
 begin
 MULTI_INT_2W_U_to_Multi_Int_X3(v1,Result);
 end;
@@ -5295,7 +5247,7 @@ end;
 
 
 (******************************************)
-procedure Multi_Int_X2_to_Multi_Int_X3(const v1:Multi_Int_X2; out MI:Multi_Int_X3);
+procedure Multi_Int_X2_to_Multi_Int_X3(const v1:Multi_Int_X2; out MI:Multi_Int_X3); inline;
 var
 	n				:MULTI_INT_1W_U;
 begin
@@ -5343,7 +5295,7 @@ end;
 
 
 (******************************************)
-class operator Multi_Int_X3.:=(const v1:Multi_Int_X2):Multi_Int_X3; inline;
+class operator Multi_Int_X3.:=(const v1:Multi_Int_X2):Multi_Int_X3;
 begin
 Multi_Int_X2_to_Multi_Int_X3(v1,Result);
 end;
@@ -5880,7 +5832,7 @@ end;
 
 
 (******************************************)
-procedure bin_to_Multi_Int_X3(const v1:ansistring; out mi:Multi_Int_X3);
+procedure bin_to_Multi_Int_X3(const v1:ansistring; out mi:Multi_Int_X3); inline;
 label 999;
 var
 	n,b,c,e	:MULTI_INT_2W_U;
@@ -5982,28 +5934,21 @@ end;
 
 
 (******************************************)
-function Bin_to_Multi_Int_X3(const v1:ansistring):Multi_Int_X3; inline;
-begin
-Bin_to_Multi_Int_X3(v1,Result);
-end;
-
-
-(******************************************)
-procedure FromBin(const v1:ansistring; out mi:Multi_Int_X3); overload; inline;
+procedure FromBin(const v1:ansistring; out mi:Multi_Int_X3); overload;
 begin
 Bin_to_Multi_Int_X3(v1,mi);
 end;
 
 
 (******************************************)
-function Multi_Int_X3.FromBin(const v1:ansistring):Multi_Int_X3; inline;
+function Multi_Int_X3.FromBin(const v1:ansistring):Multi_Int_X3;
 begin
 bin_to_Multi_Int_X3(v1,Result);
 end;
 
 
 (******************************************)
-procedure Multi_Int_X3_to_bin(const v1:Multi_Int_X3; out v2:ansistring; LZ:T_Multi_Leading_Zeros);
+procedure Multi_Int_X3_to_bin(const v1:Multi_Int_X3; out v2:ansistring; LZ:T_Multi_Leading_Zeros); inline;
 var
 	s		:ansistring = '';
 	n		:MULTI_INT_1W_S;
@@ -6049,14 +5994,14 @@ end;
 
 
 (******************************************)
-function Multi_Int_X3.Tobin(const LZ:T_Multi_Leading_Zeros):ansistring; inline;
+function Multi_Int_X3.Tobin(const LZ:T_Multi_Leading_Zeros):ansistring;
 begin
 Multi_Int_X3_to_bin(self, Result, LZ);
 end;
 
 
 (******************************************)
-procedure Multi_Int_X3_to_hex(const v1:Multi_Int_X3; out v2:ansistring; LZ:T_Multi_Leading_Zeros);
+procedure Multi_Int_X3_to_hex(const v1:Multi_Int_X3; out v2:ansistring; LZ:T_Multi_Leading_Zeros); inline;
 var
 	s		:ansistring = '';
 	n		:Multi_int32u;
@@ -6103,14 +6048,14 @@ end;
 
 
 (******************************************)
-function Multi_Int_X3.ToHex(const LZ:T_Multi_Leading_Zeros):ansistring; inline;
+function Multi_Int_X3.ToHex(const LZ:T_Multi_Leading_Zeros):ansistring;
 begin
 Multi_Int_X3_to_hex(self, Result, LZ);
 end;
 
 
 (******************************************)
-procedure hex_to_Multi_Int_X3(const v1:ansistring; out mi:Multi_Int_X3);
+procedure hex_to_Multi_Int_X3(const v1:ansistring; out mi:Multi_Int_X3); inline;
 label 999;
 var
 	n,i,b,c,e	:MULTI_INT_2W_U;
@@ -6214,28 +6159,21 @@ end;
 
 
 (******************************************)
-procedure FromHex(const v1:ansistring; out v2:Multi_Int_X3); overload; inline;
+procedure FromHex(const v1:ansistring; out v2:Multi_Int_X3); overload;
 begin
 hex_to_Multi_Int_X3(v1,v2);
 end;
 
 
 (******************************************)
-function Multi_Int_X3.FromHex(const v1:ansistring):Multi_Int_X3; inline;
+function Multi_Int_X3.FromHex(const v1:ansistring):Multi_Int_X3;
 begin
 hex_to_Multi_Int_X3(v1,Result);
 end;
 
 
 (******************************************)
-function Hex_to_Multi_Int_X3(const v1:ansistring):Multi_Int_X3; inline;
-begin
-hex_to_Multi_Int_X3(v1,Result);
-end;
-
-
-(******************************************)
-procedure Multi_Int_X3_to_ansistring(const v1:Multi_Int_X3; out v2:ansistring);
+procedure Multi_Int_X3_to_ansistring(const v1:Multi_Int_X3; out v2:ansistring); inline;
 var
 	s		:ansistring = '';
 	M_Val	:array[0..Multi_X3_maxi] of MULTI_INT_2W_U;
@@ -6305,7 +6243,7 @@ end;
 
 
 (******************************************)
-function Multi_Int_X3.ToStr:ansistring; inline;
+function Multi_Int_X3.ToStr:ansistring;
 begin
 Multi_Int_X3_to_ansistring(self, Result);
 end;
@@ -6905,7 +6843,7 @@ end;
 
 
 (******************************************)
-class operator Multi_Int_X3.-(const v1:Multi_Int_X3):Multi_Int_X3; inline;
+class operator Multi_Int_X3.-(const v1:Multi_Int_X3):Multi_Int_X3;
 begin
 Result:= v1;
 if	(v1.Negative_flag = Multi_UBool_TRUE) then Result.Negative_flag:= Multi_UBool_FALSE;
@@ -7202,7 +7140,7 @@ finished:= FALSE;
 while not finished do
 	begin
     T:= subtract_Multi_Int_X3(H,L);
-    ShiftDown(T,1);
+    ShiftDown_NBits_Multi_Int_X3(T,1);
     C:= add_Multi_Int_X3(L,T);
     multiply_Multi_Int_X3(C,C, CC);
 
@@ -7824,7 +7762,7 @@ end;
 
 
 (******************************************)
-function Abs(const v1:Multi_Int_X4):Multi_Int_X4; overload; inline;
+function Abs(const v1:Multi_Int_X4):Multi_Int_X4; overload;
 begin
 Result:= v1;
 Result.Negative_flag:= Multi_UBool_FALSE;
@@ -7842,7 +7780,7 @@ end;
 
 
 (******************************************)
-function Multi_Int_X4_Odd(const v1:Multi_Int_X4):boolean;
+function Multi_Int_X4_Odd(const v1:Multi_Int_X4):boolean; inline;
 var	bit1_mask	:MULTI_INT_1W_U;
 begin
 
@@ -7866,7 +7804,7 @@ end;
 
 
 (******************************************)
-function Odd(const v1:Multi_Int_X4):boolean; overload; inline;
+function Odd(const v1:Multi_Int_X4):boolean; overload;
 begin
 Result:= Multi_Int_X4_Odd(v1);
 end;
@@ -7897,7 +7835,7 @@ end;
 
 
 (******************************************)
-function Even(const v1:Multi_Int_X4):boolean; overload; inline;
+function Even(const v1:Multi_Int_X4):boolean; overload;
 begin
 Result:= Multi_Int_X4_Even(v1);
 end;
@@ -8151,23 +8089,34 @@ end;
 procedure ShiftDown_NWords_Multi_Int_X4(Var v1:Multi_Int_X4; NWords:MULTI_INT_1W_U);
 var	n	:MULTI_INT_1W_U;
 begin
-if		(NWords > 0)
-and		(NWords <= Multi_X4_maxi) then
-	begin
-	n:= NWords;
-	while (n > 0) do
+if	(NWords > 0) then
+	if	(NWords <= Multi_X4_maxi) then
 		begin
-		v1.M_Value[0]:= v1.M_Value[1];
-		v1.M_Value[1]:= v1.M_Value[2];
-		v1.M_Value[2]:= v1.M_Value[3];
-		v1.M_Value[3]:= v1.M_Value[4];
-		v1.M_Value[4]:= v1.M_Value[5];
-		v1.M_Value[5]:= v1.M_Value[6];
-		v1.M_Value[6]:= v1.M_Value[7];
+		n:= NWords;
+		while (n > 0) do
+			begin
+			v1.M_Value[0]:= v1.M_Value[1];
+			v1.M_Value[1]:= v1.M_Value[2];
+			v1.M_Value[2]:= v1.M_Value[3];
+			v1.M_Value[3]:= v1.M_Value[4];
+			v1.M_Value[4]:= v1.M_Value[5];
+			v1.M_Value[5]:= v1.M_Value[6];
+			v1.M_Value[6]:= v1.M_Value[7];
+			v1.M_Value[7]:= 0;
+			DEC(n);
+			end;
+		end
+	else
+		begin
+		v1.M_Value[0]:= 0;
+		v1.M_Value[1]:= 0;
+		v1.M_Value[2]:= 0;
+		v1.M_Value[3]:= 0;
+		v1.M_Value[4]:= 0;
+		v1.M_Value[5]:= 0;
+		v1.M_Value[6]:= 0;
 		v1.M_Value[7]:= 0;
-		DEC(n);
 		end;
-	end;
 end;
 
 
@@ -8204,13 +8153,6 @@ end;
 
 
 {******************************************}
-procedure ShiftUp(Var v1:Multi_Int_X4; NBits:MULTI_INT_1W_U); overload; inline;
-begin
-ShiftUp_MultiBits_Multi_Int_X4(v1, NBits);
-end;
-
-
-{******************************************}
 procedure ShiftDown_MultiBits_Multi_Int_X4(Var v1:Multi_Int_X4; NBits:MULTI_INT_1W_U);
 var
 NWords_count,
@@ -8241,14 +8183,7 @@ end;
 
 
 {******************************************}
-procedure ShiftDown(Var v1:Multi_Int_X4; NBits:MULTI_INT_1W_U); overload; inline;
-begin
-ShiftDown_MultiBits_Multi_Int_X4(v1, NBits);
-end;
-
-
-{******************************************}
-class operator Multi_Int_X4.shl(const v1:Multi_Int_X4; const NBits:MULTI_INT_1W_U):Multi_Int_X4; inline;
+class operator Multi_Int_X4.shl(const v1:Multi_Int_X4; const NBits:MULTI_INT_1W_U):Multi_Int_X4;
 begin
 Result:= v1;
 ShiftUp_MultiBits_Multi_Int_X4(Result, NBits);
@@ -8256,7 +8191,7 @@ end;
 
 
 {******************************************}
-class operator Multi_Int_X4.shr(const v1:Multi_Int_X4; const NBits:MULTI_INT_1W_U):Multi_Int_X4; inline;
+class operator Multi_Int_X4.shr(const v1:Multi_Int_X4; const NBits:MULTI_INT_1W_U):Multi_Int_X4;
 begin
 Result:= v1;
 ShiftDown_MultiBits_Multi_Int_X4(Result, NBits);
@@ -8574,7 +8509,7 @@ end;
 
 
 (******************************************)
-procedure Multi_Int_X2_to_Multi_Int_X4(const v1:Multi_Int_X2; out MI:Multi_Int_X4);
+procedure Multi_Int_X2_to_Multi_Int_X4(const v1:Multi_Int_X2; out MI:Multi_Int_X4); inline;
 var
 	n				:MULTI_INT_1W_U;
 begin
@@ -8622,14 +8557,14 @@ end;
 
 
 (******************************************)
-class operator Multi_Int_X4.:=(const v1:Multi_Int_X2):Multi_Int_X4; inline;
+class operator Multi_Int_X4.:=(const v1:Multi_Int_X2):Multi_Int_X4;
 begin
 Multi_Int_X2_to_Multi_Int_X4(v1,Result);
 end;
 
 
 (******************************************)
-procedure Multi_Int_X3_to_Multi_Int_X4(const v1:Multi_Int_X3; out MI:Multi_Int_X4);
+procedure Multi_Int_X3_to_Multi_Int_X4(const v1:Multi_Int_X3; out MI:Multi_Int_X4); inline;
 var
 	n				:MULTI_INT_1W_U;
 begin
@@ -8677,14 +8612,14 @@ end;
 
 
 (******************************************)
-class operator Multi_Int_X4.:=(const v1:Multi_Int_X3):Multi_Int_X4; inline;
+class operator Multi_Int_X4.:=(const v1:Multi_Int_X3):Multi_Int_X4;
 begin
 Multi_Int_X3_to_Multi_Int_X4(v1,Result);
 end;
 
 
 (******************************************)
-procedure ansistring_to_Multi_Int_X4(const v1:ansistring; out mi:Multi_Int_X4);
+procedure ansistring_to_Multi_Int_X4(const v1:ansistring; out mi:Multi_Int_X4); inline;
 label 999;
 var
 	i,b,c,e		:MULTI_INT_2W_U;
@@ -8830,7 +8765,7 @@ end;
 
 
 (******************************************)
-class operator Multi_Int_X4.:=(const v1:ansistring):Multi_Int_X4; inline;
+class operator Multi_Int_X4.:=(const v1:ansistring):Multi_Int_X4;
 begin
 ansistring_to_Multi_Int_X4(v1,Result);
 end;
@@ -8838,10 +8773,9 @@ end;
 
 {$ifdef 32bit}
 (******************************************)
-procedure MULTI_INT_4W_S_to_Multi_Int_X4(const v1:MULTI_INT_4W_S; var mi:Multi_Int_X4);
+procedure MULTI_INT_4W_S_to_Multi_Int_X4(const v1:MULTI_INT_4W_S; out mi:Multi_Int_X4); inline;
 var
 v	:MULTI_INT_4W_U;
-n	:MULTI_INT_2W_U;
 begin
 mi.Overflow_flag:=FALSE;
 mi.Defined_flag:=TRUE;
@@ -8868,17 +8802,16 @@ end;
 
 
 (******************************************)
-class operator Multi_Int_X4.:=(const v1:MULTI_INT_4W_S):Multi_Int_X4; inline;
+class operator Multi_Int_X4.:=(const v1:MULTI_INT_4W_S):Multi_Int_X4;
 begin
 MULTI_INT_4W_S_to_Multi_Int_X4(v1,Result);
 end;
 
 
 (******************************************)
-procedure MULTI_INT_4W_U_to_Multi_Int_X4(const v1:MULTI_INT_4W_U; var mi:Multi_Int_X4);
+procedure MULTI_INT_4W_U_to_Multi_Int_X4(const v1:MULTI_INT_4W_U; out mi:Multi_Int_X4); inline;
 var
 v	:MULTI_INT_4W_U;
-n	:MULTI_INT_2W_U;
 begin
 mi.Overflow_flag:=FALSE;
 mi.Defined_flag:=TRUE;
@@ -8901,7 +8834,7 @@ end;
 
 
 (******************************************)
-class operator Multi_Int_X4.:=(const v1:MULTI_INT_4W_U):Multi_Int_X4; inline;
+class operator Multi_Int_X4.:=(const v1:MULTI_INT_4W_U):Multi_Int_X4;
 begin
 MULTI_INT_4W_U_to_Multi_Int_X4(v1,Result);
 end;
@@ -8909,7 +8842,7 @@ end;
 
 
 (******************************************)
-procedure MULTI_INT_2W_S_to_Multi_Int_X4(const v1:MULTI_INT_2W_S; out mi:Multi_Int_X4);
+procedure MULTI_INT_2W_S_to_Multi_Int_X4(const v1:MULTI_INT_2W_S; out mi:Multi_Int_X4); inline;
 begin
 mi.Overflow_flag:=FALSE;
 mi.Defined_flag:=TRUE;
@@ -8936,14 +8869,14 @@ end;
 
 
 (******************************************)
-class operator Multi_Int_X4.:=(const v1:MULTI_INT_2W_S):Multi_Int_X4; inline;
+class operator Multi_Int_X4.:=(const v1:MULTI_INT_2W_S):Multi_Int_X4;
 begin
 MULTI_INT_2W_S_to_Multi_Int_X4(v1,Result);
 end;
 
 
 (******************************************)
-procedure MULTI_INT_2W_U_to_Multi_Int_X4(const v1:MULTI_INT_2W_U; out mi:Multi_Int_X4);
+procedure MULTI_INT_2W_U_to_Multi_Int_X4(const v1:MULTI_INT_2W_U; out mi:Multi_Int_X4); inline;
 begin
 mi.Overflow_flag:=FALSE;
 mi.Defined_flag:=TRUE;
@@ -8961,7 +8894,7 @@ end;
 
 
 (******************************************)
-class operator Multi_Int_X4.:=(const v1:MULTI_INT_2W_U):Multi_Int_X4; inline;
+class operator Multi_Int_X4.:=(const v1:MULTI_INT_2W_U):Multi_Int_X4;
 begin
 MULTI_INT_2W_U_to_Multi_Int_X4(v1,Result);
 end;
@@ -9511,7 +9444,7 @@ end;
 
 
 (******************************************)
-procedure bin_to_Multi_Int_X4(const v1:ansistring; out mi:Multi_Int_X4);
+procedure bin_to_Multi_Int_X4(const v1:ansistring; out mi:Multi_Int_X4); inline;
 label 999;
 var
 	n,b,c,e	:MULTI_INT_2W_U;
@@ -9613,28 +9546,21 @@ end;
 
 
 (******************************************)
-function Bin_to_Multi_Int_X4(const v1:ansistring):Multi_Int_X4; inline;
-begin
-Bin_to_Multi_Int_X4(v1,Result);
-end;
-
-
-(******************************************)
-procedure FromBin(const v1:ansistring; out mi:Multi_Int_X4); overload; inline;
+procedure FromBin(const v1:ansistring; out mi:Multi_Int_X4); overload;
 begin
 Bin_to_Multi_Int_X4(v1,mi);
 end;
 
 
 (******************************************)
-function Multi_Int_X4.FromBin(const v1:ansistring):Multi_Int_X4; inline;
+function Multi_Int_X4.FromBin(const v1:ansistring):Multi_Int_X4;
 begin
 bin_to_Multi_Int_X4(v1,Result);
 end;
 
 
 (******************************************)
-procedure Multi_Int_X4_to_bin(const v1:Multi_Int_X4; out v2:ansistring; LZ:T_Multi_Leading_Zeros);
+procedure Multi_Int_X4_to_bin(const v1:Multi_Int_X4; out v2:ansistring; LZ:T_Multi_Leading_Zeros); inline;
 var
 	s		:ansistring = '';
 	n		:MULTI_INT_1W_S;
@@ -9682,14 +9608,14 @@ end;
 
 
 (******************************************)
-function Multi_Int_X4.Tobin(const LZ:T_Multi_Leading_Zeros):ansistring; inline;
+function Multi_Int_X4.Tobin(const LZ:T_Multi_Leading_Zeros):ansistring;
 begin
 Multi_Int_X4_to_bin(self, Result, LZ);
 end;
 
 
 (******************************************)
-procedure hex_to_Multi_Int_X4(const v1:ansistring; out mi:Multi_Int_X4);
+procedure hex_to_Multi_Int_X4(const v1:ansistring; out mi:Multi_Int_X4); inline;
 label 999;
 var
 	n,i,b,c,e	:MULTI_INT_2W_U;
@@ -9793,28 +9719,21 @@ end;
 
 
 (******************************************)
-procedure FromHex(const v1:ansistring; out v2:Multi_Int_X4); overload; inline;
+procedure FromHex(const v1:ansistring; out v2:Multi_Int_X4); overload;
 begin
 hex_to_Multi_Int_X4(v1,v2);
 end;
 
 
 (******************************************)
-function Multi_Int_X4.FromHex(const v1:ansistring):Multi_Int_X4; inline;
+function Multi_Int_X4.FromHex(const v1:ansistring):Multi_Int_X4;
 begin
 hex_to_Multi_Int_X4(v1,Result);
 end;
 
 
 (******************************************)
-function Hex_to_Multi_Int_X4(const v1:ansistring):Multi_Int_X4; inline;
-begin
-hex_to_Multi_Int_X4(v1,Result);
-end;
-
-
-(******************************************)
-procedure Multi_Int_X4_to_hex(const v1:Multi_Int_X4; out v2:ansistring; LZ:T_Multi_Leading_Zeros);
+procedure Multi_Int_X4_to_hex(const v1:Multi_Int_X4; out v2:ansistring; LZ:T_Multi_Leading_Zeros); inline;
 var
 	s		:ansistring = '';
 	n		:Multi_int32u;
@@ -9862,14 +9781,14 @@ end;
 
 
 (******************************************)
-function Multi_Int_X4.ToHex(const LZ:T_Multi_Leading_Zeros):ansistring; inline;
+function Multi_Int_X4.ToHex(const LZ:T_Multi_Leading_Zeros):ansistring;
 begin
 Multi_Int_X4_to_hex(self, Result, LZ);
 end;
 
 
 (******************************************)
-procedure Multi_Int_X4_to_ansistring(const v1:Multi_Int_X4; out v2:ansistring);
+procedure Multi_Int_X4_to_ansistring(const v1:Multi_Int_X4; out v2:ansistring); inline;
 var
 	s		:ansistring = '';
 	M_Val	:array[0..Multi_X4_maxi] of MULTI_INT_2W_U;
@@ -9948,14 +9867,14 @@ end;
 
 
 (******************************************)
-function Multi_Int_X4.ToStr:ansistring; inline;
+function Multi_Int_X4.ToStr:ansistring;
 begin
 Multi_Int_X4_to_ansistring(self, Result);
 end;
 
 
 (******************************************)
-class operator Multi_Int_X4.:=(const v1:Multi_Int_X4):ansistring; inline;
+class operator Multi_Int_X4.:=(const v1:Multi_Int_X4):ansistring;
 begin
 Multi_Int_X4_to_ansistring(v1, Result);
 end;
@@ -10603,7 +10522,7 @@ end;
 
 
 (******************************************)
-class operator Multi_Int_X4.-(const v1:Multi_Int_X4):Multi_Int_X4; inline;
+class operator Multi_Int_X4.-(const v1:Multi_Int_X4):Multi_Int_X4;
 begin
 Result:= v1;
 if	(v1.Negative_flag = Multi_UBool_TRUE) then Result.Negative_flag:= Multi_UBool_FALSE;
@@ -10900,7 +10819,7 @@ finished:= FALSE;
 while not finished do
 	begin
     T:= subtract_Multi_Int_X4(H,L);
-    ShiftDown(T,1);
+    ShiftDown_NBits_Multi_Int_X4(T,1);
     C:= add_Multi_Int_X4(L,T);
     multiply_Multi_Int_X4(C,C, CC);
 
@@ -11722,24 +11641,36 @@ end;
 procedure ShiftDown_NWords_Multi_Int_X5(Var v1:Multi_Int_X5; NWords:MULTI_INT_1W_U);
 var	n	:MULTI_INT_1W_U;
 begin
-if		(NWords > 0)
-and		(NWords <= Multi_X5_max) then
-	begin
-	n:= NWords;
-	while (n > 0) do
+if	(NWords > 0) then
+	if	(NWords <= Multi_X5_maxi) then
 		begin
-		v1.M_Value[0]:= v1.M_Value[1];
-		v1.M_Value[1]:= v1.M_Value[2];
-		v1.M_Value[2]:= v1.M_Value[3];
-		v1.M_Value[3]:= v1.M_Value[4];
-		v1.M_Value[4]:= v1.M_Value[5];
-		v1.M_Value[5]:= v1.M_Value[6];
-		v1.M_Value[6]:= v1.M_Value[7];
-		v1.M_Value[7]:= v1.M_Value[8];
+		n:= NWords;
+		while (n > 0) do
+			begin
+			v1.M_Value[0]:= v1.M_Value[1];
+			v1.M_Value[1]:= v1.M_Value[2];
+			v1.M_Value[2]:= v1.M_Value[3];
+			v1.M_Value[3]:= v1.M_Value[4];
+			v1.M_Value[4]:= v1.M_Value[5];
+			v1.M_Value[5]:= v1.M_Value[6];
+			v1.M_Value[6]:= v1.M_Value[7];
+			v1.M_Value[7]:= v1.M_Value[8];
+			v1.M_Value[8]:= 0;
+			DEC(n);
+			end;
+		end
+	else
+		begin
+		v1.M_Value[0]:= 0;
+		v1.M_Value[1]:= 0;
+		v1.M_Value[2]:= 0;
+		v1.M_Value[3]:= 0;
+		v1.M_Value[4]:= 0;
+		v1.M_Value[5]:= 0;
+		v1.M_Value[6]:= 0;
+		v1.M_Value[7]:= 0;
 		v1.M_Value[8]:= 0;
-		DEC(n);
 		end;
-	end;
 end;
 
 
@@ -11774,7 +11705,7 @@ end;
 
 
 (******************************************)
-procedure MULTI_INT_2W_U_to_Multi_Int_X5(const v1:MULTI_INT_2W_U; out mi:Multi_Int_X5);
+procedure MULTI_INT_2W_U_to_Multi_Int_X5(const v1:MULTI_INT_2W_U; out mi:Multi_Int_X5); inline;
 begin
 mi.Overflow_flag:=FALSE;
 mi.Defined_flag:=TRUE;
@@ -11793,14 +11724,14 @@ end;
 
 
 (******************************************)
-class operator Multi_Int_X5.:=(const v1:MULTI_INT_2W_U):Multi_Int_X5; inline;
+class operator Multi_Int_X5.:=(const v1:MULTI_INT_2W_U):Multi_Int_X5;
 begin
 MULTI_INT_2W_U_to_Multi_Int_X5(v1,Result);
 end;
 
 
 (******************************************)
-procedure Multi_Int_X4_to_Multi_Int_X5(const v1:Multi_Int_X4; var MI:Multi_Int_X5);
+procedure Multi_Int_X4_to_Multi_Int_X5(const v1:Multi_Int_X4; var MI:Multi_Int_X5); inline;
 var
 	n				:MULTI_INT_1W_U;
 begin
@@ -11848,14 +11779,14 @@ end;
 
 
 (******************************************)
-class operator Multi_Int_X5.:=(const v1:Multi_Int_X4):Multi_Int_X5; inline;
+class operator Multi_Int_X5.:=(const v1:Multi_Int_X4):Multi_Int_X5;
 begin
 Multi_Int_X4_to_Multi_Int_X5(v1,Result);
 end;
 
 
 (******************************************)
-function To_Multi_Int_X5(const v1:Multi_Int_X4):Multi_Int_X5; inline;
+function To_Multi_Int_X5(const v1:Multi_Int_X4):Multi_Int_X5;
 begin
 Multi_Int_X4_to_Multi_Int_X5(v1,Result);
 end;
@@ -12532,23 +12463,7 @@ end;
 
 
 (******************************************)
-{
-class operator Multi_Int_XV.:=(const v1:Multi_Int_XV):Multi_Int_XV;
-begin
-Multi_Int_XV_to_Multi_Int_XV(v1,Result);
-end;
-
-
-(******************************************)
-function To_Multi_Int_XV(const v1:Multi_Int_XV):Multi_Int_XV;
-begin
-Multi_Int_XV_to_Multi_Int_XV(v1,Result);
-end;
-}
-
-
-(******************************************)
-procedure Multi_Int_Set_XV_Limit(const S:MULTI_INT_1W_U); inline;
+procedure Multi_Int_Set_XV_Limit(const S:MULTI_INT_1W_U);
 begin
 if (S > Multi_XV_size) then Multi_XV_limit:= S
 else
@@ -12562,7 +12477,7 @@ end;
 
 
 (******************************************)
-function Multi_Int_XV_Limit:MULTI_INT_1W_U; inline;
+function Multi_Int_XV_Limit:MULTI_INT_1W_U;
 begin
 Result:= Multi_XV_limit;
 end;
@@ -12576,21 +12491,12 @@ if	(S < 2) then
 	v1.Defined_flag:= FALSE;
 	v1.Overflow_flag:=TRUE;
 	Multi_Int_ERROR:= TRUE;
-	{
-	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
-		Raise EInterror.create('Multi_XV_size must be > 1');
-	}
 	exit;
 	end;
 if	(S > Multi_XV_limit) then
 	begin
-	// v1.Defined_flag:= FALSE;
 	v1.Overflow_flag:=TRUE;
 	Multi_Int_ERROR:= TRUE;
-	{
-	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
-		Raise EIntOverflow.create('Overflow');
-	}
 	exit;
 	end;
 setlength(v1.M_Value, S);
@@ -12771,7 +12677,7 @@ end;
 
 
 (******************************************)
-function Abs(const v1:Multi_Int_XV):Multi_Int_XV; overload; inline;
+function Abs(const v1:Multi_Int_XV):Multi_Int_XV; overload;
 begin
 Result:= v1;
 Result.Negative_flag:= Multi_UBool_FALSE;
@@ -12813,7 +12719,7 @@ end;
 
 
 (******************************************)
-function Odd(const v1:Multi_Int_XV):boolean; overload; inline;
+function Odd(const v1:Multi_Int_XV):boolean; overload;
 begin
 Result:= Multi_Int_XV_Odd(v1);
 end;
@@ -12844,7 +12750,7 @@ end;
 
 
 (******************************************)
-function Even(const v1:Multi_Int_XV):boolean; overload; inline;
+function Even(const v1:Multi_Int_XV):boolean; overload;
 begin
 Result:= Multi_Int_XV_Even(v1);
 end;
@@ -12977,14 +12883,7 @@ end;
 
 
 {******************************************}
-procedure ShiftUp(var v1:Multi_Int_XV; NBits:MULTI_INT_1W_U); overload; inline;
-begin
-ShiftUp_MultiBits_Multi_Int_XV(v1, NBits);
-end;
-
-
-{******************************************}
-class operator Multi_Int_XV.shl(const v1:Multi_Int_XV; const NBits:MULTI_INT_1W_U):Multi_Int_XV; inline;
+class operator Multi_Int_XV.shl(const v1:Multi_Int_XV; const NBits:MULTI_INT_1W_U):Multi_Int_XV;
 begin
 // Result:= v1;								// this causes problems in calling code
 Multi_Int_XV_to_Multi_Int_XV(v1, Result);	// if not done, causes problems in calling code
@@ -13041,22 +12940,31 @@ end;
 procedure ShiftDown_NWords_Multi_Int_XV(var v1:Multi_Int_XV; NWords:MULTI_INT_1W_U);
 var	n,i	:MULTI_INT_1W_U;
 begin
-if		(NWords > 0)
-and		(NWords <= Multi_XV_maxi) then
-	begin
-	n:= NWords;
-	while (n > 0) do
+if (NWords > 0) then
+	if (NWords <= Multi_XV_maxi) then
 		begin
-		i:=0;
-		while (i < (v1.M_Value_Size - 1)) do
+		n:= NWords;
+		while (n > 0) do
 			begin
-			v1.M_Value[i]:= v1.M_Value[i+1];
-			inc(i);
+			i:=0;
+			while (i < (v1.M_Value_Size - 1)) do
+				begin
+				v1.M_Value[i]:= v1.M_Value[i+1];
+				inc(i);
+				end;
+			v1.M_Value[i]:= 0;
+			DEC(n);
 			end;
-		v1.M_Value[i]:= 0;
-		DEC(n);
+		end
+	else
+		begin
+		n:= (v1.M_Value_Size - 1);
+		while (n > 0) do
+			begin
+			v1.M_Value[n]:= 0;
+			DEC(n);
+			end;
 		end;
-	end;
 end;
 
 
@@ -13091,14 +12999,7 @@ end;
 
 
 {******************************************}
-procedure ShiftDown(var v1:Multi_Int_XV; NBits:MULTI_INT_1W_U); overload; inline;
-begin
-ShiftDown_MultiBits_Multi_Int_XV(v1, NBits);
-end;
-
-
-{******************************************}
-class operator Multi_Int_XV.shr(const v1:Multi_Int_XV; const NBits:MULTI_INT_1W_U):Multi_Int_XV; inline;
+class operator Multi_Int_XV.shr(const v1:Multi_Int_XV; const NBits:MULTI_INT_1W_U):Multi_Int_XV;
 begin
 // Result:= v1;								// this causes problems in calling code
 Multi_Int_XV_to_Multi_Int_XV(v1, Result);	// if not done, causes problems in calling code
@@ -13323,7 +13224,7 @@ end;
 
 
 (******************************************)
-procedure ansistring_to_Multi_Int_XV(const v1:ansistring; out mi:Multi_Int_XV);
+procedure ansistring_to_Multi_Int_XV(const v1:ansistring; out mi:Multi_Int_XV); inline;
 label 999;
 var
 	n,i,b,c,e,s	:MULTI_INT_2W_U;
@@ -13440,14 +13341,14 @@ end;
 
 
 (******************************************)
-class operator Multi_Int_XV.:=(const v1:ansistring):Multi_Int_XV; inline;
+class operator Multi_Int_XV.:=(const v1:ansistring):Multi_Int_XV;
 begin
 ansistring_to_Multi_Int_XV(v1,Result);
 end;
 
 
 (******************************************)
-procedure Multi_Int_XV_to_ansistring(const v1:Multi_Int_XV; var v2:ansistring);
+procedure Multi_Int_XV_to_ansistring(const v1:Multi_Int_XV; var v2:ansistring); inline;
 var
 	s			:ansistring = '';
 	M_Val		:array of MULTI_INT_2W_U;
@@ -13509,21 +13410,21 @@ end;
 
 
 (******************************************)
-function Multi_Int_XV.ToStr:ansistring; inline;
+function Multi_Int_XV.ToStr:ansistring;
 begin
 Multi_Int_XV_to_ansistring(self, Result);
 end;
 
 
 (******************************************)
-class operator Multi_Int_XV.:=(const v1:Multi_Int_XV):ansistring; inline;
+class operator Multi_Int_XV.:=(const v1:Multi_Int_XV):ansistring;
 begin
 Multi_Int_XV_to_ansistring(v1, Result);
 end;
 
 
 (******************************************)
-procedure hex_to_Multi_Int_XV(const v1:ansistring; out mi:Multi_Int_XV);
+procedure hex_to_Multi_Int_XV(const v1:ansistring; out mi:Multi_Int_XV); inline;
 label 999;
 var
 	n,i,b,c,e,s	:MULTI_INT_2W_U;
@@ -13636,28 +13537,21 @@ end;
 
 
 (******************************************)
-function Hex_to_Multi_Int_XV(const v1:ansistring):Multi_Int_XV; inline;
+function Multi_Int_XV.FromHex(const v1:ansistring):Multi_Int_XV;
 begin
 hex_to_Multi_Int_XV(v1,Result);
 end;
 
 
 (******************************************)
-function Multi_Int_XV.FromHex(const v1:ansistring):Multi_Int_XV; inline;
-begin
-hex_to_Multi_Int_XV(v1,Result);
-end;
-
-
-(******************************************)
-procedure FromHex(const v1:ansistring; out v2:Multi_Int_XV); overload; inline;
+procedure FromHex(const v1:ansistring; out v2:Multi_Int_XV); overload;
 begin
 hex_to_Multi_Int_XV(v1,v2);
 end;
 
 
 (******************************************)
-procedure Multi_Int_XV_to_hex(const v1:Multi_Int_XV; var v2:ansistring; LZ:T_Multi_Leading_Zeros);
+procedure Multi_Int_XV_to_hex(const v1:Multi_Int_XV; var v2:ansistring; LZ:T_Multi_Leading_Zeros); inline;
 var
 	s		:ansistring = '';
 	i,n		:MULTI_INT_1W_S;
@@ -13706,14 +13600,14 @@ end;
 
 
 (******************************************)
-function Multi_Int_XV.ToHex(const LZ:T_Multi_Leading_Zeros):ansistring; inline;
+function Multi_Int_XV.ToHex(const LZ:T_Multi_Leading_Zeros):ansistring;
 begin
 Multi_Int_XV_to_hex(self, Result, LZ);
 end;
 
 
 (******************************************)
-procedure Bin_to_Multi_Int_XV(const v1:ansistring; out mi:Multi_Int_XV);
+procedure Bin_to_Multi_Int_XV(const v1:ansistring; out mi:Multi_Int_XV); inline;
 label 999;
 var
 	n,b,c,e,s	:MULTI_INT_2W_U;
@@ -13829,28 +13723,21 @@ end;
 
 
 (******************************************)
-function Bin_to_Multi_Int_XV(const v1:ansistring):Multi_Int_XV; inline;
-begin
-Bin_to_Multi_Int_XV(v1,Result);
-end;
-
-
-(******************************************)
-procedure FromBin(const v1:ansistring; out mi:Multi_Int_XV); overload; inline;
+procedure FromBin(const v1:ansistring; out mi:Multi_Int_XV); overload;
 begin
 Bin_to_Multi_Int_XV(v1,mi);
 end;
 
 
 (******************************************)
-function Multi_Int_XV.FromBin(const v1:ansistring):Multi_Int_XV; inline; inline;
+function Multi_Int_XV.FromBin(const v1:ansistring):Multi_Int_XV;
 begin
 bin_to_Multi_Int_XV(v1,Result);
 end;
 
 
 (******************************************)
-procedure Multi_Int_XV_to_bin(const v1:Multi_Int_XV; var v2:ansistring; LZ:T_Multi_Leading_Zeros);
+procedure Multi_Int_XV_to_bin(const v1:Multi_Int_XV; var v2:ansistring; LZ:T_Multi_Leading_Zeros); inline;
 var
 	s		:ansistring = '';
 	i,n		:MULTI_INT_1W_S;
@@ -13896,14 +13783,14 @@ end;
 
 
 (******************************************)
-function Multi_Int_XV.ToBin(const LZ:T_Multi_Leading_Zeros):ansistring; inline;
+function Multi_Int_XV.ToBin(const LZ:T_Multi_Leading_Zeros):ansistring;
 begin
 Multi_Int_XV_to_bin(self, Result, LZ);
 end;
 
 
 (******************************************)
-procedure MULTI_INT_2W_S_to_Multi_Int_XV(const v1:MULTI_INT_2W_S; out mi:Multi_Int_XV);
+procedure MULTI_INT_2W_S_to_Multi_Int_XV(const v1:MULTI_INT_2W_S; out mi:Multi_Int_XV); inline;
 var
 	n				:MULTI_INT_2W_U;
 begin
@@ -13934,14 +13821,14 @@ end;
 
 
 (******************************************)
-class operator Multi_Int_XV.:=(const v1:MULTI_INT_2W_S):Multi_Int_XV; inline;
+class operator Multi_Int_XV.:=(const v1:MULTI_INT_2W_S):Multi_Int_XV;
 begin
 MULTI_INT_2W_S_to_Multi_Int_XV(v1,Result);
 end;
 
 
 (******************************************)
-procedure MULTI_INT_2W_U_to_Multi_Int_XV(const v1:MULTI_INT_2W_U; out mi:Multi_Int_XV);
+procedure MULTI_INT_2W_U_to_Multi_Int_XV(const v1:MULTI_INT_2W_U; out mi:Multi_Int_XV); inline;
 var
 	n				:MULTI_INT_2W_U;
 begin
@@ -13963,7 +13850,7 @@ end;
 
 
 (******************************************)
-class operator Multi_Int_XV.:=(const v1:MULTI_INT_2W_U):Multi_Int_XV; inline;
+class operator Multi_Int_XV.:=(const v1:MULTI_INT_2W_U):Multi_Int_XV;
 begin
 MULTI_INT_2W_U_to_Multi_Int_XV(v1,Result);
 end;
@@ -13975,7 +13862,7 @@ end;
 // 4 word integers do not exist in 64bit mode
 
 (******************************************)
-procedure MULTI_INT_4W_S_to_Multi_Int_XV(const v1:MULTI_INT_4W_S; var mi:Multi_Int_XV);
+procedure MULTI_INT_4W_S_to_Multi_Int_XV(const v1:MULTI_INT_4W_S; var mi:Multi_Int_XV); inline;
 var
 v	:MULTI_INT_4W_U;
 n	:MULTI_INT_2W_U;
@@ -14018,14 +13905,14 @@ end;
 
 
 (******************************************)
-class operator Multi_Int_XV.:=(const v1:MULTI_INT_4W_S):Multi_Int_XV; inline;
+class operator Multi_Int_XV.:=(const v1:MULTI_INT_4W_S):Multi_Int_XV;
 begin
 MULTI_INT_4W_S_to_Multi_Int_XV(v1,Result);
 end;
 
 
 (******************************************)
-procedure MULTI_INT_4W_U_to_Multi_Int_XV(const v1:MULTI_INT_4W_U; var mi:Multi_Int_XV);
+procedure MULTI_INT_4W_U_to_Multi_Int_XV(const v1:MULTI_INT_4W_U; var mi:Multi_Int_XV); inline;
 var
 v	:MULTI_INT_4W_U;
 n	:MULTI_INT_2W_U;
@@ -14066,7 +13953,7 @@ end;
 
 
 (******************************************)
-class operator Multi_Int_XV.:=(const v1:MULTI_INT_4W_U):Multi_Int_XV; inline;
+class operator Multi_Int_XV.:=(const v1:MULTI_INT_4W_U):Multi_Int_XV;
 begin
 MULTI_INT_4W_U_to_Multi_Int_XV(v1,Result);
 end;
@@ -14074,7 +13961,7 @@ end;
 
 
 (******************************************)
-procedure Multi_Int_X4_to_Multi_Int_XV(const v1:Multi_Int_X4; var MI:Multi_Int_XV);
+procedure Multi_Int_X4_to_Multi_Int_XV(const v1:Multi_Int_X4; var MI:Multi_Int_XV); inline;
 var
 	n				:MULTI_INT_1W_U;
 begin
@@ -14136,21 +14023,21 @@ end;
 
 
 (******************************************)
-class operator Multi_Int_XV.:=(const v1:Multi_Int_X4):Multi_Int_XV; inline;
+class operator Multi_Int_XV.:=(const v1:Multi_Int_X4):Multi_Int_XV;
 begin
 Multi_Int_X4_to_Multi_Int_XV(v1,Result);
 end;
 
 
 (******************************************)
-function To_Multi_Int_XV(const v1:Multi_Int_X4):Multi_Int_XV; inline;
+function To_Multi_Int_XV(const v1:Multi_Int_X4):Multi_Int_XV;
 begin
 Multi_Int_X4_to_Multi_Int_XV(v1,Result);
 end;
 
 
 (******************************************)
-procedure Multi_Int_X3_to_Multi_Int_XV(const v1:Multi_Int_X3; var MI:Multi_Int_XV);
+procedure Multi_Int_X3_to_Multi_Int_XV(const v1:Multi_Int_X3; var MI:Multi_Int_XV); inline;
 var
 	n				:MULTI_INT_1W_U;
 begin
@@ -14212,21 +14099,21 @@ end;
 
 
 (******************************************)
-class operator Multi_Int_XV.:=(const v1:Multi_Int_X3):Multi_Int_XV; inline;
+class operator Multi_Int_XV.:=(const v1:Multi_Int_X3):Multi_Int_XV;
 begin
 Multi_Int_X3_to_Multi_Int_XV(v1,Result);
 end;
 
 
 (******************************************)
-function To_Multi_Int_XV(const v1:Multi_Int_X3):Multi_Int_XV; inline;
+function To_Multi_Int_XV(const v1:Multi_Int_X3):Multi_Int_XV;
 begin
 Multi_Int_X3_to_Multi_Int_XV(v1,Result);
 end;
 
 
 (******************************************)
-procedure Multi_Int_X2_to_Multi_Int_XV(const v1:Multi_Int_X2; var MI:Multi_Int_XV);
+procedure Multi_Int_X2_to_Multi_Int_XV(const v1:Multi_Int_X2; var MI:Multi_Int_XV); inline;
 var
 	n				:MULTI_INT_1W_U;
 begin
@@ -14288,14 +14175,14 @@ end;
 
 
 (******************************************)
-class operator Multi_Int_XV.:=(const v1:Multi_Int_X2):Multi_Int_XV; inline;
+class operator Multi_Int_XV.:=(const v1:Multi_Int_X2):Multi_Int_XV;
 begin
 Multi_Int_X2_to_Multi_Int_XV(v1,Result);
 end;
 
 
 (******************************************)
-function To_Multi_Int_XV(const v1:Multi_Int_X2):Multi_Int_XV; inline;
+function To_Multi_Int_XV(const v1:Multi_Int_X2):Multi_Int_XV;
 begin
 Multi_Int_X2_to_Multi_Int_XV(v1,Result);
 end;
@@ -16608,7 +16495,7 @@ while (i <= Multi_XV_maxi) do
 	end;
 end;
 
-procedure Multi_Int_Reset_X2_Last_Divisor; inline;
+procedure Multi_Int_Reset_X2_Last_Divisor;
 begin
 X2_Last_Divisor:= 0;
 X2_Last_Dividend:= 0;
@@ -16616,7 +16503,7 @@ X2_Last_Quotient:= 0;
 X2_Last_Remainder:= 0;
 end;
 
-procedure Multi_Int_Reset_X3_Last_Divisor; inline;
+procedure Multi_Int_Reset_X3_Last_Divisor;
 begin
 X3_Last_Divisor:= 0;
 X3_Last_Dividend:= 0;
@@ -16624,7 +16511,7 @@ X3_Last_Quotient:= 0;
 X3_Last_Remainder:= 0;
 end;
 
-procedure Multi_Int_Reset_X4_Last_Divisor; inline;
+procedure Multi_Int_Reset_X4_Last_Divisor;
 begin
 X4_Last_Divisor:= 0;
 X4_Last_Dividend:= 0;
@@ -16632,7 +16519,7 @@ X4_Last_Quotient:= 0;
 X4_Last_Remainder:= 0;
 end;
 
-procedure Multi_Int_Reset_XV_Last_Divisor; inline;
+procedure Multi_Int_Reset_XV_Last_Divisor;
 begin
 XV_Last_Divisor:= 0;
 XV_Last_Dividend:= 0;
