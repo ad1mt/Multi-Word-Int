@@ -14,3 +14,4 @@ Changes in version 4.37:
 - Re-instate "lost" Negative function
 - bitwise operations no longer generate an exception for negative values
 - Fix for a problem with exceptions when range-checking is enabled on the 32-bit compiler
+- Bug fixes in bitshift functions
