@@ -237,6 +237,9 @@ v4.37.03
 v4.37.04
 -	inline "wrapper" functions & procedures
 -	more bitshift bug fixes
+
+v4.37.05
+-	bug fixes: overflow flag was not set in many functions
 *)
 
 (* END OF USER OPTIONAL DEFINES *)
@@ -1218,16 +1221,13 @@ if NBits <= NBits_max then
 	INT_1W_U_shl(v1.M_Value[0], NBits);
 
 	carry_bits_2:= ((v1.M_Value[1] and carry_bits_mask) >> NBits_carry);
-	// v1.M_Value[1]:= ((v1.M_Value[1] << NBits) OR carry_bits_1);
 	INT_1W_U_shl(v1.M_Value[1], NBits);
 	v1.M_Value[1]:= (v1.M_Value[1] OR carry_bits_1);
 
 	carry_bits_1:= ((v1.M_Value[2] and carry_bits_mask) >> NBits_carry);
-	// v1.M_Value[2]:= ((v1.M_Value[2] << NBits) OR carry_bits_2);
 	INT_1W_U_shl(v1.M_Value[2], NBits);
 	v1.M_Value[2]:= (v1.M_Value[2] OR carry_bits_2);
 
-	// v1.M_Value[3]:= ((v1.M_Value[3] << NBits) OR carry_bits_1);
 	INT_1W_U_shl(v1.M_Value[3], NBits);
 	v1.M_Value[3]:= (v1.M_Value[3] OR carry_bits_1);
 	end;
@@ -1248,13 +1248,7 @@ begin
 if NBits > 0 then
 	begin
 
-	{$ifdef 32bit}
-	carry_bits_mask:= $FFFF;
-	{$endif}
-	{$ifdef 64bit}
 	carry_bits_mask:= $FFFFFFFF;
-	{$endif}
-
 	NBits_max:= MULTI_INT_1W_SIZE;
 	NBits_carry:= (NBits_max - NBits);
 
@@ -1283,19 +1277,26 @@ end;
 procedure ShiftUp_NWords_Multi_Int_X2(Var v1:Multi_Int_X2; NWords:MULTI_INT_1W_U);
 var	n	:MULTI_INT_1W_U;
 begin
-if		(NWords > 0)
-and		(NWords <= Multi_X2_maxi) then
-	begin
-	n:= NWords;
-	while (n > 0) do
+if	(NWords > 0) then
+	if	(NWords <= Multi_X2_maxi) then
 		begin
-		v1.M_Value[3]:= v1.M_Value[2];
-		v1.M_Value[2]:= v1.M_Value[1];
-		v1.M_Value[1]:= v1.M_Value[0];
+		n:= NWords;
+		while (n > 0) do
+			begin
+			v1.M_Value[3]:= v1.M_Value[2];
+			v1.M_Value[2]:= v1.M_Value[1];
+			v1.M_Value[1]:= v1.M_Value[0];
+			v1.M_Value[0]:= 0;
+			DEC(n);
+			end;
+		end
+	else
+		begin
 		v1.M_Value[0]:= 0;
-		DEC(n);
+		v1.M_Value[1]:= 0;
+		v1.M_Value[2]:= 0;
+		v1.M_Value[3]:= 0;
 		end;
-	end;
 end;
 
 
@@ -2919,12 +2920,26 @@ then
 		end;
 	exit;
 	end;
+if	(v1.Overflow_flag or v2.Overflow_flag)
+then
+	begin
+	Result:= 0;
+	Result.Overflow_flag:=TRUE;
+	Result.Defined_flag:=FALSE;
+	Multi_Int_ERROR:= TRUE;
+	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
+		begin
+		Raise EIntOverflow.create('Overflow');
+		end;
+	exit;
+	end;
 
 Result.M_Value[0]:= (v1.M_Value[0] xor v2.M_Value[0]);
 Result.M_Value[1]:= (v1.M_Value[1] xor v2.M_Value[1]);
 Result.M_Value[2]:= (v1.M_Value[2] xor v2.M_Value[2]);
 Result.M_Value[3]:= (v1.M_Value[3] xor v2.M_Value[3]);
 Result.Defined_flag:=TRUE;
+Result.Overflow_flag:= FALSE;
 
 Result.Negative_flag:= Multi_UBool_FALSE;
 if	(v1.Negative <> v2.Negative)
@@ -2953,6 +2968,7 @@ Result.M_Value[1]:= (v1.M_Value[1] or v2.M_Value[1]);
 Result.M_Value[2]:= (v1.M_Value[2] or v2.M_Value[2]);
 Result.M_Value[3]:= (v1.M_Value[3] or v2.M_Value[3]);
 Result.Defined_flag:=TRUE;
+Result.Overflow_flag := FALSE;
 
 Result.Negative_flag:= Multi_UBool_FALSE;
 if v1.Negative and v2.Negative
@@ -2981,6 +2997,7 @@ Result.M_Value[1]:= (v1.M_Value[1] and v2.M_Value[1]);
 Result.M_Value[2]:= (v1.M_Value[2] and v2.M_Value[2]);
 Result.M_Value[3]:= (v1.M_Value[3] and v2.M_Value[3]);
 Result.Defined_flag:=TRUE;
+Result.Overflow_flag := FALSE;
 
 Result.Negative_flag:= Multi_UBool_FALSE;
 if v1.Negative and v2.Negative
@@ -3008,6 +3025,7 @@ Result.M_Value[1]:= (not v1.M_Value[1]);
 Result.M_Value[2]:= (not v1.M_Value[2]);
 Result.M_Value[3]:= (not v1.M_Value[3]);
 Result.Defined_flag:=TRUE;
+Result.Overflow_flag := FALSE;
 
 Result.Negative_flag:=  Multi_UBool_TRUE;
 if v1.Negative
@@ -4432,26 +4450,21 @@ if NBits <= NBits_max then
 	INT_1W_U_shl(v1.M_Value[0], NBits);
 
 	carry_bits_2:= ((v1.M_Value[1] and carry_bits_mask) >> NBits_carry);
-	// v1.M_Value[1]:= ((v1.M_Value[1] << NBits) OR carry_bits_1);
 	INT_1W_U_shl(v1.M_Value[1], NBits);
 	v1.M_Value[1]:= (v1.M_Value[1] OR carry_bits_1);
 
 	carry_bits_1:= ((v1.M_Value[2] and carry_bits_mask) >> NBits_carry);
-	// v1.M_Value[2]:= ((v1.M_Value[2] << NBits) OR carry_bits_2);
 	INT_1W_U_shl(v1.M_Value[2], NBits);
 	v1.M_Value[2]:= (v1.M_Value[2] OR carry_bits_2);
 
 	carry_bits_2:= ((v1.M_Value[3] and carry_bits_mask) >> NBits_carry);
-	// v1.M_Value[3]:= ((v1.M_Value[3] << NBits) OR carry_bits_1);
 	INT_1W_U_shl(v1.M_Value[3], NBits);
 	v1.M_Value[3]:= (v1.M_Value[3] OR carry_bits_1);
 
 	carry_bits_1:= ((v1.M_Value[4] and carry_bits_mask) >> NBits_carry);
-	// v1.M_Value[4]:= ((v1.M_Value[4] << NBits) OR carry_bits_2);
 	INT_1W_U_shl(v1.M_Value[4], NBits);
 	v1.M_Value[4]:= (v1.M_Value[4] OR carry_bits_2);
 
-	// v1.M_Value[5]:= ((v1.M_Value[5] << NBits) OR carry_bits_1);
 	INT_1W_U_shl(v1.M_Value[5], NBits);
 	v1.M_Value[5]:= (v1.M_Value[5] OR carry_bits_1);
 	end;
@@ -4507,21 +4520,30 @@ end;
 procedure ShiftUp_NWords_Multi_Int_X3(Var v1:Multi_Int_X3; NWords:MULTI_INT_1W_U);
 var	n	:MULTI_INT_1W_U;
 begin
-if		(NWords > 0)
-and		(NWords <= Multi_X3_maxi) then
-	begin
-	n:= NWords;
-	while (n > 0) do
+if	(NWords > 0) then
+	if	(NWords <= Multi_X3_maxi) then
 		begin
-		v1.M_Value[5]:= v1.M_Value[4];
-		v1.M_Value[4]:= v1.M_Value[3];
-		v1.M_Value[3]:= v1.M_Value[2];
-		v1.M_Value[2]:= v1.M_Value[1];
-		v1.M_Value[1]:= v1.M_Value[0];
+		n:= NWords;
+		while (n > 0) do
+			begin
+			v1.M_Value[5]:= v1.M_Value[4];
+			v1.M_Value[4]:= v1.M_Value[3];
+			v1.M_Value[3]:= v1.M_Value[2];
+			v1.M_Value[2]:= v1.M_Value[1];
+			v1.M_Value[1]:= v1.M_Value[0];
+			v1.M_Value[0]:= 0;
+			DEC(n);
+			end;
+		end
+	else
+		begin
 		v1.M_Value[0]:= 0;
-		DEC(n);
+		v1.M_Value[1]:= 0;
+		v1.M_Value[2]:= 0;
+		v1.M_Value[3]:= 0;
+		v1.M_Value[4]:= 0;
+		v1.M_Value[5]:= 0;
 		end;
-	end;
 end;
 
 
@@ -6271,6 +6293,19 @@ then
 		end;
 	exit;
 	end;
+if	(v1.Overflow_flag or v2.Overflow_flag)
+then
+	begin
+	Result:= 0;
+	Result.Overflow_flag:=TRUE;
+	Result.Defined_flag:=FALSE;
+	Multi_Int_ERROR:= TRUE;
+	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
+		begin
+		Raise EIntOverflow.create('Overflow');
+		end;
+	exit;
+	end;
 
 Result.M_Value[0]:= (v1.M_Value[0] xor v2.M_Value[0]);
 Result.M_Value[1]:= (v1.M_Value[1] xor v2.M_Value[1]);
@@ -6279,6 +6314,7 @@ Result.M_Value[3]:= (v1.M_Value[3] xor v2.M_Value[3]);
 Result.M_Value[4]:= (v1.M_Value[4] xor v2.M_Value[4]);
 Result.M_Value[5]:= (v1.M_Value[5] xor v2.M_Value[5]);
 Result.Defined_flag:=TRUE;
+Result.Overflow_flag:= FALSE;
 
 Result.Negative_flag:= Multi_UBool_FALSE;
 if	(v1.Negative <> v2.Negative)
@@ -6309,6 +6345,7 @@ Result.M_Value[3]:= (v1.M_Value[3] or v2.M_Value[3]);
 Result.M_Value[4]:= (v1.M_Value[4] or v2.M_Value[4]);
 Result.M_Value[5]:= (v1.M_Value[5] or v2.M_Value[5]);
 Result.Defined_flag:=TRUE;
+Result.Overflow_flag:= FALSE;
 
 Result.Negative_flag:= Multi_UBool_FALSE;
 if v1.Negative and v2.Negative
@@ -6339,6 +6376,7 @@ Result.M_Value[3]:= (v1.M_Value[3] and v2.M_Value[3]);
 Result.M_Value[4]:= (v1.M_Value[4] and v2.M_Value[4]);
 Result.M_Value[5]:= (v1.M_Value[5] and v2.M_Value[5]);
 Result.Defined_flag:=TRUE;
+Result.Overflow_flag:= FALSE;
 
 Result.Negative_flag:= Multi_UBool_FALSE;
 if v1.Negative and v2.Negative
@@ -6368,6 +6406,7 @@ Result.M_Value[3]:= (not v1.M_Value[3]);
 Result.M_Value[4]:= (not v1.M_Value[4]);
 Result.M_Value[5]:= (not v1.M_Value[5]);
 Result.Defined_flag:=TRUE;
+Result.Overflow_flag:= FALSE;
 
 Result.Negative_flag:=  Multi_UBool_TRUE;
 if v1.Negative
@@ -7917,36 +7956,29 @@ if NBits <= NBits_max then
 	INT_1W_U_shl(v1.M_Value[0], NBits);
 
 	carry_bits_2:= ((v1.M_Value[1] and carry_bits_mask) >> NBits_carry);
-	// v1.M_Value[1]:= ((v1.M_Value[1] << NBits) OR carry_bits_1);
 	INT_1W_U_shl(v1.M_Value[1], NBits);
 	v1.M_Value[1]:= (v1.M_Value[1] OR carry_bits_1);
 
 	carry_bits_1:= ((v1.M_Value[2] and carry_bits_mask) >> NBits_carry);
-	// v1.M_Value[2]:= ((v1.M_Value[2] << NBits) OR carry_bits_2);
 	INT_1W_U_shl(v1.M_Value[2], NBits);
 	v1.M_Value[2]:= (v1.M_Value[2] OR carry_bits_2);
 
 	carry_bits_2:= ((v1.M_Value[3] and carry_bits_mask) >> NBits_carry);
-	// v1.M_Value[3]:= ((v1.M_Value[3] << NBits) OR carry_bits_1);
 	INT_1W_U_shl(v1.M_Value[3], NBits);
 	v1.M_Value[3]:= (v1.M_Value[3] OR carry_bits_1);
 
 	carry_bits_1:= ((v1.M_Value[4] and carry_bits_mask) >> NBits_carry);
-	// v1.M_Value[4]:= ((v1.M_Value[4] << NBits) OR carry_bits_2);
 	INT_1W_U_shl(v1.M_Value[4], NBits);
 	v1.M_Value[4]:= (v1.M_Value[4] OR carry_bits_2);
 
 	carry_bits_2:= ((v1.M_Value[5] and carry_bits_mask) >> NBits_carry);
-	// v1.M_Value[5]:= ((v1.M_Value[5] << NBits) OR carry_bits_1);
 	INT_1W_U_shl(v1.M_Value[5], NBits);
 	v1.M_Value[5]:= (v1.M_Value[5] OR carry_bits_1);
 
 	carry_bits_1:= ((v1.M_Value[6] and carry_bits_mask) >> NBits_carry);
-	// v1.M_Value[6]:= ((v1.M_Value[6] << NBits) OR carry_bits_2);
 	INT_1W_U_shl(v1.M_Value[6], NBits);
 	v1.M_Value[6]:= (v1.M_Value[6] OR carry_bits_2);
 
-	// v1.M_Value[7]:= ((v1.M_Value[7] << NBits) OR carry_bits_1);
 	INT_1W_U_shl(v1.M_Value[7], NBits);
 	v1.M_Value[7]:= (v1.M_Value[7] OR carry_bits_1);
 	end;
@@ -8011,23 +8043,34 @@ end;
 procedure ShiftUp_NWords_Multi_Int_X4(Var v1:Multi_Int_X4; NWords:MULTI_INT_1W_U);
 var	n	:MULTI_INT_1W_U;
 begin
-if		(NWords > 0)
-and		(NWords <= Multi_X4_maxi) then
-	begin
-	n:= NWords;
-	while (n > 0) do
+if	(NWords > 0) then
+	if	(NWords <= Multi_X4_maxi) then
 		begin
-		v1.M_Value[7]:= v1.M_Value[6];
-		v1.M_Value[6]:= v1.M_Value[5];
-		v1.M_Value[5]:= v1.M_Value[4];
-		v1.M_Value[4]:= v1.M_Value[3];
-		v1.M_Value[3]:= v1.M_Value[2];
-		v1.M_Value[2]:= v1.M_Value[1];
-		v1.M_Value[1]:= v1.M_Value[0];
+		n:= NWords;
+		while (n > 0) do
+			begin
+			v1.M_Value[7]:= v1.M_Value[6];
+			v1.M_Value[6]:= v1.M_Value[5];
+			v1.M_Value[5]:= v1.M_Value[4];
+			v1.M_Value[4]:= v1.M_Value[3];
+			v1.M_Value[3]:= v1.M_Value[2];
+			v1.M_Value[2]:= v1.M_Value[1];
+			v1.M_Value[1]:= v1.M_Value[0];
+			v1.M_Value[0]:= 0;
+			DEC(n);
+			end;
+		end
+	else
+		begin
 		v1.M_Value[0]:= 0;
-		DEC(n);
+		v1.M_Value[1]:= 0;
+		v1.M_Value[2]:= 0;
+		v1.M_Value[3]:= 0;
+		v1.M_Value[4]:= 0;
+		v1.M_Value[5]:= 0;
+		v1.M_Value[6]:= 0;
+		v1.M_Value[7]:= 0;
 		end;
-	end;
 end;
 
 
@@ -9895,6 +9938,19 @@ then
 		end;
 	exit;
 	end;
+if	(v1.Overflow_flag or v2.Overflow_flag)
+then
+	begin
+	Result:= 0;
+	Result.Overflow_flag:=TRUE;
+	Result.Defined_flag:=FALSE;
+	Multi_Int_ERROR:= TRUE;
+	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
+		begin
+		Raise EIntOverflow.create('Overflow');
+		end;
+	exit;
+	end;
 
 Result.M_Value[0]:=(v1.M_Value[0] xor v2.M_Value[0]);
 Result.M_Value[1]:=(v1.M_Value[1] xor v2.M_Value[1]);
@@ -9905,6 +9961,7 @@ Result.M_Value[5]:=(v1.M_Value[5] xor v2.M_Value[5]);
 Result.M_Value[6]:=(v1.M_Value[6] xor v2.M_Value[6]);
 Result.M_Value[7]:=(v1.M_Value[7] xor v2.M_Value[7]);
 Result.Defined_flag:=TRUE;
+Result.Overflow_flag:= FALSE;
 
 Result.Negative_flag:= Multi_UBool_FALSE;
 if	(v1.Negative <> v2.Negative)
@@ -9938,6 +9995,7 @@ Result.M_Value[6]:= (v1.M_Value[6] or v2.M_Value[6]);
 Result.M_Value[7]:= (v1.M_Value[7] or v2.M_Value[7]);
 
 Result.Defined_flag:=TRUE;
+Result.Overflow_flag:= FALSE;
 
 Result.Negative_flag:= Multi_UBool_FALSE;
 if v1.Negative and v2.Negative
@@ -9971,6 +10029,7 @@ Result.M_Value[6]:= (v1.M_Value[6] and v2.M_Value[6]);
 Result.M_Value[7]:= (v1.M_Value[7] and v2.M_Value[7]);
 
 Result.Defined_flag:=TRUE;
+Result.Overflow_flag:= FALSE;
 
 Result.Negative_flag:= Multi_UBool_FALSE;
 if v1.Negative and v2.Negative
@@ -10003,6 +10062,7 @@ Result.M_Value[6]:= (not v1.M_Value[6]);
 Result.M_Value[7]:= (not v1.M_Value[7]);
 
 Result.Defined_flag:=TRUE;
+Result.Overflow_flag:= FALSE;
 
 Result.Negative_flag:=  Multi_UBool_TRUE;
 if v1.Negative
@@ -11475,48 +11535,37 @@ INT_1W_U_shl(carry_bits_mask, NBits_carry);
 
 if NBits <= NBits_max then
 	begin
-	// v1.M_Value[0]:= (v1.M_Value[0] << NBits);
-	// INT_1W_U_shl(v1.M_Value[0], NBits);
-
 	carry_bits_1:= ((v1.M_Value[0] and carry_bits_mask) >> NBits_carry);
 	INT_1W_U_shl(v1.M_Value[0], NBits);
 
 	carry_bits_2:= ((v1.M_Value[1] and carry_bits_mask) >> NBits_carry);
-	// v1.M_Value[1]:= ((v1.M_Value[1] << NBits) OR carry_bits_1);
 	INT_1W_U_shl(v1.M_Value[1], NBits);
 	v1.M_Value[1]:= (v1.M_Value[1] OR carry_bits_1);
 
 	carry_bits_1:= ((v1.M_Value[2] and carry_bits_mask) >> NBits_carry);
-	// v1.M_Value[2]:= ((v1.M_Value[2] << NBits) OR carry_bits_2);
 	INT_1W_U_shl(v1.M_Value[2], NBits);
 	v1.M_Value[2]:= (v1.M_Value[2] OR carry_bits_2);
 
 	carry_bits_2:= ((v1.M_Value[3] and carry_bits_mask) >> NBits_carry);
-	// v1.M_Value[3]:= ((v1.M_Value[3] << NBits) OR carry_bits_1);
 	INT_1W_U_shl(v1.M_Value[3], NBits);
 	v1.M_Value[3]:= (v1.M_Value[3] OR carry_bits_1);
 
 	carry_bits_1:= ((v1.M_Value[4] and carry_bits_mask) >> NBits_carry);
-	// v1.M_Value[4]:= ((v1.M_Value[4] << NBits) OR carry_bits_2);
 	INT_1W_U_shl(v1.M_Value[4], NBits);
 	v1.M_Value[4]:= (v1.M_Value[4] OR carry_bits_2);
 
 	carry_bits_2:= ((v1.M_Value[5] and carry_bits_mask) >> NBits_carry);
-	// v1.M_Value[5]:= ((v1.M_Value[5] << NBits) OR carry_bits_1);
 	INT_1W_U_shl(v1.M_Value[5], NBits);
 	v1.M_Value[5]:= (v1.M_Value[5] OR carry_bits_1);
 
 	carry_bits_1:= ((v1.M_Value[6] and carry_bits_mask) >> NBits_carry);
-	// v1.M_Value[6]:= ((v1.M_Value[6] << NBits) OR carry_bits_2);
 	INT_1W_U_shl(v1.M_Value[6], NBits);
 	v1.M_Value[6]:= (v1.M_Value[6] OR carry_bits_2);
 
 	carry_bits_2:= ((v1.M_Value[7] and carry_bits_mask) >> NBits_carry);
-	// v1.M_Value[7]:= ((v1.M_Value[7] << NBits) OR carry_bits_1);
 	INT_1W_U_shl(v1.M_Value[7], NBits);
 	v1.M_Value[7]:= (v1.M_Value[7] OR carry_bits_1);
 
-	// v1.M_Value[8]:= ((v1.M_Value[8] << NBits) OR carry_bits_2);
 	INT_1W_U_shl(v1.M_Value[8], NBits);
 	v1.M_Value[8]:= (v1.M_Value[8] OR carry_bits_2);
 	end;
@@ -12765,65 +12814,65 @@ var	carry_bits_1,
 	NBits_carry	:MULTI_INT_1W_U;
 	n			:MULTI_INT_1W_U;
 {$ifdef 32bit}
-carry_bits_mask_2w	:MULTI_INT_2W_U;
+	procedure INT_1W_U_shl(var v1:MULTI_INT_1W_U; const nbits:MULTI_INT_1W_U); inline;
+	var carry_bits_mask_2w	:MULTI_INT_2W_U;
+	begin
+	carry_bits_mask_2w:= v1;
+	carry_bits_mask_2w:= (carry_bits_mask_2w << NBits);
+	v1:= MULTI_INT_1W_U(carry_bits_mask_2w and MULTI_INT_1W_U_MAXINT);
+	end;
 {$endif}
 
 begin
 if NBits > 0 then
-begin
-
-{$ifdef 32bit}
-carry_bits_mask:= $FFFF;
-{$else}
-carry_bits_mask:= $FFFFFFFF;
-{$endif}
-
-NBits_max:= MULTI_INT_1W_SIZE;
-NBits_carry:= (NBits_max - NBits);
-
-{$ifdef 32bit}
-carry_bits_mask_2w:= carry_bits_mask;
-carry_bits_mask_2w:= (carry_bits_mask_2w << NBits_carry);
-carry_bits_mask:= MULTI_INT_1W_U(carry_bits_mask_2w mod MULTI_INT_1W_U_MAXINT_1);
-{$else}
-carry_bits_mask:= (carry_bits_mask << NBits_carry);
-{$endif}
-
-if NBits <= NBits_max then
 	begin
-	carry_bits_1:= ((v1.M_Value[0] and carry_bits_mask) >> NBits_carry);
+
 	{$ifdef 32bit}
-	// v1.M_Value[0]:= (v1.M_Value[0] << NBits);
-	carry_bits_mask_2w:= v1.M_Value[0];
-    carry_bits_mask_2w:= (carry_bits_mask_2w << NBits);
-    v1.M_Value[0]:= MULTI_INT_1W_U(carry_bits_mask_2w mod MULTI_INT_1W_U_MAXINT_1);
+	carry_bits_mask:= $FFFF;
 	{$else}
-	v1.M_Value[0]:= (v1.M_Value[0] << NBits);
+	carry_bits_mask:= $FFFFFFFF;
 	{$endif}
 
-	n:=1;
-	while (n < (v1.M_Value_Size-1)) do
-		begin
-		carry_bits_2:= ((v1.M_Value[n] and carry_bits_mask) >> NBits_carry);
+	NBits_max:= MULTI_INT_1W_SIZE;
+	NBits_carry:= (NBits_max - NBits);
 
+	{$ifdef 32bit}
+	INT_1W_U_shl(carry_bits_mask, NBits_carry);
+	{$else}
+	carry_bits_mask:= (carry_bits_mask << NBits_carry);
+	{$endif}
+
+	if NBits <= NBits_max then
+		begin
+		carry_bits_1:= ((v1.M_Value[0] and carry_bits_mask) >> NBits_carry);
 		{$ifdef 32bit}
-		// v1.M_Value[n]:= ((v1.M_Value[n] << NBits) OR carry_bits_1);
-		carry_bits_mask_2w:= v1.M_Value[n];
-        carry_bits_mask_2w:= ((carry_bits_mask_2w  << NBits) OR carry_bits_1);
-        v1.M_Value[n]:= MULTI_INT_1W_U(carry_bits_mask_2w mod MULTI_INT_1W_U_MAXINT_1);
+		// v1.M_Value[0]:= (v1.M_Value[0] << NBits);
+	    INT_1W_U_shl(v1.M_Value[0], NBits);
 		{$else}
-		v1.M_Value[n]:= ((v1.M_Value[n] << NBits) OR carry_bits_1);
+		v1.M_Value[0]:= (v1.M_Value[0] << NBits);
 		{$endif}
 
-		carry_bits_1:= carry_bits_2;
-		inc(n);
+		n:=1;
+		while (n < (v1.M_Value_Size-1)) do
+			begin
+			carry_bits_2:= ((v1.M_Value[n] and carry_bits_mask) >> NBits_carry);
+
+			{$ifdef 32bit}
+			// v1.M_Value[n]:= ((v1.M_Value[n] << NBits) OR carry_bits_1);
+	        INT_1W_U_shl(v1.M_Value[n], NBits);
+	        v1.M_Value[n]:= (v1.M_Value[n] OR carry_bits_1);
+			{$else}
+			v1.M_Value[n]:= ((v1.M_Value[n] << NBits) OR carry_bits_1);
+			{$endif}
+
+			carry_bits_1:= carry_bits_2;
+			inc(n);
+			end;
+
+		v1.M_Value[n]:= ((v1.M_Value[n] << NBits) OR carry_bits_1);
+
 		end;
-
-	v1.M_Value[n]:= ((v1.M_Value[n] << NBits) OR carry_bits_1);
-
 	end;
-end;
-
 end;
 
 
@@ -12831,22 +12880,31 @@ end;
 procedure ShiftUp_NWords_Multi_Int_XV(var v1:Multi_Int_XV; NWords:MULTI_INT_1W_U);
 var	n,i	:MULTI_INT_1W_U;
 begin
-if		(NWords > 0)
-and		(NWords <= Multi_XV_maxi) then
-	begin
-	n:= NWords;
-	while (n > 0) do
+if (NWords > 0) then
+	if (NWords <= Multi_XV_maxi) then
 		begin
-		i:=(v1.M_Value_Size - 1);
-		while (i > 0) do
+		n:= NWords;
+		while (n > 0) do
 			begin
-			v1.M_Value[i]:= v1.M_Value[i-1];
-			dec(i);
+			i:=(v1.M_Value_Size - 1);
+			while (i > 0) do
+				begin
+				v1.M_Value[i]:= v1.M_Value[i-1];
+				dec(i);
+				end;
+			v1.M_Value[i]:= 0;
+			DEC(n);
 			end;
-		v1.M_Value[i]:= 0;
-		DEC(n);
+		end
+	else
+		begin
+		n:= (v1.M_Value_Size - 1);
+		while (n > 0) do
+			begin
+			v1.M_Value[n]:= 0;
+			DEC(n);
+			end;
 		end;
-	end;
 end;
 
 
@@ -12901,38 +12959,37 @@ var	carry_bits_1,
 	n			:integer;
 begin
 if NBits > 0 then
-begin
-
-{$ifdef 32bit}
-carry_bits_mask:= $FFFF;
-{$endif}
-{$ifdef 64bit}
-carry_bits_mask:= $FFFFFFFF;
-{$endif}
-
-NBits_max:= MULTI_INT_1W_SIZE;
-NBits_carry:= (NBits_max - NBits);
-carry_bits_mask:= (carry_bits_mask >> NBits_carry);
-
-if NBits <= NBits_max then
 	begin
-	n:= (v1.M_Value_Size - 1);
-	carry_bits_1:= ((v1.M_Value[n] and carry_bits_mask) << NBits_carry);
-	v1.M_Value[n]:= (v1.M_Value[n] >> NBits);
 
-	dec(n);
-	while (n > 0) do
+	{$ifdef 32bit}
+	carry_bits_mask:= $FFFF;
+	{$endif}
+	{$ifdef 64bit}
+	carry_bits_mask:= $FFFFFFFF;
+	{$endif}
+
+	NBits_max:= MULTI_INT_1W_SIZE;
+	NBits_carry:= (NBits_max - NBits);
+	carry_bits_mask:= (carry_bits_mask >> NBits_carry);
+
+	if NBits <= NBits_max then
 		begin
-		carry_bits_2:= ((v1.M_Value[n] and carry_bits_mask) << NBits_carry);
-		v1.M_Value[n]:= ((v1.M_Value[n] >> NBits) OR carry_bits_1);
-		carry_bits_1:= carry_bits_2;
+		n:= (v1.M_Value_Size - 1);
+		carry_bits_1:= ((v1.M_Value[n] and carry_bits_mask) << NBits_carry);
+		v1.M_Value[n]:= (v1.M_Value[n] >> NBits);
+
 		dec(n);
+		while (n > 0) do
+			begin
+			carry_bits_2:= ((v1.M_Value[n] and carry_bits_mask) << NBits_carry);
+			v1.M_Value[n]:= ((v1.M_Value[n] >> NBits) OR carry_bits_1);
+			carry_bits_1:= carry_bits_2;
+			dec(n);
+			end;
+
+		v1.M_Value[n]:= ((v1.M_Value[n] >> NBits) OR carry_bits_1);
 		end;
-
-	v1.M_Value[n]:= ((v1.M_Value[n] >> NBits) OR carry_bits_1);
 	end;
-end;
-
 end;
 
 
@@ -15383,7 +15440,7 @@ then
 	begin
 	Result:= 0;
 	Result.Overflow_flag:=TRUE;
-	Result.Defined_flag:=TRUE;
+	Result.Defined_flag:=FALSE;
 	Multi_Int_ERROR:= TRUE;
 	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
 		begin
@@ -15419,6 +15476,7 @@ while (i < s) do
 	end;
 
 Result.Defined_flag:=TRUE;
+Result.Overflow_flag:= FALSE;
 
 Result.Negative_flag:= Multi_UBool_FALSE;
 if	(v1.Negative <> v2.Negative)
@@ -15488,6 +15546,7 @@ while (i < s) do
 	end;
 
 Result.Defined_flag:=TRUE;
+Result.Overflow_flag:= FALSE;
 
 Result.Negative_flag:= Multi_UBool_FALSE;
 if v1.Negative and v2.Negative
@@ -15557,6 +15616,7 @@ while (i < s) do
 	end;
 
 Result.Defined_flag:=TRUE;
+Result.Overflow_flag:= FALSE;
 
 Result.Negative_flag:= Multi_UBool_FALSE;
 if v1.Negative and v2.Negative
@@ -15622,6 +15682,7 @@ while (i < s) do
 	end;
 
 Result.Defined_flag:=TRUE;
+Result.Overflow_flag:= FALSE;
 
 Result.Negative_flag:=  Multi_UBool_TRUE;
 if v1.Negative
