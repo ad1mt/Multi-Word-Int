@@ -251,7 +251,7 @@ uses	sysutils
 ;
 
 const
-	version = '4.37.04';
+	version = '4.37.05';
 
 const
 
