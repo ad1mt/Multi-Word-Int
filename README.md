@@ -12,7 +12,7 @@ Changes in version 4.37:
 - Bug fixes in XOR function
 - Tidy-up/simplify overflow exception messages
 - Re-instate "lost" Negative function
-- bitwise operations no longer generate an exception for negative values
+- bitwise operations no longer generates an exception for negative values
 - Fix for a problem with exceptions when range-checking is enabled on the 32-bit compiler
 - Bug fixes in bitshift functions
 - bug fixes: overflow flag was not set in several functions
