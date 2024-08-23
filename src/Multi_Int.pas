@@ -240,6 +240,10 @@ v4.37.04
 
 v4.37.05
 -	bug fixes: overflow flag was not set in many functions
+
+v4.37.06
+-	bug fix: in Multi_Init_Initialisation, "if (Multi_XV_size < 1)"
+	should have been "if (Multi_XV_size <= 1)"
 *)
 
 (* END OF USER OPTIONAL DEFINES *)
@@ -16485,7 +16489,7 @@ Inc(Multi_Init_Initialisation_count);
 
 Multi_XV_size:=	P_Multi_XV_size;
 
-if (Multi_XV_size < 1) then
+if (Multi_XV_size <= 1) then
 	begin
 	Raise EInterror.create('Multi_XV_size must be > 1');
 	exit;
