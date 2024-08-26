@@ -244,6 +244,10 @@ v4.37.05
 v4.37.06
 -	bug fix: in Multi_Init_Initialisation, "if (Multi_XV_size < 1)"
 	should have been "if (Multi_XV_size <= 1)"
+
+v4.38
+-	1.	make remainder params optional in sqroot
+-	2.	Fix typo "procedure Multi_Init_Initialisation"
 *)
 
 (* END OF USER OPTIONAL DEFINES *)
@@ -255,7 +259,7 @@ uses	sysutils
 ;
 
 const
-	version = '4.37.05';
+	version = '4.38.00';
 
 const
 
@@ -645,7 +649,7 @@ Multi_Int_X3_MAXINT							:Multi_Int_X3;
 Multi_Int_X4_MAXINT							:Multi_Int_X4;
 Multi_Int_XV_MAXINT							:Multi_Int_XV;
 
-procedure Multi_Init_Initialisation(const P_Multi_XV_size:MULTI_INT_1W_U = 16);	{$ifdef inline_functions} inline; {$endif}
+procedure Multi_Int_Initialisation(const P_Multi_XV_size:MULTI_INT_1W_U = 16);	{$ifdef inline_functions} inline; {$endif}
 procedure Multi_Int_Reset_XV_Size(var v1:Multi_Int_XV ;const S:MULTI_INT_1W_U);	{$ifdef inline_functions} inline; {$endif}
 procedure Multi_Int_Set_XV_Limit(const S:MULTI_INT_1W_U);	{$ifdef inline_functions} inline; {$endif}
 function Multi_Int_XV_Limit:MULTI_INT_1W_U;	{$ifdef inline_functions} inline; {$endif}
@@ -678,6 +682,11 @@ procedure SqRoot(const v1:Multi_Int_XV; out VR,VREM:Multi_Int_XV); overload;	{$i
 procedure SqRoot(const v1:Multi_Int_X4; out VR,VREM:Multi_Int_X4); overload;	{$ifdef inline_functions} inline; {$endif}
 procedure SqRoot(const v1:Multi_Int_X3; out VR,VREM:Multi_Int_X3); overload;	{$ifdef inline_functions} inline; {$endif}
 procedure SqRoot(const v1:Multi_Int_X2; out VR,VREM:Multi_Int_X2); overload;	{$ifdef inline_functions} inline; {$endif}
+
+procedure SqRoot(const v1:Multi_Int_XV; out VR:Multi_Int_XV); overload;	{$ifdef inline_functions} inline; {$endif}
+procedure SqRoot(const v1:Multi_Int_X4; out VR:Multi_Int_X4); overload;	{$ifdef inline_functions} inline; {$endif}
+procedure SqRoot(const v1:Multi_Int_X3; out VR:Multi_Int_X3); overload;	{$ifdef inline_functions} inline; {$endif}
+procedure SqRoot(const v1:Multi_Int_X2; out VR:Multi_Int_X2); overload;	{$ifdef inline_functions} inline; {$endif}
 
 procedure FromHex(const v1:ansistring; out v2:Multi_Int_X2); overload;	{$ifdef inline_functions} inline; {$endif}
 procedure FromHex(const v1:ansistring; out v2:Multi_Int_X3); overload;	{$ifdef inline_functions} inline; {$endif}
@@ -3721,9 +3730,6 @@ while not finished do
 		else
 			begin
 			finished:= TRUE;
-			// VREM:= (v1 - (C * C));
-			// multiply_Multi_Int_X2(C,C, T);
-			// VREM:= subtract_Multi_Int_X2(v1,T);
 			VREM:= 0;
 			end
 		end
@@ -3748,6 +3754,15 @@ while not finished do
 VR:= C;
 VR.Negative_flag:= Multi_UBool_FALSE;
 VREM.Negative_flag:= Multi_UBool_FALSE;
+end;
+
+
+(*-----------------------*)
+procedure SqRoot(const v1:Multi_Int_X2; out VR:Multi_Int_X2);
+var	VREM:Multi_Int_X2;
+begin
+VREM:= 0;
+sqroot(v1,VR,VREM);
 end;
 
 
@@ -7223,6 +7238,15 @@ while not finished do
 VR:= C;
 VR.Negative_flag:= Multi_UBool_FALSE;
 VREM.Negative_flag:= Multi_UBool_FALSE;
+end;
+
+
+(*-----------------------*)
+procedure SqRoot(const v1:Multi_Int_X3; out VR:Multi_Int_X3);
+var	VREM:Multi_Int_X3;
+begin
+VREM:= 0;
+sqroot(v1,VR,VREM);
 end;
 
 
@@ -10816,7 +10840,7 @@ var
 D,D2		:MULTI_INT_2W_S;
 HS,LS		:ansistring;
 H,L,C,CC,T	:Multi_Int_X4;
-finished		:boolean;
+finished	:boolean;
 begin
 if	(Not v1.Defined_flag)
 then
@@ -10923,6 +10947,15 @@ while not finished do
 VR:= C;
 VR.Negative_flag:= Multi_UBool_FALSE;
 VREM.Negative_flag:= Multi_UBool_FALSE;
+end;
+
+
+(*-----------------------*)
+procedure SqRoot(const v1:Multi_Int_X4; out VR:Multi_Int_X4);
+var	VREM:Multi_Int_X4;
+begin
+VREM:= 0;
+sqroot(v1,VR,VREM);
 end;
 
 
@@ -16005,6 +16038,15 @@ VREM.Negative_flag:= Multi_UBool_FALSE;
 end;
 
 
+(*-----------------------*)
+procedure SqRoot(const v1:Multi_Int_XV; out VR:Multi_Int_XV);
+var	VREM:Multi_Int_XV;
+begin
+VREM:= 0;
+sqroot(v1,VR,VREM);
+end;
+
+
 (********************v3********************)
 { Function exp_by_squaring_iterative(TV, P) }
 
@@ -16481,7 +16523,7 @@ Multi_Init_Initialisation
 ******************************************
 }
 
-procedure Multi_Init_Initialisation(const P_Multi_XV_size:MULTI_INT_1W_U = 16);
+procedure Multi_Int_Initialisation(const P_Multi_XV_size:MULTI_INT_1W_U = 16);
 var	i:MULTI_INT_1W_U;
 
 begin
@@ -16594,6 +16636,6 @@ end;
 
 
 begin
-Multi_Init_Initialisation;
+Multi_Int_Initialisation;
 end.
 
