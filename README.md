@@ -9,3 +9,4 @@ The library has now been thoroughly tested I no longer considered it to be beta 
 
 Changes in version 4.39:
 - major bug fix in DIV with Multi_Int_XV type.
+- overflow bug fix in Multi_Int_Reset_XV_Size
