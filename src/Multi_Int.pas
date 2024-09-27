@@ -257,6 +257,7 @@ v4.38
 
 v4.39
 -	1.	major bug fix in div with single word dividor
+-	2.	overflow bug fix in Multi_Int_Reset_XV_Size
 *)
 
 INTERFACE
@@ -12576,8 +12577,9 @@ Result:= Multi_XV_limit;
 end;
 
 
-(******************************************)
+(********************v2********************)
 procedure Multi_Int_Reset_XV_Size(var v1:Multi_Int_XV ;const S:MULTI_INT_1W_U);
+var	p1:Multi_Int_XV;
 begin
 if	(S < 2) then
 	begin
@@ -12592,13 +12594,27 @@ if	(S > Multi_XV_limit) then
 	Multi_Int_ERROR:= TRUE;
 	exit;
 	end;
+p1:= v1;
 setlength(v1.M_Value, S);
 v1.M_Value_Size:= S;
+
 if	(S < v1.M_Value_Size) then
 	begin
 	v1.Negative_flag:= Multi_UBool_UNDEF;
 	v1.Overflow_flag:= FALSE;
 	v1.Defined_flag:= FALSE;
+	end;
+
+if	(v1 < p1) then
+    begin
+	Multi_Int_ERROR:= TRUE;
+	v1.Negative_flag:= Multi_UBool_UNDEF;
+	v1.Overflow_flag:= TRUE;
+	v1.Defined_flag:= FALSE;
+	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
+		begin
+		Raise EInterror.create('Overflow');
+		end;
 	end;
 end;
 
