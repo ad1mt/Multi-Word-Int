@@ -28,12 +28,18 @@ UNIT Multi_Int;
   	{$define 32bit}
 {$ENDIF}
 
+// This makes procedure and functions inlined
+// {$define inline_functions}
+
+(* END OF USER OPTIONAL DEFINES *)
+
+// This define is essential to make exceptions work correctly
+// for floating-point operations on Intel 32 bit CPU's.
+// Do not remove this define.
+
 {$ifdef 32bit}
 	{$SAFEFPUEXCEPTIONS ON}
 {$endif}
-
-// This makes procedure and functions inlined
-// {$define inline_functions}
 
 (******************************************************************************)
 (*
@@ -248,10 +254,11 @@ v4.37.06
 v4.38
 -	1.	make remainder params optional in sqroot
 -	2.	Fix typo "procedure Multi_Init_Initialisation"
+
+v4.39
+-	1.	major bug fix in div with single word dividor
 *)
 
-(* END OF USER OPTIONAL DEFINES *)
-	
 INTERFACE
 
 uses	sysutils
@@ -259,7 +266,7 @@ uses	sysutils
 ;
 
 const
-	version = '4.38.00';
+	version = '4.39.00';
 
 const
 
@@ -16237,6 +16244,8 @@ else
 		P_remainder:= 0;
 		P_quotient:= 0;
 		word_carry:= 0;
+		if	(P_quotient.M_Value_Size < P_dividend.M_Value_Size) then
+			Multi_Int_Reset_XV_Size(P_quotient,P_dividend.M_Value_Size);
 		i:= (P_dividend.M_Value_Size - 1);
 		while (i >= 0) do
 			begin
