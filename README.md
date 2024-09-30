@@ -5,7 +5,6 @@ Provides basic arithmetic operations add, subtract, multiply, divide, exclusive-
 Provides implicit/automatic conversions to other types wherever possible.
 Will compile and run on 32bit and 64bit environments.
 Written purely in Pascal to be portable and reliable (no assembly or C language code).
-The library has now been thoroughly tested I no longer considered it to be beta development code.
 
 Changes in version 4.40:
 - more bug fixes
