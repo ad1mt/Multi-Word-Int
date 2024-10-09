@@ -1,72 +1,134 @@
-Multi_int Library For Free Pascal.
-==================================
+Multi-Word-Int
 
-Multi_int is a library that provides large integers for the Free Pascal compiler.
+Multi-Word-Int is a large integer library for the Free Pascal compiler.
+It is written entirely in Pascal, works in both 32bit and 64bit environments, so should be portable to any platform that is targeted by the compiler. It has been tested on Windows 10 with Intel CPU (32bit & 64bit), and Linux on Raspberry Pi ARM CPU (32bit & 64bit).
+The library is designed to be as easy to use as possible. In most cases, the large integer types are used in exactly the same way as the standard built-in integers. Automatic/implicit type conversion is provided for most other numerical types, and also for conversion from strings to large integer. Where automatic/implicit type conversion is not available, explicit type conversion functions/procedures/methods are provided.
+One the main design aims is to allow existing code to be changed to use the library with minimal changes.
 
-The large integer types are:
+Large Integer Types
 
-Multi_Int_X2    fixed 2 word integer  (in a 64bit environment = 128 bits)
-Multi_Int_X3    fixed 3 word integer  (in a 64bit environment = 256 bits)
-Multi_Int_X4    fixed 4 word integer  (in a 64bit environment = 512 bits)
-Multi_Int_XV    user definable muliple word integer
+The large integer types provided are:
+Multi_Int_X2 :	fixed 2 word integer
+In a 64bit environment this equals 128 bits, in a 32bit environment this equals 64 bits.
 
-The types Multi_Int_X2, Multi_Int_X3 and Multi_Int_X4 are provided for maximum speed.
-Multi_Int_XV is user definable in size at run time. It has been tested up to 2048 words (= 16384 bits).
+Multi_Int_X3 :	fixed 3 word integer
+In a 64bit environment this equals 192 bits, in a 32bit environment this equals 96 bits.
 
-The following arithmetical operations are available:
+Multi_Int_X4 :	fixed 4 word integer
+In a 64bit environment this equals 256 bits, in a 32bit environment this equals 128 bits.
 
-add           +
-subtract      -
-multiply      *
-divide        div
-exclusive or  xor
-modulo        mod
-power         **
+Multi_Int_XV :	variable size multiple word integer
+The default size of this type is defined by the calling code in a parameter to the initialisation procedure; this is in half-words. So, if you specify 128, this equals 64 whole words, which equals 4096 bits in a 64bit environment. For example:   Multi_Init_Initialisation(64); 
+A maximum size is set at 2x the default in the initialisation function, but by calling Multi_Int_Set_XV_Limit, you can specify the maximum size of this type, like this:   Multi_Int_Set_XV_Limit(64);   
+As the number contained in a Multi_Int_XV variable gets larger, the size of the variable expands to a size that can contain the number. If the maximum size is reached, an overflow exception/error is generated.
+Individual variables of type Multi_Int_XV can be resized explicitly by calling the Multi_Int_Reset_XV_Size function, but in most cases this will not be necessary because it will be done automatically whenever a new value is assigned:   Multi_Int_Reset_XV_Size(V,64); 
+The larger the size of Multi_Int_XV variables, the slower the calculations become.
+The fixed-size types Multi_Int_X2, Multi_Int_X3 and Multi_Int_X4 are provided for maximum speed, the Multi_Int_XV type is provided for maximum flexibility. 
 
-All the usual comparison operators are available:
-  =  <>  >  >=  <  <=
+Operators
+
+The following operators are provided:
++ :	add
+- :	subtract (also unary minus)
+* :	multiply
+div :	divide
+mod :	modulo
+** : 	power
+abs :	absolute value
+xor :	bitwise exclusive-or
+and :	bitwise And function
+not :	bitwise Not function
+or :	bitwise Or function
+shr :	bit shift right
+shl :	bit shift left
+
+The standard comparison/logical operators are provided:
+  = 	equals
+ <> 	not-equals
+ >	greater-than
+ >=	greater-than-or-equal-to
+ <	less-than 
+<=	less-than-or-equal-to
+These can be used in expressions in the same was as standard built-in integers.
+
+The bitwise operations are performed on the absolute values. The sign of the result is then calculated according to the following rules:
+xor - if the signs are different, the result is negative, otherwise the result is positive
+or - if the both signs are negative, the result is negative, otherwise the result is positive
+and - if the both signs are negative, the result is negative, otherwise the result is positive
+not - if the sign is positive, the result is negative, otherwise the result is positive
+
+Type Conversion
 
 Conversion to/from other types is automatic/implicit, for the following types:
 to/from integers
-to/from real
-from string is automatic
-to string with "ToStr" method
-to/from string in hex notation with ToHex and FromHex methods
-to/from different large integer types with typecast functions To_Multi_Int_XV, To_Multi_Int_X4, To_Multi_Int_X3 and To_Multi_Int_X2
+to/from real  (with significant loss of precision)
+from string (decimal notation is assumed)
+from smaller Multi_Int_X types to larger ones (from larger to smaller requires explicit conversion via methods)
 
-Other operations/functions:
+Explicit conversion to/from other types is provided for the following types:
+to string in decimal notation with the ToStr method;
+to/from string in hex notation with ToHex and FromHex methods/functions;
+to any large integer type from any other with typecast functions:
+ To_Multi_Int_XV,
+ To_Multi_Int_X4,
+ To_Multi_Int_X3
+ To_Multi_Int_X2.
+
+One has to be careful when using implicit type/value conversions. When using a numeric type or literal that is greater than a standard integer maximum value, the compiler will assume (or implicitly cast to) a float type, then assign that float value to the Multi_Int, and lose a significant amount of precision. An example is the following assignment:
+
+var V:Multi_Int;
+V:=18446744073709551616;  // this value is 1 greater than the maximum amount that a uint64 type can contain.
+
+In this case, the compiler casts the value  18446744073709551616 to a float type, then assigns the float value to the Multi_Int V.  The value that gets assigned is 18446744073709600000, not  18446744073709551616 as one might expect. The following code shows how to avoid the problem, by using a string literal:
+
+var V:Multi_Int;
+V:=’18446744073709551616’;  // this value is correctly assigned, with no loss of precision.
+
+Explicit casting like this  V:=Multi_Int(18446744073709551616); does not help, because the literal 18446744073709551616 is interpreted as a floating point value before it reaches the cast function.
+
+Other operations/functions
+
+The following operations/functions are provided:
 Odd(v)
 Even(v)
-v.Defined
-v.Overflow
+Negative(v)			this returns a boolean
 SqRoot(v,result,remainder)
 Abs(v)
+ShiftUp(v, Nbits)		this function has been replaced by the shl operator
+ShiftDown(v, Nbits)		this function has been replaced by the shr operator
+RotateUp(v, Nbits)		this function has been withdrawn
+RotateDown(v, Nbits)		this function has been withdrawn
 
-If the SqRoot (square root) function cannot give an exact result, it rounds down, and gives a remainder.
+If the SqRoot (square root) function cannot give an exact result, it rounds down, and gives a remainder. Note that the SHL and SHR operators do not generate overflow exceptions, which is different to the behaviour of the equivalent native code operations.
+The RotateUp and RotateDown procedures have been withdrawn, because of problems with the internal logic. 
 
-The following constants are available (technically, these are actually variables calculated during initialisation):
+The following methods are also provided to calling code:
+v.Defined	this indicates if the variable is defined/undefined
+v.Overflow	this indicates if the variable has overflowed
+v.Negative	this indicates if the variable is negative
 
+Constants
+
+The following constants are provided (technically, these are variables calculated during initialisation):
 Multi_Int_X2_MAXINT
 Multi_Int_X3_MAXINT
 Multi_Int_X4_MAXINT
-Multi_Int_XV_MAXINT
+Multi_Int_XV_MAXINT	this is recalculated whenever the size of the type is set
 
-There are two example/test programs included with the library code, to illustrate how the library can be used and fill in any gaps in this documentation.
+Exceptions
+
+The unit exports a variable Multi_Int_RAISE_EXCEPTIONS_ENABLED, which can be set by the calling code, at any point. If set to TRUE, this enables run-time exceptions to be generated in the event of overflow and other errors. Multi_Int types have attributes named Defined and Overload which can be checked explicitly in the calling code. The unit also exports a boolean variable named Multi_Int_ERROR, which is also set after any operation that generates an error.  The Defined and Overload attributes and the Multi_Int_ERROR variable are always set, even if Multi_Int_RAISE_EXCEPTIONS_ENABLED variable is set to FALSE. If Multi_Int_RAISE_EXCEPTIONS_ENABLED is FALSE, the Defined and Overload attributes and the Multi_Int_ERROR variable can be checked from the calling code.
+Note that if Multi_Int_RAISE_EXCEPTIONS_ENABLED is FALSE, when converting Multi_Int variables to other types, the only way to detect overflow errors, is via the Multi_Int_ERROR variable.
 
 Technical Notes
----------------
-The code will only compile & work correctly in Delphi mode. The "advancedrecords" mode will not work correctly.
 
-The code will compile in both 32bit and 64bit environments. In the Multi_Int.pas file there is a define "{$define 64bit}" or "{$define 32bit}" which is set depending on the environment, i.e. whether standard integers are 32bit or 64bit. This is set automatically to match the version of the compiler you are using, but can be overidden.
+The unit code will now compile & work correctly in Delphi mode or ObjFPC mode with "advancedrecords".
 
-The Multi_Int unit exports a variable Multi_Int_RAISE_EXCEPTIONS_ENABLED, which can be set by the calling code, at any point. If set to TRUE, this enables run-time exceptions to be generated in the event of overflow (and similar) errors. Multi_Int types have attributes named Defined and Overload which are set and can be checked explicitly in the calling code. The unit also exports a boolean variable named Multi_Int_OVERFLOW_ERROR, which is also set after any operation that generates an overflow error. If exceptions are disabled by setting the Multi_Int_RAISE_EXCEPTIONS_ENABLED variable is set to FALSE, run-time exceptions will not be generated, in which case the Defined and Overload attributes and the Multi_Int_OVERFLOW_ERROR variable will still be set, and can be checked from the calling code.
-Note that if the Multi_Int_RAISE_EXCEPTIONS_ENABLED variable is set to FALSE, when converting Multi_Int variables to other types, if an overflow error occurs, the only way to detect this is via the Multi_Int_OVERFLOW_ERROR variable.
+The code will compile in both 32bit and 64bit environments. In the unit source there is a define "{$define 64bit}" or "{$define 32bit}" which is set depending on the environment, i.e. whether standard integers are 32bit or 64bit. This is set automatically to match the version of the compiler you are using, but can be overidden.
 
-By calling Multi_Init_Initialisation, you can set/change the size of the Multi_Int_XV type; this is the size in half-words. So, if you specify 128 half-words, which equals 64 whole words, which equals 4096 bits. Set this size to be the maximum you need for your application (with a small margin of error). The larger the size, the slower the calculations become.
+Multi_Init_Initialisation can be called many times, before or after any Multi_Int variables are used/created. If called a second time after  Multi_Int variables have been created/used, already existing variables are not affected.
 
-The name old name for Multi_Int_XV was Multi_Int_X48; it was a hangover from earlier days.
-
-The standard integer types have been aliased as follows, to make the coding easier in both 32bit and 64bit environments. Do not change these:
+The standard integer types have been aliased as follows, to make the internal unit coding easier in both 32bit and 64bit environments, and are not intended for use by calling code; the unit code depends on these, so do not change them:
 	Multi_int8u = byte;
 	Multi_int8 = shortint;
 	Multi_int16 = smallint;
@@ -76,57 +138,55 @@ The standard integer types have been aliased as follows, to make the coding easi
 	Multi_int64u = QWord;
 	Multi_int64 = int64;
 
-INT_1W_S, INT_1W_U, INT_2W_S, and INT_2W_U are aliased to the above types depending on whether "{$define 64bit}" or "{$define 32bit}" are defined. For example the following are defined for a 64bit environment. Do not change these:
-	MULTI_INT_1W_S = int32;
-	MULTI_INT_1W_U = int32u;
-	MULTI_INT_2W_S = int64;
-	MULTI_INT_2W_U = int64u;
+The following integer type aliases have also  been set, to make the internal unit coding easier in both 32bit and 64bit environments, and are not intended for use by calling code; the unit code depends on these, so do not change them:
+	INT_1W_S
+	INT_1W_U
+	INT_2W_S
+and	INT_2W_U
 
-The following functions/procedures are also available to calling code:
+These are aliased to the above types depending on whether "{$define 64bit}" or "{$define 32bit}" are defined. For example the following are defined for a 64bit environment. Do not change these:
+	MULTI_INT_1W_S = Multi_int32;
+	MULTI_INT_1W_U = Multi_int32u;
+	MULTI_INT_2W_S = Multi_int64;
+	MULTI_INT_2W_U = Multi_int64u;
 
-function Odd(const v1:Multi_Int_X2):boolean
-function Even(const v1:Multi_Int_XV):boolean
-function Abs(const v1:Multi_Int_XV):Multi_Int_X
-procedure ShiftUp(var v1:Multi_Int_X2; NBits)
-procedure ShiftDown(var v1:Multi_Int_X2; NBits)
-procedure RotateUp(Var v1:Multi_Int_X2; NBits)
-procedure RotateDown(Var v1:Multi_Int_X2; NBits)
-function To_Multi_Int_XV(const v1:Multi_Int_X2):Multi_Int_XV
-function To_Multi_Int_X4(const v1:Multi_Int_XV):Multi_Int_X4
-function To_Multi_Int_X3(const v1:Multi_Int_X2):Multi_Int_X3
-function To_Multi_Int_X2(const v1:Multi_Int_XV):Multi_Int_X2
+There are is a define in the source code {$define Overflow_Checks}, which is intended for use when compiler overflow checks are enabled. The {$define Overflow_Checks} does not switch on overflow checking for you; if you wish to use overflow checking, you still need to enable this in the usual way. In short, the rule is: if you want overflow checking, turn it on in the usual way and set {$define Overflow_Checks}. If you turn on overflow checking, but do not set {$define Overflow_Checks}, then the code will turn off overflow checking at bit shift operations and will not re-enable them. On Intel CPUs, some bit shift operations trigger an undesired overflow exception, and the code disables overflow checking around these operations. The {$define Overflow_Checks} tells the code that overflow checking needs to be re-enabled after bit shift operations.
 
+The code to overload the two-parameter Inc operator/procedure, has been withdrawn, because of problems with implementation.
 
-The library code imports a unit named UBool to provide an exotic boolean types:
+The library code defines a big integer type for internal use only:
+Multi_Int_X5 :	fixed 5 word integer
+This types are required by the division routine.
+
+The library code defines a unit named UBool to provide an exotic boolean type:
 UBool = (UBool_UNDEF,UBool_FALSE,UBool_TRUE)
-and T_UBool.
-The main feature of the T_UBool and UBool types are to provide boolean variables that can have an additional value of "undefined".
-These types implement methods and implicit conversion to/from standard boolean values.
+and T_Ubool. The main feature of the T_UBool and UBool types are to provide boolean variables that can have an additional value of "undefined". The Ubool unit implements implicit conversion  to/from standard boolean values, where possible. It is intended for internal library use only.
 
-Here is a small Demo Program...  "Hello_Multi_Int"
+The internal structure of a large integer is an array of unsigned integers. The array elements are stored little-endian form, therefore the least significant integer array element is at index zero.
+There is a boolean to represent the sign. There is no unsigned large integer type.
+There is a boolean to represent whether an overflow has occurred. There is a boolean to represent whether a variable has been assigned a value, or is undefined.
+
+Here is a small Demo Program...
 (*----------------------------*)
-program		hello_multi_int;
-uses		Multi_Int;
-type
-Big_Int		= Multi_int_XV;
-
+Program hello_multi_int;
+uses Multi_Int;
+type Big_Int= Multi_int_XV;
 var	N,P,R,Q	: Big_Int;
 begin
-// literal numbers > 64bit MAXINT can be specified as strings
-
+// literal numbers > 64bit MAXINT should be specified as strings
 N:= '340282366920938463463374607431768211455';  // equals ((2 ** 128) - 1)
-P:= ((Big_Int(2) ** Big_Int(128)) - 1);			// sometimes explicit type casting is necessary
+P:= ((Big_Int(2) ** Big_Int(128)) – 1); // sometimes explicit type casting is necessary
 if ((P - N) <> 0) then writeln('Fail!');
-
 P:= (N ** 2);
 R:= (P div N);
 if (R <> N) then writeln('Fail!')
 else writeln('R = N = ',R.ToStr);
-
 sqroot(P,R,Q);
 if (R <> N) or (Q <> 0)
 then writeln('Fail!')
 else writeln('Hex R = N = ',R.ToHex);
-
 end.
 (*----------------------------*)
+
+Documentation v1.10
+
