@@ -285,6 +285,9 @@ v4.60
 -	2.	another major bug fix in sqroot function
 -	3.	replicate sqroot function bug fix to all instances
 
+v4.61
+-	1.	more bug fixes in Multi_Int_XV divide
+
 *)
 
 INTERFACE
@@ -435,10 +438,10 @@ T_Multi_UBool	=	record
 
 Multi_Int_X2	=	record
 					private
-						M_Value			:array[0..Multi_X2_maxi] of MULTI_INT_1W_U;
-						Negative_flag	:T_Multi_UBool;
 						Overflow_flag	:boolean;
 						Defined_flag	:boolean;
+						Negative_flag	:T_Multi_UBool;
+						M_Value			:array[0..Multi_X2_maxi] of MULTI_INT_1W_U;
 					public
 						function ToStr:ansistring;	{$ifdef inline_functions} inline; {$endif}
 						function ToHex(const LZ:T_Multi_Leading_Zeros=Multi_Trim_Leading_Zeros):ansistring;	{$ifdef inline_functions} inline; {$endif}
@@ -494,10 +497,10 @@ Multi_Int_X2	=	record
 
 Multi_Int_X3	=	record
 					private
-						M_Value			:array[0..Multi_X3_maxi] of MULTI_INT_1W_U;
-						Negative_flag		:T_Multi_UBool;
 						Overflow_flag	:boolean;
 						Defined_flag	:boolean;
+						Negative_flag		:T_Multi_UBool;
+						M_Value			:array[0..Multi_X3_maxi] of MULTI_INT_1W_U;
 					public
 						function ToStr:ansistring;	{$ifdef inline_functions} inline; {$endif}
 						function ToHex(const LZ:T_Multi_Leading_Zeros=Multi_Trim_Leading_Zeros):ansistring;	{$ifdef inline_functions} inline; {$endif}
@@ -554,10 +557,10 @@ Multi_Int_X3	=	record
 
 Multi_Int_X4	=	record
 					private
-						M_Value			:array[0..Multi_X4_maxi] of MULTI_INT_1W_U;
-						Negative_flag	:T_Multi_UBool;
 						Overflow_flag	:boolean;
 						Defined_flag	:boolean;
+						Negative_flag	:T_Multi_UBool;
+						M_Value			:array[0..Multi_X4_maxi] of MULTI_INT_1W_U;
 					public
 						function ToStr:ansistring;	{$ifdef inline_functions} inline; {$endif}
 						function ToHex(const LZ:T_Multi_Leading_Zeros=Multi_Trim_Leading_Zeros):ansistring;	{$ifdef inline_functions} inline; {$endif}
@@ -615,11 +618,11 @@ Multi_Int_X4	=	record
 
 Multi_Int_XV	=	record
 					private
-						M_Value			:array of MULTI_INT_1W_U;
-						Negative_flag	:T_Multi_UBool;
 						Overflow_flag	:boolean;
 						Defined_flag	:boolean;
 						M_Value_Size	:MULTI_INT_2W_U;
+						Negative_flag	:T_Multi_UBool;
+						M_Value			:array of MULTI_INT_1W_U;
 					public
 						procedure init;	{$ifdef inline_functions} inline; {$endif}
 						function ToStr:ansistring;	{$ifdef inline_functions} inline; {$endif}
@@ -16287,7 +16290,8 @@ dividend_i,
 dividend_i_1,
 quotient_i,
 dividor_i,
-div_s,
+div_size,
+div_size_plus,
 dividor_i_1,
 dividor_non_zero_pos,
 shiftup_bits_dividor,
@@ -16330,9 +16334,29 @@ else
 		goto 9000;
 	    end;
 
+	div_size:= (P_dividend.M_Value_Size + 1);
+
 	dividor:= P_dividor;
-	div_s:= (Multi_XV_size + 1);
-	Multi_Int_Reset_XV_Size(dividor, div_s);
+	Multi_Int_Reset_XV_Size(dividor, div_size);
+	if (dividor.Overflow) then
+		begin
+		P_quotient.Defined_flag:= FALSE;
+		P_quotient.Overflow_flag:= TRUE;
+		P_remainder.Defined_flag:= FALSE;
+		P_remainder.Overflow_flag:= TRUE;
+		Multi_Int_ERROR:= TRUE;
+		goto 9999;
+		end;
+
+    dividend:= P_dividend;
+	Multi_Int_Reset_XV_Size(dividend, div_size);
+	dividend.Negative_flag:= FALSE;
+
+	quotient:= 0;
+	Multi_Int_Reset_XV_Size(quotient, div_size);
+
+	next_dividend:= 0;
+	Multi_Int_Reset_XV_Size(next_dividend, div_size);
 
 	dividor_non_zero_pos:= 0;
     i:= (dividor.M_Value_Size - 1);
@@ -16365,14 +16389,6 @@ else
 		P_remainder.M_Value[0]:= word_carry;
 		goto 9000;
 		end;
-
-    dividend:= P_dividend;
-	Multi_Int_Reset_XV_Size(dividend, div_s);
-	dividend.Negative_flag:= FALSE;
-
-	quotient:= 0;
-	Multi_Int_Reset_XV_Size(quotient, div_s);
-	Multi_Int_Reset_XV_Size(next_dividend, div_s);
 
 	shiftup_bits_dividor:= nlz_bits(dividor.M_Value[dividor_non_zero_pos]);
 	if	(shiftup_bits_dividor > 0) then
@@ -16424,19 +16440,7 @@ else
 				end;
 
 			quotient:= 0;
-			if (quotient.M_Value_Size < div_s) then
-				begin
-				Multi_Int_Reset_XV_Size(quotient, div_s);
-				if (quotient.Overflow) then
-					begin
-					P_quotient.Defined_flag:= FALSE;
-					P_quotient.Overflow_flag:= TRUE;
-					P_remainder.Defined_flag:= FALSE;
-					P_remainder.Overflow_flag:= TRUE;
-					Multi_Int_ERROR:= TRUE;
-					goto 9999;
-					end;
-				end;
+			Multi_Int_Reset_XV_Size(quotient, div_size);
 
 			quotient.M_Value[quotient_i]:= word_division;
             next_dividend:= (dividor * quotient);
@@ -16613,7 +16617,7 @@ var
 D,D2		:MULTI_INT_2W_S;
 HS,LS		:ansistring;
 H,L,
-C,CC,LPC,
+C,CC,LPC,CCD,
 Q,R,T		:Multi_Int_XV;
 finished	:boolean;
 
