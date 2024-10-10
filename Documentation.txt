@@ -18,10 +18,15 @@ Multi_Int_X4 :	fixed 4 word integer
 In a 64bit environment this equals 256 bits, in a 32bit environment this equals 128 bits.
 
 Multi_Int_XV :	variable size multiple word integer
-The default size of this type is defined by the calling code in a parameter to the initialisation procedure; this is in half-words. So, if you specify 128, this equals 64 whole words, which equals 4096 bits in a 64bit environment. For example:   Multi_Init_Initialisation(64); 
-A maximum size is set at 2x the default in the initialisation function, but by calling Multi_Int_Set_XV_Limit, you can specify the maximum size of this type, like this:   Multi_Int_Set_XV_Limit(64);   
-As the number contained in a Multi_Int_XV variable gets larger, the size of the variable expands to a size that can contain the number. If the maximum size is reached, an overflow exception/error is generated.
-Individual variables of type Multi_Int_XV can be resized explicitly by calling the Multi_Int_Reset_XV_Size function, but in most cases this will not be necessary because it will be done automatically whenever a new value is assigned:   Multi_Int_Reset_XV_Size(V,64); 
+
+The default size of the Multi_Int_XV type is defined by the calling code in a parameter to the initialisation procedure; this is in half-words. So, if you specify 128, this equals 64 whole words, which equals 4096 bits in a 64bit environment. For example:   Multi_Int_Initialisation(64); 
+
+The Multi_Int_XV type has a maximum size which is set at 2x the default in the initialisation function. The limit can be changed by calling Multi_Int_Set_XV_Limit, where you can specify an alternate maximum size, like this:   Multi_Int_Set_XV_Limit(75);   
+
+As the number contained in a Multi_Int_XV variable gets larger, the size of the variable expands to a size that can contain the number. If the maximum size limit is reached, an overflow exception/error is generated.
+
+Individual variables of type Multi_Int_XV can no longer be resized explicitly; the Multi_Int_Reset_XV_Size function is no longer available, due to problems with implementation.
+
 The larger the size of Multi_Int_XV variables, the slower the calculations become.
 The fixed-size types Multi_Int_X2, Multi_Int_X3 and Multi_Int_X4 are provided for maximum speed, the Multi_Int_XV type is provided for maximum flexibility. 
 
@@ -93,6 +98,7 @@ Odd(v)
 Even(v)
 Negative(v)			this returns a boolean
 SqRoot(v,result,remainder)
+SqRoot(v,result,)
 Abs(v)
 ShiftUp(v, Nbits)		this function has been replaced by the shl operator
 ShiftDown(v, Nbits)		this function has been replaced by the shr operator
@@ -126,7 +132,7 @@ The unit code will now compile & work correctly in Delphi mode or ObjFPC mode wi
 
 The code will compile in both 32bit and 64bit environments. In the unit source there is a define "{$define 64bit}" or "{$define 32bit}" which is set depending on the environment, i.e. whether standard integers are 32bit or 64bit. This is set automatically to match the version of the compiler you are using, but can be overidden.
 
-Multi_Init_Initialisation can be called many times, before or after any Multi_Int variables are used/created. If called a second time after  Multi_Int variables have been created/used, already existing variables are not affected.
+Multi_Int_Initialisation can only be called once (previously it could be called many times, but this has been withdrawn due to problems with implementation).
 
 The standard integer types have been aliased as follows, to make the internal unit coding easier in both 32bit and 64bit environments, and are not intended for use by calling code; the unit code depends on these, so do not change them:
 	Multi_int8u = byte;
@@ -156,7 +162,7 @@ The code to overload the two-parameter Inc operator/procedure, has been withdraw
 
 The library code defines a big integer type for internal use only:
 Multi_Int_X5 :	fixed 5 word integer
-This types are required by the division routine.
+This type is required by the division routine.
 
 The library code defines a unit named UBool to provide an exotic boolean type:
 UBool = (UBool_UNDEF,UBool_FALSE,UBool_TRUE)
@@ -188,5 +194,5 @@ else writeln('Hex R = N = ',R.ToHex);
 end.
 (*----------------------------*)
 
-Documentation v1.10
+Documentation v1.12
 
