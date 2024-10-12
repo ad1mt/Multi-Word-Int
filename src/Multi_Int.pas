@@ -22,7 +22,7 @@ UNIT Multi_Int;
 // In 99.9% of cases, you should leave this to default, unless you have problems
 // running the code in a 32bit or ARM environment.
 
-// {$DEFINE 32BIT} // override
+{$DEFINE 64BIT} // override
 
 {$IFDEF 32BIT}
 	{$WARNING 32BIT OVERRIDE}
@@ -53,9 +53,18 @@ UNIT Multi_Int;
 // for floating-point operations on Intel 32 bit CPU's.
 // Do not remove this define.
 
-{$ifdef 32BIT}
-	{$SAFEFPUEXCEPTIONS ON}
-{$endif}
+{$IFDEF 64BIT}
+	{$IFDEF CPU32}
+		{$SAFEFPUEXCEPTIONS ON}
+		{$WARNING 64BIT OVERRIDE IN 32BIT ENVIRONMENT DETECTED}
+		{$WARNING SETTING SAFEFPUEXCEPTIONS ON}
+	{$ENDIF}
+{$ELSE}
+	{$IFDEF 32BIT}
+		{$SAFEFPUEXCEPTIONS ON}
+	{$ENDIF}
+{$ENDIF}
+
 
 (******************************************************************************)
 (*
