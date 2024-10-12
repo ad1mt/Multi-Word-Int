@@ -20,13 +20,29 @@ UNIT Multi_Int;
 // E.g. if your compiler is 64bit but you want to generate code for 32bit integers,
 // you would remove the "{$define 64bit}" and replace it with "{$define 32bit}"
 // In 99.9% of cases, you should leave this to default, unless you have problems
-// running the code in a 32bit environment.
+// running the code in a 32bit or ARM environment.
 
-{$IFDEF CPU64}
-	{$define 64bit}
+// {$DEFINE 32BIT} // override
+
+{$IFDEF 32BIT}
+	{$WARNING 32BIT OVERRIDE}
 {$ELSE}
-  	{$define 32bit}
+	{$IFDEF 64BIT}
+		{$WARNING 64BIT OVERRIDE}
+	{$ELSE}
+		{$IFDEF CPU64}
+			{$DEFINE 64BIT}
+			{$WARNING 64BIT ENVIRONMENT DETECTED}
+		{$ELSE} {$IFDEF CPU32}
+		  	{$DEFINE 32BIT}
+			{$WARNING 32BIT ENVIRONMENT DETECTED}
+		{$ELSE}
+			{$FATAL Could not detect 32bit vs 64bit CPU}
+		{$ENDIF}
+		{$ENDIF}
+	{$ENDIF}
 {$ENDIF}
+
 
 // This makes procedure and functions inlined
 // {$define inline_functions}
@@ -37,7 +53,7 @@ UNIT Multi_Int;
 // for floating-point operations on Intel 32 bit CPU's.
 // Do not remove this define.
 
-{$ifdef 32bit}
+{$ifdef 32BIT}
 	{$SAFEFPUEXCEPTIONS ON}
 {$endif}
 
@@ -288,6 +304,9 @@ v4.60
 v4.61
 -	1.	more bug fixes in Multi_Int_XV divide
 
+v4.62
+-	1.	bug fixes in 32bit vs 64bit detection
+
 *)
 
 INTERFACE
@@ -297,7 +316,7 @@ uses	sysutils
 ;
 
 const
-	version = '4.60.00';
+	version = '4.62.00';
 
 const
 
@@ -16291,7 +16310,6 @@ dividend_i_1,
 quotient_i,
 dividor_i,
 div_size,
-div_size_plus,
 dividor_i_1,
 dividor_non_zero_pos,
 shiftup_bits_dividor,
@@ -16617,7 +16635,7 @@ var
 D,D2		:MULTI_INT_2W_S;
 HS,LS		:ansistring;
 H,L,
-C,CC,LPC,CCD,
+C,CC,LPC,
 Q,R,T		:Multi_Int_XV;
 finished	:boolean;
 
