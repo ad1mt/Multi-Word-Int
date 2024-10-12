@@ -22,7 +22,7 @@ UNIT Multi_Int;
 // In 99.9% of cases, you should leave this to default, unless you have problems
 // running the code in a 32bit or ARM environment.
 
-{$DEFINE 64BIT} // override
+// {$DEFINE 64BIT} // override
 
 {$IFDEF 32BIT}
 	{$WARNING 32BIT OVERRIDE}
