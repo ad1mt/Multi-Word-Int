@@ -130,7 +130,9 @@ Technical Notes
 
 The unit code will now compile & work correctly in Delphi mode or ObjFPC mode with "advancedrecords".
 
-The code will compile in both 32bit and 64bit environments. In the unit source there is a define "{$define 64bit}" or "{$define 32bit}" which is set depending on the environment, i.e. whether standard integers are 32bit or 64bit. This is set automatically to match the version of the compiler you are using, but can be overidden.
+The code will compile in both 32bit and 64bit environments. In the unit source there is a define "{$define 64bit}" or "{$define 32bit}" which is set depending on the environment is 32bit or 64bit. This is set automatically to match the version of the compiler you are using, but can be overidden.
+
+Note that on some Raspberry Pi CPUs, the compiler runs in 64bit mode, but the compiled code does not work correctly. Setting {$define 32bit} fixes the problem. A fix for this problem might be found in the future.
 
 Multi_Int_Initialisation can only be called once (previously it could be called many times, but this has been withdrawn due to problems with implementation).
 
@@ -194,5 +196,5 @@ else writeln('Hex R = N = ',R.ToHex);
 end.
 (*----------------------------*)
 
-Documentation v1.12
+Documentation v1.13
 
