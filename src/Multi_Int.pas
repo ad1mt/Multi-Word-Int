@@ -8,10 +8,9 @@ UNIT Multi_Int;
 // If you want to take this code and copyright it yourself, feel free.
 (******************************************************************************)
 
-// {$MODE DELPHI}
 {$MODE OBJFPC}
 {$MODESWITCH ADVANCEDRECORDS}
-
+{$LONGSTRINGS ON}
 {$MODESWITCH NESTEDCOMMENTS+}
 
 (* USER OPTIONAL DEFINES *)
@@ -22,8 +21,6 @@ UNIT Multi_Int;
 // In 99.9% of cases, you should leave this to default, unless you have problems
 // running the code in a 32bit or ARM environment.
 
-// {$DEFINE 64BIT} // override
-
 {$IFDEF 32BIT}
 	{$WARNING 32BIT OVERRIDE}
 {$ELSE}
@@ -32,10 +29,10 @@ UNIT Multi_Int;
 	{$ELSE}
 		{$IFDEF CPU64}
 			{$DEFINE 64BIT}
-			{$WARNING 64BIT ENVIRONMENT DETECTED}
+			{$NOTE 64BIT ENVIRONMENT DETECTED}
 		{$ELSE} {$IFDEF CPU32}
 		  	{$DEFINE 32BIT}
-			{$WARNING 32BIT ENVIRONMENT DETECTED}
+			{$NOTE 32BIT ENVIRONMENT DETECTED}
 		{$ELSE}
 			{$FATAL Could not detect 32bit vs 64bit CPU}
 		{$ENDIF}
@@ -316,6 +313,10 @@ v4.61
 v4.62
 -	1.	bug fixes in 32bit vs 64bit detection
 
+v4.63
+-	1.	bug fixes in floating point single conversion 
+		routines for 64bit raspberry pi
+
 *)
 
 INTERFACE
@@ -325,7 +326,7 @@ uses	sysutils
 ;
 
 const
-	version = '4.62.00';
+	version = '4.63.00';
 
 const
 
@@ -360,10 +361,6 @@ const
 	Multi_INT64_MAXINT_1 = 9223372036854775808;
 	Multi_INT64U_MAXINT = 18446744073709551615;
 	Multi_INT64U_MAXINT_1 = 18446744073709551616;
-
-	MULTI_SINGLE_TYPE_MAXVAL	= '9999999999999999999999999999';
-	MULTI_REAL_TYPE_MAXVAL		= '99999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999';
-	MULTI_DOUBLE_TYPE_MAXVAL	= '99999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999';
 
 	MULTI_SINGLE_TYPE_PRECISION_DIGITS	= 7;
 	MULTI_REAL_TYPE_PRECISION_DIGITS	= 15;
@@ -2198,7 +2195,6 @@ then
 Multi_Int_ERROR:= FALSE;
 finished:= FALSE;
 M:= MULTI_INT_1W_U_MAXINT_1;
-
 R:=	v1.M_Value[0];
 i:= 1;
 while	(i <= Multi_X2_maxi)
@@ -2209,24 +2205,31 @@ do
 	then
 		begin
 			V:= v1.M_Value[i];
-			try
-				begin
+			try begin
 				V:= (V * M);
 				R:= R + V;
 				end
-            except
-				begin
+			except Multi_Int_ERROR:= TRUE;
+			end; // except
+			if V.IsInfinity
+			or single.IsInfinity(R) then
 				Multi_Int_ERROR:= TRUE;
+
+			if (Multi_Int_ERROR) then
+				begin
+				finished:= TRUE;
 				if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
 					begin
 					Raise EIntOverflow.create('Overflow');
 					end;
 				end;
-			end;
+
 			V:= MULTI_INT_1W_U_MAXINT_1;
 			try M:= (M * V);
 			except finished:= TRUE;
-			end;
+			end; // except
+			if single.IsInfinity(M) then 
+				finished:= TRUE;
 		end
 	else
 		begin
@@ -2279,24 +2282,35 @@ do
 	then
 		begin
 			V:= v1.M_Value[i];
-			try
-				begin
+			try begin
 				V:= (V * M);
 				R:= R + V;
 				end
-            except
-				begin
+			except Multi_Int_ERROR:= TRUE;
+			end; // except
+			{
+			if single.IsInfinity(V)
+			or single.IsInfinity(R) then
 				Multi_Int_ERROR:= TRUE;
+			}
+
+			if (Multi_Int_ERROR) then
+				begin
+				finished:= TRUE;
 				if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
 					begin
 					Raise EIntOverflow.create('Overflow');
 					end;
 				end;
-			end;
+
 			V:= MULTI_INT_1W_U_MAXINT_1;
 			try M:= (M * V);
 			except finished:= TRUE;
-			end;
+			end; // except
+			{
+			if single.IsInfinity(M) then 
+				finished:= TRUE;
+			}
 		end
 	else
 		begin
@@ -2349,24 +2363,31 @@ do
 	then
 		begin
 			V:= v1.M_Value[i];
-			try
-				begin
+			try begin
 				V:= (V * M);
 				R:= R + V;
 				end
-            except
-				begin
+			except Multi_Int_ERROR:= TRUE;
+			end; // except
+			if double.IsInfinity(V)
+			or double.IsInfinity(R) then
 				Multi_Int_ERROR:= TRUE;
+
+			if (Multi_Int_ERROR) then
+				begin
+				finished:= TRUE;
 				if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
 					begin
 					Raise EIntOverflow.create('Overflow');
 					end;
 				end;
-			end;
+
 			V:= MULTI_INT_1W_U_MAXINT_1;
 			try M:= (M * V);
 			except finished:= TRUE;
-			end;
+			end; // except
+			if double.IsInfinity(M) then 
+				finished:= TRUE;
 		end
 	else
 		begin
@@ -5638,6 +5659,35 @@ do
 	then
 		begin
 			V:= v1.M_Value[i];
+			try begin
+				V:= (V * M);
+				R:= R + V;
+				end
+			except Multi_Int_ERROR:= TRUE;
+			end; // except
+			if single.IsInfinity(V)
+			or single.IsInfinity(R) then
+				Multi_Int_ERROR:= TRUE;
+
+			if (Multi_Int_ERROR) then
+				begin
+				finished:= TRUE;
+				if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
+					begin
+					Raise EIntOverflow.create('Overflow');
+					end;
+				end;
+
+			V:= MULTI_INT_1W_U_MAXINT_1;
+			try M:= (M * V);
+			except finished:= TRUE;
+			end; // except
+			if single.IsInfinity(M) then 
+				finished:= TRUE;
+		end
+		{
+		begin
+			V:= v1.M_Value[i];
 			try
 				begin
 				V:= (V * M);
@@ -5657,6 +5707,7 @@ do
 			except finished:= TRUE;
 			end;
 		end
+		}
 	else
 		begin
 		if	(v1.M_Value[i] > 0) then
@@ -5708,24 +5759,35 @@ do
 	then
 		begin
 			V:= v1.M_Value[i];
-			try
-				begin
+			try begin
 				V:= (V * M);
 				R:= R + V;
 				end
-            except
-				begin
+			except Multi_Int_ERROR:= TRUE;
+			end; // except
+			{
+			if real.IsInfinity(V)
+			or real.IsInfinity(R) then
 				Multi_Int_ERROR:= TRUE;
+			}
+
+			if (Multi_Int_ERROR) then
+				begin
+				finished:= TRUE;
 				if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
 					begin
 					Raise EIntOverflow.create('Overflow');
 					end;
 				end;
-			end;
+
 			V:= MULTI_INT_1W_U_MAXINT_1;
 			try M:= (M * V);
 			except finished:= TRUE;
-			end;
+			end; // except
+			{
+			if real.IsInfinity(M) then 
+				finished:= TRUE;
+			}
 		end
 	else
 		begin
@@ -5778,24 +5840,31 @@ do
 	then
 		begin
 			V:= v1.M_Value[i];
-			try
-				begin
+			try begin
 				V:= (V * M);
 				R:= R + V;
 				end
-            except
-				begin
+			except Multi_Int_ERROR:= TRUE;
+			end; // except
+			if double.IsInfinity(V)
+			or double.IsInfinity(R) then
 				Multi_Int_ERROR:= TRUE;
+
+			if (Multi_Int_ERROR) then
+				begin
+				finished:= TRUE;
 				if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
 					begin
 					Raise EIntOverflow.create('Overflow');
 					end;
 				end;
-			end;
+
 			V:= MULTI_INT_1W_U_MAXINT_1;
 			try M:= (M * V);
 			except finished:= TRUE;
-			end;
+			end; // except
+			if double.IsInfinity(M) then 
+				finished:= TRUE;
 		end
 	else
 		begin
@@ -9340,6 +9409,35 @@ do
 	then
 		begin
 			V:= v1.M_Value[i];
+			try begin
+				V:= (V * M);
+				R:= R + V;
+				end
+			except Multi_Int_ERROR:= TRUE;
+			end; // except
+			if single.IsInfinity(V)
+			or single.IsInfinity(R) then
+				Multi_Int_ERROR:= TRUE;
+
+			if (Multi_Int_ERROR) then
+				begin
+				finished:= TRUE;
+				if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
+					begin
+					Raise EIntOverflow.create('Overflow');
+					end;
+				end;
+
+			V:= MULTI_INT_1W_U_MAXINT_1;
+			try M:= (M * V);
+			except finished:= TRUE;
+			end; // except
+			if single.IsInfinity(M) then 
+				finished:= TRUE;
+		end
+		{
+		begin
+			V:= v1.M_Value[i];
 			try
 				begin
 				V:= (V * M);
@@ -9359,6 +9457,7 @@ do
 			except finished:= TRUE;
 			end;
 		end
+		}
 	else
 		begin
 		if	(v1.M_Value[i] > 0) then
@@ -9410,24 +9509,35 @@ do
 	then
 		begin
 			V:= v1.M_Value[i];
-			try
-				begin
+			try begin
 				V:= (V * M);
 				R:= R + V;
 				end
-            except
-				begin
+			except Multi_Int_ERROR:= TRUE;
+			end; // except
+			{
+			if real.IsInfinity(V)
+			or real.IsInfinity(R) then
 				Multi_Int_ERROR:= TRUE;
+			}
+
+			if (Multi_Int_ERROR) then
+				begin
+				finished:= TRUE;
 				if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
 					begin
 					Raise EIntOverflow.create('Overflow');
 					end;
 				end;
-			end;
+
 			V:= MULTI_INT_1W_U_MAXINT_1;
 			try M:= (M * V);
 			except finished:= TRUE;
-			end;
+			end; // except
+			{
+			if real.IsInfinity(M) then 
+				finished:= TRUE;
+			}
 		end
 	else
 		begin
@@ -9480,24 +9590,31 @@ do
 	then
 		begin
 			V:= v1.M_Value[i];
-			try
-				begin
+			try begin
 				V:= (V * M);
 				R:= R + V;
 				end
-            except
-				begin
+			except Multi_Int_ERROR:= TRUE;
+			end; // except
+			if double.IsInfinity(V)
+			or double.IsInfinity(R) then
 				Multi_Int_ERROR:= TRUE;
+
+			if (Multi_Int_ERROR) then
+				begin
+				finished:= TRUE;
 				if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
 					begin
 					Raise EIntOverflow.create('Overflow');
 					end;
 				end;
-			end;
+
 			V:= MULTI_INT_1W_U_MAXINT_1;
 			try M:= (M * V);
 			except finished:= TRUE;
-			end;
+			end; // except
+			if double.IsInfinity(M) then 
+				finished:= TRUE;
 		end
 	else
 		begin
@@ -14577,24 +14694,31 @@ do
 	then
 		begin
 			V:= v1.M_Value[i];
-			try
-				begin
+			try begin
 				V:= (V * M);
 				R:= R + V;
 				end
-            except
-				begin
+			except Multi_Int_ERROR:= TRUE;
+			end; // except
+			if single.IsInfinity(V)
+			or single.IsInfinity(R) then
 				Multi_Int_ERROR:= TRUE;
+
+			if (Multi_Int_ERROR) then
+				begin
+				finished:= TRUE;
 				if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
 					begin
 					Raise EIntOverflow.create('Overflow');
 					end;
 				end;
-			end;
+
 			V:= MULTI_INT_1W_U_MAXINT_1;
 			try M:= (M * V);
 			except finished:= TRUE;
-			end;
+			end; // except
+			if single.IsInfinity(M) then 
+				finished:= TRUE;
 		end
 	else
 		begin
@@ -14658,24 +14782,35 @@ do
 	then
 		begin
 			V:= v1.M_Value[i];
-			try
-				begin
+			try begin
 				V:= (V * M);
 				R:= R + V;
 				end
-            except
-				begin
+			except Multi_Int_ERROR:= TRUE;
+			end; // except
+			{
+			if real.IsInfinity(V)
+			or real.IsInfinity(R) then
 				Multi_Int_ERROR:= TRUE;
+			}
+
+			if (Multi_Int_ERROR) then
+				begin
+				finished:= TRUE;
 				if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
 					begin
 					Raise EIntOverflow.create('Overflow');
 					end;
 				end;
-			end;
+
 			V:= MULTI_INT_1W_U_MAXINT_1;
 			try M:= (M * V);
 			except finished:= TRUE;
-			end;
+			end; // except
+			{
+			if real.IsInfinity(M) then 
+				finished:= TRUE;
+			}
 		end
 	else
 		begin
@@ -14739,24 +14874,31 @@ do
 	then
 		begin
 			V:= v1.M_Value[i];
-			try
-				begin
+			try begin
 				V:= (V * M);
 				R:= R + V;
 				end
-            except
-				begin
+			except Multi_Int_ERROR:= TRUE;
+			end; // except
+			if double.IsInfinity(V)
+			or double.IsInfinity(R) then
 				Multi_Int_ERROR:= TRUE;
+
+			if (Multi_Int_ERROR) then
+				begin
+				finished:= TRUE;
 				if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
 					begin
 					Raise EIntOverflow.create('Overflow');
 					end;
 				end;
-			end;
+
 			V:= MULTI_INT_1W_U_MAXINT_1;
 			try M:= (M * V);
 			except finished:= TRUE;
-			end;
+			end; // except
+			if double.IsInfinity(M) then 
+				finished:= TRUE;
 		end
 	else
 		begin
