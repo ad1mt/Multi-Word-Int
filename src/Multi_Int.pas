@@ -20,6 +20,11 @@ UNIT Multi_Int;
 // you would remove the "{$define 64bit}" and replace it with "{$define 32bit}"
 // In 99.9% of cases, you should leave this to default, unless you have problems
 // running the code in a 32bit or ARM environment.
+// E.g:
+// {$DEFINE 32BIT}
+// or
+// {$DEFINE 64BIT}
+
 
 {$IFDEF 32BIT}
 	{$WARNING 32BIT OVERRIDE}
@@ -65,180 +70,6 @@ UNIT Multi_Int;
 
 (******************************************************************************)
 (*
-v4.23B
--	bug fixes in divide
--	divide v4 working
--	sign bug fixes in power
--	sign bug fixes in sqroot
-
-v4.23B
--	Negative functions
--	Abs functions
--	Additional init procs
--	Exception bug ifxes in Inc/Dec
-
-v4.23C
-
-v4.23D
--	?
--	sign bug fix in power v4.24
--	move UBool into separate unit.
-
-v4.25
--	rename RAISE_EXCEPTIONS_ENABLED to Multi_Int_RAISE_EXCEPTIONS_ENABLED
--	make Multi_Int_RAISE_EXCEPTIONS_ENABLED a var instead of a define to allow
-	better control of exceptions
--	Multi_Int_RAISE_EXCEPTIONS_ENABLED defaults to TRUE
-
-v4.26
--	automagically detect and set {$define 64bit} or {$define 32bit}
-
-v4.27
--	single word divisor optimisation from Warren/Knuth
--	inc(v1,increment), dec(v1, decrement)
-
-v4.30
--	dynamic array inside Multi_Int_X48 record
--	Multi_Int_X48 size is now set at runtime
--	deal with Multi_Init_Initialisation not called or called more than once
--	Multi_Int to real overflow bug fixes (need replicating to all floats)
--	real-to-Multi-Int finished
--	single-to-Multi-Int finished
--	double-to-Multi-Int finished
--	bug fix in sqroot
--	bug fix in procedure ansistring_to_Multi_Int_X2
--	single-digit divisor bug fix in division routine
--	speed up Multi_Int_X48 multiply routine
-
-v4.31
--	Rename Multi_Int_X48 to Multi_Int_XV
--	Rename assorted X48 stuff to XV
--	Make call Multi_Init_Initialisation optional with default value of 16
--	overflow bug fix in division routine
--	overflow bug in Multi_Int to single/double/real
--	overflow bug in 32bit Multi_Int to double/real
--	disable Multi_Int to single in 32bit environment
--	bug fix in hex to Multi_Int
-
-v4.32.01
--	missing implicit conversion int64 to Multi_Int in 32bit environment
--	in all cases of overflow set Multi_Int_OVERFLOW_ERROR:=TRUE
--	set {$SAFEFPUEXCEPTIONS ON} in 32bit environments
--	re-instate Multi_int to single conversion in 32bit environment
-
-v4.32.02
--	display compiler warning about lossy float to Multi_int conversion
--	add tests for hex conversion
--	Multi_Int_X3 hex conversion bug
--	Multi_Init_Initialisation improvements to make it easier to build test suites
-
-v4.32.03
--	SINGLE_TYPE_PRECISION_DIGITS	= 7;
--	REAL_TYPE_PRECISION_DIGITS		= 15;
--	DOUBLE_TYPE_PRECISION_DIGITS	= 15;
-
-v4.32.04
--	rename all INT_1W_S (etc) to MULTI_INT_1W_S (etc)
--	remove redundant Shift & Rotate procedures from record types
-
-v4.32.05
--	exception not raised when div values same as last time
--	create method function FromHex(const v1:ansistring):Multi_Int;
-
-v4.33.00
--	check and prevent Multi_Init_Initialisation if XV vars already exist
--	check invalidly resized XV vars
--	xor function was not checking overflow
-
-v4.33.01
--	unary minus was not checking overflow
--	Multi_Int_XV xor function was not calling init
--	some shift operations did not have {$Q-} and {$R-}
--	To_Multi_Int_XV functions were not calling the Multi_Int_X_to_Multi_Int_XV proc
-
-v4.34.00
--	new division algorithm - re-engineered knuth-warren  (Multi_Int_XV)
-
-v4.34.01
--	new division algorithm for Multi_Int_X2 X3 X4
--	version const
-
-v4.34.04
--	new division algorithm for Multi_Int_X4 required new Multi_Int_X5 for internal use only
--	new division algorithm for Multi_Int_XV required new Multi_Int_XW for internal use only
-
-v4.34.05
--	bug fixes
-
-v4.34.06
--	speed up multiplication routine - needed to get best out of new division algorithm
-
-v4.34.07
--	small speed ups in new division algorithm
-
-v4.34.08
--	UNFIXED Multi_Int_XV corruption bug in new division algorithm
-
-v4.34.09
--	fix Multi_Int_XV corruption bug in new division algorithm
-
-v4.34.10
--	reproduce fix for Multi_Int_XV corruption bug in new division algorithm to other types,
-	even thought the other types did not manifest the bug. I did this to keep the code
-	the same for the different data types.
-
-v4.34.11
--	small speedups in multiplication routines.
--	bring UBool unit back inside from the cold.
--	testing bug fix in Multi_Int_X2 modulus functine
--	need extra initialisation routines reset_X2_Last_Divisor etc
--	bug fix in division algorithm
-
-v4.34.12
--	major bug fix in division algorithm
-
-v4.34.13
--	another bug fix in division algorithm
--	more reliable conversion from float types, by
-	truncating the final digit instead of rounding.
-
-v4.35.00
--	allow resizing of Multi_Int_XV type
--	allow different Multi_Int_XV vars to have different sizes
--	when a Multi_Int_XV operation value is larger than the operands,
-	resize the result var to fit the value.
-
-v4.35.01
--	impose limit on size of Multi_Int_XV vars
-
-v4.35.02
--	lots of M_Value array indexing bugs fixed
--	result must not be set to 0 after failed call to Multi_Int_Reset_XV_Size
--	potential overflow bug in sqroot fixed
--	where internal M_Val array is used, result must be init := 0 in
-	ansistring_to_Multi_Int_XV, hex_to_Multi_Int_XV, add_Multi_Int_XV,
-	subtract_Multi_Int_XV and multiply_Multi_Int_XV
--	in Multi_Int_Set_XV_Limit check Multi_XV_Limit > Multi_Int_XV_size
--	exceptional case bug fix in division algorithm
--	lots undefined bug fixes in equals,less-than etc
-
-v4.35.03
--	ToBin and FromBin functions
--	removed extended Inc operator (two-parameter version)
--	clean up hints, notes, warnings
--	exception overflow bug fix in add/subtract_Multi_Int_XV
--	more exception bug fixes
-
-v4.35.04
--	re-instate function inlining with a switch
--	use function out parameters instead of var to eliminate warnings
--	define shr shl operators
--	serious bug fix in calling code for some operations var was being referenced
-	instead of copied - for Multi_Int_XV only, others ok
--	implement shr and shl operators
--	hide ShiftDown & ShiftUp procedures
--	more var parameters changed to out
-
 v4.36.00
 -	now works in OBJFPC mode with ADVANCEDRECORDS switch
 
@@ -317,6 +148,14 @@ v4.63
 -	1.	bug fixes in floating point single conversion 
 		routines for 64bit raspberry pi
 
+v4.64
+-	1.	code tidy-up - remove redundant goto's
+-	2.	code tidy-up - make all inline statement conditional
+
+v4.65
+-	1.	faster tostr function - now working for XV type
+		not relevant to X2-X4 types
+
 *)
 
 INTERFACE
@@ -326,7 +165,7 @@ uses	sysutils
 ;
 
 const
-	version = '4.63.00';
+	version = '4.65.00';
 
 const
 
@@ -1705,7 +1544,6 @@ end;
 
 (******************************************)
 procedure ansistring_to_Multi_Int_X2(const v1:ansistring; out mi:Multi_Int_X2); {$ifdef inline_functions} inline; {$endif}
-label 999;
 var
 	i,b,c,e		:MULTI_INT_2W_U;
 	M_Val		:array[0..Multi_X2_maxi] of MULTI_INT_2W_U;
@@ -1751,7 +1589,7 @@ if	(length(v1) > 0) then
 						end;
 					end;
 			end;
- 		if mi.Defined_flag = FALSE then goto 999;
+ 		if mi.Defined_flag = FALSE then exit;
 		M_Val[0]:=(M_Val[0] * 10) + i;
 		M_Val[1]:=(M_Val[1] * 10);
 		M_Val[2]:=(M_Val[2] * 10);
@@ -1784,7 +1622,7 @@ if	(length(v1) > 0) then
 				begin
 				Raise EIntOverflow.create('Overflow');
 				end;
-			goto 999;
+			exit;
 			end;
 
 		Inc(c);
@@ -1805,8 +1643,6 @@ then Zeroneg:= TRUE;
 if Zeroneg then mi.Negative_flag:= Multi_UBool_FALSE
 else if Signeg then mi.Negative_flag:= Multi_UBool_TRUE
 else mi.Negative_flag:= Multi_UBool_FALSE;
-
-999:
 end;
 
 
@@ -2628,7 +2464,6 @@ end;
 
 (******************************************)
 procedure bin_to_Multi_Int_X2(const v1:ansistring; out mi:Multi_Int_X2); {$ifdef inline_functions} inline; {$endif}
-label 999;
 var
 	n,b,c,e	:MULTI_INT_2W_U;
 	bit			:MULTI_INT_1W_S;
@@ -2672,7 +2507,7 @@ if	(length(v1) > 0) then
 			mi.Defined_flag:= FALSE;
 			if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
 				Raise EInterror.create('Invalid binary digit');
-			goto 999;
+			exit;
 			end;
 
 		M_Val[0]:=(M_Val[0] * 2) + bit;
@@ -2704,7 +2539,7 @@ if	(length(v1) > 0) then
 				begin
 				Raise EIntOverflow.create('Overflow');
 				end;
-			goto 999;
+			exit;
 			end;
 		Inc(c);
 		end;
@@ -2723,8 +2558,6 @@ if M_Val_All_Zero then Zeroneg:= TRUE;
 if Zeroneg then mi.Negative_flag:= Multi_UBool_FALSE
 else if Signeg then mi.Negative_flag:= Multi_UBool_TRUE
 else mi.Negative_flag:= Multi_UBool_FALSE;
-
-999:
 end;
 
 
@@ -2847,7 +2680,6 @@ end;
 
 (******************************************)
 procedure hex_to_Multi_Int_X2(const v1:ansistring; out mi:Multi_Int_X2); {$ifdef inline_functions} inline; {$endif}
-label 999;
 var
 	n,i,b,c,e	:MULTI_INT_2W_U;
 	M_Val		:array[0..Multi_X2_maxi] of MULTI_INT_2W_U;
@@ -2894,7 +2726,7 @@ if	(length(v1) > 0) then
 						end;
 					end;
 			end;
-		if mi.Defined_flag = FALSE then goto 999;
+		if mi.Defined_flag = FALSE then exit;
 
 		M_Val[0]:=(M_Val[0] * 16) + i;
 		n:=1;
@@ -2925,7 +2757,7 @@ if	(length(v1) > 0) then
 				begin
 				Raise EIntOverflow.create('Overflow');
 				end;
-			goto 999;
+			exit;
 			end;
 		Inc(c);
 		end;
@@ -2944,8 +2776,6 @@ if M_Val_All_Zero then Zeroneg:= TRUE;
 if Zeroneg then mi.Negative_flag:= Multi_UBool_FALSE
 else if Signeg then mi.Negative_flag:= Multi_UBool_TRUE
 else mi.Negative_flag:= Multi_UBool_FALSE;
-
-999:
 end;
 
 
@@ -3598,7 +3428,6 @@ end;
 
 (********************v1********************)
 procedure multiply_Multi_Int_X2(const v1,v2:Multi_Int_X2;out Result:Multi_Int_X2);
-label	999;
 var
 M_Val		:array[0..Multi_X2_maxi_x2] of MULTI_INT_2W_U;
 tv1,tv2		:MULTI_INT_2W_U;
@@ -3630,7 +3459,7 @@ or		(zf)
 if	(jz < 0) then
 	begin
 	Result.Negative_flag:=Multi_UBool_FALSE;
-	goto 999;
+	exit;
 	end;
 
 zf:= FALSE;
@@ -3649,7 +3478,7 @@ or		(zf)
 if	(iz < 0) then
 	begin
 	Result.Negative_flag:=Multi_UBool_FALSE;
-	goto 999;
+	exit;
 	end;
 
 i:=0;
@@ -3708,8 +3537,6 @@ while (n <= Multi_X2_maxi) do
 	Result.M_Value[n]:= M_Val[n];
 	inc(n);
 	end;
-
-999:
 end;
 
 
@@ -3849,7 +3676,7 @@ end;
 
 (********************v1********************)
 procedure intdivide_taylor_warruth_X2(const P_dividend,P_dividor:Multi_Int_X2;out P_quotient,P_remainder:Multi_Int_X2);
-label	AGAIN,9000,9999;
+label	AGAIN,FINISH;
 var
 dividor,
 quotient,
@@ -3901,7 +3728,7 @@ else
 	if	(Abs(P_dividor) > Abs(P_dividend)) then
 		begin
 	 	P_remainder:= P_dividend;
-		goto 9000;
+		goto FINISH;
 	    end;
 
 	dividor_non_zero_pos:= 0;
@@ -3932,7 +3759,7 @@ else
 			Dec(i);
 			end;
 		P_remainder.M_Value[0]:= word_carry;
-		goto 9000;
+		goto FINISH;
 		end;
 
     dividend:= P_dividend;
@@ -4011,7 +3838,7 @@ else
 	ShiftDown_MultiBits_Multi_Int_X3(dividend, shiftup_bits_dividor);
 	P_remainder:= To_Multi_Int_X2(dividend);
 
-9000:
+FINISH:
 	if	(P_dividend.Negative_flag = TRUE) and (P_remainder > 0)
 	then
 		P_remainder.Negative_flag:= TRUE;
@@ -4022,7 +3849,6 @@ else
 		P_quotient.Negative_flag:= TRUE;
 
 	end;
-9999:
 end;
 
 
@@ -5031,7 +4857,6 @@ end;
 
 (******************************************)
 procedure ansistring_to_Multi_Int_X3(const v1:ansistring; out mi:Multi_Int_X3); {$ifdef inline_functions} inline; {$endif}
-label 999;
 var
 	i,b,c,e		:MULTI_INT_2W_U;
 	M_Val		:array[0..Multi_X3_maxi] of MULTI_INT_2W_U;
@@ -5079,7 +4904,7 @@ if	(length(v1) > 0) then
 						end;
 					end;
 			end;
-		if mi.Defined_flag = FALSE then goto 999;
+		if mi.Defined_flag = FALSE then exit;
 		M_Val[0]:=(M_Val[0] * 10) + i;
 		M_Val[1]:=(M_Val[1] * 10);
 		M_Val[2]:=(M_Val[2] * 10);
@@ -5126,7 +4951,7 @@ if	(length(v1) > 0) then
 				begin
 				Raise EIntOverflow.create('Overflow');
 				end;
-			goto 999;
+			exit;
 			end;
 
 		Inc(c);
@@ -5152,7 +4977,6 @@ if Zeroneg then mi.Negative_flag:= Multi_UBool_FALSE
 else if Signeg then mi.Negative_flag:= Multi_UBool_TRUE
 else mi.Negative_flag:= Multi_UBool_FALSE;
 
-999:
 end;
 
 
@@ -5352,48 +5176,7 @@ if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
 exit;
 
 CLEAN_EXIT:
-
 end;
-
-
-{
-var n :MULTI_INT_1W_U;
-begin
-Result.Overflow_flag:= v1.Overflow_flag;
-Result.Defined_flag:= v1.Defined_flag;
-Result.Negative_flag:= v1.Negative_flag;
-
-if	(v1.Defined_flag = FALSE)
-then
-	begin
-	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
-		begin
-		Raise EInterror.create('Uninitialised variable');
-		end;
-	Result.Defined_flag:= FALSE;
-	exit;
-	end;
-
-if	(v1.Overflow_flag = TRUE)
-then
-	begin
-	Multi_Int_ERROR:= TRUE;
-	Result.Overflow_flag:= TRUE;
-	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
-		begin
-		Raise EInterror.create('Overflow');
-		end;
-	exit;
-	end;
-
-n:= 0;
-while (n <= Multi_X3_maxi) do
-	begin
-	Result.M_Value[n]:= v1.M_Value[n];
-	inc(n);
-	end;
-end;
-}
 
 
 (******************************************)
@@ -6118,7 +5901,6 @@ end;
 
 (******************************************)
 procedure bin_to_Multi_Int_X3(const v1:ansistring; out mi:Multi_Int_X3); {$ifdef inline_functions} inline; {$endif}
-label 999;
 var
 	n,b,c,e	:MULTI_INT_2W_U;
 	bit			:MULTI_INT_1W_S;
@@ -6162,7 +5944,7 @@ if	(length(v1) > 0) then
 			mi.Overflow_flag:=TRUE;
 			if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
 				Raise EInterror.create('Invalid binary digit');
-			goto 999;
+			exit;
 			end;
 
 		M_Val[0]:=(M_Val[0] * 2) + bit;
@@ -6194,7 +5976,7 @@ if	(length(v1) > 0) then
 				begin
 				Raise EIntOverflow.create('Overflow');
 				end;
-			goto 999;
+			exit;
 			end;
 		Inc(c);
 		end;
@@ -6214,7 +5996,6 @@ if Zeroneg then mi.Negative_flag:= Multi_UBool_FALSE
 else if Signeg then mi.Negative_flag:= Multi_UBool_TRUE
 else mi.Negative_flag:= Multi_UBool_FALSE;
 
-999:
 end;
 
 
@@ -6341,7 +6122,6 @@ end;
 
 (******************************************)
 procedure hex_to_Multi_Int_X3(const v1:ansistring; out mi:Multi_Int_X3); {$ifdef inline_functions} inline; {$endif}
-label 999;
 var
 	n,i,b,c,e	:MULTI_INT_2W_U;
 	M_Val		:array[0..Multi_X3_maxi] of MULTI_INT_2W_U;
@@ -6388,7 +6168,7 @@ if	(length(v1) > 0) then
 						end;
 					end;
 			end;
-		if mi.Defined_flag = FALSE then goto 999;
+		if mi.Defined_flag = FALSE then exit;
 
 		M_Val[0]:=(M_Val[0] * 16) + i;
 		n:=1;
@@ -6419,7 +6199,7 @@ if	(length(v1) > 0) then
 				begin
 				Raise EIntOverflow.create('Overflow');
 				end;
-			goto 999;
+			exit;
 			end;
 		Inc(c);
 		end;
@@ -6439,7 +6219,6 @@ if Zeroneg then mi.Negative_flag:= Multi_UBool_FALSE
 else if Signeg then mi.Negative_flag:= Multi_UBool_TRUE
 else mi.Negative_flag:= Multi_UBool_FALSE;
 
-999:
 end;
 
 
@@ -7155,7 +6934,6 @@ end;
 
 (*******************v4*********************)
 procedure multiply_Multi_Int_X3(const v1,v2:Multi_Int_X3;out Result:Multi_Int_X3); overload;
-label	999;
 var
 M_Val		:array[0..Multi_X3_maxi_x2] of MULTI_INT_2W_U;
 tv1,tv2		:MULTI_INT_2W_U;
@@ -7187,7 +6965,7 @@ or		(zf)
 if	(jz < 0) then
 	begin
 	Result.Negative_flag:=Multi_UBool_FALSE;
-	goto 999;
+	exit;
 	end;
 
 zf:= FALSE;
@@ -7206,7 +6984,7 @@ or		(zf)
 if	(iz < 0) then
 	begin
 	Result.Negative_flag:=Multi_UBool_FALSE;
-	goto 999;
+	exit;
 	end;
 
 i:=0;
@@ -7266,7 +7044,6 @@ while (n <= Multi_X3_maxi) do
 	inc(n);
 	end;
 
-999:
 end;
 
 
@@ -7454,7 +7231,7 @@ end;
 
 (********************v1********************)
 procedure intdivide_taylor_warruth_X3(const P_dividend,P_dividor:Multi_Int_X3;out P_quotient,P_remainder:Multi_Int_X3);
-label	AGAIN,9000,9999;
+label	AGAIN,FINISH;
 var
 dividor,
 quotient,
@@ -7505,7 +7282,7 @@ else
 	if	(Abs(P_dividor) > Abs(P_dividend)) then
 		begin
 	 	P_remainder:= P_dividend;
-		goto 9000;
+		goto FINISH;
 	    end;
 
 	dividor_non_zero_pos:= 0;
@@ -7536,7 +7313,7 @@ else
 			Dec(i);
 			end;
 		P_remainder.M_Value[0]:= word_carry;
-		goto 9000;
+		goto FINISH;
 		end;
 
     dividend:= P_dividend;
@@ -7615,7 +7392,7 @@ else
 	ShiftDown_MultiBits_Multi_Int_X4(dividend, shiftup_bits_dividor);
 	P_remainder:= To_Multi_Int_X3(dividend);
 
-9000:
+FINISH:
 	if	(P_dividend.Negative_flag = TRUE) and (P_remainder > 0)
 	then
 		P_remainder.Negative_flag:= TRUE;
@@ -7626,7 +7403,7 @@ else
 		P_quotient.Negative_flag:= TRUE;
 
 	end;
-9999:
+
 end;
 
 
@@ -8762,47 +8539,7 @@ if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
 exit;
 
 CLEAN_EXIT:
-
 end;
-
-{
-var n :MULTI_INT_1W_U;
-begin
-Result.Overflow_flag:= v1.Overflow_flag;
-Result.Defined_flag:= v1.Defined_flag;
-Result.Negative_flag:= v1.Negative_flag;
-
-if	(v1.Defined_flag = FALSE)
-then
-	begin
-	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
-		begin
-		Raise EInterror.create('Uninitialised variable');
-		end;
-	Result.Defined_flag:= FALSE;
-	exit;
-	end;
-
-if	(v1.Overflow_flag = TRUE)
-then
-	begin
-	Result.Overflow_flag:= TRUE;
-	Multi_Int_ERROR:= TRUE;
-	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
-		begin
-		Raise EInterror.create('Overflow');
-		end;
-	exit;
-	end;
-
-n:= 0;
-while (n <= Multi_X4_maxi) do
-	begin
-	Result.M_Value[n]:= v1.M_Value[n];
-	inc(n);
-	end;
-end;
-}
 
 
 (******************************************)
@@ -9007,7 +8744,6 @@ end;
 
 (******************************************)
 procedure ansistring_to_Multi_Int_X4(const v1:ansistring; out mi:Multi_Int_X4); {$ifdef inline_functions} inline; {$endif}
-label 999;
 var
 	i,b,c,e		:MULTI_INT_2W_U;
 	M_Val		:array[0..Multi_X4_maxi] of MULTI_INT_2W_U;
@@ -9057,7 +8793,7 @@ if	(length(v1) > 0) then
 						end;
 					end;
 			end;
-		if mi.Defined_flag = FALSE then goto 999;
+		if mi.Defined_flag = FALSE then exit;
 		M_Val[0]:=(M_Val[0] * 10) + i;
 		M_Val[1]:=(M_Val[1] * 10);
 		M_Val[2]:=(M_Val[2] * 10);
@@ -9118,7 +8854,7 @@ if	(length(v1) > 0) then
 				begin
 				Raise EIntOverflow.create('Overflow');
 				end;
-			goto 999;
+			exit;
 			end;
 		Inc(c);
 		end;
@@ -9147,7 +8883,6 @@ if Zeroneg then mi.Negative_flag:= Multi_UBool_FALSE
 else if Signeg then mi.Negative_flag:= Multi_UBool_TRUE
 else mi.Negative_flag:= Multi_UBool_FALSE;
 
-999:
 end;
 
 
@@ -9880,7 +9615,6 @@ end;
 
 (******************************************)
 procedure bin_to_Multi_Int_X4(const v1:ansistring; out mi:Multi_Int_X4); {$ifdef inline_functions} inline; {$endif}
-label 999;
 var
 	n,b,c,e	:MULTI_INT_2W_U;
 	bit			:MULTI_INT_1W_S;
@@ -9924,7 +9658,7 @@ if	(length(v1) > 0) then
 			mi.Defined_flag:= FALSE;
 			if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
 				Raise EInterror.create('Invalid binary digit');
-			goto 999;
+			exit;
 			end;
 
 		M_Val[0]:=(M_Val[0] * 2) + bit;
@@ -9956,7 +9690,7 @@ if	(length(v1) > 0) then
 				begin
 				Raise EIntOverflow.create('Overflow');
 				end;
-			goto 999;
+			exit;
 			end;
 		Inc(c);
 		end;
@@ -9976,7 +9710,6 @@ if Zeroneg then mi.Negative_flag:= Multi_UBool_FALSE
 else if Signeg then mi.Negative_flag:= Multi_UBool_TRUE
 else mi.Negative_flag:= Multi_UBool_FALSE;
 
-999:
 end;
 
 
@@ -10051,7 +9784,6 @@ end;
 
 (******************************************)
 procedure hex_to_Multi_Int_X4(const v1:ansistring; out mi:Multi_Int_X4); {$ifdef inline_functions} inline; {$endif}
-label 999;
 var
 	n,i,b,c,e	:MULTI_INT_2W_U;
 	M_Val		:array[0..Multi_X4_maxi] of MULTI_INT_2W_U;
@@ -10098,7 +9830,7 @@ if	(length(v1) > 0) then
 						end;
 					end;
 			end;
-		if mi.Defined_flag = FALSE then goto 999;
+		if mi.Defined_flag = FALSE then exit;
 
 		M_Val[0]:=(M_Val[0] * 16) + i;
 		n:=1;
@@ -10129,7 +9861,7 @@ if	(length(v1) > 0) then
 				begin
 				Raise EIntOverflow.create('Overflow');
 				end;
-			goto 999;
+			exit;
 			end;
 		Inc(c);
 		end;
@@ -10149,7 +9881,6 @@ if Zeroneg then mi.Negative_flag:= Multi_UBool_FALSE
 else if Signeg then mi.Negative_flag:= Multi_UBool_TRUE
 else mi.Negative_flag:= Multi_UBool_FALSE;
 
-999:
 end;
 
 
@@ -10984,7 +10715,6 @@ end;
 
 (*******************v4*********************)
 procedure multiply_Multi_Int_X4(const v1,v2:Multi_Int_X4;out Result:Multi_Int_X4); overload;
-label	999;
 var
 M_Val		:array[0..Multi_X4_maxi_x2] of MULTI_INT_2W_U;
 tv1,tv2		:MULTI_INT_2W_U;
@@ -11016,7 +10746,7 @@ or		(zf)
 if	(jz < 0) then
 	begin
 	Result.Negative_flag:=Multi_UBool_FALSE;
-	goto 999;
+	exit;
 	end;
 
 zf:= FALSE;
@@ -11035,7 +10765,7 @@ or		(zf)
 if	(iz < 0) then
 	begin
 	Result.Negative_flag:=Multi_UBool_FALSE;
-	goto 999;
+	exit;
 	end;
 
 i:=0;
@@ -11095,7 +10825,6 @@ while (n <= Multi_X4_maxi) do
 	inc(n);
 	end;
 
-999:
 end;
 
 
@@ -11286,7 +11015,7 @@ end;
 
 (********************v1********************)
 procedure intdivide_taylor_warruth_X4(const P_dividend,P_dividor:Multi_Int_X4;out P_quotient,P_remainder:Multi_Int_X4);
-label	AGAIN,9000,9999;
+label	AGAIN,FINISH;
 var
 dividor,
 quotient,
@@ -11339,7 +11068,7 @@ else
 	if	(Abs(P_dividor) > Abs(P_dividend)) then
 		begin
 	 	P_remainder:= P_dividend;
-		goto 9000;
+		goto FINISH;
 	    end;
 
 	dividor_non_zero_pos:= 0;
@@ -11371,7 +11100,7 @@ else
 			Dec(i);
 			end;
 		P_remainder.M_Value[0]:= word_carry;
-		goto 9000;
+		goto FINISH;
 		end;
 
 	shiftup_bits_dividor:= nlz_bits(dividor.M_Value[dividor_non_zero_pos]);
@@ -11447,7 +11176,7 @@ else
 	ShiftDown_MultiBits_Multi_Int_X5(dividend, shiftup_bits_dividor);
 	P_remainder:= To_Multi_Int_X4(dividend);
 
-9000:
+FINISH:
 	if	(P_dividend.Negative_flag = TRUE) and (P_remainder > 0)
 	then
 		P_remainder.Negative_flag:= TRUE;
@@ -11458,7 +11187,7 @@ else
 		P_quotient.Negative_flag:= TRUE;
 
 	end;
-9999:
+
 end;
 
 
@@ -12289,7 +12018,6 @@ end;
 
 (*******************v4*********************)
 procedure multiply_Multi_Int_X5(const v1,v2:Multi_Int_X5;out Result:Multi_Int_X5); overload;
-label	999;
 var
 M_Val		:array[0..Multi_X5_max_x2] of MULTI_INT_2W_U;
 tv1,tv2		:MULTI_INT_2W_U;
@@ -12321,7 +12049,7 @@ or		(zf)
 if	(jz < 0) then
 	begin
 	Result.Negative_flag:=Multi_UBool_FALSE;
-	goto 999;
+	exit;
 	end;
 
 zf:= FALSE;
@@ -12340,7 +12068,7 @@ or		(zf)
 if	(iz < 0) then
 	begin
 	Result.Negative_flag:=Multi_UBool_FALSE;
-	goto 999;
+	exit;
 	end;
 
 i:=0;
@@ -12400,7 +12128,6 @@ while (n <= Multi_X5_max) do
 	inc(n);
 	end;
 
-999:
 end;
 
 
@@ -13559,7 +13286,7 @@ end;
 
 
 (******************************************)
-function ABS_notequal_Multi_Int_XV(const v1,v2:Multi_Int_XV):Boolean; inline;
+function ABS_notequal_Multi_Int_XV(const v1,v2:Multi_Int_XV):Boolean; {$ifdef inline_functions} inline; {$endif}
 begin
 Result:= (not ABS_equal_Multi_Int_XV(v1,v2));
 end;
@@ -13683,7 +13410,6 @@ end;
 
 (******************************************)
 procedure ansistring_to_Multi_Int_XV(const v1:ansistring; out mi:Multi_Int_XV); {$ifdef inline_functions} inline; {$endif}
-label 999;
 var
 	n,i,b,c,e,s	:MULTI_INT_2W_U;
 	M_Val		:array of MULTI_INT_2W_U;
@@ -13733,7 +13459,7 @@ if	(length(v1) > 0) then
 						end;
 					end;
 			end;
-		if mi.Defined_flag = FALSE then goto 999;
+		if mi.Defined_flag = FALSE then exit;
 
 		M_Val[0]:=(M_Val[0] * 10) + i;
 		n:=1;
@@ -13777,7 +13503,7 @@ if (s > Multi_XV_size) then
 			begin
 			Raise EInterror.create('Overflow');
 			end;
-		goto 999;
+		exit;
 		end;
 	end;
 
@@ -13796,7 +13522,6 @@ if Zeroneg then mi.Negative_flag:= Multi_UBool_FALSE
 else if Signeg then mi.Negative_flag:= Multi_UBool_TRUE
 else mi.Negative_flag:= Multi_UBool_FALSE;
 
-999:
 end;
 
 
@@ -13807,13 +13532,13 @@ ansistring_to_Multi_Int_XV(v1,Result);
 end;
 
 
-(******************************************)
-procedure Multi_Int_XV_to_ansistring(const v1:Multi_Int_XV; var v2:ansistring); inline;
+(*********************v2*******************)
+procedure Multi_Int_XV_to_ansistring(const v1:Multi_Int_XV; var v2:ansistring);	{$ifdef inline_functions} inline; {$endif}
 var
-	s			:ansistring = '';
-	M_Val		:array of MULTI_INT_2W_U;
-	n,t			:MULTI_INT_2W_U;
-	M_Val_All_Zero	:boolean;
+s				:ansistring = '';
+M_Val			:array of MULTI_INT_2W_U;
+n,t,z			:MULTI_INT_2W_S;
+M_Val_All_Zero	:boolean;
 begin
 if	(Not v1.Defined_flag)
 then
@@ -13839,27 +13564,38 @@ then
 	end;
 
 setlength(M_Val, v1.M_Value_Size);
-
-n:=0;
-while (n < v1.M_Value_Size) do
+z:= -1;
+n:= (v1.M_Value_Size - 1);
+while (n >= 0) do
 	begin
 	t:= v1.M_Value[n];
 	M_Val[n]:= t;
-	inc(n);
+	if (z = -1) then
+	if (t <> 0) then
+		z:= n;
+	Dec(n);
 	end;
+if (z = -1) then z:= 0;
 
 repeat
-	n:= (v1.M_Value_Size - 1);
+	n:= z;
+	z:= -1;
 	M_Val_All_Zero:= TRUE;
-	repeat
+	while (n > 0) do
+		begin
 		M_Val[n-1]:= M_Val[n-1] + (MULTI_INT_1W_U_MAXINT_1 * (M_Val[n] MOD 10));
 		M_Val[n]:= (M_Val[n] DIV 10);
-		if M_Val[n] <> 0 then M_Val_All_Zero:= FALSE;
+		if M_Val[n] <> 0 then
+			begin
+			M_Val_All_Zero:= FALSE;
+			if (z = -1) then z:= n;
+			end;
 		dec(n);
-	until	(n = 0);
+		end;
 
+	if (z = -1) then z:= 0;
 	s:= inttostr(M_Val[0] MOD 10) + s;
-		M_Val[0]:= (M_Val[0] DIV 10);
+	M_Val[0]:= (M_Val[0] DIV 10);
 	if M_Val[0] <> 0 then M_Val_All_Zero:= FALSE;
 
 until M_Val_All_Zero;
@@ -13884,8 +13620,7 @@ end;
 
 
 (******************************************)
-procedure hex_to_Multi_Int_XV(const v1:ansistring; out mi:Multi_Int_XV); inline;
-label 999;
+procedure hex_to_Multi_Int_XV(const v1:ansistring; out mi:Multi_Int_XV); {$ifdef inline_functions} inline; {$endif}
 var
 	n,i,b,c,e,s	:MULTI_INT_2W_U;
 	M_Val		:array of MULTI_INT_2W_U;
@@ -13930,7 +13665,7 @@ if	(length(v1) > 0) then
 				if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
 					Raise;
 			end;
-		if mi.Defined_flag = FALSE then goto 999;
+		if mi.Defined_flag = FALSE then exit;
 
 		M_Val[0]:=(M_Val[0] * 16) + i;
 		n:=1;
@@ -13975,7 +13710,7 @@ if (s > Multi_XV_size) then
 			begin
 			Raise EInterror.create('Overflow');
 			end;
-		goto 999;
+		exit;
 		end;
 	end;
 
@@ -13993,7 +13728,6 @@ if Zeroneg then mi.Negative_flag:= Multi_UBool_FALSE
 else if Signeg then mi.Negative_flag:= Multi_UBool_TRUE
 else mi.Negative_flag:= Multi_UBool_FALSE;
 
-999:
 end;
 
 
@@ -14012,7 +13746,7 @@ end;
 
 
 (******************************************)
-procedure Multi_Int_XV_to_hex(const v1:Multi_Int_XV; var v2:ansistring; LZ:T_Multi_Leading_Zeros); inline;
+procedure Multi_Int_XV_to_hex(const v1:Multi_Int_XV; var v2:ansistring; LZ:T_Multi_Leading_Zeros); {$ifdef inline_functions} inline; {$endif}
 var
 	s		:ansistring = '';
 	i,n		:MULTI_INT_1W_S;
@@ -14068,8 +13802,7 @@ end;
 
 
 (******************************************)
-procedure Bin_to_Multi_Int_XV(const v1:ansistring; out mi:Multi_Int_XV); inline;
-label 999;
+procedure Bin_to_Multi_Int_XV(const v1:ansistring; out mi:Multi_Int_XV); {$ifdef inline_functions} inline; {$endif}
 var
 	n,b,c,e,s	:MULTI_INT_2W_U;
 	bit			:MULTI_INT_1W_S;
@@ -14116,7 +13849,7 @@ if	(length(v1) > 0) then
 			mi.Defined_flag:= FALSE;
 			if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
 				Raise EInterror.create('Invalid binary digit');
-			goto 999;
+			exit;
 			end;
 
 		M_Val[0]:=(M_Val[0] * 2) + bit;
@@ -14162,7 +13895,7 @@ if (s > Multi_XV_size) then
 			begin
 			Raise EInterror.create('Overflow');
 			end;
-		goto 999;
+		exit;
 		end;
 	end;
 
@@ -14180,7 +13913,6 @@ if Zeroneg then mi.Negative_flag:= Multi_UBool_FALSE
 else if Signeg then mi.Negative_flag:= Multi_UBool_TRUE
 else mi.Negative_flag:= Multi_UBool_FALSE;
 
-999:
 end;
 
 
@@ -14199,7 +13931,7 @@ end;
 
 
 (******************************************)
-procedure Multi_Int_XV_to_bin(const v1:Multi_Int_XV; var v2:ansistring; LZ:T_Multi_Leading_Zeros); inline;
+procedure Multi_Int_XV_to_bin(const v1:Multi_Int_XV; var v2:ansistring; LZ:T_Multi_Leading_Zeros); {$ifdef inline_functions} inline; {$endif}
 var
 	s		:ansistring = '';
 	i,n		:MULTI_INT_1W_S;
@@ -14290,7 +14022,7 @@ end;
 
 
 (******************************************)
-procedure MULTI_INT_2W_U_to_Multi_Int_XV(const v1:MULTI_INT_2W_U; out mi:Multi_Int_XV); inline;
+procedure MULTI_INT_2W_U_to_Multi_Int_XV(const v1:MULTI_INT_2W_U; out mi:Multi_Int_XV); {$ifdef inline_functions} inline; {$endif}
 var
 	n				:MULTI_INT_2W_U;
 begin
@@ -14324,7 +14056,7 @@ end;
 // 4 word integers do not exist in 64bit mode
 
 (******************************************)
-procedure MULTI_INT_4W_S_to_Multi_Int_XV(const v1:MULTI_INT_4W_S; var mi:Multi_Int_XV); inline;
+procedure MULTI_INT_4W_S_to_Multi_Int_XV(const v1:MULTI_INT_4W_S; var mi:Multi_Int_XV); {$ifdef inline_functions} inline; {$endif}
 var
 v	:MULTI_INT_4W_U;
 n	:MULTI_INT_2W_U;
@@ -14374,7 +14106,7 @@ end;
 
 
 (******************************************)
-procedure MULTI_INT_4W_U_to_Multi_Int_XV(const v1:MULTI_INT_4W_U; var mi:Multi_Int_XV); inline;
+procedure MULTI_INT_4W_U_to_Multi_Int_XV(const v1:MULTI_INT_4W_U; var mi:Multi_Int_XV); {$ifdef inline_functions} inline; {$endif}
 var
 v	:MULTI_INT_4W_U;
 n	:MULTI_INT_2W_U;
@@ -14481,7 +14213,6 @@ if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
 exit;
 
 CLEAN_EXIT:
-
 end;
 
 
@@ -14633,7 +14364,6 @@ if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
 exit;
 
 CLEAN_EXIT:
-
 end;
 
 
@@ -15346,7 +15076,6 @@ end;
 
 (******************************************)
 function add_Multi_Int_XV(const v1,v2:Multi_Int_XV):Multi_Int_XV;
-label 999;
 var
 	tv1,tv2			:MULTI_INT_2W_S;
 	i,s1,s2,s,ss	:MULTI_INT_1W_S;
@@ -15408,7 +15137,7 @@ if	(ss > Result.M_Value_Size) then
 		begin
 		Multi_Int_ERROR:= TRUE;
 		Result.Defined_flag:= FALSE;
-		goto 999;
+		exit;
 		end;
 	end;
 
@@ -15428,13 +15157,11 @@ while (i < ss) do
 if M_Val_All_Zero
 then Result.Negative_flag:=Multi_UBool_FALSE;
 
-999:
 end;
 
 
 (******************************************)
 function subtract_Multi_Int_XV(const v1,v2:Multi_Int_XV):Multi_Int_XV;
-label 999;
 var
 	tv1,tv2			:MULTI_INT_2W_S;
 	M_Val			:array of MULTI_INT_2W_S;
@@ -15493,7 +15220,7 @@ if	(ss > Result.M_Value_Size) then
 		begin
 		Multi_Int_ERROR:= TRUE;
 		Result.Defined_flag:= FALSE;
-		goto 999;
+		exit;
 		end;
 	end;
 
@@ -15513,7 +15240,6 @@ while (i < ss) do
 if M_Val_All_Zero
 then Result.Negative_flag:=Multi_UBool_FALSE;
 
-999:
 end;
 
 
@@ -15854,7 +15580,6 @@ end;
 
 (******************************************)
 class operator Multi_Int_XV.xor(const v1,v2:Multi_Int_XV):Multi_Int_XV;
-label 999;
 var
 i,s1,s2,s	:MULTI_INT_1W_S;
 tv1,tv2		:MULTI_INT_1W_U;
@@ -15898,7 +15623,7 @@ if (s > Result.M_Value_Size) then
 		begin
 		Multi_Int_ERROR:= TRUE;
 		Result.Defined_flag:= FALSE;
-		goto 999;
+		exit;
 		end;
 	end;
 
@@ -15918,13 +15643,11 @@ Result.Negative_flag:= Multi_UBool_FALSE;
 if	(v1.Negative <> v2.Negative)
 then Result.Negative_flag:= Multi_UBool_TRUE;
 
-999:
 end;
 
 
 (******************************************)
 class operator Multi_Int_XV.or(const v1,v2:Multi_Int_XV):Multi_Int_XV;
-label 999;
 var
 i,s1,s2,s	:MULTI_INT_1W_S;
 tv1,tv2		:MULTI_INT_1W_U;
@@ -15968,7 +15691,7 @@ if (s > Result.M_Value_Size) then
 		begin
 		Multi_Int_ERROR:= TRUE;
 		Result.Defined_flag:= FALSE;
-		goto 999;
+		exit;
 		end;
 	end;
 
@@ -15988,13 +15711,11 @@ Result.Negative_flag:= Multi_UBool_FALSE;
 if v1.Negative and v2.Negative
 then Result.Negative_flag:= Multi_UBool_TRUE;
 
-999:
 end;
 
 
 (******************************************)
 class operator Multi_Int_XV.and(const v1,v2:Multi_Int_XV):Multi_Int_XV;
-label 999;
 var
 i,s1,s2,s	:MULTI_INT_1W_S;
 tv1,tv2		:MULTI_INT_1W_U;
@@ -16038,7 +15759,7 @@ if (s > Result.M_Value_Size) then
 		begin
 		Multi_Int_ERROR:= TRUE;
 		Result.Defined_flag:= FALSE;
-		goto 999;
+		exit;
 		end;
 	end;
 
@@ -16058,13 +15779,11 @@ Result.Negative_flag:= Multi_UBool_FALSE;
 if v1.Negative and v2.Negative
 then Result.Negative_flag:= Multi_UBool_TRUE;
 
-999:
 end;
 
 
 (******************************************)
 class operator Multi_Int_XV.not(const v1:Multi_Int_XV):Multi_Int_XV;
-label 999;
 var
 i,s1,s	:MULTI_INT_1W_S;
 tv1		:MULTI_INT_1W_U;
@@ -16105,7 +15824,7 @@ if (s > Result.M_Value_Size) then
 		begin
 		Multi_Int_ERROR:= TRUE;
 		Result.Defined_flag:= FALSE;
-		goto 999;
+		exit;
 		end;
 	end;
 
@@ -16124,13 +15843,11 @@ Result.Negative_flag:=  Multi_UBool_TRUE;
 if v1.Negative
 then Result.Negative_flag:= Multi_UBool_FALSE;
 
-999:
 end;
 
 
 (*******************v4*********************)
 procedure multiply_Multi_Int_XV(const v1,v2:Multi_Int_XV;out Result:Multi_Int_XV); overload;
-label	999;
 var
 i,j,k,
 s1,s2,ss,
@@ -16168,7 +15885,7 @@ or		(zf)
 if	(z2 < 0) then
 	begin
 	Result.Negative_flag:=Multi_UBool_FALSE;
-	goto 999;
+	exit;
 	end;
 
 // skip leading zeros in v1
@@ -16188,7 +15905,7 @@ or		(zf)
 if	(z1 < 0) then
 	begin
 	Result.Negative_flag:=Multi_UBool_FALSE;
-	goto 999;
+	exit;
 	end;
 
 // main loopy
@@ -16254,7 +15971,7 @@ if ((z1 + 1) > Result.M_Value_Size) then
 		begin
 		Multi_Int_ERROR:= TRUE;
 		Result.Defined_flag:= FALSE;
-		goto 999;
+		exit;
 		end;
 	end;
 
@@ -16266,7 +15983,6 @@ while (i <= z1) do
 	Inc(i);
 	end;
 
-999:
 end;
 
 
@@ -16447,7 +16163,7 @@ end;
 
 (********************v0********************)
 procedure intdivide_taylor_warruth_XV(const P_dividend,P_dividor:Multi_Int_XV;out P_quotient,P_remainder:Multi_Int_XV);
-label	AGAIN,9000,9999;
+label	AGAIN,FINISH;
 
 var
 dividor,
@@ -16500,7 +16216,7 @@ else
 	if	(Abs(P_dividor) > Abs(P_dividend)) then
 		begin
 	 	P_remainder:= P_dividend;
-		goto 9000;
+		goto FINISH;
 	    end;
 
 	div_size:= (P_dividend.M_Value_Size + 1);
@@ -16514,7 +16230,7 @@ else
 		P_remainder.Defined_flag:= FALSE;
 		P_remainder.Overflow_flag:= TRUE;
 		Multi_Int_ERROR:= TRUE;
-		goto 9999;
+		exit;
 		end;
 
     dividend:= P_dividend;
@@ -16556,7 +16272,7 @@ else
 			Dec(i);
 			end;
 		P_remainder.M_Value[0]:= word_carry;
-		goto 9000;
+		goto FINISH;
 		end;
 
 	shiftup_bits_dividor:= nlz_bits(dividor.M_Value[dividor_non_zero_pos]);
@@ -16636,7 +16352,7 @@ else
 	ShiftDown_MultiBits_Multi_Int_XV(dividend, shiftup_bits_dividor);
 	P_remainder:= dividend;
 
-9000:
+FINISH:
 	if	(P_dividend.Negative_flag = TRUE) and (P_remainder > 0)
 	then
 		P_remainder.Negative_flag:= TRUE;
@@ -16648,7 +16364,6 @@ else
 
 	end;
 
-9999:
 end;
 
 
