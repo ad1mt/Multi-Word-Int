@@ -165,6 +165,10 @@ v4.66x
 v4.67
 -	1.	restore inlining functions and with a define/conditional
 
+v4.68
+-	1.	some function "var" parameters should have been "out"
+-	2.	added new procedure instance of XV type init.
+
 *)
 
 INTERFACE
@@ -174,7 +178,7 @@ uses	sysutils
 ;
 
 const
-	version = '4.67.00';
+	version = '4.68.00';
 
 const
 
@@ -11924,7 +11928,7 @@ end;
 
 
 (******************************************)
-procedure Multi_Int_X4_to_Multi_Int_X5(const v1:Multi_Int_X4; var MI:Multi_Int_X5); 
+procedure Multi_Int_X4_to_Multi_Int_X5(const v1:Multi_Int_X4; out MI:Multi_Int_X5);
 var
 	n				:MULTI_INT_1W_U;
 begin
@@ -12565,6 +12569,7 @@ Multi_Int_XV
 ******************************************
 }
 
+
 (******************************************)
 procedure Multi_Int_XV.init;	{$ifdef inline_functions_level_1} inline; {$endif}
 begin
@@ -12582,6 +12587,26 @@ self.M_Value_Size:= Multi_XV_size;
 self.Negative_flag:= Multi_UBool_FALSE;
 self.Overflow_flag:= FALSE;
 self.Defined_flag:= FALSE;
+end;
+
+
+(******************************************)
+procedure init_Multi_Int_XV(out mi:Multi_Int_XV);	{$ifdef inline_functions_level_1} inline; {$endif}
+begin
+mi.Defined_flag:= FALSE;
+if	(NOT Multi_Init_Initialisation_done) then
+	begin
+	Multi_Int_ERROR:= TRUE;
+	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
+		Raise EInterror.create('Multi_Init_Initialisation has not been called');
+	exit;
+	end;
+
+setlength(mi.M_Value, Multi_XV_size);
+mi.M_Value_Size:= Multi_XV_size;
+mi.Negative_flag:= Multi_UBool_FALSE;
+mi.Overflow_flag:= FALSE;
+mi.Defined_flag:= FALSE;
 end;
 
 
@@ -12625,11 +12650,11 @@ end;
 
 
 (******************************************)
-procedure Multi_Int_XV_to_Multi_Int_XV(const v1:Multi_Int_XV; var MI:Multi_Int_XV);
+procedure Multi_Int_XV_to_Multi_Int_XV(const v1:Multi_Int_XV; out MI:Multi_Int_XV);
 var	n	:MULTI_INT_1W_U;
 
 begin
-MI.init;
+init_Multi_Int_XV(MI);
 
 if	(v1.Defined_flag = FALSE)
 then
@@ -13543,7 +13568,7 @@ end;
 
 
 (*********************v2*******************)
-procedure Multi_Int_XV_to_ansistring(const v1:Multi_Int_XV; var v2:ansistring);	
+procedure Multi_Int_XV_to_ansistring(const v1:Multi_Int_XV; out v2:ansistring);
 var
 s				:ansistring = '';
 M_Val			:array of MULTI_INT_2W_U;
@@ -13756,7 +13781,7 @@ end;
 
 
 (******************************************)
-procedure Multi_Int_XV_to_hex(const v1:Multi_Int_XV; var v2:ansistring; LZ:T_Multi_Leading_Zeros); 
+procedure Multi_Int_XV_to_hex(const v1:Multi_Int_XV; out v2:ansistring; LZ:T_Multi_Leading_Zeros);
 var
 	s		:ansistring = '';
 	i,n		:MULTI_INT_1W_S;
@@ -13825,7 +13850,7 @@ Multi_Int_ERROR:= FALSE;
 s:= Multi_XV_size;
 setlength(M_Val, s);
 
-mi.init;
+init_Multi_Int_XV(MI);
 mi.Overflow_flag:=FALSE;
 mi.Defined_flag:= TRUE;
 mi.Negative_flag:= FALSE;
@@ -13941,7 +13966,7 @@ end;
 
 
 (******************************************)
-procedure Multi_Int_XV_to_bin(const v1:Multi_Int_XV; var v2:ansistring; LZ:T_Multi_Leading_Zeros); 
+procedure Multi_Int_XV_to_bin(const v1:Multi_Int_XV; out v2:ansistring; LZ:T_Multi_Leading_Zeros);
 var
 	s		:ansistring = '';
 	i,n		:MULTI_INT_1W_S;
@@ -13998,7 +14023,7 @@ procedure MULTI_INT_2W_S_to_Multi_Int_XV(const v1:MULTI_INT_2W_S; out mi:Multi_I
 var
 	n				:MULTI_INT_2W_U;
 begin
-mi.init;
+init_Multi_Int_XV(MI);
 mi.Overflow_flag:=FALSE;
 mi.Defined_flag:=TRUE;
 
@@ -14035,7 +14060,7 @@ end;
 procedure MULTI_INT_2W_U_to_Multi_Int_XV(const v1:MULTI_INT_2W_U; out mi:Multi_Int_XV);			{$ifdef inline_functions_level_1} inline; {$endif}
 var	n	:MULTI_INT_2W_U;
 begin
-mi.init;
+init_Multi_Int_XV(MI);
 mi.Overflow_flag:=FALSE;
 mi.Defined_flag:=TRUE;
 mi.Negative_flag:= Multi_UBool_FALSE;
@@ -14065,7 +14090,7 @@ end;
 // 4 word integers do not exist in 64bit mode
 
 (******************************************)
-procedure MULTI_INT_4W_S_to_Multi_Int_XV(const v1:MULTI_INT_4W_S; var mi:Multi_Int_XV); 
+procedure MULTI_INT_4W_S_to_Multi_Int_XV(const v1:MULTI_INT_4W_S; out mi:Multi_Int_XV);
 var
 v	:MULTI_INT_4W_U;
 n	:MULTI_INT_2W_U;
@@ -14115,7 +14140,7 @@ end;
 
 
 (******************************************)
-procedure MULTI_INT_4W_U_to_Multi_Int_XV(const v1:MULTI_INT_4W_U; var mi:Multi_Int_XV); 
+procedure MULTI_INT_4W_U_to_Multi_Int_XV(const v1:MULTI_INT_4W_U; out mi:Multi_Int_XV);
 var
 v	:MULTI_INT_4W_U;
 n	:MULTI_INT_2W_U;
@@ -14165,11 +14190,11 @@ end;
 
 
 (******************************************)
-procedure Multi_Int_X4_to_Multi_Int_XV(const v1:Multi_Int_X4; var MI:Multi_Int_XV);	
+procedure Multi_Int_X4_to_Multi_Int_XV(const v1:Multi_Int_X4; out MI:Multi_Int_XV);
 label OVERFLOW_BRANCH, CLEAN_EXIT;
 var	n	:MULTI_INT_1W_U;
 begin
-MI.init;
+init_Multi_Int_XV(MI);
 
 if	(v1.Defined_flag = FALSE)
 then
@@ -14240,11 +14265,11 @@ end;
 
 
 (******************************************)
-procedure Multi_Int_X3_to_Multi_Int_XV(const v1:Multi_Int_X3; var MI:Multi_Int_XV);	
+procedure Multi_Int_X3_to_Multi_Int_XV(const v1:Multi_Int_X3; out MI:Multi_Int_XV);
 label OVERFLOW_BRANCH, CLEAN_EXIT;
 var	n	:MULTI_INT_1W_U;
 begin
-MI.init;
+init_Multi_Int_XV(MI);
 
 if	(v1.Defined_flag = FALSE)
 then
@@ -14316,11 +14341,11 @@ end;
 
 
 (******************************************)
-procedure Multi_Int_X2_to_Multi_Int_XV(const v1:Multi_Int_X2; var MI:Multi_Int_XV);	
+procedure Multi_Int_X2_to_Multi_Int_XV(const v1:Multi_Int_X2; out MI:Multi_Int_XV);
 label OVERFLOW_BRANCH, CLEAN_EXIT;
 var	n	:MULTI_INT_1W_U;
 begin
-MI.init;
+init_Multi_Int_XV(MI);
 
 if	(v1.Defined_flag = FALSE)
 then
@@ -15624,7 +15649,7 @@ s2:= v2.M_Value_Size;
 s:= s1;
 if (s1 < s2) then s:= s2;
 
-Result.init;
+init_Multi_Int_XV(Result);
 if (s > Result.M_Value_Size) then
 	begin
 	Multi_Int_Reset_XV_Size(Result, s);
@@ -15692,7 +15717,7 @@ s2:= v2.M_Value_Size;
 s:= s1;
 if (s1 < s2) then s:= s2;
 
-Result.init;
+init_Multi_Int_XV(Result);
 if (s > Result.M_Value_Size) then
 	begin
 	Multi_Int_Reset_XV_Size(Result, s);
@@ -15760,7 +15785,7 @@ s2:= v2.M_Value_Size;
 s:= s1;
 if (s1 < s2) then s:= s2;
 
-Result.init;
+init_Multi_Int_XV(Result);
 if (s > Result.M_Value_Size) then
 	begin
 	Multi_Int_Reset_XV_Size(Result, s);
@@ -15825,7 +15850,7 @@ then
 s1:= v1.M_Value_Size;
 s:= s1;
 
-Result.init;
+init_Multi_Int_XV(Result);
 if (s > Result.M_Value_Size) then
 	begin
 	Multi_Int_Reset_XV_Size(Result, s);
@@ -15875,7 +15900,7 @@ ss:= (s1 + s2 + 1);
 setlength(M_Val, ss);
 }
 
-Result.init;
+init_Multi_Int_XV(Result);
 Result.Overflow_flag:=FALSE;
 Result.Defined_flag:=TRUE;
 Result.Negative_flag:=Multi_UBool_UNDEF;
@@ -16041,8 +16066,7 @@ if	(R.Negative_flag = Multi_UBool_UNDEF) then
 	then R.Negative_flag:= Multi_UBool_FALSE
 	else R.Negative_flag:=Multi_UBool_TRUE;
 
-Result.init;
-
+init_Multi_Int_XV(Result);
 Result:= R;
 
 if (Result.Overflow_flag = TRUE) then
