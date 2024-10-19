@@ -47,9 +47,7 @@ UNIT Multi_Int;
 
 
 // This makes procedure and functions inlined
-
-{$define inline_functions_level_1}
-// {$define inline_functions_level_2}
+// {$define inline_functions_level_1}
 
 (* END OF USER OPTIONAL DEFINES *)
 
@@ -169,6 +167,14 @@ v4.68
 -	1.	some function "var" parameters should have been "out"
 -	2.	added new procedure instance of XV type init.
 
+v4.69
+-	1.	minor code improvements (not bugs)
+
+v4.70
+-	1.	minor code tidy-ups in division functions
+-	2.	major bug fixes in XV type division function
+-	3.	more major bug fixes in XV type division function
+
 *)
 
 INTERFACE
@@ -178,7 +184,7 @@ uses	sysutils
 ;
 
 const
-	version = '4.68.00';
+	version = '4.70.00';
 
 const
 
@@ -3711,7 +3717,7 @@ adjacent_word_division,
 word_division,
 word_dividend,
 word_carry,
-next_word_carry
+adjacent_word_carry
 				:MULTI_INT_2W_U;
 
 finished		:boolean;
@@ -3785,7 +3791,7 @@ else
 		ShiftUp_NBits_Multi_Int_X3(dividor, shiftup_bits_dividor);
 		end;
 
-	next_word_carry:= 0;
+	adjacent_word_carry:= 0;
 	word_carry:= 0;
 	dividor_i:= dividor_non_zero_pos;
 	dividor_i_1:= (dividor_i - 1);
@@ -3806,7 +3812,7 @@ else
 		begin
 		word_dividend:= ((word_carry * MULTI_INT_2W_U(MULTI_INT_1W_U_MAXINT_1)) + dividend.M_Value[dividend_i]);
         word_division:= (word_dividend div dividor.M_Value[dividor_i]);
-        next_word_carry:= (word_dividend mod dividor.M_Value[dividor_i]);
+        adjacent_word_carry:= (word_dividend mod dividor.M_Value[dividor_i]);
 
 		if	(word_division > 0) then
 			begin
@@ -3814,15 +3820,15 @@ else
 			if	(dividend_i_1 >= 0) then
 				begin
 				AGAIN:
-				adjacent_word_dividend:= ((next_word_carry * MULTI_INT_2W_U(MULTI_INT_1W_U_MAXINT_1)) + dividend.M_Value[dividend_i_1]);
+				adjacent_word_dividend:= ((adjacent_word_carry * MULTI_INT_2W_U(MULTI_INT_1W_U_MAXINT_1)) + dividend.M_Value[dividend_i_1]);
                 adjacent_word_division:= (dividor.M_Value[dividor_i_1] * word_division);
 				if	(adjacent_word_division > adjacent_word_dividend)
 				or	(word_division >= MULTI_INT_1W_U_MAXINT_1)
 				then
 					begin
 					Dec(word_division);
-					next_word_carry:= next_word_carry + dividor.M_Value[dividor_i];
-					if (next_word_carry < MULTI_INT_1W_U_MAXINT_1) then
+					adjacent_word_carry:= adjacent_word_carry + dividor.M_Value[dividor_i];
+					if (adjacent_word_carry < MULTI_INT_1W_U_MAXINT_1) then
 						goto AGAIN;
 					end;
 				end;
@@ -7265,7 +7271,7 @@ adjacent_word_division,
 word_division,
 word_dividend,
 word_carry,
-next_word_carry
+adjacent_word_carry
 				:MULTI_INT_2W_U;
 
 finished		:boolean;
@@ -7339,7 +7345,7 @@ else
 		ShiftUp_NBits_Multi_Int_X4(dividor, shiftup_bits_dividor);
 		end;
 
-	next_word_carry:= 0;
+	adjacent_word_carry:= 0;
 	word_carry:= 0;
 	dividor_i:= dividor_non_zero_pos;
 	dividor_i_1:= (dividor_i - 1);
@@ -7360,7 +7366,7 @@ else
 		begin
 		word_dividend:= ((word_carry * MULTI_INT_2W_U(MULTI_INT_1W_U_MAXINT_1)) + dividend.M_Value[dividend_i]);
         word_division:= (word_dividend div dividor.M_Value[dividor_i]);
-        next_word_carry:= (word_dividend mod dividor.M_Value[dividor_i]);
+        adjacent_word_carry:= (word_dividend mod dividor.M_Value[dividor_i]);
 
 		if	(word_division > 0) then
 			begin
@@ -7368,15 +7374,15 @@ else
 			if	(dividend_i_1 >= 0) then
 				begin
 				AGAIN:
-				adjacent_word_dividend:= ((next_word_carry * MULTI_INT_2W_U(MULTI_INT_1W_U_MAXINT_1)) + dividend.M_Value[dividend_i_1]);
+				adjacent_word_dividend:= ((adjacent_word_carry * MULTI_INT_2W_U(MULTI_INT_1W_U_MAXINT_1)) + dividend.M_Value[dividend_i_1]);
                 adjacent_word_division:= (dividor.M_Value[dividor_i_1] * word_division);
 				if	(adjacent_word_division > adjacent_word_dividend)
 				or	(word_division >= MULTI_INT_1W_U_MAXINT_1)
 				then
 					begin
 					Dec(word_division);
-					next_word_carry:= next_word_carry + dividor.M_Value[dividor_i];
-					if (next_word_carry < MULTI_INT_1W_U_MAXINT_1) then
+					adjacent_word_carry:= adjacent_word_carry + dividor.M_Value[dividor_i];
+					if (adjacent_word_carry < MULTI_INT_1W_U_MAXINT_1) then
 						goto AGAIN;
 					end;
 				end;
@@ -11052,7 +11058,7 @@ adjacent_word_division,
 word_division,
 word_dividend,
 word_carry,
-next_word_carry
+adjacent_word_carry
 				:MULTI_INT_2W_U;
 
 finished		:boolean;
@@ -11124,7 +11130,7 @@ else
 		ShiftUp_NBits_Multi_Int_X5(dividor, shiftup_bits_dividor);
 		end;
 
-	next_word_carry:= 0;
+	adjacent_word_carry:= 0;
 	word_carry:= 0;
 	dividor_i:= dividor_non_zero_pos;
 	dividor_i_1:= (dividor_i - 1);
@@ -11145,7 +11151,7 @@ else
 		begin
 		word_dividend:= ((word_carry * MULTI_INT_2W_U(MULTI_INT_1W_U_MAXINT_1)) + dividend.M_Value[dividend_i]);
         word_division:= (word_dividend div dividor.M_Value[dividor_i]);
-        next_word_carry:= (word_dividend mod dividor.M_Value[dividor_i]);
+        adjacent_word_carry:= (word_dividend mod dividor.M_Value[dividor_i]);
 
 		if	(word_division > 0) then
 			begin
@@ -11153,15 +11159,15 @@ else
 			if	(dividend_i_1 >= 0) then
 				begin
 				AGAIN:
-				adjacent_word_dividend:= ((next_word_carry * MULTI_INT_2W_U(MULTI_INT_1W_U_MAXINT_1)) + dividend.M_Value[dividend_i_1]);
+				adjacent_word_dividend:= ((adjacent_word_carry * MULTI_INT_2W_U(MULTI_INT_1W_U_MAXINT_1)) + dividend.M_Value[dividend_i_1]);
                 adjacent_word_division:= (dividor.M_Value[dividor_i_1] * word_division);
 				if	(adjacent_word_division > adjacent_word_dividend)
 				or	(word_division >= MULTI_INT_1W_U_MAXINT_1)
 				then
 					begin
 					Dec(word_division);
-					next_word_carry:= next_word_carry + dividor.M_Value[dividor_i];
-					if (next_word_carry < MULTI_INT_1W_U_MAXINT_1) then
+					adjacent_word_carry:= adjacent_word_carry + dividor.M_Value[dividor_i];
+					if (adjacent_word_carry < MULTI_INT_1W_U_MAXINT_1) then
 						goto AGAIN;
 					end;
 				end;
@@ -12683,9 +12689,8 @@ then
 if (v1.M_Value_Size > mi.M_Value_Size) then
 	begin
 	Multi_Int_Reset_XV_Size(MI, v1.M_Value_Size);
-	if	(mi.Overflow) then
+	if Multi_Int_ERROR then
 		begin
-		Multi_Int_ERROR:= TRUE;
 		mi.Defined_flag:=FALSE;
 		if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
 			Raise EInterror.create('Overflow');
@@ -12845,49 +12850,49 @@ end;
 
 
 (******************************************)
-function Multi_Int_XV.Overflow:boolean;	{$ifdef inline_functions_level_1} inline; {$endif}
+function Multi_Int_XV.Overflow:boolean;							{$ifdef inline_functions_level_1} inline; {$endif}
 begin
 Result:= self.Overflow_flag;
 end;
 
 
 (******************************************)
-function Multi_Int_XV.Defined:boolean;	{$ifdef inline_functions_level_1} inline; {$endif}
+function Multi_Int_XV.Defined:boolean;							{$ifdef inline_functions_level_1} inline; {$endif}
 begin
 Result:= self.Defined_flag;
 end;
 
 
 (******************************************)
-function Overflow(const v1:Multi_Int_XV):boolean; overload;	{$ifdef inline_functions_level_1} inline; {$endif}
+function Overflow(const v1:Multi_Int_XV):boolean; overload;		{$ifdef inline_functions_level_1} inline; {$endif}
 begin
 Result:= v1.Overflow_flag;
 end;
 
 
 (******************************************)
-function Defined(const v1:Multi_Int_XV):boolean; overload; {$ifdef inline_functions_level_1} inline; {$endif}
+function Defined(const v1:Multi_Int_XV):boolean; overload; 		{$ifdef inline_functions_level_1} inline; {$endif}
 begin
 Result:= v1.Defined_flag;
 end;
 
 
 (******************************************)
-function Multi_Int_XV.Negative:boolean; {$ifdef inline_functions_level_1} inline; {$endif}
+function Multi_Int_XV.Negative:boolean; 						{$ifdef inline_functions_level_1} inline; {$endif}
 begin
 Result:= self.Negative_flag;
 end;
 
 
 (******************************************)
-function Negative(const v1:Multi_Int_XV):boolean; overload;	{$ifdef inline_functions_level_1} inline; {$endif}
+function Negative(const v1:Multi_Int_XV):boolean; overload;		{$ifdef inline_functions_level_1} inline; {$endif}
 begin
 Result:= v1.Negative_flag;
 end;
 
 
 (******************************************)
-function Abs(const v1:Multi_Int_XV):Multi_Int_XV; overload;	{$ifdef inline_functions_level_1} inline; {$endif}
+function Abs(const v1:Multi_Int_XV):Multi_Int_XV; overload;		{$ifdef inline_functions_level_1} inline; {$endif}
 begin
 Result:= v1;
 Result.Negative_flag:= Multi_UBool_FALSE;
@@ -12929,7 +12934,7 @@ end;
 
 
 (******************************************)
-function Odd(const v1:Multi_Int_XV):boolean; overload;
+function Odd(const v1:Multi_Int_XV):boolean; overload;					{$ifdef inline_functions_level_1} inline; {$endif}
 begin
 Result:= Multi_Int_XV_Odd(v1);
 end;
@@ -12937,12 +12942,9 @@ end;
 
 (******************************************)
 function Multi_Int_XV_Even(const v1:Multi_Int_XV):boolean; 				{$ifdef inline_functions_level_1} inline; {$endif}
-var	bit1_mask	:MULTI_INT_1W_U;
 begin
 
-bit1_mask:= $1;
-
-if ((v1.M_Value[0] and bit1_mask) = bit1_mask)
+if ((v1.M_Value[0] and $1) = $1)
 then Result:= FALSE
 else Result:= TRUE;
 
@@ -12960,7 +12962,7 @@ end;
 
 
 (******************************************)
-function Even(const v1:Multi_Int_XV):boolean; overload;
+function Even(const v1:Multi_Int_XV):boolean; overload;					{$ifdef inline_functions_level_1} inline; {$endif}
 begin
 Result:= Multi_Int_XV_Even(v1);
 end;
@@ -13321,14 +13323,14 @@ end;
 
 
 (******************************************)
-function ABS_notequal_Multi_Int_XV(const v1,v2:Multi_Int_XV):Boolean; {$ifdef inline_functions_level_1} inline; {$endif}
+function ABS_notequal_Multi_Int_XV(const v1,v2:Multi_Int_XV):Boolean; 	{$ifdef inline_functions_level_1} inline; {$endif}
 begin
 Result:= (not ABS_equal_Multi_Int_XV(v1,v2));
 end;
 
 
 (******************************************)
-class operator Multi_Int_XV.=(const v1,v2:Multi_Int_XV):Boolean;	{$ifdef inline_functions_level_1} inline; {$endif}
+class operator Multi_Int_XV.=(const v1,v2:Multi_Int_XV):Boolean;		{$ifdef inline_functions_level_1} inline; {$endif}
 begin
 if	(Not v1.Defined_flag)
 or	(Not v2.Defined_flag)
@@ -13353,7 +13355,7 @@ end;
 
 
 (******************************************)
-class operator Multi_Int_XV.<>(const v1,v2:Multi_Int_XV):Boolean;	{$ifdef inline_functions_level_1} inline; {$endif}
+class operator Multi_Int_XV.<>(const v1,v2:Multi_Int_XV):Boolean;		{$ifdef inline_functions_level_1} inline; {$endif}
 begin
 if	(Not v1.Defined_flag)
 or	(Not v2.Defined_flag)
@@ -13378,7 +13380,7 @@ end;
 
 
 (******************************************)
-class operator Multi_Int_XV.<=(const v1,v2:Multi_Int_XV):Boolean;	{$ifdef inline_functions_level_1} inline; {$endif}
+class operator Multi_Int_XV.<=(const v1,v2:Multi_Int_XV):Boolean;		{$ifdef inline_functions_level_1} inline; {$endif}
 begin
 if	(Not v1.Defined_flag)
 or	(Not v2.Defined_flag)
@@ -13411,7 +13413,7 @@ end;
 
 
 (******************************************)
-class operator Multi_Int_XV.>=(const v1,v2:Multi_Int_XV):Boolean;	{$ifdef inline_functions_level_1} inline; {$endif}
+class operator Multi_Int_XV.>=(const v1,v2:Multi_Int_XV):Boolean;		{$ifdef inline_functions_level_1} inline; {$endif}
 begin
 if	(Not v1.Defined_flag)
 or	(Not v2.Defined_flag)
@@ -13530,10 +13532,9 @@ if	(length(v1) > 0) then
 if (s > Multi_XV_size) then
 	begin
 	Multi_Int_Reset_XV_Size(MI, s);
-	if	(mi.Overflow) then
+	if Multi_Int_ERROR then
 		begin
 		mi.Defined_flag:= FALSE;
-		Multi_Int_ERROR:= TRUE;
 		if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
 			begin
 			Raise EInterror.create('Overflow');
@@ -13561,7 +13562,7 @@ end;
 
 
 (******************************************)
-class operator Multi_Int_XV.:=(const v1:ansistring):Multi_Int_XV;	{$ifdef inline_functions_level_1} inline; {$endif}
+class operator Multi_Int_XV.:=(const v1:ansistring):Multi_Int_XV;		{$ifdef inline_functions_level_1} inline; {$endif}
 begin
 ansistring_to_Multi_Int_XV(v1,Result);
 end;
@@ -13641,14 +13642,14 @@ end;
 
 
 (******************************************)
-function Multi_Int_XV.ToStr:ansistring;	{$ifdef inline_functions_level_1} inline; {$endif}
+function Multi_Int_XV.ToStr:ansistring;									{$ifdef inline_functions_level_1} inline; {$endif}
 begin
 Multi_Int_XV_to_ansistring(self, Result);
 end;
 
 
 (******************************************)
-class operator Multi_Int_XV.:=(const v1:Multi_Int_XV):ansistring;	{$ifdef inline_functions_level_1} inline; {$endif}
+class operator Multi_Int_XV.:=(const v1:Multi_Int_XV):ansistring;		{$ifdef inline_functions_level_1} inline; {$endif}
 begin
 Multi_Int_XV_to_ansistring(v1, Result);
 end;
@@ -13737,10 +13738,9 @@ if	(length(v1) > 0) then
 if (s > Multi_XV_size) then
 	begin
 	Multi_Int_Reset_XV_Size(MI, s);
-	if	(mi.Overflow) then
+	if Multi_Int_ERROR then
 		begin
 		mi.Defined_flag:= FALSE;
-		Multi_Int_ERROR:= TRUE;
 		if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
 			begin
 			Raise EInterror.create('Overflow');
@@ -13767,14 +13767,14 @@ end;
 
 
 (******************************************)
-function Multi_Int_XV.FromHex(const v1:ansistring):Multi_Int_XV;
+function Multi_Int_XV.FromHex(const v1:ansistring):Multi_Int_XV;			{$ifdef inline_functions_level_1} inline; {$endif}
 begin
 hex_to_Multi_Int_XV(v1,Result);
 end;
 
 
 (******************************************)
-procedure FromHex(const v1:ansistring; out v2:Multi_Int_XV); overload;
+procedure FromHex(const v1:ansistring; out v2:Multi_Int_XV); overload;		{$ifdef inline_functions_level_1} inline; {$endif}
 begin
 hex_to_Multi_Int_XV(v1,v2);
 end;
@@ -13830,7 +13830,7 @@ end;
 
 
 (******************************************)
-function Multi_Int_XV.ToHex(const LZ:T_Multi_Leading_Zeros):ansistring;
+function Multi_Int_XV.ToHex(const LZ:T_Multi_Leading_Zeros):ansistring;			{$ifdef inline_functions_level_1} inline; {$endif}
 begin
 Multi_Int_XV_to_hex(self, Result, LZ);
 end;
@@ -13922,10 +13922,9 @@ if	(length(v1) > 0) then
 if (s > Multi_XV_size) then
 	begin
 	Multi_Int_Reset_XV_Size(MI, s);
-	if	(mi.Overflow) then
+	if Multi_Int_ERROR then
 		begin
 		mi.Defined_flag:= FALSE;
-		Multi_Int_ERROR:= TRUE;
 		if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
 			begin
 			Raise EInterror.create('Overflow');
@@ -13952,14 +13951,14 @@ end;
 
 
 (******************************************)
-procedure FromBin(const v1:ansistring; out mi:Multi_Int_XV); overload;
+procedure FromBin(const v1:ansistring; out mi:Multi_Int_XV); overload;			{$ifdef inline_functions_level_1} inline; {$endif}
 begin
 Bin_to_Multi_Int_XV(v1,mi);
 end;
 
 
 (******************************************)
-function Multi_Int_XV.FromBin(const v1:ansistring):Multi_Int_XV;
+function Multi_Int_XV.FromBin(const v1:ansistring):Multi_Int_XV;				{$ifdef inline_functions_level_1} inline; {$endif}
 begin
 bin_to_Multi_Int_XV(v1,Result);
 end;
@@ -14012,14 +14011,14 @@ end;
 
 
 (******************************************)
-function Multi_Int_XV.ToBin(const LZ:T_Multi_Leading_Zeros):ansistring;
+function Multi_Int_XV.ToBin(const LZ:T_Multi_Leading_Zeros):ansistring;				{$ifdef inline_functions_level_1} inline; {$endif}
 begin
 Multi_Int_XV_to_bin(self, Result, LZ);
 end;
 
 
 (******************************************)
-procedure MULTI_INT_2W_S_to_Multi_Int_XV(const v1:MULTI_INT_2W_S; out mi:Multi_Int_XV);					{$ifdef inline_functions_level_1} inline; {$endif}
+procedure MULTI_INT_2W_S_to_Multi_Int_XV(const v1:MULTI_INT_2W_S; out mi:Multi_Int_XV);		{$ifdef inline_functions_level_1} inline; {$endif}
 var
 	n				:MULTI_INT_2W_U;
 begin
@@ -14099,10 +14098,9 @@ mi.init;
 if (mi.M_Value_Size < 4) then
 	begin
 	Multi_Int_Reset_XV_Size(MI, 4);
-	if	(mi.Overflow) then
+	if Multi_Int_ERROR then
 		begin
 		mi.Defined_flag:=FALSE;
-		Multi_Int_ERROR:= TRUE;
 		if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
 			Raise EInterror.create('Overflow');
 		exit;
@@ -14150,10 +14148,9 @@ mi.init;
 if (mi.M_Value_Size < 4) then
 	begin
 	Multi_Int_Reset_XV_Size(MI, 4);
-	if	(mi.Overflow) then
+	if Multi_Int_ERROR then
 		begin
 		mi.Defined_flag:=FALSE;
-		Multi_Int_ERROR:= TRUE;
 		if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
 			Raise EInterror.create('Overflow');
 		exit;
@@ -14219,7 +14216,7 @@ n:= 0;
 if	(MI.M_Value_Size < Multi_X4_size) then
 	begin
 	Multi_Int_Reset_XV_Size(MI, Multi_X4_size);
-	if	(MI.Overflow) then
+	if Multi_Int_ERROR then
 		goto OVERFLOW_BRANCH;
 	end;
 
@@ -14251,14 +14248,14 @@ end;
 
 
 (******************************************)
-class operator Multi_Int_XV.:=(const v1:Multi_Int_X4):Multi_Int_XV;
+class operator Multi_Int_XV.:=(const v1:Multi_Int_X4):Multi_Int_XV;			{$ifdef inline_functions_level_1} inline; {$endif}
 begin
 Multi_Int_X4_to_Multi_Int_XV(v1,Result);
 end;
 
 
 (******************************************)
-function To_Multi_Int_XV(const v1:Multi_Int_X4):Multi_Int_XV;
+function To_Multi_Int_XV(const v1:Multi_Int_X4):Multi_Int_XV;				{$ifdef inline_functions_level_1} inline; {$endif}
 begin
 Multi_Int_X4_to_Multi_Int_XV(v1,Result);
 end;
@@ -14294,7 +14291,7 @@ n:= 0;
 if	(MI.M_Value_Size < Multi_X3_size) then
 	begin
 	Multi_Int_Reset_XV_Size(MI, Multi_X3_size);
-	if	(MI.Overflow) then
+	if Multi_Int_ERROR then
 		goto OVERFLOW_BRANCH;
 	end;
 
@@ -14327,14 +14324,14 @@ end;
 
 
 (******************************************)
-class operator Multi_Int_XV.:=(const v1:Multi_Int_X3):Multi_Int_XV;
+class operator Multi_Int_XV.:=(const v1:Multi_Int_X3):Multi_Int_XV;				{$ifdef inline_functions_level_1} inline; {$endif}
 begin
 Multi_Int_X3_to_Multi_Int_XV(v1,Result);
 end;
 
 
 (******************************************)
-function To_Multi_Int_XV(const v1:Multi_Int_X3):Multi_Int_XV;
+function To_Multi_Int_XV(const v1:Multi_Int_X3):Multi_Int_XV;					{$ifdef inline_functions_level_1} inline; {$endif}
 begin
 Multi_Int_X3_to_Multi_Int_XV(v1,Result);
 end;
@@ -14370,7 +14367,7 @@ n:= 0;
 if	(MI.M_Value_Size < Multi_X2_size) then
 	begin
 	Multi_Int_Reset_XV_Size(MI, Multi_X2_size);
-	if	(MI.Overflow) then
+	if Multi_Int_ERROR then
 		goto OVERFLOW_BRANCH;
 	end;
 
@@ -14402,14 +14399,14 @@ end;
 
 
 (******************************************)
-class operator Multi_Int_XV.:=(const v1:Multi_Int_X2):Multi_Int_XV;
+class operator Multi_Int_XV.:=(const v1:Multi_Int_X2):Multi_Int_XV;				{$ifdef inline_functions_level_1} inline; {$endif}
 begin
 Multi_Int_X2_to_Multi_Int_XV(v1,Result);
 end;
 
 
 (******************************************)
-function To_Multi_Int_XV(const v1:Multi_Int_X2):Multi_Int_XV;
+function To_Multi_Int_XV(const v1:Multi_Int_X2):Multi_Int_XV;					{$ifdef inline_functions_level_1} inline; {$endif}
 begin
 Multi_Int_X2_to_Multi_Int_XV(v1,Result);
 end;
@@ -15167,9 +15164,8 @@ Result:= 0;
 if	(ss > Result.M_Value_Size) then
 	begin
 	Multi_Int_Reset_XV_Size(Result, ss);
-	if (Result.Overflow) then
+	if Multi_Int_ERROR then
 		begin
-		Multi_Int_ERROR:= TRUE;
 		Result.Defined_flag:= FALSE;
 		exit;
 		end;
@@ -15250,9 +15246,8 @@ Result:= 0;
 if	(ss > Result.M_Value_Size) then
 	begin
 	Multi_Int_Reset_XV_Size(Result, ss);
-	if (Result.Overflow) then
+	if Multi_Int_ERROR then
 		begin
-		Multi_Int_ERROR:= TRUE;
 		Result.Defined_flag:= FALSE;
 		exit;
 		end;
@@ -15653,9 +15648,8 @@ init_Multi_Int_XV(Result);
 if (s > Result.M_Value_Size) then
 	begin
 	Multi_Int_Reset_XV_Size(Result, s);
-	if (Result.Overflow) then
+	if Multi_Int_ERROR then
 		begin
-		Multi_Int_ERROR:= TRUE;
 		Result.Defined_flag:= FALSE;
 		exit;
 		end;
@@ -15721,9 +15715,8 @@ init_Multi_Int_XV(Result);
 if (s > Result.M_Value_Size) then
 	begin
 	Multi_Int_Reset_XV_Size(Result, s);
-	if (Result.Overflow) then
+	if Multi_Int_ERROR then
 		begin
-		Multi_Int_ERROR:= TRUE;
 		Result.Defined_flag:= FALSE;
 		exit;
 		end;
@@ -15789,9 +15782,8 @@ init_Multi_Int_XV(Result);
 if (s > Result.M_Value_Size) then
 	begin
 	Multi_Int_Reset_XV_Size(Result, s);
-	if (Result.Overflow) then
+	if Multi_Int_ERROR then
 		begin
-		Multi_Int_ERROR:= TRUE;
 		Result.Defined_flag:= FALSE;
 		exit;
 		end;
@@ -15854,9 +15846,8 @@ init_Multi_Int_XV(Result);
 if (s > Result.M_Value_Size) then
 	begin
 	Multi_Int_Reset_XV_Size(Result, s);
-	if (Result.Overflow) then
+	if Multi_Int_ERROR then
 		begin
-		Multi_Int_ERROR:= TRUE;
 		Result.Defined_flag:= FALSE;
 		exit;
 		end;
@@ -16010,9 +16001,8 @@ until (i < 0);
 if ((z1 + 1) > Result.M_Value_Size) then
 	begin
 	Multi_Int_Reset_XV_Size(Result,(z1+1));
-	if (Result.Overflow) then
+	if Multi_Int_ERROR then
 		begin
-		Multi_Int_ERROR:= TRUE;
 		Result.Defined_flag:= FALSE;
 		exit;
 		end;
@@ -16204,6 +16194,7 @@ dividend_i_1,
 quotient_i,
 dividor_i,
 div_size,
+rem_size,
 dividor_i_1,
 dividor_non_zero_pos,
 shiftup_bits_dividor,
@@ -16215,14 +16206,13 @@ adjacent_word_division,
 word_division,
 word_dividend,
 word_carry,
-next_word_carry
+adjacent_word_carry
 				:MULTI_INT_2W_U;
 
 finished		:boolean;
 
 (****)
 begin
-
 P_quotient:= 0;
 P_remainder:= 0;
 
@@ -16246,43 +16236,18 @@ else
 		goto FINISH;
 	    end;
 
-	div_size:= (P_dividend.M_Value_Size + 1);
-
-	dividor:= P_dividor;
-	Multi_Int_Reset_XV_Size(dividor, div_size);
-	if (dividor.Overflow) then
-		begin
-		P_quotient.Defined_flag:= FALSE;
-		P_quotient.Overflow_flag:= TRUE;
-		P_remainder.Defined_flag:= FALSE;
-		P_remainder.Overflow_flag:= TRUE;
-		Multi_Int_ERROR:= TRUE;
-		exit;
-		end;
-
-    dividend:= P_dividend;
-	Multi_Int_Reset_XV_Size(dividend, div_size);
-	dividend.Negative_flag:= FALSE;
-
-	quotient:= 0;
-	Multi_Int_Reset_XV_Size(quotient, div_size);
-
-	next_dividend:= 0;
-	Multi_Int_Reset_XV_Size(next_dividend, div_size);
-
 	dividor_non_zero_pos:= 0;
-    i:= (dividor.M_Value_Size - 1);
+    i:= (P_dividor.M_Value_Size - 1);
 	while	(i >= 0) do
 		begin
 		if	(dividor_non_zero_pos = 0) then
-			if	(dividor.M_Value[i] <> 0) then
+			if	(P_dividor.M_Value[i] <> 0) then
 				begin
 				dividor_non_zero_pos:= i;
 				break;
 				end;
 		Dec(i);
 		end;
-	dividor.Negative_flag:= FALSE;
 
 	// essential short-cut for single word dividor
 	// NB this is not just for speed, the later code
@@ -16291,7 +16256,7 @@ else
 	if	(dividor_non_zero_pos = 0) then
 		begin
 		word_carry:= 0;
-		i:= Multi_XV_maxi;
+		i:= (P_dividor.M_Value_Size - 1);
 		while (i >= 0) do
 			begin
 			P_quotient.M_Value[i]:= (((word_carry * MULTI_INT_2W_U(MULTI_INT_1W_U_MAXINT_1)) + MULTI_INT_2W_U(P_dividend.M_Value[i])) div MULTI_INT_2W_U(P_dividor.M_Value[0]));
@@ -16302,6 +16267,31 @@ else
 		goto FINISH;
 		end;
 
+	div_size:= (P_dividend.M_Value_Size + 1);
+
+	dividor:= P_dividor;
+    dividend:= P_dividend;
+	quotient:= 0;
+	next_dividend:= 0;
+
+	Multi_Int_Reset_XV_Size(dividor, div_size);
+	Multi_Int_Reset_XV_Size(dividend, div_size);
+	Multi_Int_Reset_XV_Size(quotient, div_size);
+	Multi_Int_Reset_XV_Size(next_dividend, div_size);
+
+	if Multi_Int_ERROR then
+		begin
+		P_quotient.Defined_flag:= FALSE;
+		P_quotient.Overflow_flag:= TRUE;
+		P_remainder.Defined_flag:= FALSE;
+		P_remainder.Overflow_flag:= TRUE;
+		Multi_Int_ERROR:= TRUE;
+		exit;
+		end;
+
+	dividor.Negative_flag:= FALSE;
+	dividend.Negative_flag:= FALSE;
+
 	shiftup_bits_dividor:= nlz_bits(dividor.M_Value[dividor_non_zero_pos]);
 	if	(shiftup_bits_dividor > 0) then
 		begin
@@ -16309,7 +16299,7 @@ else
 		ShiftUp_NBits_Multi_Int_XV(dividor, shiftup_bits_dividor);
 		end;
 
-	next_word_carry:= 0;
+	adjacent_word_carry:= 0;
 	word_carry:= 0;
 	dividor_i:= dividor_non_zero_pos;
 	dividor_i_1:= (dividor_i - 1);
@@ -16330,7 +16320,7 @@ else
 		begin
 		word_dividend:= ((word_carry * MULTI_INT_2W_U(MULTI_INT_1W_U_MAXINT_1)) + dividend.M_Value[dividend_i]);
         word_division:= (word_dividend div dividor.M_Value[dividor_i]);
-        next_word_carry:= (word_dividend mod dividor.M_Value[dividor_i]);
+        adjacent_word_carry:= (word_dividend mod dividor.M_Value[dividor_i]);
 
 		if	(word_division > 0) then
 			begin
@@ -16338,25 +16328,33 @@ else
 			if	(dividend_i_1 >= 0) then
 				begin
 				AGAIN:
-				adjacent_word_dividend:= ((next_word_carry * MULTI_INT_2W_U(MULTI_INT_1W_U_MAXINT_1)) + dividend.M_Value[dividend_i_1]);
+				adjacent_word_dividend:= ((adjacent_word_carry * MULTI_INT_2W_U(MULTI_INT_1W_U_MAXINT_1)) + dividend.M_Value[dividend_i_1]);
                 adjacent_word_division:= (dividor.M_Value[dividor_i_1] * word_division);
 				if	(adjacent_word_division > adjacent_word_dividend)
 				or	(word_division >= MULTI_INT_1W_U_MAXINT_1)
 				then
 					begin
 					Dec(word_division);
-					next_word_carry:= next_word_carry + dividor.M_Value[dividor_i];
-					if (next_word_carry < MULTI_INT_1W_U_MAXINT_1) then
+					adjacent_word_carry:= adjacent_word_carry + dividor.M_Value[dividor_i];
+					if (adjacent_word_carry < MULTI_INT_1W_U_MAXINT_1) then
 						goto AGAIN;
 					end;
 				end;
 
 			quotient:= 0;
 			Multi_Int_Reset_XV_Size(quotient, div_size);
+			if Multi_Int_ERROR then
+				begin
+				P_quotient.Defined_flag:= FALSE;
+				P_quotient.Overflow_flag:= TRUE;
+				P_remainder.Defined_flag:= FALSE;
+				P_remainder.Overflow_flag:= TRUE;
+				Multi_Int_ERROR:= TRUE;
+				exit;
+				end;
 
 			quotient.M_Value[quotient_i]:= word_division;
-            next_dividend:= (dividor * quotient);
-            next_dividend:= (dividend - next_dividend);
+			next_dividend:= (dividend - (dividor * quotient));
 			if (next_dividend.Negative) then
 				begin
 				Dec(word_division);
@@ -16377,7 +16375,24 @@ else
 		end; { while }
 
 	ShiftDown_MultiBits_Multi_Int_XV(dividend, shiftup_bits_dividor);
-	P_remainder:= dividend;
+
+	if	(P_remainder.M_Value_Size < dividend.M_Value_Size) then
+		begin
+		rem_size:= P_remainder.M_Value_Size;
+		P_remainder:= dividend;
+        Multi_Int_Reset_XV_Size(quotient, rem_size);
+		if Multi_Int_ERROR then
+			begin
+			P_quotient.Defined_flag:= FALSE;
+			P_quotient.Overflow_flag:= TRUE;
+			P_remainder.Defined_flag:= FALSE;
+			P_remainder.Overflow_flag:= TRUE;
+			Multi_Int_ERROR:= TRUE;
+			exit;
+			end;
+		end
+	else
+		P_remainder:= dividend;
 
 FINISH:
 	if	(P_dividend.Negative_flag = TRUE) and (P_remainder > 0)
