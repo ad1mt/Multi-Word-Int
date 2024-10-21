@@ -11012,9 +11012,7 @@ else
 		TV:= T;
 		PT := (PT div 2);
 		end;
-{$WARNINGS OFF} {$HINTS OFF}
 	multiply_Multi_Int_X4(TV,Y, R);
-{$WARNINGS ON} {$HINTS ON}
 
 	if	(R.Overflow_flag)
 	then
