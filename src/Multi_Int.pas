@@ -175,10 +175,6 @@ v4.70
 -	2.	major bug fixes in XV type division function
 -	3.	more major bug fixes in XV type division function
 
-v4.71
--	1.	speed improvements in XV type multiply
--	2.	bug in sqroot
-
 *)
 
 INTERFACE
@@ -188,7 +184,7 @@ uses	sysutils
 ;
 
 const
-	version = '4.71.00';
+	version = '4.70.00';
 
 const
 
@@ -548,9 +544,7 @@ Multi_Int_XV	=	record
 						class operator inc(const v1:Multi_Int_XV):Multi_Int_XV;	
 						class operator dec(const v1:Multi_Int_XV):Multi_Int_XV;	
 						class operator *(const v1,v2:Multi_Int_XV):Multi_Int_XV;		{$ifdef inline_functions_level_1} inline; {$endif}
-						class operator *(const v1:Multi_Int_XV; const v2:MULTI_INT_1W_U):Multi_Int_XV;		{$ifdef inline_functions_level_1} inline; {$endif}
-						class operator *(const v1:Multi_Int_XV; const v2:MULTI_INT_1W_S):Multi_Int_XV;		{$ifdef inline_functions_level_1} inline; {$endif}
-						class operator div(const v1,v2:Multi_Int_XV):Multi_Int_XV;
+						class operator div(const v1,v2:Multi_Int_XV):Multi_Int_XV;	
 						class operator mod(const v1,v2:Multi_Int_XV):Multi_Int_XV;	
 						class operator xor(const v1,v2:Multi_Int_XV):Multi_Int_XV;	
 						class operator or(const v1,v2:Multi_Int_XV):Multi_Int_XV;	
@@ -687,7 +681,7 @@ Multi_Int_X5	=	record
 (******************************************)
 var
 
-Multi_Int_Initialisation_done				:boolean = FALSE;
+Multi_Init_Initialisation_done				:boolean = FALSE;
 Multi_XV_size								:MULTI_INT_2W_U = 0;
 Multi_XV_limit								:MULTI_INT_2W_U = 0;
 Multi_XV_maxi								:MULTI_INT_2W_U;
@@ -724,7 +718,7 @@ function To_Multi_Int_X5(const v1:Multi_Int_X4):Multi_Int_X5; forward;
 function Multi_Int_X2_to_X3_multiply(const v1,v2:Multi_Int_X2):Multi_Int_X3; forward;	
 function Multi_Int_X3_to_X4_multiply(const v1,v2:Multi_Int_X3):Multi_Int_X4; forward;	
 function Multi_Int_X4_to_X5_multiply(const v1,v2:Multi_Int_X4):Multi_Int_X5; forward;	
-function To_Multi_Int_X4(const v1:Multi_Int_X5):Multi_Int_X4; forward; overload;
+function To_Multi_Int_X4(const v1:Multi_Int_X5):Multi_Int_X4; forward; overload;	
 
 (******************************************)
 procedure	T_Multi_UBool.Init(v:Multi_UBool_Values);
@@ -11012,7 +11006,9 @@ else
 		TV:= T;
 		PT := (PT div 2);
 		end;
+{$WARNINGS OFF} {$HINTS OFF}
 	multiply_Multi_Int_X4(TV,Y, R);
+{$WARNINGS ON} {$HINTS ON}
 
 	if	(R.Overflow_flag)
 	then
@@ -12584,11 +12580,11 @@ Multi_Int_XV
 procedure Multi_Int_XV.init;	{$ifdef inline_functions_level_1} inline; {$endif}
 begin
 self.Defined_flag:= FALSE;
-if	(NOT Multi_Int_Initialisation_done) then
+if	(NOT Multi_Init_Initialisation_done) then
 	begin
 	Multi_Int_ERROR:= TRUE;
 	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
-		Raise EInterror.create('Multi_Int_Initialisation has not been called');
+		Raise EInterror.create('Multi_Init_Initialisation has not been called');
 	exit;
 	end;
 
@@ -12601,42 +12597,22 @@ end;
 
 
 (******************************************)
-procedure init_Multi_Int_XV(out MI:Multi_Int_XV); overload;	{$ifdef inline_functions_level_1} inline; {$endif}
+procedure init_Multi_Int_XV(out mi:Multi_Int_XV);	{$ifdef inline_functions_level_1} inline; {$endif}
 begin
-MI.Defined_flag:= FALSE;
-if	(NOT Multi_Int_Initialisation_done) then
+mi.Defined_flag:= FALSE;
+if	(NOT Multi_Init_Initialisation_done) then
 	begin
 	Multi_Int_ERROR:= TRUE;
 	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
-		Raise EInterror.create('Multi_Int_Initialisation has not been called');
+		Raise EInterror.create('Multi_Init_Initialisation has not been called');
 	exit;
 	end;
 
 setlength(mi.M_Value, Multi_XV_size);
-MI.M_Value_Size:= Multi_XV_size;
-MI.Negative_flag:= Multi_UBool_FALSE;
-MI.Overflow_flag:= FALSE;
-MI.Defined_flag:= FALSE;
-end;
-
-
-(******************************************)
-procedure init_Multi_Int_XV(out MI:Multi_Int_XV; const S:MULTI_INT_2W_U); overload;	{$ifdef inline_functions_level_1} inline; {$endif}
-begin
-MI.Defined_flag:= FALSE;
-if	(NOT Multi_Int_Initialisation_done) then
-	begin
-	Multi_Int_ERROR:= TRUE;
-	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
-		Raise EInterror.create('Multi_Int_Initialisation has not been called');
-	exit;
-	end;
-
-setlength(mi.M_Value, S);
-MI.M_Value_Size:= Multi_XV_size;
-MI.Negative_flag:= Multi_UBool_FALSE;
-MI.Overflow_flag:= FALSE;
-MI.Defined_flag:= FALSE;
+mi.M_Value_Size:= Multi_XV_size;
+mi.Negative_flag:= Multi_UBool_FALSE;
+mi.Overflow_flag:= FALSE;
+mi.Defined_flag:= FALSE;
 end;
 
 
@@ -15895,257 +15871,34 @@ then Result.Negative_flag:= Multi_UBool_FALSE;
 end;
 
 
-(******************************************)
-procedure multiply_Multi_Int_XV(const v1:Multi_Int_XV; const v2:MULTI_INT_1W_S; out Result:Multi_Int_XV); overload;
-var
-i,h,
-s1,ss,
-z1			:MULTI_INT_2W_S;
-zf			:boolean;
-tv1			:MULTI_INT_2W_U;
-
-begin
-Result:= 0;
-if (v2 = 0) then
-	exit;
-
-s1:= v1.M_Value_Size;
-ss:= (s1 + 1);
-Multi_Int_Reset_XV_Size(Result,ss);
-
-// skip leading zeros in v1
-zf:= FALSE;
-i:= (s1-1);
-z1:= -1;
-repeat
-	if	(v1.M_Value[i] <> 0) then
-		begin
-		z1:= i;
-		zf:= TRUE;
-		end;
-	DEC(i);
-until	(i < 0)
-or		(zf)
-;
-if	(z1 < 0) then
-	begin
-	Result.Negative_flag:=Multi_UBool_FALSE;
-	exit;
-	end;
-
-// main loopy
-i:= 0;
-h:= 0;
-repeat
-	if	(v1.M_Value[i] <> 0)
-	then
-		begin
-		h:= i+1;
-		tv1:=v1.M_Value[i];
-		Result.M_Value[h]:= (Result.M_Value[h] + ((tv1 * abs(v2)) DIV MULTI_INT_1W_U_MAXINT_1));
-		Result.M_Value[i]:= (Result.M_Value[i] + ((tv1 * abs(v2)) MOD MULTI_INT_1W_U_MAXINT_1));
-		end;
-	INC(i);
-until (i > z1);
-
-if (Result.M_Value[h] <> 0) then
-	z1:= h;
-
-Inc(z1);
-if (z1 > v1.M_Value_Size) then
-	Multi_Int_Reset_XV_Size(Result,z1)
-else
-	Multi_Int_Reset_XV_Size(Result,v1.M_Value_Size);
-if (Result.Overflow) then
-	begin
-	Multi_Int_ERROR:= TRUE;
-	Result.Defined_flag:= FALSE;
-	exit;
-	end;
-
-if	(	(v2 < 0)
-	and	(not v1.Negative_flag)
-	)
-or	(	(v2 >= 0)
-	and	(v1.Negative_flag)
-	)
-then
-	Result.Negative_flag:= TRUE
-else
-	Result.Negative_flag:= FALSE;
-end;
-
-
-(******************************************)
-class operator Multi_Int_XV.*(const v1:Multi_Int_XV; const v2:MULTI_INT_1W_S):Multi_Int_XV;	{$ifdef inline_functions_level_1} inline; {$endif}
-begin
-if	(Not v1.Defined_flag)
-then
-	begin
-	Result:=0;
-	Result.Defined_flag:= FALSE;
-	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
-		begin
-		Raise EInterror.create('Uninitialised variable');
-		end;
-	exit;
-	end;
-if	(v1.Overflow_flag)
-then
-	begin
-	Result:= 0;
-	Result.Overflow_flag:=TRUE;
-	Result.Defined_flag:=TRUE;
-	Multi_Int_ERROR:= TRUE;
-	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
-		begin
-		Raise EIntOverflow.create('Overflow');
-		end;
-	exit;
-	end;
-
-multiply_Multi_Int_XV(v1,v2,Result);
-
-if (Result.Overflow_flag = TRUE) then
-	begin
-	Multi_Int_ERROR:= TRUE;
-	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
-		Raise EIntOverflow.create('Overflow');
-	end;
-
-end;
-
-
-(******************************************)
-procedure multiply_Multi_Int_XV(const v1:Multi_Int_XV; const v2:MULTI_INT_1W_U; out Result:Multi_Int_XV); overload;
-var
-i,h,
-s1,ss,
-z1			:MULTI_INT_2W_S;
-zf			:boolean;
-tv1			:MULTI_INT_2W_U;
-
-begin
-Result:= 0;
-if (v2 = 0) then
-	exit;
-
-s1:= v1.M_Value_Size;
-ss:= (s1 + 1);
-Multi_Int_Reset_XV_Size(Result,ss);
-
-// skip leading zeros in v1
-zf:= FALSE;
-i:= (s1-1);
-z1:= -1;
-repeat
-	if	(v1.M_Value[i] <> 0) then
-		begin
-		z1:= i;
-		zf:= TRUE;
-		end;
-	DEC(i);
-until	(i < 0)
-or		(zf)
-;
-if	(z1 < 0) then
-	begin
-	Result.Negative_flag:=Multi_UBool_FALSE;
-	exit;
-	end;
-
-// main loopy
-i:= 0;
-h:= 0;
-repeat
-	if	(v1.M_Value[i] <> 0)
-	then
-		begin
-		h:= i+1;
-		tv1:=v1.M_Value[i];
-		Result.M_Value[h]:= (Result.M_Value[h] + ((tv1 * v2) DIV MULTI_INT_1W_U_MAXINT_1));
-		Result.M_Value[i]:= (Result.M_Value[i] + ((tv1 * v2) MOD MULTI_INT_1W_U_MAXINT_1));
-		end;
-	INC(i);
-until (i > z1);
-
-if (Result.M_Value[h] <> 0) then
-	z1:= h;
-
-Inc(z1);
-if (z1 > v1.M_Value_Size) then
-	Multi_Int_Reset_XV_Size(Result,z1)
-else
-	Multi_Int_Reset_XV_Size(Result,v1.M_Value_Size);
-if (Result.Overflow) then
-	begin
-	Multi_Int_ERROR:= TRUE;
-	Result.Defined_flag:= FALSE;
-	exit;
-	end;
-
-Result.Negative_flag:= v1.Negative_flag;
-end;
-
-
-(******************************************)
-class operator Multi_Int_XV.*(const v1:Multi_Int_XV; const v2:MULTI_INT_1W_U):Multi_Int_XV;	{$ifdef inline_functions_level_1} inline; {$endif}
-begin
-if	(Not v1.Defined_flag)
-then
-	begin
-	Result:=0;
-	Result.Defined_flag:= FALSE;
-	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
-		begin
-		Raise EInterror.create('Uninitialised variable');
-		end;
-	exit;
-	end;
-if	(v1.Overflow_flag)
-then
-	begin
-	Result:= 0;
-	Result.Overflow_flag:=TRUE;
-	Result.Defined_flag:=TRUE;
-	Multi_Int_ERROR:= TRUE;
-	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
-		begin
-		Raise EIntOverflow.create('Overflow');
-		end;
-	exit;
-	end;
-
-multiply_Multi_Int_XV(v1,v2,Result);
-
-if (Result.Overflow_flag = TRUE) then
-	begin
-	Multi_Int_ERROR:= TRUE;
-	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
-		Raise EIntOverflow.create('Overflow');
-	end;
-
-end;
-
-
-(*******************v5*********************)
+(*******************v4*********************)
 procedure multiply_Multi_Int_XV(const v1,v2:Multi_Int_XV;out Result:Multi_Int_XV); overload;
 var
-i,j,k,h,
-ss,z2,z1	:MULTI_INT_2W_S;
-zf			:boolean;
+i,j,k,
+s1,s2,ss,
+z1,z2,
+M_Hi	:MULTI_INT_2W_S;
+zf,
+zero_mult	:boolean;
 tv1,tv2		:MULTI_INT_2W_U;
 M_Val		:array of MULTI_INT_2W_U;
 
 begin
-Result:= 0;
+s1:= v1.M_Value_Size;
+s2:= v2.M_Value_Size;
+{
+ss:= (s1 + s2 + 1);
+setlength(M_Val, ss);
+}
+
+init_Multi_Int_XV(Result);
 Result.Overflow_flag:=FALSE;
 Result.Defined_flag:=TRUE;
 Result.Negative_flag:=Multi_UBool_UNDEF;
 
 // skip leading zeros in v2
 zf:= FALSE;
-i:= (v2.M_Value_Size - 1);
+i:= (s2-1);
 z2:= -1;
 repeat
 	if	(v2.M_Value[i] <> 0) then
@@ -16165,7 +15918,7 @@ if	(z2 < 0) then
 
 // skip leading zeros in v1
 zf:= FALSE;
-i:= (v1.M_Value_Size - 1);
+i:= (s1-1);
 z1:= -1;
 repeat
 	if	(v1.M_Value[i] <> 0) then
@@ -16183,50 +15936,73 @@ if	(z1 < 0) then
 	exit;
 	end;
 
-ss:= (z1 + z2 + 4);
+ss:= (z1 + z2 + 3);
 setlength(M_Val, ss);
 
 // main loopy
-h:= 0;
-i:= 0;
-j:= 0;
+i:=0;
+j:=0;
 repeat
 	if (v2.M_Value[j] <> 0) then
     	begin
+		zero_mult:= TRUE;
+		M_Hi:= -1;
 		repeat
-			if	(v1.M_Value[i] <> 0)
+		if	(v1.M_Value[i] <> 0)
 			then
 				begin
+				zero_mult:= FALSE;
 				tv1:=v1.M_Value[i];
 				tv2:=v2.M_Value[j];
-				h:= (i+j);
-				M_Val[h]:= (M_Val[h] + ((tv1 * tv2) MOD MULTI_INT_1W_U_MAXINT_1));
-				M_Val[h+1]:= (M_Val[h+1] + ((tv1 * tv2) DIV MULTI_INT_1W_U_MAXINT_1));
-				if (M_Val[i+j+1] > 0) then
-					Inc(h);
+                M_Hi:= (i+j+1);
+				M_Val[M_Hi]:= (M_Val[M_Hi] + ((tv1 * tv2) DIV MULTI_INT_1W_U_MAXINT_1));
+                Dec(M_Hi);
+				M_Val[M_Hi]:= (M_Val[M_Hi] + ((tv1 * tv2) MOD MULTI_INT_1W_U_MAXINT_1));
 				end;
 			INC(i);
 		until (i > z1);
-		k:=0;
-		repeat
-        	if (M_Val[k] <> 0) then
-				begin
-				M_Val[k+1]:= M_Val[k+1] + (M_Val[k] DIV MULTI_INT_1W_U_MAXINT_1);
-				M_Val[k]:= (M_Val[k] MOD MULTI_INT_1W_U_MAXINT_1);
-				end;
-			INC(k);
-		until (k > h);
+		if not zero_mult then
+			begin
+			k:=0;
+			repeat
+            	if (M_Val[k] <> 0) then
+					begin
+					M_Val[k+1]:= M_Val[k+1] + (M_Val[k] DIV MULTI_INT_1W_U_MAXINT_1);
+					M_Val[k]:= (M_Val[k] MOD MULTI_INT_1W_U_MAXINT_1);
+					end;
+				INC(k);
+			until (k > (M_Hi + 2));
+			end;
 		i:=0;
         end;
 	INC(j);
 until (j > z2);
 
-if ((h+1) > Result.M_Value_Size) then
-	begin
-	Multi_Int_Reset_XV_Size(Result,(h+1));
-	if (Result.Overflow) then
+// skip leading zeros to make result var just big enough, but no bigger
+// check if result all zeros; if so, negative:= false, else negative:= undefined
+
+Result.Negative_flag:=Multi_UBool_FALSE;
+zf:= FALSE;
+z1:= -1;
+i:= (ss-1);
+repeat
+	if (M_Val[i] <> 0) then
 		begin
-		Multi_Int_ERROR:= TRUE;
+		Result.Negative_flag:= Multi_UBool_UNDEF;
+		if (not zf) then
+			begin
+			zf:= TRUE;
+			z1:= i;
+			end;
+		end;
+	Dec(i);
+until (i < 0);
+
+if ((z1 + 1) > Result.M_Value_Size) then
+	begin
+	Multi_Int_Reset_XV_Size(Result,(z1+1));
+	if Multi_Int_ERROR then
+		begin
 		Result.Defined_flag:= FALSE;
 		exit;
 		end;
@@ -16234,7 +16010,7 @@ if ((h+1) > Result.M_Value_Size) then
 
 // copy temp M_Val to Result
 i:= 0;
-while (i <= h) do
+while (i <= z1) do
 	begin
 	Result.M_Value[i]:= M_Val[i];
 	Inc(i);
@@ -16850,7 +16626,6 @@ repeat
 	begin
 	// CC:= ((C + (v1 div C)) div 2);
     intdivide_taylor_warruth_XV(v1,C,Q,R);
-	if (Multi_Int_ERROR) then exit;
 	CC:= (C+Q);
     ShiftDown_MultiBits_Multi_Int_XV(CC, 1);
 	if	(ABS(C-CC) < 2) then
@@ -16893,7 +16668,7 @@ end;
 
 {
 ******************************************
-Multi_Int_Initialisation
+Multi_Init_Initialisation
 ******************************************
 }
 
@@ -16901,18 +16676,18 @@ procedure Multi_Int_Initialisation(const P_Multi_XV_size:MULTI_INT_2W_U = 16);
 var	i:MULTI_INT_2W_S;
 
 begin
-if Multi_Int_Initialisation_done then
+if Multi_Init_Initialisation_done then
 	begin
 	Multi_Int_ERROR:= TRUE;
 	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
 		begin
-		Raise EIntOverflow.create('Multi_Int_Initialisation already called');
+		Raise EIntOverflow.create('Multi_Init_Initialisation already called');
 		end;
 	exit;
 	end
 else
 	begin
-	Multi_Int_Initialisation_done:= TRUE;
+	Multi_Init_Initialisation_done:= TRUE;
 
 	Multi_XV_size:=	P_Multi_XV_size;
 	if (Multi_XV_size < 2) then
