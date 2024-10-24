@@ -7,5 +7,5 @@ Will compile and run on 32bit and 64bit environments.
 Written purely in Pascal to be portable and reliable (no assembly or C language code).
 
 Changes in this version:
-- speedups in subtraction function
+- subtraction function runs faster
 - bug fixes
