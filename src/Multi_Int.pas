@@ -203,6 +203,10 @@ v4.75
 		moved to unit initialisation.
 -	3.	Multi_Int_RAISE_EXCEPTIONS_ENABLED defaults now to FALSE
 
+v4.76
+-	1.	Yet more bugs in Multi_Int_XV division.
+-	2.	fixed many bugs where Multi_Int_ERROR should be set TRUE
+
 *)
 
 INTERFACE
@@ -373,6 +377,8 @@ Multi_Int_X2	=	record
 					{$ifdef 32bit}
 						class operator :=(const v1:MULTI_INT_4W_S):Multi_Int_X2;		{$ifdef inline_functions_level_1} inline; {$endif}
 						class operator :=(const v1:MULTI_INT_4W_U):Multi_Int_X2;		{$ifdef inline_functions_level_1} inline; {$endif}
+						class operator :=(const v1:Multi_Int_X2):MULTI_INT_4W_S;		{$ifdef inline_functions_level_1} inline; {$endif}
+						class operator :=(const v1:Multi_Int_X2):MULTI_INT_4W_U;		{$ifdef inline_functions_level_1} inline; {$endif}
 					{$endif}
 						class operator :=(const v1:ansistring):Multi_Int_X2;			{$ifdef inline_functions_level_1} inline; {$endif}
 						class operator :=(const v1:Multi_Int_X2):ansistring;			{$ifdef inline_functions_level_1} inline; {$endif}
@@ -433,6 +439,8 @@ Multi_Int_X3	=	record
 					{$ifdef 32bit}
 						class operator :=(const v1:MULTI_INT_4W_S):Multi_Int_X3;		{$ifdef inline_functions_level_1} inline; {$endif}
 						class operator :=(const v1:MULTI_INT_4W_U):Multi_Int_X3;		{$ifdef inline_functions_level_1} inline; {$endif}
+						class operator :=(const v1:Multi_Int_X3):MULTI_INT_4W_S;		{$ifdef inline_functions_level_1} inline; {$endif}
+						class operator :=(const v1:Multi_Int_X3):MULTI_INT_4W_U;		{$ifdef inline_functions_level_1} inline; {$endif}
 					{$endif}
 						class operator :=(const v1:ansistring):Multi_Int_X3;			{$ifdef inline_functions_level_1} inline; {$endif}
 						class operator :=(const v1:Multi_Int_X3):ansistring;			{$ifdef inline_functions_level_1} inline; {$endif}
@@ -494,6 +502,8 @@ Multi_Int_X4	=	record
 					{$ifdef 32bit}
 						class operator :=(const v1:MULTI_INT_4W_S):Multi_Int_X4;		{$ifdef inline_functions_level_1} inline; {$endif}
 						class operator :=(const v1:MULTI_INT_4W_U):Multi_Int_X4;		{$ifdef inline_functions_level_1} inline; {$endif}
+						class operator :=(const v1:Multi_Int_X4):MULTI_INT_4W_S;		{$ifdef inline_functions_level_1} inline; {$endif}
+						class operator :=(const v1:Multi_Int_X4):MULTI_INT_4W_U;		{$ifdef inline_functions_level_1} inline; {$endif}
 					{$endif}
 						class operator :=(const v1:ansistring):Multi_Int_X4;			{$ifdef inline_functions_level_1} inline; {$endif}
 						class operator :=(const v1:Multi_Int_X4):ansistring;			{$ifdef inline_functions_level_1} inline; {$endif}
@@ -601,13 +611,12 @@ Multi_Int_XV	=	record
 					end;
 
 var
-Multi_Int_RAISE_EXCEPTIONS_ENABLED	:boolean = FALSE;
+Multi_Int_RAISE_EXCEPTIONS_ENABLED	:boolean = TRUE;
 Multi_Int_ERROR						:boolean = FALSE;
 Multi_Int_X2_MAXINT					:Multi_Int_X2;
 Multi_Int_X3_MAXINT					:Multi_Int_X3;
 Multi_Int_X4_MAXINT					:Multi_Int_X4;
 Multi_Int_XV_MAXINT					:Multi_Int_XV;
-T									:int32;
 
 procedure Multi_Int_Initialisation(const P_Multi_XV_size:MULTI_INT_2W_U = 16);	
 procedure Multi_Int_Set_XV_Limit(const S:MULTI_INT_2W_U);							{$ifdef inline_functions_level_1} inline; {$endif}
@@ -720,7 +729,7 @@ Multi_Int_X5	=	record
 
 (******************************************)
 var
-i											:MULTI_INT_1W_U;
+i,T											:MULTI_INT_1W_U;
 Multi_Int_Initialisation_done				:boolean = FALSE;
 Multi_XV_size								:MULTI_INT_2W_U = 0;
 Multi_XV_limit								:MULTI_INT_2W_U = 0;
@@ -1716,12 +1725,13 @@ Result.Negative_flag:= v1.Negative_flag;
 if	(v1.Defined_flag = FALSE)
 then
 	begin
+	Multi_Int_ERROR:= TRUE;
+	Result.Defined_flag:= FALSE;
 	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
 		begin
 		Raise EInterror.create('Uninitialised variable');
 		end;
 		Multi_Int_ERROR:= TRUE;
-	Result.Defined_flag:= FALSE;
 	exit;
 	end;
 
@@ -2079,6 +2089,7 @@ begin
 if	(Not v1.Defined_flag)
 then
 	begin
+	Multi_Int_ERROR:= TRUE;
 	Result:=0;
 	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
 		begin
@@ -2155,6 +2166,7 @@ begin
 if	(Not v1.Defined_flag)
 then
 	begin
+	Multi_Int_ERROR:= TRUE;
 	Result:=0;
 	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
 		begin
@@ -2236,6 +2248,7 @@ begin
 if	(Not v1.Defined_flag)
 then
 	begin
+	Multi_Int_ERROR:= TRUE;
 	Result:=0;
 	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
 		begin
@@ -2303,6 +2316,91 @@ Result:= R;
 end;
 
 
+{$ifdef 32bit}
+
+(******************************************)
+class operator Multi_Int_X2.:=(const v1:Multi_Int_X2):MULTI_INT_4W_S;
+var		R	:MULTI_INT_4W_U;
+begin
+Multi_Int_ERROR:= FALSE;
+if	(Not v1.Defined_flag)
+then
+	begin
+	Result:=0;
+	Multi_Int_ERROR:= TRUE;
+	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
+		begin
+		Raise EInterror.create('Uninitialised variable');
+		end;
+	exit;
+	end;
+
+if	(v1 > MULTI_INT_4W_U_MAXINT)
+or	(v1 < (-MULTI_INT_4W_U_MAXINT_1))
+then
+	begin
+	Result:=0;
+	Multi_Int_ERROR:= TRUE;
+	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
+		begin
+		Raise EInterror.create('Overflow');
+		end;
+	exit;
+	end;
+
+R:=	MULTI_INT_4W_U(v1.M_Value[3]);
+R:=	(R * MULTI_INT_1W_U_MAXINT_1) + MULTI_INT_4W_U(v1.M_Value[2]);
+R:=	(R * MULTI_INT_1W_U_MAXINT_1) + MULTI_INT_4W_U(v1.M_Value[1]);
+R:=	(R * MULTI_INT_1W_U_MAXINT_1) + MULTI_INT_4W_U(v1.M_Value[0]);
+
+if v1.Negative_flag
+then Result:= MULTI_INT_4W_S(-R)
+else Result:= MULTI_INT_4W_S(R);
+end;
+
+
+
+(******************************************)
+class operator Multi_Int_X2.:=(const v1:Multi_Int_X2):MULTI_INT_4W_U;
+var		R	:MULTI_INT_4W_U;
+begin
+Multi_Int_ERROR:= FALSE;
+if	(Not v1.Defined_flag)
+then
+	begin
+	Result:=0;
+	Multi_Int_ERROR:= TRUE;
+	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
+		begin
+		Raise EInterror.create('Uninitialised variable');
+		end;
+	exit;
+	end;
+
+if	(v1 > MULTI_INT_4W_U_MAXINT)
+or	(v1.Negative_flag)
+then
+	begin
+	Result:=0;
+	Multi_Int_ERROR:= TRUE;
+	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
+		begin
+		Raise EInterror.create('Overflow');
+		end;
+	exit;
+	end;
+
+R:=	MULTI_INT_4W_U(v1.M_Value[3]);
+R:=	(R * MULTI_INT_1W_U_MAXINT_1) + MULTI_INT_4W_U(v1.M_Value[2]);
+R:=	(R * MULTI_INT_1W_U_MAXINT_1) + MULTI_INT_4W_U(v1.M_Value[1]);
+R:=	(R * MULTI_INT_1W_U_MAXINT_1) + MULTI_INT_4W_U(v1.M_Value[0]);
+
+Result:= (R);
+end;
+
+{$endif}
+
+
 {******************************************}
 class operator Multi_Int_X2.:=(const v1:Multi_Int_X2):MULTI_INT_2W_S;
 var	R	:MULTI_INT_2W_U;
@@ -2311,6 +2409,7 @@ Multi_Int_ERROR:= FALSE;
 if	(Not v1.Defined_flag)
 then
 	begin
+	Multi_Int_ERROR:= TRUE;
 	Result:=0;
 	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
 		begin
@@ -2386,6 +2485,7 @@ if	(Not v1.Defined_flag)
 then
 	begin
 	Result:=0;
+	Multi_Int_ERROR:= TRUE;
 	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
 		begin
 		Raise EInterror.create('Uninitialised variable');
@@ -2425,6 +2525,7 @@ or	(v1.Negative_flag = Multi_UBool_TRUE)
 then
 	begin
 	Result:=0;
+	Multi_Int_ERROR:= TRUE;
 	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
 		begin
 		Raise EInterror.create('Uninitialised variable');
@@ -2460,6 +2561,7 @@ or	(v1.Negative_flag = Multi_UBool_TRUE)
 then
 	begin
 	Result:=0;
+	Multi_Int_ERROR:= TRUE;
 	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
 		begin
 		Raise EInterror.create('Uninitialised variable');
@@ -2495,6 +2597,7 @@ or	(v1.Negative_flag = Multi_UBool_TRUE)
 then
 	begin
 	Result:=0;
+	Multi_Int_ERROR:= TRUE;
 	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
 		begin
 		Raise EInterror.create('Uninitialised variable');
@@ -2644,6 +2747,7 @@ if	(Not v1.Defined_flag)
 then
 	begin
 	v2:='UNDEFINED';
+	Multi_Int_ERROR:= TRUE;
 	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
 		begin
 		Raise EInterror.create('Uninitialised variable');
@@ -2654,6 +2758,7 @@ if	(v1.Overflow_flag)
 then
 	begin
 	v2:='OVERFLOW';
+	Multi_Int_ERROR:= TRUE;
 	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
 		begin
 		Raise EInterror.create('Overflow');
@@ -2695,6 +2800,7 @@ if	(Not v1.Defined_flag)
 then
 	begin
 	v2:='UNDEFINED';
+	Multi_Int_ERROR:= TRUE;
 	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
 		begin
 		Raise EInterror.create('Uninitialised variable');
@@ -2862,6 +2968,7 @@ if	(Not v1.Defined_flag)
 then
 	begin
 	v2:='UNDEFINED';
+	Multi_Int_ERROR:= TRUE;
 	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
 		begin
 		Raise EInterror.create('Uninitialised variable');
@@ -2935,6 +3042,7 @@ then
 	begin
 	Result:=0;
 	Result.Defined_flag:= FALSE;
+	Multi_Int_ERROR:= TRUE;
 	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
 		begin
 		Raise EInterror.create('Uninitialised variable');
@@ -2977,6 +3085,7 @@ then
 	begin
 	Result:=0;
 	Result.Defined_flag:= FALSE;
+	Multi_Int_ERROR:= TRUE;
 	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
 		begin
 		Raise EInterror.create('Uninitialised variable');
@@ -3006,6 +3115,7 @@ then
 	begin
 	Result:=0;
 	Result.Defined_flag:= FALSE;
+	Multi_Int_ERROR:= TRUE;
 	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
 		begin
 		Raise EInterror.create('Uninitialised variable');
@@ -3034,6 +3144,7 @@ then
 	begin
 	Result:=0;
 	Result.Defined_flag:= FALSE;
+	Multi_Int_ERROR:= TRUE;
 	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
 		begin
 		Raise EInterror.create('Uninitialised variable');
@@ -3183,6 +3294,7 @@ then
 	Result:=0;
 	Result.Defined_flag:= v1.Defined_flag;
 	Result.Overflow_flag:= v1.Overflow_flag;
+	Multi_Int_ERROR:= TRUE;
 	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
 		begin
 		Raise EInterror.create('Uninitialised variable');
@@ -3249,6 +3361,7 @@ then
 	begin
 	Result:=0;
 	Result.Defined_flag:= FALSE;
+	Multi_Int_ERROR:= TRUE;
 	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
 		begin
 		Raise EInterror.create('Uninitialised variable');
@@ -3331,6 +3444,7 @@ then
 	Result:=0;
 	Result.Defined_flag:= v1.Defined_flag;
 	Result.Overflow_flag:= v1.Overflow_flag;
+	Multi_Int_ERROR:= TRUE;
 	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
 		begin
 		Raise EInterror.create('Uninitialised variable');
@@ -3396,6 +3510,7 @@ then
 	begin
 	Result:=0;
 	Result.Defined_flag:= FALSE;
+	Multi_Int_ERROR:= TRUE;
 	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
 		begin
 		Raise EInterror.create('Uninitialised variable');
@@ -3609,6 +3724,7 @@ then
 	begin
 	Result:=0;
 	Result.Defined_flag:= FALSE;
+	Multi_Int_ERROR:= TRUE;
 	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
 		begin
 		Raise EInterror.create('Uninitialised variable');
@@ -3622,6 +3738,7 @@ then
 	Result:= 0;
 	Result.Overflow_flag:=TRUE;
 	Result.Defined_flag:=TRUE;
+	Multi_Int_ERROR:= TRUE;
 	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
 		begin
 		Raise EIntOverflow.create('Overflow');
@@ -3923,6 +4040,7 @@ then
 	begin
 	Result:=0;
 	Result.Defined_flag:= FALSE;
+	Multi_Int_ERROR:= TRUE;
 	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
 		begin
 		Raise EInterror.create('Uninitialised variable');
@@ -3987,6 +4105,7 @@ then
 	begin
 	Result:=0;
 	Result.Defined_flag:= FALSE;
+	Multi_Int_ERROR:= TRUE;
 	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
 		begin
 		Raise EInterror.create('Uninitialised variable');
@@ -4057,6 +4176,7 @@ then
 	VR.Defined_flag:= FALSE;
 	VREM:= 0;
 	VREM.Defined_flag:= FALSE;
+	Multi_Int_ERROR:= TRUE;
 	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
 		begin
 		Raise EInterror.create('Uninitialised variable');
@@ -5250,6 +5370,7 @@ if	(v1.Defined_flag = FALSE)
 then
 	begin
 	Result.Defined_flag:= FALSE;
+	Multi_Int_ERROR:= TRUE;
 	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
 		begin
 		Raise EInterror.create('Uninitialised variable');
@@ -5290,11 +5411,12 @@ Result.Negative_flag:= v1.Negative_flag;
 if	(v1.Defined_flag = FALSE)
 then
 	begin
+	Result.Defined_flag:= FALSE;
+	Multi_Int_ERROR:= TRUE;
 	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
 		begin
 		Raise EInterror.create('Uninitialised variable');
 		end;
-	Result.Defined_flag:= FALSE;
 	exit;
 	end;
 
@@ -5480,6 +5602,7 @@ if	(Not v1.Defined_flag)
 then
 	begin
 	Result:=0;
+	Multi_Int_ERROR:= TRUE;
 	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
 		begin
 		Raise EInterror.create('Uninitialised variable');
@@ -5580,6 +5703,7 @@ if	(Not v1.Defined_flag)
 then
 	begin
 	Result:=0;
+	Multi_Int_ERROR:= TRUE;
 	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
 		begin
 		Raise EInterror.create('Uninitialised variable');
@@ -5661,6 +5785,7 @@ if	(Not v1.Defined_flag)
 then
 	begin
 	Result:=0;
+	Multi_Int_ERROR:= TRUE;
 	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
 		begin
 		Raise EInterror.create('Uninitialised variable');
@@ -5727,6 +5852,91 @@ Result:= R;
 end;
 
 
+{$ifdef 32bit}
+
+(******************************************)
+class operator Multi_Int_X3.:=(const v1:Multi_Int_X3):MULTI_INT_4W_S;
+var		R	:MULTI_INT_4W_U;
+begin
+Multi_Int_ERROR:= FALSE;
+if	(Not v1.Defined_flag)
+then
+	begin
+	Result:=0;
+	Multi_Int_ERROR:= TRUE;
+	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
+		begin
+		Raise EInterror.create('Uninitialised variable');
+		end;
+	exit;
+	end;
+
+if	(v1 > MULTI_INT_4W_U_MAXINT)
+or	(v1 < (-MULTI_INT_4W_U_MAXINT_1))
+then
+	begin
+	Result:=0;
+	Multi_Int_ERROR:= TRUE;
+	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
+		begin
+		Raise EInterror.create('Overflow');
+		end;
+	exit;
+	end;
+
+R:=	MULTI_INT_4W_U(v1.M_Value[3]);
+R:=	(R * MULTI_INT_1W_U_MAXINT_1) + MULTI_INT_4W_U(v1.M_Value[2]);
+R:=	(R * MULTI_INT_1W_U_MAXINT_1) + MULTI_INT_4W_U(v1.M_Value[1]);
+R:=	(R * MULTI_INT_1W_U_MAXINT_1) + MULTI_INT_4W_U(v1.M_Value[0]);
+
+if v1.Negative_flag
+then Result:= (-R)
+else Result:= (R);
+end;
+
+
+
+(******************************************)
+class operator Multi_Int_X3.:=(const v1:Multi_Int_X3):MULTI_INT_4W_U;
+var		R	:MULTI_INT_4W_U;
+begin
+Multi_Int_ERROR:= FALSE;
+if	(Not v1.Defined_flag)
+then
+	begin
+	Result:=0;
+	Multi_Int_ERROR:= TRUE;
+	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
+		begin
+		Raise EInterror.create('Uninitialised variable');
+		end;
+	exit;
+	end;
+
+if	(v1 > MULTI_INT_4W_U_MAXINT)
+or	(v1.Negative_flag)
+then
+	begin
+	Result:=0;
+	Multi_Int_ERROR:= TRUE;
+	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
+		begin
+		Raise EInterror.create('Overflow');
+		end;
+	exit;
+	end;
+
+R:=	MULTI_INT_4W_U(v1.M_Value[3]);
+R:=	(R * MULTI_INT_1W_U_MAXINT_1) + MULTI_INT_4W_U(v1.M_Value[2]);
+R:=	(R * MULTI_INT_1W_U_MAXINT_1) + MULTI_INT_4W_U(v1.M_Value[1]);
+R:=	(R * MULTI_INT_1W_U_MAXINT_1) + MULTI_INT_4W_U(v1.M_Value[0]);
+
+Result:= (R);
+end;
+
+{$endif}
+
+
 (******************************************)
 class operator Multi_Int_X3.:=(const v1:Multi_Int_X3):MULTI_INT_2W_S;
 var	R	:MULTI_INT_2W_U;
@@ -5736,6 +5946,7 @@ if	(Not v1.Defined_flag)
 then
 	begin
 	Result:=0;
+	Multi_Int_ERROR:= TRUE;
 	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
 		begin
 		Raise EInterror.create('Uninitialised variable');
@@ -5776,6 +5987,7 @@ if	(Not v1.Defined_flag)
 then
 	begin
 	Result:=0;
+	Multi_Int_ERROR:= TRUE;
 	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
 		begin
 		Raise EInterror.create('Uninitialised variable');
@@ -5813,6 +6025,7 @@ if	(Not v1.Defined_flag)
 then
 	begin
 	Result:=0;
+	Multi_Int_ERROR:= TRUE;
 	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
 		begin
 		Raise EInterror.create('Uninitialised variable');
@@ -5854,6 +6067,7 @@ or	(v1.Negative_flag = Multi_UBool_TRUE)
 then
 	begin
 	Result:=0;
+	Multi_Int_ERROR:= TRUE;
 	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
 		begin
 		Raise EInterror.create('Uninitialised variable');
@@ -5893,6 +6107,7 @@ or	(v1.Negative_flag = Multi_UBool_TRUE)
 then
 	begin
 	Result:=0;
+	Multi_Int_ERROR:= TRUE;
 	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
 		begin
 		Raise EInterror.create('Uninitialised variable');
@@ -5931,6 +6146,7 @@ or	(v1.Negative_flag = Multi_UBool_TRUE)
 then
 	begin
 	Result:=0;
+	Multi_Int_ERROR:= TRUE;
 	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
 		begin
 		Raise EInterror.create('Uninitialised variable');
@@ -6082,6 +6298,7 @@ if	(Not v1.Defined_flag)
 then
 	begin
 	v2:='UNDEFINED';
+	Multi_Int_ERROR:= TRUE;
 	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
 		begin
 		Raise EInterror.create('Uninitialised variable');
@@ -6092,6 +6309,7 @@ if	(v1.Overflow_flag)
 then
 	begin
 	v2:='OVERFLOW';
+	Multi_Int_ERROR:= TRUE;
 	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
 		begin
 		Raise EInterror.create('Overflow');
@@ -6135,6 +6353,7 @@ if	(Not v1.Defined_flag)
 then
 	begin
 	v2:='UNDEFINED';
+	Multi_Int_ERROR:= TRUE;
 	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
 		begin
 		Raise EInterror.create('Uninitialised variable');
@@ -6305,6 +6524,7 @@ if	(Not v1.Defined_flag)
 then
 	begin
 	v2:='UNDEFINED';
+	Multi_Int_ERROR:= TRUE;
 	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
 		begin
 		Raise EInterror.create('Uninitialised variable');
@@ -6388,6 +6608,7 @@ then
 	begin
 	Result:=0;
 	Result.Defined_flag:= FALSE;
+	Multi_Int_ERROR:= TRUE;
 	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
 		begin
 		Raise EInterror.create('Uninitialised variable');
@@ -6432,6 +6653,7 @@ then
 	begin
 	Result:=0;
 	Result.Defined_flag:= FALSE;
+	Multi_Int_ERROR:= TRUE;
 	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
 		begin
 		Raise EInterror.create('Uninitialised variable');
@@ -6463,6 +6685,7 @@ then
 	begin
 	Result:=0;
 	Result.Defined_flag:= FALSE;
+	Multi_Int_ERROR:= TRUE;
 	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
 		begin
 		Raise EInterror.create('Uninitialised variable');
@@ -6493,6 +6716,7 @@ then
 	begin
 	Result:=0;
 	Result.Defined_flag:= FALSE;
+	Multi_Int_ERROR:= TRUE;
 	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
 		begin
 		Raise EInterror.create('Uninitialised variable');
@@ -6689,6 +6913,7 @@ then
 	Result:=0;
 	Result.Defined_flag:= v1.Defined_flag;
 	Result.Overflow_flag:= v1.Overflow_flag;
+	Multi_Int_ERROR:= TRUE;
 	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
 		begin
 		Raise EInterror.create('Uninitialised variable');
@@ -6755,6 +6980,7 @@ then
 	begin
 	Result:=0;
 	Result.Defined_flag:= FALSE;
+	Multi_Int_ERROR:= TRUE;
 	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
 		begin
 		Raise EInterror.create('Uninitialised variable');
@@ -6837,6 +7063,7 @@ then
 	Result:=0;
 	Result.Defined_flag:= v1.Defined_flag;
 	Result.Overflow_flag:= v1.Overflow_flag;
+	Multi_Int_ERROR:= TRUE;
 	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
 		begin
 		Raise EInterror.create('Uninitialised variable');
@@ -6902,6 +7129,7 @@ then
 	begin
 	Result:=0;
 	Result.Defined_flag:= FALSE;
+	Multi_Int_ERROR:= TRUE;
 	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
 		begin
 		Raise EInterror.create('Uninitialised variable');
@@ -7116,6 +7344,7 @@ then
 	begin
 	Result:=0;
 	Result.Defined_flag:= FALSE;
+	Multi_Int_ERROR:= TRUE;
 	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
 		begin
 		Raise EInterror.create('Uninitialised variable');
@@ -7165,6 +7394,7 @@ then
 	begin
 	Result:=0;
 	Result.Defined_flag:= FALSE;
+	Multi_Int_ERROR:= TRUE;
 	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
 		begin
 		Raise EInterror.create('Uninitialised variable');
@@ -7478,6 +7708,7 @@ then
 	begin
 	Result:=0;
 	Result.Defined_flag:= FALSE;
+	Multi_Int_ERROR:= TRUE;
 	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
 		begin
 		Raise EInterror.create('Uninitialised variable');
@@ -7542,6 +7773,7 @@ then
 	begin
 	Result:=0;
 	Result.Defined_flag:= FALSE;
+	Multi_Int_ERROR:= TRUE;
 	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
 		begin
 		Raise EInterror.create('Uninitialised variable');
@@ -7612,6 +7844,7 @@ then
 	VR.Defined_flag:= FALSE;
 	VREM:= 0;
 	VREM.Defined_flag:= FALSE;
+	Multi_Int_ERROR:= TRUE;
 	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
 		begin
 		Raise EInterror.create('Uninitialised variable');
@@ -8612,22 +8845,24 @@ Result.Negative_flag:= v1.Negative_flag;
 if	(v1.Defined_flag = FALSE)
 then
 	begin
+	Result.Defined_flag:= FALSE;
+	Multi_Int_ERROR:= TRUE;
 	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
 		begin
 		Raise EInterror.create('Uninitialised variable');
 		end;
-	Result.Defined_flag:= FALSE;
 	exit;
 	end;
 
 if	(v1.Overflow_flag = TRUE)
 then
 	begin
+	Result.Overflow_flag:= TRUE;
+	Multi_Int_ERROR:= TRUE;
 	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
 		begin
 		Raise EInterror.create('Overflow');
 		end;
-	Result.Overflow_flag:= TRUE;
 	exit;
 	end;
 
@@ -8657,22 +8892,24 @@ Result.Negative_flag:= v1.Negative_flag;
 if	(v1.Defined_flag = FALSE)
 then
 	begin
+	Result.Defined_flag:= FALSE;
+	Multi_Int_ERROR:= TRUE;
 	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
 		begin
 		Raise EInterror.create('Uninitialised variable');
 		end;
-	Result.Defined_flag:= FALSE;
 	exit;
 	end;
 
 if	(v1.Overflow_flag = TRUE)
 then
 	begin
+	Result.Overflow_flag:= TRUE;
+	Multi_Int_ERROR:= TRUE;
 	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
 		begin
 		Raise EInterror.create('Overflow');
 		end;
-	Result.Overflow_flag:= TRUE;
 	exit;
 	end;
 
@@ -9182,6 +9419,7 @@ if	(Not v1.Defined_flag)
 then
 	begin
 	Result:=0;
+	Multi_Int_ERROR:= TRUE;
 	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
 		begin
 		Raise EInterror.create('Uninitialised variable');
@@ -9282,6 +9520,7 @@ if	(Not v1.Defined_flag)
 then
 	begin
 	Result:=0;
+	Multi_Int_ERROR:= TRUE;
 	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
 		begin
 		Raise EInterror.create('Uninitialised variable');
@@ -9363,6 +9602,7 @@ if	(Not v1.Defined_flag)
 then
 	begin
 	Result:=0;
+	Multi_Int_ERROR:= TRUE;
 	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
 		begin
 		Raise EInterror.create('Uninitialised variable');
@@ -9429,6 +9669,91 @@ Result:= R;
 end;
 
 
+{$ifdef 32bit}
+
+(******************************************)
+class operator Multi_Int_X4.:=(const v1:Multi_Int_X4):MULTI_INT_4W_S;
+var		R	:MULTI_INT_4W_U;
+begin
+Multi_Int_ERROR:= FALSE;
+if	(Not v1.Defined_flag)
+then
+	begin
+	Result:=0;
+	Multi_Int_ERROR:= TRUE;
+	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
+		begin
+		Raise EInterror.create('Uninitialised variable');
+		end;
+	exit;
+	end;
+
+if	(v1 > MULTI_INT_4W_U_MAXINT)
+or	(v1 < (-MULTI_INT_4W_U_MAXINT_1))
+then
+	begin
+	Result:=0;
+	Multi_Int_ERROR:= TRUE;
+	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
+		begin
+		Raise EInterror.create('Overflow');
+		end;
+	exit;
+	end;
+
+R:=	MULTI_INT_4W_U(v1.M_Value[3]);
+R:=	(R * MULTI_INT_1W_U_MAXINT_1) + MULTI_INT_4W_U(v1.M_Value[2]);
+R:=	(R * MULTI_INT_1W_U_MAXINT_1) + MULTI_INT_4W_U(v1.M_Value[1]);
+R:=	(R * MULTI_INT_1W_U_MAXINT_1) + MULTI_INT_4W_U(v1.M_Value[0]);
+
+if v1.Negative_flag
+then Result:= MULTI_INT_4W_S(-R)
+else Result:= MULTI_INT_4W_S(R);
+end;
+
+
+
+(******************************************)
+class operator Multi_Int_X4.:=(const v1:Multi_Int_X4):MULTI_INT_4W_U;
+var		R	:MULTI_INT_4W_U;
+begin
+Multi_Int_ERROR:= FALSE;
+if	(Not v1.Defined_flag)
+then
+	begin
+	Result:=0;
+	Multi_Int_ERROR:= TRUE;
+	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
+		begin
+		Raise EInterror.create('Uninitialised variable');
+		end;
+	exit;
+	end;
+
+if	(v1 > MULTI_INT_4W_U_MAXINT)
+or	(v1.Negative_flag)
+then
+	begin
+	Result:=0;
+	Multi_Int_ERROR:= TRUE;
+	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
+		begin
+		Raise EInterror.create('Overflow');
+		end;
+	exit;
+	end;
+
+R:=	MULTI_INT_4W_U(v1.M_Value[3]);
+R:=	(R * MULTI_INT_1W_U_MAXINT_1) + MULTI_INT_4W_U(v1.M_Value[2]);
+R:=	(R * MULTI_INT_1W_U_MAXINT_1) + MULTI_INT_4W_U(v1.M_Value[1]);
+R:=	(R * MULTI_INT_1W_U_MAXINT_1) + MULTI_INT_4W_U(v1.M_Value[0]);
+
+Result:= (R);
+end;
+
+{$endif}
+
+
 (******************************************)
 class operator Multi_Int_X4.:=(const v1:Multi_Int_X4):MULTI_INT_2W_S;
 var	R	:MULTI_INT_2W_U;
@@ -9437,6 +9762,7 @@ if	(Not v1.Defined_flag)
 then
 	begin
 	Result:=0;
+	Multi_Int_ERROR:= TRUE;
 	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
 		begin
 		Raise EInterror.create('Uninitialised variable');
@@ -9456,6 +9782,7 @@ or	(v1.M_Value[7] <> 0)
 then
 	begin
 	Result:=0;
+	Multi_Int_ERROR:= TRUE;
 	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
 		begin
 		Raise EInterror.create('Uninitialised variable');
@@ -9478,6 +9805,7 @@ if	(Not v1.Defined_flag)
 then
 	begin
 	Result:=0;
+	Multi_Int_ERROR:= TRUE;
 	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
 		begin
 		Raise EInterror.create('Uninitialised variable');
@@ -9518,6 +9846,7 @@ if	(Not v1.Defined_flag)
 then
 	begin
 	Result:=0;
+	Multi_Int_ERROR:= TRUE;
 	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
 		begin
 		Raise EInterror.create('Uninitialised variable');
@@ -9561,6 +9890,7 @@ or	(v1.Negative_flag = Multi_UBool_TRUE)
 then
 	begin
 	Result:=0;
+	Multi_Int_ERROR:= TRUE;
 	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
 		begin
 		Raise EInterror.create('Uninitialised variable');
@@ -9602,6 +9932,7 @@ or	(v1.Negative_flag = Multi_UBool_TRUE)
 then
 	begin
 	Result:=0;
+	Multi_Int_ERROR:= TRUE;
 	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
 		begin
 		Raise EInterror.create('Uninitialised variable');
@@ -9642,6 +9973,7 @@ or	(v1.Negative_flag = Multi_UBool_TRUE)
 then
 	begin
 	Result:=0;
+	Multi_Int_ERROR:= TRUE;
 	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
 		begin
 		Raise EInterror.create('Uninitialised variable');
@@ -9796,6 +10128,7 @@ if	(Not v1.Defined_flag)
 then
 	begin
 	v2:='UNDEFINED';
+	Multi_Int_ERROR:= TRUE;
 	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
 		begin
 		Raise EInterror.create('Uninitialised variable');
@@ -9806,6 +10139,7 @@ if	(v1.Overflow_flag)
 then
 	begin
 	v2:='OVERFLOW';
+	Multi_Int_ERROR:= TRUE;
 	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
 		begin
 		Raise EInterror.create('Overflow');
@@ -9967,6 +10301,7 @@ if	(Not v1.Defined_flag)
 then
 	begin
 	v2:='UNDEFINED';
+	Multi_Int_ERROR:= TRUE;
 	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
 		begin
 		Raise EInterror.create('Uninitialised variable');
@@ -9977,6 +10312,7 @@ if	(v1.Overflow_flag)
 then
 	begin
 	v2:='OVERFLOW';
+	Multi_Int_ERROR:= TRUE;
 	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
 		begin
 		Raise EInterror.create('Overflow');
@@ -10022,6 +10358,7 @@ if	(Not v1.Defined_flag)
 then
 	begin
 	v2:='UNDEFINED';
+	Multi_Int_ERROR:= TRUE;
 	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
 		begin
 		Raise EInterror.create('Uninitialised variable');
@@ -10032,6 +10369,7 @@ if	(v1.Overflow_flag)
 then
 	begin
 	v2:='OVERFLOW';
+	Multi_Int_ERROR:= TRUE;
 	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
 		begin
 		Raise EInterror.create('Uninitialised variable');
@@ -10114,6 +10452,7 @@ then
 	begin
 	Result:=0;
 	Result.Defined_flag:= FALSE;
+	Multi_Int_ERROR:= TRUE;
 	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
 		begin
 		Raise EInterror.create('Uninitialised variable');
@@ -10160,6 +10499,7 @@ then
 	begin
 	Result:=0;
 	Result.Defined_flag:= FALSE;
+	Multi_Int_ERROR:= TRUE;
 	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
 		begin
 		Raise EInterror.create('Uninitialised variable');
@@ -10194,6 +10534,7 @@ then
 	begin
 	Result:=0;
 	Result.Defined_flag:= FALSE;
+	Multi_Int_ERROR:= TRUE;
 	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
 		begin
 		Raise EInterror.create('Uninitialised variable');
@@ -10227,6 +10568,7 @@ then
 	begin
 	Result:=0;
 	Result.Defined_flag:= FALSE;
+	Multi_Int_ERROR:= TRUE;
 	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
 		begin
 		Raise EInterror.create('Uninitialised variable');
@@ -10470,6 +10812,7 @@ then
 	Result:=0;
 	Result.Defined_flag:= v1.Defined_flag;
 	Result.Overflow_flag:= v1.Overflow_flag;
+	Multi_Int_ERROR:= TRUE;
 	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
 		begin
 		Raise EInterror.create('Uninitialised variable');
@@ -10536,6 +10879,7 @@ then
 	begin
 	Result:=0;
 	Result.Defined_flag:= FALSE;
+	Multi_Int_ERROR:= TRUE;
 	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
 		begin
 		Raise EInterror.create('Uninitialised variable');
@@ -10617,6 +10961,7 @@ then
 	begin
 	Result:=0;
 	Result.Defined_flag:= FALSE;
+	Multi_Int_ERROR:= TRUE;
 	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
 		begin
 		Raise EInterror.create('Uninitialised variable');
@@ -10708,6 +11053,7 @@ then
 	Result:=0;
 	Result.Defined_flag:= v1.Defined_flag;
 	Result.Overflow_flag:= v1.Overflow_flag;
+	Multi_Int_ERROR:= TRUE;
 	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
 		begin
 		Raise EInterror.create('Uninitialised variable');
@@ -10897,6 +11243,7 @@ then
 	begin
 	Result:=0;
 	Result.Defined_flag:= FALSE;
+	Multi_Int_ERROR:= TRUE;
 	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
 		begin
 		Raise EInterror.create('Uninitialised variable');
@@ -10947,6 +11294,7 @@ then
 	begin
 	Result:=0;
 	Result.Defined_flag:= FALSE;
+	Multi_Int_ERROR:= TRUE;
 	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
 		begin
 		Raise EInterror.create('Uninitialised variable');
@@ -11261,6 +11609,7 @@ then
 	begin
 	Result:=0;
 	Result.Defined_flag:= FALSE;
+	Multi_Int_ERROR:= TRUE;
 	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
 		begin
 		Raise EInterror.create('Uninitialised variable');
@@ -11325,6 +11674,7 @@ then
 	begin
 	Result:=0;
 	Result.Defined_flag:= FALSE;
+	Multi_Int_ERROR:= TRUE;
 	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
 		begin
 		Raise EInterror.create('Uninitialised variable');
@@ -11394,6 +11744,7 @@ then
 	VR.Defined_flag:= FALSE;
 	VREM:= 0;
 	VREM.Defined_flag:= FALSE;
+	Multi_Int_ERROR:= TRUE;
 	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
 		begin
 		Raise EInterror.create('Uninitialised variable');
@@ -12044,11 +12395,12 @@ Result.Negative_flag:= v1.Negative_flag;
 if	(v1.Defined_flag = FALSE)
 then
 	begin
+	Result.Defined_flag:= FALSE;
+	Multi_Int_ERROR:= TRUE;
 	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
 		begin
 		Raise EInterror.create('Uninitialised variable');
 		end;
-	Result.Defined_flag:= FALSE;
 	exit;
 	end;
 
@@ -12199,6 +12551,7 @@ then
 	begin
 	Result:=0;
 	Result.Defined_flag:= FALSE;
+	Multi_Int_ERROR:= TRUE;
 	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
 		begin
 		Raise EInterror.create('Uninitialised variable');
@@ -12249,6 +12602,7 @@ then
 	begin
 	Result:=0;
 	Result.Defined_flag:= FALSE;
+	Multi_Int_ERROR:= TRUE;
 	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
 		begin
 		Raise EInterror.create('Uninitialised variable');
@@ -12527,6 +12881,7 @@ then
 	begin
 	Result:=0;
 	Result.Defined_flag:= FALSE;
+	Multi_Int_ERROR:= TRUE;
 	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
 		begin
 		Raise EInterror.create('Uninitialised variable');
@@ -14477,6 +14832,7 @@ begin
 if	(Not v1.Defined_flag)
 then
 	begin
+	Multi_Int_ERROR:= TRUE;
 	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
 		begin
 		Raise EInterror.create('Uninitialised variable');
@@ -14563,6 +14919,7 @@ begin
 if	(Not v1.Defined_flag)
 then
 	begin
+	Multi_Int_ERROR:= TRUE;
 	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
 		begin
 		Raise EInterror.create('Uninitialised variable');
@@ -14653,6 +15010,7 @@ begin
 if	(Not v1.Defined_flag)
 then
 	begin
+	Multi_Int_ERROR:= TRUE;
 	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
 		begin
 		Raise EInterror.create('Uninitialised variable');
@@ -15064,6 +15422,7 @@ Multi_Int_ERROR:= FALSE;
 if	(Not v1.Defined_flag)
 then
 	begin
+	Multi_Int_ERROR:= TRUE;
 	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
 		begin
 		Raise EInterror.create('Uninitialised variable');
@@ -15105,6 +15464,7 @@ Multi_Int_ERROR:= FALSE;
 if	(Not v1.Defined_flag)
 then
 	begin
+	Multi_Int_ERROR:= TRUE;
 	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
 		begin
 		Raise EInterror.create('Uninitialised variable');
@@ -15671,6 +16031,7 @@ or	(Not v2.Defined_flag)
 then
 	begin
 	Result.Defined_flag:= FALSE;
+	Multi_Int_ERROR:= TRUE;
 	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
 		begin
 		Raise EInterror.create('Uninitialised variable');
@@ -15750,6 +16111,7 @@ then
 	begin
 	Result.Defined_flag:= v1.Defined_flag;
 	Result.Overflow_flag:= v1.Overflow_flag;
+	Multi_Int_ERROR:= TRUE;
 	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
 		begin
 		Raise EInterror.create('Uninitialised variable');
@@ -15813,6 +16175,7 @@ or	(Not v2.Defined_flag)
 then
 	begin
 	Result.Defined_flag:= FALSE;
+	Multi_Int_ERROR:= TRUE;
 	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
 		begin
 		Raise EInterror.create('Uninitialised variable');
@@ -15901,6 +16264,7 @@ then
 	begin
 	Result.Defined_flag:= v1.Defined_flag;
 	Result.Overflow_flag:= v1.Overflow_flag;
+	Multi_Int_ERROR:= TRUE;
 	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
 		begin
 		Raise EInterror.create('Uninitialised variable');
@@ -15962,6 +16326,7 @@ then
 	begin
 	Result.Defined_flag:= v1.Defined_flag;
 	Result.Overflow_flag:= v1.Overflow_flag;
+	Multi_Int_ERROR:= TRUE;
 	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
 		begin
 		Raise EInterror.create('Uninitialised variable');
@@ -15998,6 +16363,7 @@ or	(Not v2.Defined_flag)
 then
 	begin
 	Result.Defined_flag:= FALSE;
+	Multi_Int_ERROR:= TRUE;
 	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
 		begin
 		Raise EInterror.create('Uninitialised variable');
@@ -16063,6 +16429,7 @@ or	(Not v2.Defined_flag)
 then
 	begin
 	Result.Defined_flag:= FALSE;
+	Multi_Int_ERROR:= TRUE;
 	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
 		begin
 		Raise EInterror.create('Uninitialised variable');
@@ -16128,6 +16495,7 @@ or	(Not v2.Defined_flag)
 then
 	begin
 	Result.Defined_flag:= FALSE;
+	Multi_Int_ERROR:= TRUE;
 	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
 		begin
 		Raise EInterror.create('Uninitialised variable');
@@ -16192,6 +16560,7 @@ if	(Not v1.Defined_flag)
 then
 	begin
 	Result.Defined_flag:= FALSE;
+	Multi_Int_ERROR:= TRUE;
 	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
 		begin
 		Raise EInterror.create('Uninitialised variable');
@@ -16605,6 +16974,7 @@ if	(Not v1.Defined_flag)
 then
 	begin
 	Result.Defined_flag:= FALSE;
+	Multi_Int_ERROR:= TRUE;
 	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
 		begin
 		Raise EInterror.create('Uninitialised variable');
@@ -16643,6 +17013,7 @@ if	(Not v1.Defined_flag)
 then
 	begin
 	Result.Defined_flag:= FALSE;
+	Multi_Int_ERROR:= TRUE;
 	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
 		begin
 		Raise EInterror.create('Uninitialised variable');
@@ -16681,6 +17052,7 @@ if	(Not v1.Defined_flag)
 then
 	begin
 	Result.Defined_flag:= FALSE;
+	Multi_Int_ERROR:= TRUE;
 	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
 		begin
 		Raise EInterror.create('Uninitialised variable');
@@ -16719,6 +17091,7 @@ if	(Not v1.Defined_flag)
 then
 	begin
 	Result.Defined_flag:= FALSE;
+	Multi_Int_ERROR:= TRUE;
 	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
 		begin
 		Raise EInterror.create('Uninitialised variable');
@@ -16760,6 +17133,7 @@ if	(Not v1.Defined_flag)
 then
 	begin
 	Result.Defined_flag:= FALSE;
+	Multi_Int_ERROR:= TRUE;
 	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
 		begin
 		Raise EInterror.create('Uninitialised variable');
@@ -16811,6 +17185,7 @@ if	(Not v1.Defined_flag)
 then
 	begin
 	Result.Defined_flag:= FALSE;
+	Multi_Int_ERROR:= TRUE;
 	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
 		begin
 		Raise EInterror.create('Uninitialised variable');
@@ -16862,6 +17237,7 @@ if	(Not v1.Defined_flag)
 then
 	begin
 	Result.Defined_flag:= FALSE;
+	Multi_Int_ERROR:= TRUE;
 	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
 		begin
 		Raise EInterror.create('Uninitialised variable');
@@ -16914,6 +17290,7 @@ if	(Not v1.Defined_flag)
 then
 	begin
 	Result.Defined_flag:= FALSE;
+	Multi_Int_ERROR:= TRUE;
 	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
 		begin
 		Raise EInterror.create('Uninitialised variable');
@@ -16965,6 +17342,7 @@ or	(Not v2.Defined_flag)
 then
 	begin
 	Result.Defined_flag:= FALSE;
+	Multi_Int_ERROR:= TRUE;
 	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
 		begin
 		Raise EInterror.create('Uninitialised variable');
@@ -17011,6 +17389,7 @@ if	(Not v1.Defined_flag)
 then
 	begin
 	Result.Defined_flag:= FALSE;
+	Multi_Int_ERROR:= TRUE;
 	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
 		begin
 		Raise EInterror.create('Uninitialised variable');
@@ -17175,6 +17554,18 @@ else
 				break;
 				end;
 		Dec(i);
+		end;
+
+	Multi_Int_Reset_XV_Size(P_quotient, P_dividend.M_Value_Size);
+	Multi_Int_Reset_XV_Size(P_remainder, P_dividend.M_Value_Size);
+
+	if Multi_Int_ERROR then
+		begin
+		P_quotient.Defined_flag:= FALSE;
+		P_quotient.Overflow_flag:= TRUE;
+		P_remainder.Defined_flag:= FALSE;
+		P_remainder.Overflow_flag:= TRUE;
+		exit;
 		end;
 
 	// essential short-cut for single word dividor
@@ -17363,6 +17754,7 @@ or	(Not v2.Defined_flag)
 then
 	begin
 	Result.Defined_flag:= FALSE;
+	Multi_Int_ERROR:= TRUE;
 	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
 		begin
 		Raise EInterror.create('Uninitialised variable');
@@ -17424,6 +17816,7 @@ or	(Not v2.Defined_flag)
 then
 	begin
 	Result.Defined_flag:= FALSE;
+	Multi_Int_ERROR:= TRUE;
 	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
 		begin
 		Raise EInterror.create('Uninitialised variable');
@@ -17494,6 +17887,7 @@ then
 	VR.Defined_flag:= FALSE;
 	VREM:= 0;
 	VREM.Defined_flag:= FALSE;
+	Multi_Int_ERROR:= TRUE;
 	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
 		begin
 		Raise EInterror.create('Uninitialised variable');
@@ -17648,6 +18042,7 @@ else
 
 	if (Multi_XV_maxi < 1) then
 		begin
+		Multi_Int_ERROR:= TRUE;
 		if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
 			begin
 			Raise EInterror.create('Multi_XV_maxi value must be > 0');
@@ -17752,6 +18147,7 @@ Multi_Int_X4_MAXINT.Defined_flag:= TRUE;
 Multi_Int_X4_MAXINT.Negative_flag:= FALSE;
 Multi_Int_X4_MAXINT.Overflow_flag:= FALSE;
 
-T:= 0;
+T:= 1;
 end.
+
 
