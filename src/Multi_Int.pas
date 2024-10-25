@@ -27,7 +27,7 @@ UNIT Multi_Int;
 
 
 // This makes procedures and functions inlined
-{$define inline_functions_level_1}
+// {$define inline_functions_level_1}
 
 (* END OF USER OPTIONAL DEFINES *)
 
@@ -213,6 +213,10 @@ v4.77
 -	3.	replicate recent Multi_Int_XV division bug fixes to
 		other division functions
 
+v4.78
+-	1.	replicate subtract_Multi_Int_XV speedups to add_Multi_Int_XV
+-	2.	bug fixes in subtract_Multi_Int_XV & add_Multi_Int_XV
+
 *)
 
 INTERFACE
@@ -222,7 +226,7 @@ uses	sysutils
 ;
 
 const
-	version = '4.77.00';
+	version = '4.78.01';
 
 const
 
@@ -15562,8 +15566,186 @@ Result:= Multi_int8(v1.M_Value[0]);
 end;
 
 
-(******************************************)
+(*******************v4B*********************)
 function add_Multi_Int_XV(const v1,v2:Multi_Int_XV):Multi_Int_XV;
+var
+i,cv,
+vz1,vz2,
+rs,rz,
+z1,z2,
+tv,tv1,tv2		:MULTI_INT_2W_S;
+M_Val_All_Zero	:boolean;
+zf				:boolean;
+
+begin
+
+// skip leading zeros in v2
+zf:= FALSE;
+i:= (v2.M_Value_Size - 1);
+z2:= -1;
+repeat
+	if	(v2.M_Value[i] <> 0) then
+		begin
+		z2:= i;
+		zf:= TRUE;
+		end;
+	DEC(i);
+until	(i < 0)
+or		(zf)
+;
+if (z2 < 0) then z2:= 0;
+
+// skip leading zeros in v1
+zf:= FALSE;
+i:= (v1.M_Value_Size - 1);
+z1:= -1;
+repeat
+	if	(v1.M_Value[i] <> 0) then
+		begin
+		z1:= i;
+		zf:= TRUE;
+		end;
+	DEC(i);
+until	(i < 0)
+or		(zf)
+;
+if (z1 < 0) then z1:= 0;
+
+if	(z2 > z1) then
+	begin
+	vz1:= z1;
+	vz2:= z2;
+	end
+else
+	begin
+	vz2:= z1;
+	vz1:= z2;
+	end;
+
+if	(v2.M_Value_Size > v1.M_Value_Size) then
+	rs:= (v2.M_Value_Size + 1)
+else
+	rs:= (v1.M_Value_Size + 1);
+
+init_Multi_Int_XV(Result,rs);
+if Multi_Int_ERROR then exit;
+
+Result.Overflow_flag:= FALSE;
+Result.Defined_flag:= TRUE;
+Result.Negative_flag:= Multi_UBool_UNDEF;
+
+// main loopy
+
+M_Val_All_Zero:=TRUE;
+rz:= 0;
+cv:= 0;
+i:= 0;
+
+while (i <= vz1) do
+	begin
+	tv:= cv + (v1.M_Value[i] + v2.M_Value[i]);
+	if	tv > MULTI_INT_1W_U_MAXINT then
+		begin
+		Result.M_Value[i]:= (tv - MULTI_INT_1W_U_MAXINT_1);
+		cv:= 1;
+		rz:= i;
+		M_Val_All_Zero:= FALSE;
+		end
+	else if tv > 0 then
+		begin
+		Result.M_Value[i]:= tv;
+		cv:= 0;
+		rz:= i;
+		M_Val_All_Zero:= FALSE;
+		end
+	else
+		begin
+		Result.M_Value[i]:= tv;
+		cv:= 0;
+		end;
+	inc(i);
+	end;
+
+while (i <= vz2) do
+	begin
+	if (i < v1.M_Value_Size) then tv1:= v1.M_Value[i] else tv1:=0;
+	if (i < v2.M_Value_Size) then tv2:= v2.M_Value[i] else tv2:=0;
+	tv:= cv + (tv1 + tv2);
+	if	tv > MULTI_INT_1W_U_MAXINT then
+		begin
+		Result.M_Value[i]:= (tv - MULTI_INT_1W_U_MAXINT_1);
+		cv:= 1;
+		rz:= i;
+		M_Val_All_Zero:= FALSE;
+		end
+	else if tv > 0 then
+		begin
+		Result.M_Value[i]:= tv;
+		cv:= 0;
+		rz:= i;
+		M_Val_All_Zero:= FALSE;
+		end
+	else
+		begin
+		Result.M_Value[i]:= tv;
+		cv:= 0;
+		end;
+	inc(i);
+	end;
+
+if (cv <> 0) then
+	begin
+	if (i < rs) then
+		begin
+		if (i < v1.M_Value_Size) then tv1:= v1.M_Value[i] else tv1:=0;
+		if (i < v2.M_Value_Size) then tv2:= v2.M_Value[i] else tv2:=0;
+		tv:= cv + (tv1 + tv2);
+		Result.M_Value[i]:= tv;
+		if tv <> 0 then
+			begin
+			rz:= i;
+			M_Val_All_Zero:= FALSE;
+			end;
+		end
+	else
+		begin
+		Multi_Int_ERROR:= TRUE;
+		Result.Defined_flag:= FALSE;
+		if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
+			Raise EIntOverflow.create('Internal error in Multi_Int_XV Add');
+		exit;
+		end;
+	end;
+
+Inc(rz);
+if	(rz < Result.M_Value_Size)
+then
+	begin
+	if (rz >= Multi_XV_size) then
+		Multi_Int_Reset_XV_Size(Result,rz)
+	else
+		Multi_Int_Reset_XV_Size(Result,Multi_XV_size);
+	if Multi_Int_ERROR then
+		begin
+		Result.Defined_flag:= FALSE;
+		if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
+			begin
+			Raise EIntOverflow.create('Internal error in Multi_Int_XV Add');
+			end;
+		exit;
+		end;
+	end;
+
+if M_Val_All_Zero then
+	Result.Negative_flag:=Multi_UBool_FALSE
+else
+	Result.Negative_flag:= Multi_UBool_UNDEF;
+
+end;
+
+
+(********************v3********************)
+function add_Multi_Int_XV_v3(const v1,v2:Multi_Int_XV):Multi_Int_XV;
 var
 	tv1,tv2			:MULTI_INT_2W_S;
 	i,s1,s2,s,ss	:MULTI_INT_1W_S;
@@ -15647,8 +15829,182 @@ then Result.Negative_flag:=Multi_UBool_FALSE;
 end;
 
 
-(*******************v4*********************)
+(*******************v4B*********************)
 function subtract_Multi_Int_XV(const v1,v2:Multi_Int_XV):Multi_Int_XV;
+var
+i,cv,
+vz1,vz2,
+rs,rz,
+z1,z2,
+tv,tv1,tv2		:MULTI_INT_2W_S;
+M_Val_All_Zero	:boolean;
+zf				:boolean;
+
+begin
+
+// skip leading zeros in v2
+zf:= FALSE;
+i:= (v2.M_Value_Size - 1);
+z2:= -1;
+repeat
+	if	(v2.M_Value[i] <> 0) then
+		begin
+		z2:= i;
+		zf:= TRUE;
+		end;
+	DEC(i);
+until	(i < 0)
+or		(zf)
+;
+if (z2 < 0) then z2:= 0;
+
+// skip leading zeros in v1
+zf:= FALSE;
+i:= (v1.M_Value_Size - 1);
+z1:= -1;
+repeat
+	if	(v1.M_Value[i] <> 0) then
+		begin
+		z1:= i;
+		zf:= TRUE;
+		end;
+	DEC(i);
+until	(i < 0)
+or		(zf)
+;
+if (z1 < 0) then z1:= 0;
+
+if	(z2 > z1) then
+	begin
+	vz1:= z1;
+	vz2:= z2;
+	end
+else
+	begin
+	vz2:= z1;
+	vz1:= z2;
+	end;
+
+if	(v2.M_Value_Size > v1.M_Value_Size) then
+	rs:= (v2.M_Value_Size + 1)
+else
+	rs:= (v1.M_Value_Size + 1);
+
+init_Multi_Int_XV(Result,rs);
+if Multi_Int_ERROR then exit;
+
+Result.Overflow_flag:= FALSE;
+Result.Defined_flag:= TRUE;
+Result.Negative_flag:= Multi_UBool_UNDEF;
+
+// main loopy
+
+M_Val_All_Zero:=TRUE;
+rz:= 0;
+cv:= 0;
+i:= 0;
+
+while (i <= vz1) do
+	begin
+	tv:= cv + (v1.M_Value[i] - v2.M_Value[i]);
+	if	tv < 0 then
+		begin
+		Result.M_Value[i]:= (tv + MULTI_INT_1W_U_MAXINT_1);
+		cv:= -1;
+		rz:= i;
+		M_Val_All_Zero:= FALSE;
+		end
+	else if tv > 0 then
+		begin
+		Result.M_Value[i]:= tv;
+		cv:= 0;
+		rz:= i;
+		M_Val_All_Zero:= FALSE;
+		end
+	else
+		begin
+		Result.M_Value[i]:= tv;
+		cv:= 0;
+		end;
+	inc(i);
+	end;
+
+while (i <= vz2) do
+	begin
+	if (i < v1.M_Value_Size) then tv1:= v1.M_Value[i] else tv1:=0;
+	if (i < v2.M_Value_Size) then tv2:= v2.M_Value[i] else tv2:=0;
+	tv:= cv + (tv1 - tv2);
+	if	tv < 0 then
+		begin
+		Result.M_Value[i]:= (tv + MULTI_INT_1W_U_MAXINT_1);
+		cv:= -1;
+		rz:= i;
+		M_Val_All_Zero:= FALSE;
+		end
+	else if tv > 0 then
+		begin
+		Result.M_Value[i]:= tv;
+		cv:= 0;
+		rz:= i;
+		M_Val_All_Zero:= FALSE;
+		end
+	else
+		begin
+		Result.M_Value[i]:= tv;
+		cv:= 0;
+		end;
+	inc(i);
+	end;
+
+if (cv <> 0) then
+	if (i < rs) then
+		begin
+		if (i < v1.M_Value_Size) then tv1:= v1.M_Value[i] else tv1:=0;
+		if (i < v2.M_Value_Size) then tv2:= v2.M_Value[i] else tv2:=0;
+		tv:= cv + (tv1 - tv2);
+		Result.M_Value[i]:= tv;
+		if tv <> 0 then
+			begin
+			rz:= i;
+			M_Val_All_Zero:= FALSE;
+			end;
+		end
+	else
+		begin
+		Multi_Int_ERROR:= TRUE;
+		Result.Defined_flag:= FALSE;
+		if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
+			Raise EIntOverflow.create('Internal error in Multi_Int_XV Subtract');
+		exit;
+		end;
+
+Inc(rz);
+if	(rz < Result.M_Value_Size)
+then
+	begin
+	if (rz >= Multi_XV_size) then
+		Multi_Int_Reset_XV_Size(Result,rz)
+	else
+		Multi_Int_Reset_XV_Size(Result,Multi_XV_size);
+	if Multi_Int_ERROR then
+		begin
+		Result.Defined_flag:= FALSE;
+		if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
+			Raise EIntOverflow.create('Internal error in Multi_Int_XV Subtract');
+		exit;
+		end;
+	end;
+
+if M_Val_All_Zero then
+	Result.Negative_flag:=Multi_UBool_FALSE
+else
+	Result.Negative_flag:= Multi_UBool_UNDEF;
+
+end;
+
+
+(*******************v4*********************)
+function subtract_Multi_Int_XV_v4a(const v1,v2:Multi_Int_XV):Multi_Int_XV;
 var
 i,vz,rs,rz,cv,
 z1,z2,
@@ -15770,6 +16126,11 @@ if (cv <> 0) then
 	begin
 	tv:= cv + (v1.M_Value[i] - v2.M_Value[i]);
 	Result.M_Value[i]:= tv;
+	if tv <> 0 then
+		begin
+		rz:= i;
+		M_Val_All_Zero:= FALSE;
+		end;
 	end;
 
 Inc(rz);
@@ -15787,6 +16148,7 @@ then
 			begin
 			Raise EIntOverflow.create('Internal error in subtract_Multi_Int_XV');
 			end;
+		exit;
 		end;
 	end;
 
@@ -18215,13 +18577,13 @@ Multi_Int_X4_MAXINT.Negative_flag:= FALSE;
 Multi_Int_X4_MAXINT.Overflow_flag:= FALSE;
 
 {
-what is the point of Force_recompile ?
+What is the point of Force_recompile ?
 I have been getting problems where disabling/enabling the
 {$define inline_functions_level_1} has not been picked-up
 by the compiler. So whenever I change the define, I also
 change the value assigned to T, which forces a re-compile.
 }
 
-Force_recompile:= 1;
+Force_recompile:= 0;
 end.
 
