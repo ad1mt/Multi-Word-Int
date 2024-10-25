@@ -26,6 +26,13 @@ UNIT Multi_Int;
 // {$DEFINE 64BIT}
 
 
+// This makes procedures and functions inlined
+{$define inline_functions_level_1}
+
+(* END OF USER OPTIONAL DEFINES *)
+
+// Do not remove these defines
+
 {$IFDEF 32BIT}
 	{$WARNING 32BIT OVERRIDE}
 {$ELSE}
@@ -46,15 +53,8 @@ UNIT Multi_Int;
 {$ENDIF}
 
 
-// This makes procedure and functions inlined
-{$define inline_functions_level_1}
-
-(* END OF USER OPTIONAL DEFINES *)
-
-
 // This define is essential to make exceptions work correctly
 // for floating-point operations on Intel 32 bit CPU's.
-// Do not remove this define.
 
 {$IFDEF 64BIT}
 	{$IFDEF CPU32}
@@ -207,6 +207,12 @@ v4.76
 -	1.	Yet more bugs in Multi_Int_XV division.
 -	2.	fixed many bugs where Multi_Int_ERROR should be set TRUE
 
+v4.77
+-	1.	Rename T to Force_recompile to make it self-documenting :)
+-	2.	more bug fixes in sqroot
+-	3.	replicate recent Multi_Int_XV division bug fixes to
+		other division functions
+
 *)
 
 INTERFACE
@@ -216,7 +222,7 @@ uses	sysutils
 ;
 
 const
-	version = '4.75.00';
+	version = '4.77.00';
 
 const
 
@@ -729,7 +735,7 @@ Multi_Int_X5	=	record
 
 (******************************************)
 var
-i,T											:MULTI_INT_1W_U;
+i, Force_recompile							:MULTI_INT_1W_U;
 Multi_Int_Initialisation_done				:boolean = FALSE;
 Multi_XV_size								:MULTI_INT_2W_U = 0;
 Multi_XV_limit								:MULTI_INT_2W_U = 0;
@@ -3924,8 +3930,6 @@ else
 
 	if	(dividor_non_zero_pos = 0) then
 		begin
-		P_remainder:= 0;
-		P_quotient:= 0;
 		word_carry:= 0;
 		i:= Multi_X2_maxi;
 		while (i >= 0) do
@@ -3992,11 +3996,27 @@ else
 			quotient:= 0;
 			quotient.M_Value[quotient_i]:= word_division;
             next_dividend:= (dividend - (dividor * quotient));
+			if Multi_Int_ERROR then
+				begin
+				P_quotient.Defined_flag:= FALSE;
+				P_quotient.Overflow_flag:= TRUE;
+				P_remainder.Defined_flag:= FALSE;
+				P_remainder.Overflow_flag:= TRUE;
+				exit;
+				end;
 			if (next_dividend.Negative) then
 				begin
 				Dec(word_division);
 				quotient.M_Value[quotient_i]:= word_division;
 	            next_dividend:= (dividend - (dividor * quotient));
+				if Multi_Int_ERROR then
+					begin
+					P_quotient.Defined_flag:= FALSE;
+					P_quotient.Overflow_flag:= TRUE;
+					P_remainder.Defined_flag:= FALSE;
+					P_remainder.Overflow_flag:= TRUE;
+					exit;
+					end;
 				end;
 			P_quotient.M_Value[quotient_i]:= word_division;
             dividend:= next_dividend;
@@ -4213,6 +4233,9 @@ then
 	exit;
 	end;
 
+VR.Defined_flag:= FALSE;
+VREM.Defined_flag:= FALSE;
+
 if	(v1 >= 100) then
 	begin
 	D:= length(v1.ToStr);
@@ -4248,6 +4271,7 @@ repeat
 	begin
 	// CC:= ((C + (v1 div C)) div 2);
     intdivide_taylor_warruth_X2(v1,C,Q,R);
+	if (Multi_Int_ERROR) then exit;
 	CC:= (C+Q);
     ShiftDown_MultiBits_Multi_Int_X2(CC, 1);
 	if	(ABS(C-CC) < 2) then
@@ -7591,8 +7615,6 @@ else
 
 	if	(dividor_non_zero_pos = 0) then
 		begin
-		P_remainder:= 0;
-		P_quotient:= 0;
 		word_carry:= 0;
 		i:= Multi_X3_maxi;
 		while (i >= 0) do
@@ -7659,11 +7681,27 @@ else
 			quotient:= 0;
 			quotient.M_Value[quotient_i]:= word_division;
             next_dividend:= (dividend - (dividor * quotient));
+			if Multi_Int_ERROR then
+				begin
+				P_quotient.Defined_flag:= FALSE;
+				P_quotient.Overflow_flag:= TRUE;
+				P_remainder.Defined_flag:= FALSE;
+				P_remainder.Overflow_flag:= TRUE;
+				exit;
+				end;
 			if (next_dividend.Negative) then
 				begin
 				Dec(word_division);
 				quotient.M_Value[quotient_i]:= word_division;
 	            next_dividend:= (dividend - (dividor * quotient));
+				if Multi_Int_ERROR then
+					begin
+					P_quotient.Defined_flag:= FALSE;
+					P_quotient.Overflow_flag:= TRUE;
+					P_remainder.Defined_flag:= FALSE;
+					P_remainder.Overflow_flag:= TRUE;
+					exit;
+					end;
 				end;
 			P_quotient.M_Value[quotient_i]:= word_division;
             dividend:= next_dividend;
@@ -7881,6 +7919,9 @@ then
 	exit;
 	end;
 
+VR.Defined_flag:= FALSE;
+VREM.Defined_flag:= FALSE;
+
 if	(v1 >= 100) then
 	begin
 	D:= length(v1.ToStr);
@@ -7918,6 +7959,7 @@ repeat
     intdivide_taylor_warruth_X3(v1,C,Q,R);
 	CC:= (C+Q);
     ShiftDown_MultiBits_Multi_Int_X3(CC, 1);
+	if (Multi_Int_ERROR) then exit;
 	if	(ABS(C-CC) < 2) then
 		begin
 		if	(CC < LPC) then
@@ -11493,10 +11535,11 @@ else
 	dividend.Negative_flag:= FALSE;
 
 	// essential short-cut for single word dividor
+	// NB this is not just for speed, the later code
+	// will break if this case is not processed in advance
+
 	if	(dividor_non_zero_pos = 0) then
 		begin
-		P_remainder:= 0;
-		P_quotient:= 0;
 		word_carry:= 0;
 		i:= Multi_X4_maxi;
 		while (i >= 0) do
@@ -11557,14 +11600,31 @@ else
 						goto AGAIN;
 					end;
 				end;
+
 			quotient:= 0;
 			quotient.M_Value[quotient_i]:= word_division;
             next_dividend:= (dividend - (dividor * quotient));
+			if Multi_Int_ERROR then
+				begin
+				P_quotient.Defined_flag:= FALSE;
+				P_quotient.Overflow_flag:= TRUE;
+				P_remainder.Defined_flag:= FALSE;
+				P_remainder.Overflow_flag:= TRUE;
+				exit;
+				end;
 			if (next_dividend.Negative) then
 				begin
 				Dec(word_division);
 				quotient.M_Value[quotient_i]:= word_division;
 	            next_dividend:= (dividend - (dividor * quotient));
+				if Multi_Int_ERROR then
+					begin
+					P_quotient.Defined_flag:= FALSE;
+					P_quotient.Overflow_flag:= TRUE;
+					P_remainder.Defined_flag:= FALSE;
+					P_remainder.Overflow_flag:= TRUE;
+					exit;
+					end;
 				end;
 			P_quotient.M_Value[quotient_i]:= word_division;
             dividend:= next_dividend;
@@ -11781,6 +11841,9 @@ then
 	exit;
 	end;
 
+VR.Defined_flag:= FALSE;
+VREM.Defined_flag:= FALSE;
+
 if	(v1 >= 100) then
 	begin
 	D:= length(v1.ToStr);
@@ -11818,6 +11881,7 @@ repeat
     intdivide_taylor_warruth_X4(v1,C,Q,R);
 	CC:= (C+Q);
     ShiftDown_MultiBits_Multi_Int_X4(CC, 1);
+	if (Multi_Int_ERROR) then exit;
 	if	(ABS(C-CC) < 2) then
 		begin
 		if	(CC < LPC) then
@@ -17924,6 +17988,9 @@ then
 	exit;
 	end;
 
+VR.Defined_flag:= FALSE;
+VREM.Defined_flag:= FALSE;
+
 if	(v1 >= 100) then
 	begin
 	D:= length(v1.ToStr);
@@ -18147,7 +18214,14 @@ Multi_Int_X4_MAXINT.Defined_flag:= TRUE;
 Multi_Int_X4_MAXINT.Negative_flag:= FALSE;
 Multi_Int_X4_MAXINT.Overflow_flag:= FALSE;
 
-T:= 1;
-end.
+{
+what is the point of Force_recompile ?
+I have been getting problems where disabling/enabling the
+{$define inline_functions_level_1} has not been picked-up
+by the compiler. So whenever I change the define, I also
+change the value assigned to T, which forces a re-compile.
+}
 
+Force_recompile:= 1;
+end.
 
