@@ -1,4 +1,4 @@
-# Multi-Word-Int v4.76
+# Multi-Word-Int v4.77
 Library to provide multi-word (large) integers for the Free Pascal compiler.
 Designed to be reasonably fast, and requiring minimal changes to existing code.
 Provides basic arithmetic operations add, subtract, multiply, divide, exclusive-or, power, odd, even, bit shift.
