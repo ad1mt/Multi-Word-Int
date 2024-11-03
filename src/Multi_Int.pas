@@ -173,6 +173,10 @@ v4.82b
 -	1.	more bug fixes in multiply_Multi_Int_XV; setting result size
 -	2.	more bug fixes in add_Multi_Int_XV; setting result size
 
+v4.82c
+-	1.	bug fixes in initialise_Multi_Int_XV; defined should be false
+-	2.	bug fixes in all routines that set Multi_Int_XV type; defined:=TRUE;
+
 *)
 
 INTERFACE
@@ -13029,6 +13033,7 @@ begin
 n:= MI.M_Value_Size;
 setlength(MI.M_Value,0);
 setlength(MI.M_Value,n);
+MI.Defined_flag:= TRUE;
 end;
 
 
@@ -13040,7 +13045,7 @@ setlength(mi.M_Value, 2);
 MI.M_Value_Size:= 2;
 MI.Negative_flag:= Multi_UBool_FALSE;
 MI.Overflow_flag:= FALSE;
-MI.Defined_flag:= TRUE;
+MI.Defined_flag:= FALSE;
 end;
 
 
@@ -13872,7 +13877,9 @@ var
 	Signeg,
 	Zeroneg,
 	M_Val_All_Zero		:boolean;
+
 begin
+mi.Defined_flag:= FALSE;
 Multi_Int_ERROR:= FALSE;
 
 s:= (length(v1) div 10);
@@ -13903,16 +13910,13 @@ if	(length(v1) > 0) then
 			except
 				on EConvertError do
 					begin
-					mi.Defined_flag:= FALSE;
 					mi.Overflow_flag:=TRUE;
 					Multi_Int_ERROR:= TRUE;
 					if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
-						begin
 						Raise;
-						end;
+					exit;
 					end;
 			end;
-		if mi.Defined_flag = FALSE then exit;
 
 		M_Val[0]:=(M_Val[0] * 10) + i;
 		n:=1;
@@ -13946,11 +13950,7 @@ if	(length(v1) > 0) then
 	end;
 
 Multi_Int_Reset_XV_Size(MI, s);
-if Multi_Int_ERROR then
-	begin
-	mi.Defined_flag:= FALSE;
-	exit;
-	end;
+if Multi_Int_ERROR then exit;
 mi.Overflow_flag:=FALSE;
 mi.Defined_flag:= TRUE;
 mi.Negative_flag:= FALSE;
@@ -14077,7 +14077,7 @@ var
 	M_Val_All_Zero		:boolean;
 begin
 Multi_Int_ERROR:= FALSE;
-mi.Defined_flag:= TRUE;
+mi.Defined_flag:= FALSE;
 
 s:= ( length(v1) div 8);
 if (s < Multi_XV_min_size) then s:= Multi_XV_min_size;
@@ -14107,11 +14107,10 @@ if	(length(v1) > 0) then
 			except
 				Multi_Int_ERROR:= TRUE;
 				mi.Overflow_flag:=TRUE;
-				mi.Defined_flag:= FALSE;
 				if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
 					Raise;
+				exit;
 			end;
-		if mi.Defined_flag = FALSE then exit;
 
 		M_Val[0]:=(M_Val[0] * 16) + i;
 		n:=1;
@@ -14146,11 +14145,7 @@ if	(length(v1) > 0) then
 	end;
 
 Multi_Int_Reset_XV_Size(MI, s);
-if Multi_Int_ERROR then
-	begin
-	mi.Defined_flag:= FALSE;
-	exit;
-	end;
+if Multi_Int_ERROR then exit;
 mi.Overflow_flag:=FALSE;
 mi.Defined_flag:= TRUE;
 mi.Negative_flag:= FALSE;
@@ -14253,6 +14248,7 @@ var
 	M_Val_All_Zero		:boolean;
 begin
 Multi_Int_ERROR:= FALSE;
+mi.Defined_flag:= FALSE;
 
 //s:= Multi_XV_size;
 s:= (length(v1) div 32);
@@ -14286,7 +14282,6 @@ if	(length(v1) > 0) then
 			begin
 			Multi_Int_ERROR:= TRUE;
 			mi.Overflow_flag:=TRUE;
-			mi.Defined_flag:= FALSE;
 			if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
 				Raise EInterror.create('Invalid binary digit');
 			exit;
@@ -14325,11 +14320,7 @@ if	(length(v1) > 0) then
 	end;
 
 Multi_Int_Reset_XV_Size(MI, s);
-if Multi_Int_ERROR then
-	begin
-	mi.Defined_flag:= FALSE;
-	exit;
-	end;
+if Multi_Int_ERROR then exit;
 mi.Overflow_flag:=FALSE;
 mi.Defined_flag:= TRUE;
 mi.Negative_flag:= FALSE;
@@ -14423,6 +14414,7 @@ procedure MULTI_INT_2W_S_to_Multi_Int_XV(const v1:MULTI_INT_2W_S; var mi:Multi_I
 var	n	:MULTI_INT_2W_U;
 
 begin
+mi.Defined_flag:= FALSE;
 setlength(mi.M_Value, 0);
 setlength(mi.M_Value, 2);
 mi.M_Value_Size:= 2;
@@ -14439,6 +14431,8 @@ else
 	mi.M_Value[0]:= (v1 MOD MULTI_INT_1W_U_MAXINT_1);
 	mi.M_Value[1]:= (v1 DIV MULTI_INT_1W_U_MAXINT_1);
 	end;
+
+mi.Defined_flag:= TRUE;
 end;
 
 
@@ -14453,6 +14447,7 @@ end;
 procedure MULTI_INT_2W_U_to_Multi_Int_XV(const v1:MULTI_INT_2W_U; var mi:Multi_Int_XV);			{$ifdef inline_functions_level_1} inline; {$endif}
 var	n	:MULTI_INT_2W_U;
 begin
+mi.Defined_flag:= FALSE;
 setlength(mi.M_Value, 0);
 setlength(mi.M_Value, 2);
 mi.M_Value_Size:= 2;
@@ -14460,6 +14455,7 @@ mi.M_Value_Size:= 2;
 mi.M_Value[0]:= (v1 MOD MULTI_INT_1W_U_MAXINT_1);
 mi.M_Value[1]:= (v1 DIV MULTI_INT_1W_U_MAXINT_1);
 
+mi.Defined_flag:= TRUE;
 end;
 
 
@@ -14482,17 +14478,10 @@ v	:MULTI_INT_4W_U;
 n	:MULTI_INT_2W_U;
 
 begin
-// Zero_Multi_Int_XV_M_Value(mi);
+mi.Defined_flag:= FALSE;
 setlength(mi.M_Value, 0);
 Multi_Int_Reset_XV_Size(MI, 4);
-if Multi_Int_ERROR then
-	begin
-	mi.Defined_flag:=FALSE;
-	exit;
-	end;
-
-mi.Overflow_flag:=FALSE;
-mi.Defined_flag:=TRUE;
+if Multi_Int_ERROR then exit;
 
 v:= Abs(v1);
 mi.M_Value[0]:= MULTI_INT_1W_U(v MOD MULTI_INT_1W_U_MAXINT_1);
@@ -14505,6 +14494,10 @@ mi.M_Value[3]:= v;
 
 if (v1 < 0) then mi.Negative_flag:= Multi_UBool_TRUE
 else mi.Negative_flag:= Multi_UBool_FALSE;
+
+mi.Overflow_flag:=FALSE;
+mi.Defined_flag:=TRUE;
+
 end;
 
 
@@ -14522,13 +14515,10 @@ v	:MULTI_INT_4W_U;
 n	:MULTI_INT_2W_U;
 
 begin
+mi.Defined_flag:= FALSE;
 setlength(mi.M_Value, 0);
 Multi_Int_Reset_XV_Size(MI, 4);
-if Multi_Int_ERROR then
-	begin
-	mi.Defined_flag:=FALSE;
-	exit;
-	end;
+if Multi_Int_ERROR then exit;
 
 mi.Overflow_flag:=FALSE;
 mi.Defined_flag:=TRUE;
@@ -14543,14 +14533,7 @@ mi.M_Value[2]:= MULTI_INT_1W_U(v MOD MULTI_INT_1W_U_MAXINT_1);
 v:= (v div MULTI_INT_1W_U_MAXINT_1);
 mi.M_Value[3]:= v;
 
-{
-n:=4;
-while (n < m1.M_Value_Size) do
-	begin
-	mi.M_Value[n]:= 0;
-	inc(n);
-	end;
-}
+mi.Defined_flag:= TRUE;
 end;
 
 
@@ -14568,11 +14551,11 @@ label OVERFLOW_BRANCH, CLEAN_EXIT;
 var	n	:MULTI_INT_1W_U;
 
 begin
+mi.Defined_flag:= FALSE;
 if	(v1.Defined_flag = FALSE)
 then
 	begin
 	Multi_Int_ERROR:= TRUE;
-	MI.Defined_flag:= FALSE;
 	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
 		begin
 		Raise EInterror.create('Uninitialised variable');
@@ -14599,6 +14582,7 @@ while (n <= Multi_X4_maxi) do
 	inc(n);
 	end;
 
+mi.Defined_flag:= TRUE;
 goto CLEAN_EXIT;
 
 OVERFLOW_BRANCH:
@@ -14635,11 +14619,11 @@ label OVERFLOW_BRANCH, CLEAN_EXIT;
 var	n	:MULTI_INT_1W_U;
 
 begin
+mi.Defined_flag:= FALSE;
 if	(v1.Defined_flag = FALSE)
 then
 	begin
 	Multi_Int_ERROR:= TRUE;
-	MI.Defined_flag:= FALSE;
 	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
 		begin
 		Raise EInterror.create('Uninitialised variable');
@@ -14666,6 +14650,7 @@ while (n <= Multi_X3_maxi) do
 	inc(n);
 	end;
 
+mi.Defined_flag:= TRUE;
 goto CLEAN_EXIT;
 
 OVERFLOW_BRANCH:
@@ -14702,11 +14687,11 @@ procedure Multi_Int_X2_to_Multi_Int_XV(const v1:Multi_Int_X2; var MI:Multi_Int_X
 label OVERFLOW_BRANCH, CLEAN_EXIT;
 var	n	:MULTI_INT_1W_U;
 begin
+mi.Defined_flag:= FALSE;
 if	(v1.Defined_flag = FALSE)
 then
 	begin
 	Multi_Int_ERROR:= TRUE;
-	MI.Defined_flag:= FALSE;
 	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
 		begin
 		Raise EInterror.create('Uninitialised variable');
@@ -14733,6 +14718,7 @@ while (n <= Multi_X2_maxi) do
 	inc(n);
 	end;
 
+mi.Defined_flag:= TRUE;
 goto CLEAN_EXIT;
 
 OVERFLOW_BRANCH:
@@ -15042,8 +15028,8 @@ ansistring_to_Multi_Int_XV(AddCharR('0',AnsiLeftStr(R_FLOATREC.digits,(MULTI_SIN
 
 if (R.Overflow) then
 	begin
-	Result.Defined_flag:= FALSE;
 	Result.Negative_flag:= Multi_UBool_UNDEF;
+	Result.Defined_flag:= FALSE;
 	Multi_Int_ERROR:= TRUE;
 	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
 		begin
@@ -18026,6 +18012,6 @@ by the compiler. So whenever I change the define, I also
 change the value assigned to T, which forces a re-compile.
 }
 
-Force_recompile:= 1;
+Force_recompile:= 0;
 end.
 
