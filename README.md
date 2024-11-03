@@ -8,3 +8,4 @@ Written purely in Pascal to be portable and reliable (no assembly or C language 
 
 Changes in this version:
 - significant improvements throughout the code
+- bug fixes
