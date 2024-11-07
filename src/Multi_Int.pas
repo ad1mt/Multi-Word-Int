@@ -201,6 +201,9 @@ v4.85b
 v4.86
 -	1.	version number update only
 
+v4.87
+-	1.	speed up Multi_Int_XV_to_ansistring
+
 *)
 
 INTERFACE
@@ -210,7 +213,7 @@ uses	sysutils
 ;
 
 const
-	version = '4.86.00';
+	version = '4.87.00';
 
 const
 
@@ -14011,8 +14014,183 @@ else mi.Negative_flag:= Multi_UBool_FALSE;
 end;
 
 
-(*********************v2*******************)
+(*********************v3*******************)
+procedure Multi_Int_XV_to_ansistring_v3x(const v1:Multi_Int_XV; out v2:ansistring);
+var
+ts,s		:ansistring;
+i,z1		:MULTI_INT_2W_S;
+tv,cv,wf	:MULTI_INT_2W_U;
+begin
+if	(Not v1.Defined_flag)
+then
+	begin
+	v2:='UNDEFINED';
+	Multi_Int_ERROR:= TRUE;
+	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
+		begin
+		Raise EInterror.create('Uninitialised variable');
+		end;
+	exit;
+	end;
+if	(v1.Overflow_flag)
+then
+	begin
+	v2:='OVERFLOW';
+	Multi_Int_ERROR:= TRUE;
+	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
+		begin
+		Raise EInterror.create('Overflow');
+		end;
+	exit;
+	end;
+
+{$ifdef 64bit}
+wf:= 1000000000;
+{$endif}
+{$ifdef 32bit}
+wf:= 10000;
+{$endif}
+
+z1:= -1;
+i:= (v1.M_Value_Size - 1);
+while (i >= 0 ) do
+	begin
+	if (v1.M_Value[i] <> 0) then
+		if (z1 < 0) then
+			z1:= i;
+	Dec(i);
+	end;
+if	(z1 = -1) then
+	begin
+	v2:= '0';
+	exit;
+	end;
+
+s:= '';
+ts:= '';
+i:= 0;
+cv:= 0;
+tv:= v1.M_Value[i];
+while (i <= z1) do
+	begin
+	cv:= (tv MOD wf);
+	ts:= inttostr(cv);
+	s:= ts + s;
+	cv:= (tv div wf);
+	if	(cv >= wf) then
+		begin
+		tv:= (cv MOD wf);
+		ts:= inttostr(tv);
+		s:= ts + s;
+		cv:= (cv div wf);
+		end;
+	Inc(i);
+	if (i <= z1) then
+		begin
+		cv:= (cv * wf);
+		tv:= (MULTI_INT_2W_U(v1.M_Value[i]) * MULTI_INT_2W_U(MULTI_INT_1W_U_MAXINT_1));
+		tv:= (tv + cv);
+		end;
+	end;
+if (cv > 0) then
+	begin
+	ts:= inttostr(cv);
+	s:= ts + s;
+	end;
+
+if	(v1.Negative_flag = Multi_UBool_TRUE) then s:='-' + s;
+v2:=s;
+end;
+
+
+(*********************v4*******************)
 procedure Multi_Int_XV_to_ansistring(const v1:Multi_Int_XV; out v2:ansistring);
+var
+s,ts			:ansistring;
+M_Val			:array of MULTI_INT_2W_U;
+n,t,z,wf,wl		:MULTI_INT_2W_S;
+M_Val_All_Zero	:boolean;
+begin
+if	(Not v1.Defined_flag)
+then
+	begin
+	v2:='UNDEFINED';
+	Multi_Int_ERROR:= TRUE;
+	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
+		begin
+		Raise EInterror.create('Uninitialised variable');
+		end;
+	exit;
+	end;
+if	(v1.Overflow_flag)
+then
+	begin
+	v2:='OVERFLOW';
+	Multi_Int_ERROR:= TRUE;
+	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
+		begin
+		Raise EInterror.create('Overflow');
+		end;
+	exit;
+	end;
+
+{$ifdef 64bit}
+wf:= 1000000000; wl:= 9;
+{$endif}
+{$ifdef 32bit}
+wf:= 10000; wl:= 4;
+{$endif}
+
+setlength(M_Val, v1.M_Value_Size);
+z:= -1;
+n:= (v1.M_Value_Size - 1);
+while (n >= 0) do
+	begin
+	t:= v1.M_Value[n];
+	M_Val[n]:= t;
+	if (z = -1) then
+	if (t <> 0) then
+		z:= n;
+	Dec(n);
+	end;
+if (z = -1) then z:= 0;
+
+s:= '';
+repeat
+	n:= z;
+	z:= -1;
+	M_Val_All_Zero:= TRUE;
+	while (n > 0) do
+		begin
+		M_Val[n-1]:= M_Val[n-1] + (MULTI_INT_1W_U_MAXINT_1 * (M_Val[n] MOD wf));
+		M_Val[n]:= (M_Val[n] DIV wf);
+		if M_Val[n] <> 0 then
+			begin
+			M_Val_All_Zero:= FALSE;
+			if (z = -1) then z:= n;
+			end;
+		dec(n);
+		end;
+
+	if (z = -1) then z:= 0;
+	ts:= inttostr(M_Val[0] MOD wf);
+	ts:= AddChar('0',ts,wl);
+	s:= ts + s;
+	M_Val[0]:= (M_Val[0] DIV wf);
+	if M_Val[0] <> 0 then M_Val_All_Zero:= FALSE;
+
+until M_Val_All_Zero;
+
+s:= TrimLeftSet(s, ['0']);
+if (s = '') then s:= '0';
+
+if	(v1.Negative_flag = Multi_UBool_TRUE) then s:='-' + s;
+v2:=s;
+end;
+
+
+(*********************v2*******************)
+procedure Multi_Int_XV_to_ansistring_v2(const v1:Multi_Int_XV; out v2:ansistring);
 var
 s				:ansistring = '';
 M_Val			:array of MULTI_INT_2W_U;
@@ -16904,7 +17082,7 @@ var
 	b,bi,bs,i,e,n,
 	L,p,w,wf		:MULTI_INT_1W_S;
 	v				:MULTI_INT_2W_U;
-	hex_substr		:ansistring;
+	dec_substr		:ansistring;
 	Signeg,
 	Zeroneg,
 	All_Zero		:boolean;
@@ -16949,9 +17127,9 @@ repeat
 	    L:= (e - p + 1);
 	if	(L > 0) then
 		begin
-		hex_substr:= AnsiMidStr(v1,p,L);
+		dec_substr:= AnsiMidStr(v1,p,L);
 		try
-			v:= StrToInt64(hex_substr);
+			v:= StrToInt64(dec_substr);
 			except
 				Multi_Int_ERROR:= TRUE;
 				mi.Overflow_flag:=TRUE;
