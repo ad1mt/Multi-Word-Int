@@ -193,6 +193,14 @@ v4.84c
 v4.85a
 -	1.	fixes for bug report - pi_v3
 
+v4.85b
+-	1.	fixes for multiply(X2,XV)
+-	2.	minor bug fixes in multiply_Multi_Int_XV: setting result size
+-	3.	additional NOT function for T_Multi_UBool
+
+v4.86
+-	1.	version number update only
+
 *)
 
 INTERFACE
@@ -202,7 +210,7 @@ uses	sysutils
 ;
 
 const
-	version = '4.85.00';
+	version = '4.86.00';
 
 const
 
@@ -340,6 +348,7 @@ T_Multi_UBool	=	record
 						class operator and(v1:T_Multi_UBool;v2:Boolean):Boolean; inline;
 						class operator and(v1:Boolean; v2:T_Multi_UBool):Boolean; inline;
 						class operator not(v1:T_Multi_UBool):Boolean; inline;
+						class operator not(v1:T_Multi_UBool):T_Multi_UBool; inline;
 					end;
 
 Multi_Int_X2	=	record
@@ -574,6 +583,10 @@ Multi_Int_XV	=	record
 						class operator inc(const v1:Multi_Int_XV):Multi_Int_XV;	
 						class operator dec(const v1:Multi_Int_XV):Multi_Int_XV;	
 						class operator *(const v1,v2:Multi_Int_XV):Multi_Int_XV;		{$ifdef inline_functions_level_1} inline; {$endif}
+						class operator *(const v1:Multi_Int_XV; const v2:MULTI_INT_1W_U):Multi_Int_XV;	{$ifdef inline_functions_level_1} inline; {$endif}
+						class operator *(const v2:MULTI_INT_1W_U; const v1:Multi_Int_XV):Multi_Int_XV;	{$ifdef inline_functions_level_1} inline; {$endif}
+						class operator *(const v1:Multi_Int_XV; const v2:MULTI_INT_1W_S):Multi_Int_XV;	{$ifdef inline_functions_level_1} inline; {$endif}
+						class operator *(const v2:MULTI_INT_1W_S; const v1:Multi_Int_XV):Multi_Int_XV;	{$ifdef inline_functions_level_1} inline; {$endif}
 						class operator div(const v1,v2:Multi_Int_XV):Multi_Int_XV;
 						class operator mod(const v1,v2:Multi_Int_XV):Multi_Int_XV;	
 						class operator xor(const v1,v2:Multi_Int_XV):Multi_Int_XV;	
@@ -876,6 +889,13 @@ begin
 if	(v1.B_Value = Multi_UBool_TRUE) then Result:= FALSE
 else if (v1.B_Value = Multi_UBool_FALSE) then Result:= TRUE
 else Result:= FALSE;
+end;
+
+class operator T_Multi_UBool.not(v1:T_Multi_UBool):T_Multi_UBool;
+begin
+if	(v1.B_Value = Multi_UBool_TRUE) then Result:= Multi_UBool_FALSE
+else if (v1.B_Value = Multi_UBool_FALSE) then Result:= Multi_UBool_TRUE
+else Result:= Multi_UBool_UNDEF;
 end;
 
 
@@ -16595,16 +16615,6 @@ until (j > z2);
 
 Inc(h);
 
-{
-if (h < rs)
-then
-	begin
-	if (h < ro) then h:= ro;
-	Reset_XV_Size(Result,h,EXTEND_LIMIT);
-	if Multi_Int_ERROR then exit;
-	end;
-}
-
 if EXTEND_LIMIT then
 	begin
 	if (h < rs) then
@@ -16617,11 +16627,8 @@ if EXTEND_LIMIT then
 else
 	begin
 	if (h < Multi_XV_min_size) then h:= Multi_XV_min_size;
-	if (h >= ro) then
-		begin
-		Reset_XV_Size(Result, h);
-		if Multi_Int_ERROR then exit;
-		end;
+	Reset_XV_Size(Result, h);
+	if Multi_Int_ERROR then exit;
 	end;
 
 
@@ -16671,6 +16678,292 @@ if	(R.Negative_flag = Multi_UBool_UNDEF) then
 	else R.Negative_flag:=Multi_UBool_TRUE;
 
 Result:= R;
+
+end;
+
+
+(******************************************)
+procedure multiply_Multi_Int_XV(const v1:Multi_Int_XV; const v2:MULTI_INT_1W_U; var Result:Multi_Int_XV; const EXTEND_LIMIT:boolean=FALSE); overload;
+var
+i,h,rs,ro,
+z1	:MULTI_INT_2W_S;
+zf	:boolean;
+tv	:MULTI_INT_2W_U;
+
+begin
+Zero_Multi_Int_XV_M_Value(Result);
+Result.Negative_flag:=Multi_UBool_FALSE;
+Result.Defined_flag:= TRUE;
+
+if (v2 = 0) then exit;
+
+Result.Defined_flag:= FALSE;
+ro:= Result.M_Value_Size;
+rs:= (v1.M_Value_Size + 1);
+Reset_XV_Size(Result, rs, SET_EXTEND_LIMIT);
+if Multi_Int_ERROR then exit;
+
+// main loopy
+i:= 0;
+h:= 0;
+repeat
+	if	(v1.M_Value[i] <> 0)
+	then
+		begin
+		h:= i+1;
+		tv:= (v1.M_Value[i] * v2) + Result.M_Value[i];
+		Result.M_Value[i]:= (tv MOD MULTI_INT_1W_U_MAXINT_1);
+		Result.M_Value[h]:= (tv DIV MULTI_INT_1W_U_MAXINT_1);
+		end;
+	INC(i);
+until (i >= v1.M_Value_Size);
+
+if (Result.M_Value[h] = 0) then
+	Dec(h);
+
+Inc(h);
+
+if EXTEND_LIMIT then
+	begin
+	if (h < rs) then
+		begin
+		if (h < ro) then h:= ro;
+		Reset_XV_Size(Result,h,EXTEND_LIMIT);
+		if Multi_Int_ERROR then exit;
+		end;
+	end
+else
+	begin
+	if (h < Multi_XV_min_size) then h:= Multi_XV_min_size;
+	Reset_XV_Size(Result, h);
+	if Multi_Int_ERROR then exit;
+	end;
+
+Result.Defined_flag:= TRUE;
+Result.Negative_flag:= v1.Negative_flag;
+end;
+
+
+(******************************************)
+class operator Multi_Int_XV.*(const v1:Multi_Int_XV; const v2:MULTI_INT_1W_U):Multi_Int_XV;	{$ifdef inline_functions_level_1} inline; {$endif}
+begin
+if	(Not v1.Defined_flag)
+then
+	begin
+	Result.Defined_flag:= FALSE;
+	Multi_Int_ERROR:= TRUE;
+	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
+		begin
+		Raise EInterror.create('Uninitialised variable');
+		end;
+	exit;
+	end;
+if	(v1.Overflow_flag)
+then
+	begin
+	Result.Overflow_flag:=TRUE;
+	Result.Defined_flag:=TRUE;
+	Multi_Int_ERROR:= TRUE;
+	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
+		begin
+		Raise EIntOverflow.create('Overflow');
+		end;
+	exit;
+	end;
+
+multiply_Multi_Int_XV(v1,v2,Result);
+
+if (Result.Overflow_flag = TRUE) then
+	begin
+	Multi_Int_ERROR:= TRUE;
+	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
+		Raise EIntOverflow.create('Overflow');
+	end;
+
+end;
+
+
+(******************************************)
+class operator Multi_Int_XV.*(const v2:MULTI_INT_1W_U; const v1:Multi_Int_XV):Multi_Int_XV;	{$ifdef inline_functions_level_1} inline; {$endif}
+begin
+if	(Not v1.Defined_flag)
+then
+	begin
+	Result.Defined_flag:= FALSE;
+	Multi_Int_ERROR:= TRUE;
+	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
+		begin
+		Raise EInterror.create('Uninitialised variable');
+		end;
+	exit;
+	end;
+if	(v1.Overflow_flag)
+then
+	begin
+	Result.Overflow_flag:=TRUE;
+	Result.Defined_flag:=TRUE;
+	Multi_Int_ERROR:= TRUE;
+	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
+		begin
+		Raise EIntOverflow.create('Overflow');
+		end;
+	exit;
+	end;
+
+multiply_Multi_Int_XV(v1,v2,Result);
+
+if (Result.Overflow_flag = TRUE) then
+	begin
+	Multi_Int_ERROR:= TRUE;
+	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
+		Raise EIntOverflow.create('Overflow');
+	end;
+
+end;
+
+
+(******************************************)
+procedure multiply_Multi_Int_XV(const v1:Multi_Int_XV; const v2:MULTI_INT_1W_S; var Result:Multi_Int_XV; const EXTEND_LIMIT:boolean=FALSE); overload;
+var
+i,h,rs,ro,
+z1	:MULTI_INT_2W_S;
+zf	:boolean;
+tv	:MULTI_INT_2W_U;
+
+begin
+Zero_Multi_Int_XV_M_Value(Result);
+Result.Negative_flag:=Multi_UBool_FALSE;
+Result.Defined_flag:= TRUE;
+
+if (v2 = 0) then exit;
+
+Result.Defined_flag:= FALSE;
+ro:= Result.M_Value_Size;
+rs:= (v1.M_Value_Size + 1);
+Reset_XV_Size(Result, rs, SET_EXTEND_LIMIT);
+if Multi_Int_ERROR then exit;
+
+// main loopy
+i:= 0;
+h:= 0;
+repeat
+	if	(v1.M_Value[i] <> 0)
+	then
+		begin
+		h:= i+1;
+		tv:= (v1.M_Value[i] * v2) + Result.M_Value[i];
+		Result.M_Value[i]:= (tv MOD MULTI_INT_1W_U_MAXINT_1);
+		Result.M_Value[h]:= (tv DIV MULTI_INT_1W_U_MAXINT_1);
+		end;
+	INC(i);
+until (i >= v1.M_Value_Size);
+
+if (Result.M_Value[h] = 0) then
+	Dec(h);
+
+Inc(h);
+
+if EXTEND_LIMIT then
+	begin
+	if (h < rs) then
+		begin
+		if (h < ro) then h:= ro;
+		Reset_XV_Size(Result,h,EXTEND_LIMIT);
+		if Multi_Int_ERROR then exit;
+		end;
+	end
+else
+	begin
+	if (h < Multi_XV_min_size) then h:= Multi_XV_min_size;
+	Reset_XV_Size(Result, h);
+	if Multi_Int_ERROR then exit;
+	end;
+
+Result.Defined_flag:= TRUE;
+Result.Negative_flag:= v1.Negative_flag;
+end;
+
+
+(******************************************)
+class operator Multi_Int_XV.*(const v1:Multi_Int_XV; const v2:MULTI_INT_1W_S):Multi_Int_XV;	{$ifdef inline_functions_level_1} inline; {$endif}
+begin
+if	(Not v1.Defined_flag)
+then
+	begin
+	Result.Defined_flag:= FALSE;
+	Multi_Int_ERROR:= TRUE;
+	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
+		begin
+		Raise EInterror.create('Uninitialised variable');
+		end;
+	exit;
+	end;
+if	(v1.Overflow_flag)
+then
+	begin
+	Result.Overflow_flag:=TRUE;
+	Result.Defined_flag:=TRUE;
+	Multi_Int_ERROR:= TRUE;
+	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
+		begin
+		Raise EIntOverflow.create('Overflow');
+		end;
+	exit;
+	end;
+
+if	(v2 < 0) then
+	begin
+	multiply_Multi_Int_XV(v1,abs(v2),Result);
+	Result.Negative_flag:= NOT Result.Negative_flag;
+	end
+else
+	multiply_Multi_Int_XV(v1,v2,Result);
+
+{
+if (Result.Overflow_flag = TRUE) then
+	begin
+	Multi_Int_ERROR:= TRUE;
+	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
+		Raise EIntOverflow.create('Overflow');
+	end;
+}
+end;
+
+
+(******************************************)
+class operator Multi_Int_XV.*(const v2:MULTI_INT_1W_S; const v1:Multi_Int_XV):Multi_Int_XV;	{$ifdef inline_functions_level_1} inline; {$endif}
+begin
+if	(Not v1.Defined_flag)
+then
+	begin
+	Result.Defined_flag:= FALSE;
+	Multi_Int_ERROR:= TRUE;
+	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
+		begin
+		Raise EInterror.create('Uninitialised variable');
+		end;
+	exit;
+	end;
+if	(v1.Overflow_flag)
+then
+	begin
+	Result.Overflow_flag:=TRUE;
+	Result.Defined_flag:=TRUE;
+	Multi_Int_ERROR:= TRUE;
+	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
+		begin
+		Raise EIntOverflow.create('Overflow');
+		end;
+	exit;
+	end;
+
+if	(v2 < 0) then
+	begin
+	multiply_Multi_Int_XV(v1,abs(v2),Result);
+	Result.Negative_flag:= NOT Result.Negative_flag;
+	end
+else
+	multiply_Multi_Int_XV(v1,v2,Result);
 
 end;
 
