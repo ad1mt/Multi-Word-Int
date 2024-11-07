@@ -16823,68 +16823,6 @@ end;
 
 
 (******************************************)
-procedure multiply_Multi_Int_XV(const v1:Multi_Int_XV; const v2:MULTI_INT_1W_S; var Result:Multi_Int_XV; const EXTEND_LIMIT:boolean=FALSE); overload;
-var
-i,h,rs,ro,
-z1	:MULTI_INT_2W_S;
-zf	:boolean;
-tv	:MULTI_INT_2W_U;
-
-begin
-Zero_Multi_Int_XV_M_Value(Result);
-Result.Negative_flag:=Multi_UBool_FALSE;
-Result.Defined_flag:= TRUE;
-
-if (v2 = 0) then exit;
-
-Result.Defined_flag:= FALSE;
-ro:= Result.M_Value_Size;
-rs:= (v1.M_Value_Size + 1);
-Reset_XV_Size(Result, rs, SET_EXTEND_LIMIT);
-if Multi_Int_ERROR then exit;
-
-// main loopy
-i:= 0;
-h:= 0;
-repeat
-	if	(v1.M_Value[i] <> 0)
-	then
-		begin
-		h:= i+1;
-		tv:= (v1.M_Value[i] * v2) + Result.M_Value[i];
-		Result.M_Value[i]:= (tv MOD MULTI_INT_1W_U_MAXINT_1);
-		Result.M_Value[h]:= (tv DIV MULTI_INT_1W_U_MAXINT_1);
-		end;
-	INC(i);
-until (i >= v1.M_Value_Size);
-
-if (Result.M_Value[h] = 0) then
-	Dec(h);
-
-Inc(h);
-
-if EXTEND_LIMIT then
-	begin
-	if (h < rs) then
-		begin
-		if (h < ro) then h:= ro;
-		Reset_XV_Size(Result,h,EXTEND_LIMIT);
-		if Multi_Int_ERROR then exit;
-		end;
-	end
-else
-	begin
-	if (h < Multi_XV_min_size) then h:= Multi_XV_min_size;
-	Reset_XV_Size(Result, h);
-	if Multi_Int_ERROR then exit;
-	end;
-
-Result.Defined_flag:= TRUE;
-Result.Negative_flag:= v1.Negative_flag;
-end;
-
-
-(******************************************)
 class operator Multi_Int_XV.*(const v1:Multi_Int_XV; const v2:MULTI_INT_1W_S):Multi_Int_XV;	{$ifdef inline_functions_level_1} inline; {$endif}
 begin
 if	(Not v1.Defined_flag)
@@ -16919,14 +16857,6 @@ if	(v2 < 0) then
 else
 	multiply_Multi_Int_XV(v1,v2,Result);
 
-{
-if (Result.Overflow_flag = TRUE) then
-	begin
-	Multi_Int_ERROR:= TRUE;
-	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
-		Raise EIntOverflow.create('Overflow');
-	end;
-}
 end;
 
 
