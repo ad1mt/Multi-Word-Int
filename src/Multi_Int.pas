@@ -210,6 +210,7 @@ v4.87
 v4.88
 -	1.	Multi_Int_Initialisation accepts decimal digit count
 -	2.	rename EXTEND_SIZE to INTERNAL_CALL
+-	3.	Multi_Int_Set_XV_Limit accepts decimal digit count
 
 *)
 
@@ -221,7 +222,7 @@ uses	sysutils
 ;
 
 const
-	version = '4.88.00';
+	version = '4.88.02';
 
 const
 
@@ -625,7 +626,7 @@ Multi_Int_X4_MAXINT					:Multi_Int_X4;
 Multi_Int_XV_MAXINT					:Multi_Int_XV;
 
 procedure Multi_Int_Initialisation(const P_Multi_XV_size:MULTI_INT_2W_U = 16; const DEC_DIGITS:boolean=FALSE);
-procedure Multi_Int_Set_XV_Limit(const S:MULTI_INT_2W_U);							{$ifdef inline_functions_level_1} inline; {$endif}
+procedure Multi_Int_Set_XV_Limit(const P_Multi_XV_size:MULTI_INT_2W_U; const DEC_DIGITS:boolean=FALSE);	{$ifdef inline_functions_level_1} inline; {$endif}
 procedure Multi_Int_Reset_X2_Last_Divisor;
 procedure Multi_Int_Reset_X3_Last_Divisor;	
 procedure Multi_Int_Reset_X4_Last_Divisor;	
@@ -735,7 +736,6 @@ Multi_Int_X5	=	record
 var
 i, Force_recompile				:MULTI_INT_1W_U;
 Multi_Int_Initialisation_done	:boolean = FALSE;
-// Multi_XV_size				:MULTI_INT_2W_U = 0;
 Multi_XV_min_size 				:MULTI_INT_2W_U = 2;
 Multi_XV_limit					:MULTI_INT_2W_U = 0;
 
@@ -13135,16 +13135,23 @@ end;
 
 
 (******************************************)
-procedure Multi_Int_Set_XV_Limit(const S:MULTI_INT_2W_U);	{$ifdef inline_functions_level_1} inline; {$endif}
+procedure Multi_Int_Set_XV_Limit(const P_Multi_XV_size:MULTI_INT_2W_U; const DEC_DIGITS:boolean=FALSE);	{$ifdef inline_functions_level_1} inline; {$endif}
+var	V_Multi_XV_size	:MULTI_INT_2W_U;
 begin
-if (S >= Multi_XV_min_size) then Multi_XV_limit:= S
+if DEC_DIGITS then
+	V_Multi_XV_size:= ceil(P_Multi_XV_size/(MULTI_INT_1W_SIZE * log10(2)))
 else
+	V_Multi_XV_size:= P_Multi_XV_size;
+
+if (V_Multi_XV_size < Multi_XV_min_size) then
 	begin
 	Multi_Int_ERROR:= TRUE;
 	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
 		Raise EInterror.create('Multi_XV_limit must be >= Multi_XV_min_size');
 	exit;
 	end;
+
+Multi_XV_limit:= V_Multi_XV_size;
 
 i:=0;
 while (i < Multi_Int_XV_MAXINT.M_Value_Size ) do
@@ -17726,7 +17733,7 @@ else
 	Multi_Int_Initialisation_done:= TRUE;
 
 	if DEC_DIGITS then
-		V_Multi_XV_size:= ceil(P_Multi_XV_size/(32*log10(2)))
+		V_Multi_XV_size:= ceil(P_Multi_XV_size/(MULTI_INT_1W_SIZE * log10(2)))
 	else
 		V_Multi_XV_size:= P_Multi_XV_size;
 
@@ -17737,7 +17744,6 @@ else
 		exit;
 		end;
 	Multi_XV_limit:= V_Multi_XV_size;
-	Multi_XV_min_size:= 2;
 
 	XV_Last_Divisor:= 0;
 	XV_Last_Dividend:= 0;
@@ -17850,6 +17856,6 @@ by the compiler. So whenever I change the define, I also
 change the value assigned to T, which forces a re-compile.
 }
 
-Force_recompile:= 1;
+Force_recompile:= 0;
 end.
 
