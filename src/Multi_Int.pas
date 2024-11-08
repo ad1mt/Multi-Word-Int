@@ -12,6 +12,8 @@ UNIT Multi_Int;
 {$MODESWITCH ADVANCEDRECORDS}
 {$LONGSTRINGS ON}
 {$MODESWITCH NESTEDCOMMENTS+}
+{$warn 6058 off}
+{$warn 5025 off}
 
 (* USER OPTIONAL DEFINES *)
 
@@ -205,16 +207,21 @@ v4.87
 -	1.	speed up Multi_Int_XV_to_ansistring
 -	2.	tidy up
 
+v4.88
+-	1.	Multi_Int_Initialisation accepts decimal digit count
+-	2.	rename EXTEND_SIZE to INTERNAL_CALL
+
 *)
 
 INTERFACE
 
 uses	sysutils
 ,		strutils
+,       math
 ;
 
 const
-	version = '4.87.01';
+	version = '4.88.00';
 
 const
 
@@ -617,9 +624,8 @@ Multi_Int_X3_MAXINT					:Multi_Int_X3;
 Multi_Int_X4_MAXINT					:Multi_Int_X4;
 Multi_Int_XV_MAXINT					:Multi_Int_XV;
 
-procedure Multi_Int_Initialisation(const P_Multi_XV_size:MULTI_INT_2W_U = 16);	
+procedure Multi_Int_Initialisation(const P_Multi_XV_size:MULTI_INT_2W_U = 16; const DEC_DIGITS:boolean=FALSE);
 procedure Multi_Int_Set_XV_Limit(const S:MULTI_INT_2W_U);							{$ifdef inline_functions_level_1} inline; {$endif}
-// procedure INTERNAL_Reset_XV_Size(var v1:Multi_Int_XV ;const S:MULTI_INT_2W_U);	{$ifdef inline_functions_level_1} inline; {$endif}
 procedure Multi_Int_Reset_X2_Last_Divisor;
 procedure Multi_Int_Reset_X3_Last_Divisor;	
 procedure Multi_Int_Reset_X4_Last_Divisor;	
@@ -703,7 +709,7 @@ const
 	Multi_X5_maxi = 7;
 	Multi_X5_max_x2 = 16;
 	Multi_X5_size = Multi_X4_maxi + 1;
-	SET_EXTEND_LIMIT = TRUE;
+	SET_INTERNAL_CALL = TRUE;
 type
 
 (* Multi_Int_X5 FOR INTERNAL USE ONLY! *)
@@ -13080,7 +13086,7 @@ end;
 
 
 (********************v3********************)
-procedure Reset_XV_Size(var v1:Multi_Int_XV ;const S:MULTI_INT_2W_U; const EXTEND_LIMIT:boolean=FALSE);		{$ifdef inline_functions_level_1} inline; {$endif}
+procedure Reset_XV_Size(var v1:Multi_Int_XV ;const S:MULTI_INT_2W_U; const INTERNAL_CALL:boolean=FALSE);		{$ifdef inline_functions_level_1} inline; {$endif}
 begin
 if	(S < Multi_XV_min_size) then
 	begin
@@ -13090,7 +13096,7 @@ if	(S < Multi_XV_min_size) then
 		Raise EInterror.create('Multi_Int_XV Size must be >= Multi_XV_min_size');
 	exit;
 	end;
-if EXTEND_LIMIT then
+if INTERNAL_CALL then
 	begin
 	if	(S > (Multi_XV_limit + 3)) then
 		begin
@@ -13115,34 +13121,6 @@ setlength(v1.M_Value, S);
 v1.M_Value_Size:= S;
 
 end;
-
-
-(********************v3********************)
-{
-procedure INTERNAL_Reset_XV_Size(var v1:Multi_Int_XV ;const S:MULTI_INT_2W_U);	{$ifdef inline_functions_level_1} inline; {$endif}
-begin
-if	(S < Multi_XV_min_size) then
-	begin
-	Multi_Int_ERROR:= TRUE;
-	v1.Overflow_flag:= TRUE;
-	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
-		Raise EInterror.create('Multi_Int_XV Size must be >= Multi_XV_min_size');
-	exit;
-	end;
-if	(S > (Multi_XV_limit + 3)) then
-	begin
-	Multi_Int_ERROR:= TRUE;
-	v1.Overflow_flag:= TRUE;
-	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
-		Raise EInterror.create('Multi_Int_XV Size exceeded limit');
-	exit;
-	end;
-
-setlength(v1.M_Value, S);
-v1.M_Value_Size:= S;
-
-end;
-}
 
 
 (********************v2********************)
@@ -14279,7 +14257,6 @@ begin
 Multi_Int_ERROR:= FALSE;
 mi.Defined_flag:= FALSE;
 
-//s:= Multi_XV_size;
 s:= (length(v1) div 32);
 if (s <= Multi_XV_min_size) then s:= Multi_XV_min_size;
 
@@ -15363,7 +15340,7 @@ end;
 
 
 (*******************v4B*********************)
-procedure INTERNAL_add_Multi_Int_XV(const v1,v2:Multi_Int_XV; var Result:Multi_Int_XV; const EXTEND_LIMIT:boolean=FALSE);
+procedure INTERNAL_add_Multi_Int_XV(const v1,v2:Multi_Int_XV; var Result:Multi_Int_XV; const INTERNAL_CALL:boolean=FALSE);
 var
 i,cv,
 vz1,vz2,
@@ -15427,7 +15404,7 @@ else
 ro:= Result.M_Value_Size;
 if	(rs > Result.M_Value_Size) then
 	begin
-	Reset_XV_Size(Result,rs,SET_EXTEND_LIMIT);
+	Reset_XV_Size(Result,rs,SET_INTERNAL_CALL);
 	if Multi_Int_ERROR then exit;
 	end;
 
@@ -15519,22 +15496,13 @@ if (cv <> 0) then
 	end;
 
 Inc(rz);
-{
-if (rz < rs)
-then
-	begin
-	if (rz < ro) then rz:= ro;
-	Reset_XV_Size(Result,rz,EXTEND_LIMIT);
-	if Multi_Int_ERROR then exit;
-	end;
-}
 
-if EXTEND_LIMIT then
+if INTERNAL_CALL then
 	begin
 	if (rz < rs) then
 		begin
 		if (rz < ro) then rz:= ro;
-		Reset_XV_Size(Result,rz,EXTEND_LIMIT);
+		Reset_XV_Size(Result,rz,INTERNAL_CALL);
 		if Multi_Int_ERROR then exit;
 		end;
 	end
@@ -15558,7 +15526,7 @@ end;
 
 
 (*******************v4B*********************)
-procedure INTERNAL_subtract_Multi_Int_XV(const v1,v2:Multi_Int_XV; var Result:Multi_Int_XV; const EXTEND_LIMIT:boolean=FALSE);
+procedure INTERNAL_subtract_Multi_Int_XV(const v1,v2:Multi_Int_XV; var Result:Multi_Int_XV; const INTERNAL_CALL:boolean=FALSE);
 var
 i,cv,
 vz1,vz2,
@@ -15622,7 +15590,7 @@ else
 ro:= Result.M_Value_Size;
 if	(rs > Result.M_Value_Size) then
 	begin
-	Reset_XV_Size(Result,rs,SET_EXTEND_LIMIT);
+	Reset_XV_Size(Result,rs,SET_INTERNAL_CALL);
 	if Multi_Int_ERROR then exit;
 	end;
 
@@ -15712,22 +15680,13 @@ if (cv <> 0) then
 		end;
 
 Inc(rz);
-{
-if (rz < rs)
-then
-	begin
-	if (rz < ro) then rz:= ro;
-	Reset_XV_Size(Result,rz,EXTEND_LIMIT);
-	if Multi_Int_ERROR then exit;
-	end;
-}
 
-if EXTEND_LIMIT then
+if INTERNAL_CALL then
 	begin
 	if (rz < rs) then
 		begin
 		if (rz < ro) then rz:= ro;
-		Reset_XV_Size(Result,rz,EXTEND_LIMIT);
+		Reset_XV_Size(Result,rz,INTERNAL_CALL);
 		if Multi_Int_ERROR then exit;
 		end;
 	end
@@ -15751,7 +15710,7 @@ end;
 
 
 (******************************************)
-procedure add_Multi_Int_XV(const v1,v2:Multi_Int_XV; var Result:Multi_Int_XV; const EXTEND_LIMIT:boolean=FALSE);
+procedure add_Multi_Int_XV(const v1,v2:Multi_Int_XV; var Result:Multi_Int_XV; const INTERNAL_CALL:boolean=FALSE);
 Var	Neg:T_Multi_UBool;
 begin
 if	(Not v1.Defined_flag)
@@ -15784,7 +15743,7 @@ Neg:=Multi_UBool_UNDEF;
 if	(v1.Negative_flag = v2.Negative_flag)
 then
 	begin
-	INTERNAL_add_Multi_Int_XV(v1,v2,Result,EXTEND_LIMIT);
+	INTERNAL_add_Multi_Int_XV(v1,v2,Result,INTERNAL_CALL);
 	Neg:= v1.Negative_flag;
 	end
 else
@@ -15794,12 +15753,12 @@ else
 		if	ABS_greaterthan_Multi_Int_XV(v2,v1)
 		then
 			begin
-			INTERNAL_subtract_Multi_Int_XV(v2,v1,Result,EXTEND_LIMIT);
+			INTERNAL_subtract_Multi_Int_XV(v2,v1,Result,INTERNAL_CALL);
 			Neg:= Multi_UBool_TRUE;
 			end
 		else
 			begin
-			INTERNAL_subtract_Multi_Int_XV(v1,v2,Result,EXTEND_LIMIT);
+			INTERNAL_subtract_Multi_Int_XV(v1,v2,Result,INTERNAL_CALL);
 			Neg:= Multi_UBool_FALSE;
 			end;
 		end
@@ -15808,12 +15767,12 @@ else
 		if	ABS_greaterthan_Multi_Int_XV(v1,v2)
 		then
 			begin
-			INTERNAL_subtract_Multi_Int_XV(v1,v2,Result,EXTEND_LIMIT);
+			INTERNAL_subtract_Multi_Int_XV(v1,v2,Result,INTERNAL_CALL);
 			Neg:= Multi_UBool_TRUE;
 			end
 		else
 			begin
-			INTERNAL_subtract_Multi_Int_XV(v2,v1,Result,EXTEND_LIMIT);
+			INTERNAL_subtract_Multi_Int_XV(v2,v1,Result,INTERNAL_CALL);
 			Neg:= Multi_UBool_FALSE;
 			end;
 		end;
@@ -15830,7 +15789,7 @@ end;
 
 
 (******************************************)
-procedure subtract_Multi_Int_XV(const v1,v2:Multi_Int_XV; var Result:Multi_Int_XV; const EXTEND_LIMIT:boolean=FALSE);
+procedure subtract_Multi_Int_XV(const v1,v2:Multi_Int_XV; var Result:Multi_Int_XV; const INTERNAL_CALL:boolean=FALSE);
 Var	Neg:Multi_UBool_Values;
 begin
 if	(Not v1.Defined_flag)
@@ -15868,12 +15827,12 @@ then
 		if	ABS_greaterthan_Multi_Int_XV(v1,v2)
 		then
 			begin
-			INTERNAL_subtract_Multi_Int_XV(v1,v2,Result,EXTEND_LIMIT);
+			INTERNAL_subtract_Multi_Int_XV(v1,v2,Result,INTERNAL_CALL);
 			Neg:=Multi_UBool_TRUE;
 			end
 		else
 			begin
-			INTERNAL_subtract_Multi_Int_XV(v2,v1,Result,EXTEND_LIMIT);
+			INTERNAL_subtract_Multi_Int_XV(v2,v1,Result,INTERNAL_CALL);
 			Neg:=Multi_UBool_FALSE;
 			end
 		end
@@ -15882,12 +15841,12 @@ then
 		if	ABS_greaterthan_Multi_Int_XV(v2,v1)
 		then
 			begin
-			INTERNAL_subtract_Multi_Int_XV(v2,v1,Result,EXTEND_LIMIT);
+			INTERNAL_subtract_Multi_Int_XV(v2,v1,Result,INTERNAL_CALL);
 			Neg:=Multi_UBool_TRUE;
 			end
 		else
 			begin
-			INTERNAL_subtract_Multi_Int_XV(v1,v2,Result,EXTEND_LIMIT);
+			INTERNAL_subtract_Multi_Int_XV(v1,v2,Result,INTERNAL_CALL);
 			Neg:=Multi_UBool_FALSE;
 			end
 		end
@@ -15896,12 +15855,12 @@ else (* v1.Negative_flag <> v2.Negative_flag *)
 	begin
 	if	(v2.Negative_flag = TRUE) then
 		begin
-		INTERNAL_add_Multi_Int_XV(v1,v2,Result,EXTEND_LIMIT);
+		INTERNAL_add_Multi_Int_XV(v1,v2,Result,INTERNAL_CALL);
 		Neg:=Multi_UBool_FALSE;
 		end
 	else
 		begin
-		INTERNAL_add_Multi_Int_XV(v1,v2,Result,EXTEND_LIMIT);
+		INTERNAL_add_Multi_Int_XV(v1,v2,Result,INTERNAL_CALL);
 		Neg:=Multi_UBool_TRUE;
 		end
 	end;
@@ -16518,7 +16477,7 @@ end;
 
 
 (*******************v6*********************)
-procedure multiply_Multi_Int_XV(const v1,v2:Multi_Int_XV; var Result:Multi_Int_XV; const EXTEND_LIMIT:boolean=FALSE); overload;
+procedure multiply_Multi_Int_XV(const v1,v2:Multi_Int_XV; var Result:Multi_Int_XV; const INTERNAL_CALL:boolean=FALSE); overload;
 var
 zf		:boolean;
 rs,ro,
@@ -16589,7 +16548,7 @@ if	(z1 < 0) then exit;
 rs:= (z1 + z2 + 3);
 
 ro:= Result.M_Value_Size;
-Reset_XV_Size(Result,rs,SET_EXTEND_LIMIT);
+Reset_XV_Size(Result,rs,SET_INTERNAL_CALL);
 if Multi_Int_ERROR then	exit;
 
 Result.Overflow_flag:= FALSE;
@@ -16632,12 +16591,12 @@ until (j > z2);
 
 Inc(h);
 
-if EXTEND_LIMIT then
+if INTERNAL_CALL then
 	begin
 	if (h < rs) then
 		begin
 		if (h < ro) then h:= ro;
-		Reset_XV_Size(Result,h,EXTEND_LIMIT);
+		Reset_XV_Size(Result,h,INTERNAL_CALL);
 		if Multi_Int_ERROR then exit;
 		end;
 	end
@@ -16700,7 +16659,7 @@ end;
 
 
 (******************************************)
-procedure multiply_Multi_Int_XV(const v1:Multi_Int_XV; const v2:MULTI_INT_1W_U; var Result:Multi_Int_XV; const EXTEND_LIMIT:boolean=FALSE); overload;
+procedure multiply_Multi_Int_XV(const v1:Multi_Int_XV; const v2:MULTI_INT_1W_U; var Result:Multi_Int_XV; const INTERNAL_CALL:boolean=FALSE); overload;
 var
 i,h,rs,ro,
 z1	:MULTI_INT_2W_S;
@@ -16717,7 +16676,7 @@ if (v2 = 0) then exit;
 Result.Defined_flag:= FALSE;
 ro:= Result.M_Value_Size;
 rs:= (v1.M_Value_Size + 1);
-Reset_XV_Size(Result, rs, SET_EXTEND_LIMIT);
+Reset_XV_Size(Result, rs, SET_INTERNAL_CALL);
 if Multi_Int_ERROR then exit;
 
 // main loopy
@@ -16740,12 +16699,12 @@ if (Result.M_Value[h] = 0) then
 
 Inc(h);
 
-if EXTEND_LIMIT then
+if INTERNAL_CALL then
 	begin
 	if (h < rs) then
 		begin
 		if (h < ro) then h:= ro;
-		Reset_XV_Size(Result,h,EXTEND_LIMIT);
+		Reset_XV_Size(Result,h,INTERNAL_CALL);
 		if Multi_Int_ERROR then exit;
 		end;
 	end
@@ -16918,13 +16877,14 @@ end;
 (*******************v2*********************)
 procedure ansistring_to_Multi_Int_XV(const v1:ansistring; var mi:Multi_Int_XV);
 var
-	b,bi,bs,i,e,n,
+	b,bi,bs,e,n,
 	L,p,w,wf		:MULTI_INT_1W_S;
 	v				:MULTI_INT_2W_U;
 	dec_substr		:ansistring;
 	Signeg,
 	Zeroneg,
-	All_Zero		:boolean;
+	All_Zero,
+	first_time		:boolean;
 	tm				:Multi_Int_XV;
 
 begin
@@ -16958,9 +16918,9 @@ L:= (length(v1) - b);
 e:= (length(v1) + bi - 1);
 
 All_Zero:= TRUE;
+first_time:= TRUE;
 L:= w;
 p:= bs;
-i:= 1;
 repeat
 	if	((p + w) > e) then
 	    L:= (e - p + 1);
@@ -16976,7 +16936,14 @@ repeat
 				if Multi_Int_RAISE_EXCEPTIONS_ENABLED then Raise;
 				exit;
 			end;
-		if (i > 1) then
+		if first_time then
+			begin
+			first_time:= FALSE;
+			add_Multi_Int_XV(mi,v,tm);
+			if Multi_Int_ERROR then exit;
+			mi:= tm;
+			end
+		else
 			begin
 			if (L < w) then
 				begin
@@ -16988,17 +16955,10 @@ repeat
 			if Multi_Int_ERROR then exit;
 			add_Multi_Int_XV(tm,v,mi);
 			if Multi_Int_ERROR then exit;
-			end
-		else
-			begin
-			add_Multi_Int_XV(mi,v,tm);
-			if Multi_Int_ERROR then exit;
-			mi:= tm;
 			end;
 		if Multi_Int_ERROR then exit;
 		if v <> 0 then All_Zero:= FALSE;
 		p:= (p + w);
-		Inc(i);
 		end;
 until L < w;
 
@@ -17156,23 +17116,8 @@ else
 		begin
 		if	odd(PT) then
 			begin
-			multiply_Multi_Int_XV(TV,Y,T,SET_EXTEND_LIMIT);
+			multiply_Multi_Int_XV(TV,Y,T,SET_INTERNAL_CALL);
 			if Multi_Int_ERROR then exit;
-			{
-			if	(T.Overflow_flag)
-			then
-				begin
-				Result:= 0;
-				Result.Defined_flag:= FALSE;
-				Result.Overflow_flag:= TRUE;
-				Multi_Int_ERROR:= TRUE;
-				if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
-					begin
-					Raise EIntOverflow.create('Overflow');
-					end;
-				exit;
-				end;
-			}
 			if	(T.Negative_flag = Multi_UBool_UNDEF) then
 				if	(TV.Negative_flag = Y.Negative_flag)
 				then T.Negative_flag:= Multi_UBool_FALSE
@@ -17181,45 +17126,15 @@ else
 			Y:= T;
 			PT := PT - 1;
 			end;
-		multiply_Multi_Int_XV(TV,TV,T,SET_EXTEND_LIMIT);
+		multiply_Multi_Int_XV(TV,TV,T,SET_INTERNAL_CALL);
 		if Multi_Int_ERROR then exit;
-		{
-		if	(T.Overflow_flag)
-		then
-			begin
-			Result:= 0;
-			Result.Defined_flag:= FALSE;
-			Result.Overflow_flag:= TRUE;
-			Multi_Int_ERROR:= TRUE;
-			if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
-				begin
-				Raise EIntOverflow.create('Overflow');
-				end;
-			exit;
-			end;
-		}
 		T.Negative_flag:= Multi_UBool_FALSE;
 
 		TV:= T;
 		PT := (PT div 2);
 		end;
-	multiply_Multi_Int_XV(TV,Y,R,SET_EXTEND_LIMIT);
+	multiply_Multi_Int_XV(TV,Y,R,SET_INTERNAL_CALL);
 	if Multi_Int_ERROR then exit;
-	{
-	if	(R.Overflow_flag)
-	then
-		begin
-		Result:= 0;
-		Result.Defined_flag:= FALSE;
-		Result.Overflow_flag:= TRUE;
-		Multi_Int_ERROR:= TRUE;
-		if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
-			begin
-			Raise EIntOverflow.create('Overflow');
-			end;
-		exit;
-		end;
-	}
 	if	(R.Negative_flag = Multi_UBool_UNDEF) then
 		if	(TV.Negative_flag = Y.Negative_flag)
 		then R.Negative_flag:= Multi_UBool_FALSE
@@ -17231,7 +17146,7 @@ end;
 
 
 (********************v0********************)
-procedure intdivide_taylor_warruth_XV(const P_dividend,P_dividor:Multi_Int_XV;out P_quotient,P_remainder:Multi_Int_XV; const EXTEND_LIMIT:boolean=FALSE);
+procedure intdivide_taylor_warruth_XV(const P_dividend,P_dividor:Multi_Int_XV;out P_quotient,P_remainder:Multi_Int_XV; const INTERNAL_CALL:boolean=FALSE);
 label	AGAIN, FINISH, RESIZE;
 
 var
@@ -17302,8 +17217,8 @@ else
 		end;
 
 	orig_size:= P_dividend.M_Value_Size;
-	Reset_XV_Size(P_quotient, P_dividend.M_Value_Size, SET_EXTEND_LIMIT);
-	Reset_XV_Size(P_remainder, P_dividend.M_Value_Size, SET_EXTEND_LIMIT);
+	Reset_XV_Size(P_quotient, P_dividend.M_Value_Size, SET_INTERNAL_CALL);
+	Reset_XV_Size(P_remainder, P_dividend.M_Value_Size, SET_INTERNAL_CALL);
 
 	if Multi_Int_ERROR then
 		begin
@@ -17322,11 +17237,11 @@ else
 	Zero_Multi_Int_XV_M_Value(next_dividend);
 	Zero_Multi_Int_XV_M_Value(temp_dividend);
 
-	Reset_XV_Size(dividor, div_size, SET_EXTEND_LIMIT);
-	Reset_XV_Size(dividend, div_size, SET_EXTEND_LIMIT);
-	Reset_XV_Size(quotient, div_size, SET_EXTEND_LIMIT);
-	Reset_XV_Size(next_dividend, div_size, SET_EXTEND_LIMIT);
-	Reset_XV_Size(temp_dividend, div_size, SET_EXTEND_LIMIT);
+	Reset_XV_Size(dividor, div_size, SET_INTERNAL_CALL);
+	Reset_XV_Size(dividend, div_size, SET_INTERNAL_CALL);
+	Reset_XV_Size(quotient, div_size, SET_INTERNAL_CALL);
+	Reset_XV_Size(next_dividend, div_size, SET_INTERNAL_CALL);
+	Reset_XV_Size(temp_dividend, div_size, SET_INTERNAL_CALL);
 
 	if Multi_Int_ERROR then
 		begin
@@ -17419,8 +17334,8 @@ else
 
 			quotient.M_Value[quotient_i]:= word_division;
 
-            multiply_Multi_Int_XV(dividor, quotient, temp_dividend, SET_EXTEND_LIMIT);
-			subtract_Multi_Int_XV(dividend,temp_dividend,next_dividend, SET_EXTEND_LIMIT);
+            multiply_Multi_Int_XV(dividor, quotient, temp_dividend, SET_INTERNAL_CALL);
+			subtract_Multi_Int_XV(dividend,temp_dividend,next_dividend, SET_INTERNAL_CALL);
 			if Multi_Int_ERROR then
 				begin
 				P_quotient.Defined_flag:= FALSE;
@@ -17435,8 +17350,8 @@ else
 				Dec(word_division);
 				quotient.M_Value[quotient_i]:= word_division;
 
-	            multiply_Multi_Int_XV(dividor, quotient, temp_dividend, SET_EXTEND_LIMIT);
-				subtract_Multi_Int_XV(dividend,temp_dividend,next_dividend, SET_EXTEND_LIMIT);
+	            multiply_Multi_Int_XV(dividor, quotient, temp_dividend, SET_INTERNAL_CALL);
+				subtract_Multi_Int_XV(dividend,temp_dividend,next_dividend, SET_INTERNAL_CALL);
 
 				if Multi_Int_ERROR then
 					begin
@@ -17468,13 +17383,13 @@ else
 
 RESIZE:
 
-	if EXTEND_LIMIT then
+	if INTERNAL_CALL then
 		begin
 		if (hi < div_size) then
 			begin
 			if (hi < orig_size) then hi:= orig_size;
-			Reset_XV_Size(P_quotient,hi,EXTEND_LIMIT);
-			Reset_XV_Size(P_remainder,hi,EXTEND_LIMIT);
+			Reset_XV_Size(P_quotient,hi,INTERNAL_CALL);
+			Reset_XV_Size(P_remainder,hi,INTERNAL_CALL);
 			if Multi_Int_ERROR then exit;
 			end;
 		end
@@ -17730,15 +17645,15 @@ LPC:= v1;
 repeat
 	begin
 	// CC:= ((C + (v1 div C)) div 2);
-    intdivide_taylor_warruth_XV(v1, C, Q, R, SET_EXTEND_LIMIT);
+    intdivide_taylor_warruth_XV(v1, C, Q, R, SET_INTERNAL_CALL);
 	if (Multi_Int_ERROR) then exit;
 
-	add_Multi_Int_XV(C, Q, CC, SET_EXTEND_LIMIT);
+	add_Multi_Int_XV(C, Q, CC, SET_INTERNAL_CALL);
 	if (Multi_Int_ERROR) then exit;
 
     ShiftDown_MultiBits_Multi_Int_XV(CC, 1);
 
-	subtract_Multi_Int_XV(C, CC, TC, SET_EXTEND_LIMIT);
+	subtract_Multi_Int_XV(C, CC, TC, SET_INTERNAL_CALL);
 	if (Multi_Int_ERROR) then exit;
 
 	if	(ABS(TC) < 2) then
@@ -17752,11 +17667,10 @@ repeat
 	end
 until finished;
 
-// VREM:= (v1 - (LPC * LPC));
-multiply_Multi_Int_XV(LPC, LPC, TC, SET_EXTEND_LIMIT);
+multiply_Multi_Int_XV(LPC, LPC, TC, SET_INTERNAL_CALL);
 if (Multi_Int_ERROR) then exit;
 
-subtract_Multi_Int_XV(v1, TC, VREM, SET_EXTEND_LIMIT);
+subtract_Multi_Int_XV(v1, TC, VREM, SET_INTERNAL_CALL);
 if (Multi_Int_ERROR) then exit;
 
 VR:= LPC;
@@ -17791,8 +17705,10 @@ Multi_Int_Initialisation
 ******************************************
 }
 
-procedure Multi_Int_Initialisation(const P_Multi_XV_size:MULTI_INT_2W_U = 16);
-var	i:MULTI_INT_2W_S;
+procedure Multi_Int_Initialisation(const P_Multi_XV_size:MULTI_INT_2W_U = 16; const DEC_DIGITS:boolean=FALSE);
+var
+i				:MULTI_INT_2W_S;
+V_Multi_XV_size	:MULTI_INT_2W_U;
 
 begin
 
@@ -17809,13 +17725,18 @@ else
 	begin
 	Multi_Int_Initialisation_done:= TRUE;
 
-	if (P_Multi_XV_size < Multi_XV_min_size) then
+	if DEC_DIGITS then
+		V_Multi_XV_size:= ceil(P_Multi_XV_size/(32*log10(2)))
+	else
+		V_Multi_XV_size:= P_Multi_XV_size;
+
+	if (V_Multi_XV_size < Multi_XV_min_size) then
 		begin
 		Multi_Int_ERROR:= TRUE;
 		Raise EInterror.create('Multi_XV_size must be >= minimum size');
 		exit;
 		end;
-	Multi_XV_limit:= P_Multi_XV_size;
+	Multi_XV_limit:= V_Multi_XV_size;
 	Multi_XV_min_size:= 2;
 
 	XV_Last_Divisor:= 0;
