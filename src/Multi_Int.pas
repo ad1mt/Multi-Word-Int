@@ -211,6 +211,7 @@ v4.88
 -	1.	Multi_Int_Initialisation accepts decimal digit count
 -	2.	rename EXTEND_SIZE to INTERNAL_CALL
 -	3.	Multi_Int_Set_XV_Limit accepts decimal digit count
+-	4.	fix the "Can't determine which overloaded function to call" error
 
 *)
 
@@ -222,7 +223,7 @@ uses	sysutils
 ;
 
 const
-	version = '4.88.02';
+	version = '4.88.03';
 
 const
 
@@ -599,6 +600,8 @@ Multi_Int_XV	=	record
 						class operator *(const v2:MULTI_INT_1W_U; const v1:Multi_Int_XV):Multi_Int_XV;	{$ifdef inline_functions_level_1} inline; {$endif}
 						class operator *(const v1:Multi_Int_XV; const v2:MULTI_INT_1W_S):Multi_Int_XV;	{$ifdef inline_functions_level_1} inline; {$endif}
 						class operator *(const v2:MULTI_INT_1W_S; const v1:Multi_Int_XV):Multi_Int_XV;	{$ifdef inline_functions_level_1} inline; {$endif}
+						class operator *(const v1:Multi_Int_XV; const v2:MULTI_INT_2W_U):Multi_Int_XV;	{$ifdef inline_functions_level_1} inline; {$endif}
+						class operator *(const v1:Multi_Int_XV; const v2:MULTI_INT_2W_S):Multi_Int_XV;	{$ifdef inline_functions_level_1} inline; {$endif}
 						class operator div(const v1,v2:Multi_Int_XV):Multi_Int_XV;
 						class operator mod(const v1,v2:Multi_Int_XV):Multi_Int_XV;	
 						class operator xor(const v1,v2:Multi_Int_XV):Multi_Int_XV;	
@@ -16661,6 +16664,88 @@ if	(R.Negative_flag = Multi_UBool_UNDEF) then
 	else R.Negative_flag:=Multi_UBool_TRUE;
 
 Result:= R;
+
+end;
+
+
+(******************************************)
+class operator Multi_Int_XV.*(const v1:Multi_Int_XV; const v2:MULTI_INT_2W_U):Multi_Int_XV;	{$ifdef inline_functions_level_1} inline; {$endif}
+var	m2	:Multi_Int_XV;
+begin
+if	(Not v1.Defined_flag)
+then
+	begin
+	Result.Defined_flag:= FALSE;
+	Multi_Int_ERROR:= TRUE;
+	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
+		begin
+		Raise EInterror.create('Uninitialised variable');
+		end;
+	exit;
+	end;
+if	(v1.Overflow_flag)
+then
+	begin
+	Result.Overflow_flag:=TRUE;
+	Result.Defined_flag:=TRUE;
+	Multi_Int_ERROR:= TRUE;
+	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
+		begin
+		Raise EIntOverflow.create('Overflow');
+		end;
+	exit;
+	end;
+
+m2:= v2;
+multiply_Multi_Int_XV(v1,m2,Result);
+
+if (Result.Overflow_flag = TRUE) then
+	begin
+	Multi_Int_ERROR:= TRUE;
+	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
+		Raise EIntOverflow.create('Overflow');
+	end;
+
+end;
+
+
+(******************************************)
+class operator Multi_Int_XV.*(const v1:Multi_Int_XV; const v2:MULTI_INT_2W_S):Multi_Int_XV;	{$ifdef inline_functions_level_1} inline; {$endif}
+var	m2	:Multi_Int_XV;
+begin
+if	(Not v1.Defined_flag)
+then
+	begin
+	Result.Defined_flag:= FALSE;
+	Multi_Int_ERROR:= TRUE;
+	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
+		begin
+		Raise EInterror.create('Uninitialised variable');
+		end;
+	exit;
+	end;
+if	(v1.Overflow_flag)
+then
+	begin
+	Result.Overflow_flag:=TRUE;
+	Result.Defined_flag:=TRUE;
+	Multi_Int_ERROR:= TRUE;
+	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
+		begin
+		Raise EIntOverflow.create('Overflow');
+		end;
+	exit;
+	end;
+
+m2:= v2;
+multiply_Multi_Int_XV(v1,m2,Result);
+
+if (Result.Overflow_flag = TRUE) then
+	begin
+	Multi_Int_ERROR:= TRUE;
+	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
+		Raise EIntOverflow.create('Overflow');
+	end;
 
 end;
 
