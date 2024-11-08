@@ -9,4 +9,4 @@ Written purely in Pascal to be portable and reliable (no assembly or C language 
 Changes in this version:
 - size of Multi_Int_XV type can now be specified as number of decimal digits
 - code tidying up
-- new version of unit test program
+- new version of the unit test program
