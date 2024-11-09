@@ -212,6 +212,7 @@ v4.88
 -	2.	rename EXTEND_SIZE to INTERNAL_CALL
 -	3.	Multi_Int_Set_XV_Limit accepts decimal digit count
 -	4.	fix the "Can't determine which overloaded function to call" error
+-	5.	improve the way decimal digit count is specified
 
 *)
 
@@ -223,7 +224,7 @@ uses	sysutils
 ;
 
 const
-	version = '4.88.03';
+	version = '4.88.04';
 
 const
 
@@ -331,6 +332,8 @@ type
 {$endif} // 64-bit
 
 type
+
+T_HWORDS_OR_DDIGITS		=	(HALF_WORDS,DEC_DIGITS);
 
 T_Multi_Leading_Zeros	=	(Multi_Keep_Leading_Zeros, Multi_Trim_Leading_Zeros);
 
@@ -628,8 +631,8 @@ Multi_Int_X3_MAXINT					:Multi_Int_X3;
 Multi_Int_X4_MAXINT					:Multi_Int_X4;
 Multi_Int_XV_MAXINT					:Multi_Int_XV;
 
-procedure Multi_Int_Initialisation(const P_Multi_XV_size:MULTI_INT_2W_U = 16; const DEC_DIGITS:boolean=FALSE);
-procedure Multi_Int_Set_XV_Limit(const P_Multi_XV_size:MULTI_INT_2W_U; const DEC_DIGITS:boolean=FALSE);	{$ifdef inline_functions_level_1} inline; {$endif}
+procedure Multi_Int_Initialisation(const P_Multi_XV_size:MULTI_INT_2W_U = 16; const digits_or_words:T_HWORDS_OR_DDIGITS=HALF_WORDS);
+procedure Multi_Int_Set_XV_Limit(const P_Multi_XV_size:MULTI_INT_2W_U; const digits_or_words:T_HWORDS_OR_DDIGITS=HALF_WORDS);	{$ifdef inline_functions_level_1} inline; {$endif}
 procedure Multi_Int_Reset_X2_Last_Divisor;
 procedure Multi_Int_Reset_X3_Last_Divisor;	
 procedure Multi_Int_Reset_X4_Last_Divisor;	
@@ -13138,10 +13141,10 @@ end;
 
 
 (******************************************)
-procedure Multi_Int_Set_XV_Limit(const P_Multi_XV_size:MULTI_INT_2W_U; const DEC_DIGITS:boolean=FALSE);	{$ifdef inline_functions_level_1} inline; {$endif}
+procedure Multi_Int_Set_XV_Limit(const P_Multi_XV_size:MULTI_INT_2W_U; const digits_or_words:T_HWORDS_OR_DDIGITS=HALF_WORDS);	{$ifdef inline_functions_level_1} inline; {$endif}
 var	V_Multi_XV_size	:MULTI_INT_2W_U;
 begin
-if DEC_DIGITS then
+if digits_or_words = DEC_DIGITS then
 	V_Multi_XV_size:= ceil(P_Multi_XV_size/(MULTI_INT_1W_SIZE * log10(2)))
 else
 	V_Multi_XV_size:= P_Multi_XV_size;
@@ -17797,7 +17800,7 @@ Multi_Int_Initialisation
 ******************************************
 }
 
-procedure Multi_Int_Initialisation(const P_Multi_XV_size:MULTI_INT_2W_U = 16; const DEC_DIGITS:boolean=FALSE);
+procedure Multi_Int_Initialisation(const P_Multi_XV_size:MULTI_INT_2W_U = 16; const digits_or_words:T_HWORDS_OR_DDIGITS=HALF_WORDS);
 var
 i				:MULTI_INT_2W_S;
 V_Multi_XV_size	:MULTI_INT_2W_U;
@@ -17817,7 +17820,7 @@ else
 	begin
 	Multi_Int_Initialisation_done:= TRUE;
 
-	if DEC_DIGITS then
+	if digits_or_words = DEC_DIGITS then
 		V_Multi_XV_size:= ceil(P_Multi_XV_size/(MULTI_INT_1W_SIZE * log10(2)))
 	else
 		V_Multi_XV_size:= P_Multi_XV_size;
@@ -17941,6 +17944,6 @@ by the compiler. So whenever I change the define, I also
 change the value assigned to T, which forces a re-compile.
 }
 
-Force_recompile:= 0;
+Force_recompile:= 1;
 end.
 
