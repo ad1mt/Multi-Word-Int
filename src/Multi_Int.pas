@@ -215,8 +215,12 @@ v4.88
 -	5.	improve the way decimal digit count is specified
 
 v4.89
--	1.	speed up Multi_Int_X2/3/4_to_ansistring
+-	1.	speed up Multi_Int_X2/3/4 to decimal ansistring
 -	2.	bug fixes in Multi_Int_X2/3/4 sqroot
+
+v4.90
+-	1.	speed up Multi_Int_X2/3/4 to heximal ansistring
+-	2.	speed up Multi_Int_X2/3/4 from heximal ansistring
 
 *)
 
@@ -228,7 +232,7 @@ uses	sysutils
 ;
 
 const
-	version = '4.89.00';
+	version = '4.90.00';
 
 const
 
@@ -687,9 +691,9 @@ procedure FromBin(const v1:ansistring; out mi:Multi_Int_X3); overload;
 procedure FromBin(const v1:ansistring; out mi:Multi_Int_X4); overload;	
 procedure FromBin(const v1:ansistring; out mi:Multi_Int_XV); overload;	
 
-procedure Hex_to_Multi_Int_X2(const v1:ansistring; out mi:Multi_Int_X2); overload;	
-procedure Hex_to_Multi_Int_X3(const v1:ansistring; out mi:Multi_Int_X3); overload;	
-procedure Hex_to_Multi_Int_X4(const v1:ansistring; out mi:Multi_Int_X4); overload;	
+procedure Hex_to_Multi_Int_X2(const v1:ansistring; var mi:Multi_Int_X2); overload;
+procedure Hex_to_Multi_Int_X3(const v1:ansistring; var mi:Multi_Int_X3); overload;
+procedure Hex_to_Multi_Int_X4(const v1:ansistring; var mi:Multi_Int_X4); overload;
 procedure Hex_to_Multi_Int_XV(const v1:ansistring; var mi:Multi_Int_XV); overload;
 
 procedure bin_to_Multi_Int_X2(const v1:ansistring; out mi:Multi_Int_X2); overload;	
@@ -2888,104 +2892,87 @@ Multi_Int_X2_to_hex(self, Result, LZ);
 end;
 
 
-(******************************************)
-procedure hex_to_Multi_Int_X2(const v1:ansistring; out mi:Multi_Int_X2); 
+(*******************v2*********************)
+procedure hex_to_Multi_Int_X2(const v1:ansistring; var mi:Multi_Int_X2);
 var
-	n,i,b,c,e	:MULTI_INT_2W_U;
-	M_Val		:array[0..Multi_X2_maxi] of MULTI_INT_2W_U;
+	b,bi,bs,i,
+	L,p,s,w		:MULTI_INT_2W_S;
+	v			:MULTI_INT_2W_U;
+	hex_substr	:ansistring;
 	Signeg,
 	Zeroneg,
-	M_Val_All_Zero		:boolean;
-begin
-Multi_Int_ERROR:= FALSE;
+	All_Zero	:boolean;
 
+begin
 mi.Overflow_flag:=FALSE;
 mi.Defined_flag:= TRUE;
 mi.Negative_flag:= FALSE;
-Signeg:= FALSE;
+mi:= 0;
+
+if	(length(v1) = 0) then exit;
+
 Zeroneg:= FALSE;
+Signeg:= FALSE;
 
-n:=0;
-while (n <= Multi_X2_maxi)
-do begin M_Val[n]:= 0; inc(n); end;
+w:= (MULTI_INT_1W_SIZE div 4);
 
-if	(length(v1) > 0) then
+bi:= low(ansistring);
+b:= 0;
+if	(v1[bi] = '-') then
 	begin
-	b:=low(ansistring);
-	e:=b + MULTI_INT_2W_U(length(v1)) - 1;
-	if	(v1[b] = '-') then
-		begin
-		Signeg:= TRUE;
-		INC(b);
-		end;
+	Signeg:= TRUE;
+	INC(b);
+	end;
+bs:= (bi + b);
 
-	c:= b;
-	while (c <= e) do
+L:= (length(v1) - b);
+s:= (L div w);
+if	((L mod w) > 0) then Inc(s);
+if (s > Multi_X2_size) then
+	begin
+	mi.Overflow_flag:= TRUE;
+	mi.Defined_flag:= FALSE;
+	Multi_Int_ERROR:= TRUE;
+	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
+		Raise EIntOverflow.create('Overflow');
+	exit;
+	end;
+
+All_Zero:= TRUE;
+i:= 0;
+L:= w;
+p:= (bi + length(v1) - w);
+repeat
+	if	(p < bs) then
 		begin
+	    L:= (w - (bs - p));
+		p:= bs;
+		end;
+	if	(L > 0) then
+		begin
+		hex_substr:= AnsiMidStr(v1,p,L);
 		try
-			i:=Hex2Dec(v1[c]);
+			v:= Hex2Dec64(hex_substr);
 			except
-				on EConvertError do
-					begin
-					Multi_Int_ERROR:= TRUE;
-					mi.Defined_flag:= FALSE;
-					mi.Overflow_flag:=TRUE;
-					if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
-						begin
-						Raise;
-						end;
-					end;
+				Multi_Int_ERROR:= TRUE;
+				mi.Overflow_flag:=TRUE;
+				mi.Defined_flag:= FALSE;
+				if Multi_Int_RAISE_EXCEPTIONS_ENABLED then Raise;
+				exit;
 			end;
-		if mi.Defined_flag = FALSE then exit;
-
-		M_Val[0]:=(M_Val[0] * 16) + i;
-		n:=1;
-		while (n <= Multi_X2_maxi) do
-			begin
-			M_Val[n]:=(M_Val[n] * 16);
-			inc(n);
-			end;
-
-		n:=0;
-		while (n < Multi_X2_maxi) do
-			begin
-			if	M_Val[n] > MULTI_INT_1W_U_MAXINT then
-				begin
-				M_Val[n+1]:=M_Val[n+1] + (M_Val[n] DIV MULTI_INT_1W_U_MAXINT_1);
-				M_Val[n]:=(M_Val[n] MOD MULTI_INT_1W_U_MAXINT_1);
-				end;
-
-			inc(n);
-			end;
-
-		if	M_Val[n] > MULTI_INT_1W_U_MAXINT then
-			begin
-			Multi_Int_ERROR:= TRUE;
-			mi.Defined_flag:=FALSE;
-			mi.Overflow_flag:=TRUE;
-			if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
-				begin
-				Raise EIntOverflow.create('Overflow');
-				end;
-			exit;
-			end;
-		Inc(c);
+		mi.M_Value[i]:= v;
+		if v <> 0 then All_Zero:= FALSE;
+		p:= (p - w);
+		Inc(i);
 		end;
-	end;
+until L = 0;
 
-M_Val_All_Zero:= TRUE;
-n:=0;
-while (n <= Multi_X2_maxi) do
-	begin
-	mi.M_Value[n]:= M_Val[n];
-	if M_Val[n] > 0 then M_Val_All_Zero:= FALSE;
-	inc(n);
-	end;
-if M_Val_All_Zero then Zeroneg:= TRUE;
+if All_Zero then Zeroneg:= TRUE;
 
 if Zeroneg then mi.Negative_flag:= Multi_UBool_FALSE
 else if Signeg then mi.Negative_flag:= Multi_UBool_TRUE
 else mi.Negative_flag:= Multi_UBool_FALSE;
+
 end;
 
 
@@ -6605,100 +6592,82 @@ Multi_Int_X3_to_hex(self, Result, LZ);
 end;
 
 
-(******************************************)
-procedure hex_to_Multi_Int_X3(const v1:ansistring; out mi:Multi_Int_X3); 
+(*******************v2*********************)
+procedure hex_to_Multi_Int_X3(const v1:ansistring; var mi:Multi_Int_X3);
 var
-	n,i,b,c,e	:MULTI_INT_2W_U;
-	M_Val		:array[0..Multi_X3_maxi] of MULTI_INT_2W_U;
+	b,bi,bs,i,
+	L,p,s,w		:MULTI_INT_2W_S;
+	v			:MULTI_INT_2W_U;
+	hex_substr	:ansistring;
 	Signeg,
 	Zeroneg,
-	M_Val_All_Zero		:boolean;
-begin
-Multi_Int_ERROR:= FALSE;
+	All_Zero	:boolean;
 
+begin
 mi.Overflow_flag:=FALSE;
 mi.Defined_flag:= TRUE;
 mi.Negative_flag:= FALSE;
-Signeg:= FALSE;
+mi:= 0;
+
+if	(length(v1) = 0) then exit;
+
 Zeroneg:= FALSE;
+Signeg:= FALSE;
 
-n:=0;
-while (n <= Multi_X3_maxi)
-do begin M_Val[n]:= 0; inc(n); end;
+w:= (MULTI_INT_1W_SIZE div 4);
 
-if	(length(v1) > 0) then
+bi:= low(ansistring);
+b:= 0;
+if	(v1[bi] = '-') then
 	begin
-	b:=low(ansistring);
-	e:=b + MULTI_INT_2W_U(length(v1)) - 1;
-	if	(v1[b] = '-') then
-		begin
-		Signeg:= TRUE;
-		INC(b);
-		end;
+	Signeg:= TRUE;
+	INC(b);
+	end;
+bs:= (bi + b);
 
-	c:= b;
-	while (c <= e) do
+L:= (length(v1) - b);
+s:= (L div w);
+if	((L mod w) > 0) then Inc(s);
+if (s > Multi_X3_size) then
+	begin
+	mi.Overflow_flag:= TRUE;
+	mi.Defined_flag:= FALSE;
+	Multi_Int_ERROR:= TRUE;
+	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
+		Raise EIntOverflow.create('Overflow');
+	exit;
+	end;
+
+All_Zero:= TRUE;
+i:= 0;
+L:= w;
+p:= (bi + length(v1) - w);
+repeat
+	if	(p < bs) then
 		begin
+	    L:= (w - (bs - p));
+		p:= bs;
+		end;
+	if	(L > 0) then
+		begin
+		hex_substr:= AnsiMidStr(v1,p,L);
 		try
-			i:=Hex2Dec(v1[c]);
+			v:= Hex2Dec64(hex_substr);
 			except
-				on EConvertError do
-					begin
-					Multi_Int_ERROR:= TRUE;
-					mi.Defined_flag:= FALSE;
-					mi.Overflow_flag:=TRUE;
-					if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
-						begin
-						Raise;
-						end;
-					end;
+				Multi_Int_ERROR:= TRUE;
+				mi.Overflow_flag:=TRUE;
+				mi.Defined_flag:= FALSE;
+				if Multi_Int_RAISE_EXCEPTIONS_ENABLED then Raise;
+				exit;
 			end;
-		if mi.Defined_flag = FALSE then exit;
-
-		M_Val[0]:=(M_Val[0] * 16) + i;
-		n:=1;
-		while (n <= Multi_X3_maxi) do
-			begin
-			M_Val[n]:=(M_Val[n] * 16);
-			inc(n);
-			end;
-
-		n:=0;
-		while (n < Multi_X3_maxi) do
-			begin
-			if	M_Val[n] > MULTI_INT_1W_U_MAXINT then
-				begin
-				M_Val[n+1]:=M_Val[n+1] + (M_Val[n] DIV MULTI_INT_1W_U_MAXINT_1);
-				M_Val[n]:=(M_Val[n] MOD MULTI_INT_1W_U_MAXINT_1);
-				end;
-
-			inc(n);
-			end;
-
-		if	M_Val[n] > MULTI_INT_1W_U_MAXINT then
-			begin
-			Multi_Int_ERROR:= TRUE;
-			mi.Defined_flag:=FALSE;
-			mi.Overflow_flag:=TRUE;
-			if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
-				begin
-				Raise EIntOverflow.create('Overflow');
-				end;
-			exit;
-			end;
-		Inc(c);
+		mi.M_Value[i]:= v;
+		if v <> 0 then All_Zero:= FALSE;
+		p:= (p - w);
+		Inc(i);
 		end;
-	end;
+until L = 0;
 
-M_Val_All_Zero:= TRUE;
-n:=0;
-while (n <= Multi_X3_maxi) do
-	begin
-	mi.M_Value[n]:= M_Val[n];
-	if M_Val[n] > 0 then M_Val_All_Zero:= FALSE;
-	inc(n);
-	end;
-if M_Val_All_Zero then Zeroneg:= TRUE;
+if All_Zero then Zeroneg:= TRUE;
 
 if Zeroneg then mi.Negative_flag:= Multi_UBool_FALSE
 else if Signeg then mi.Negative_flag:= Multi_UBool_TRUE
@@ -10428,100 +10397,82 @@ Multi_Int_X4_to_bin(self, Result, LZ);
 end;
 
 
-(******************************************)
-procedure hex_to_Multi_Int_X4(const v1:ansistring; out mi:Multi_Int_X4); 
+(*******************v2*********************)
+procedure hex_to_Multi_Int_X4(const v1:ansistring; var mi:Multi_Int_X4);
 var
-	n,i,b,c,e	:MULTI_INT_2W_U;
-	M_Val		:array[0..Multi_X4_maxi] of MULTI_INT_2W_U;
+	b,bi,bs,i,
+	L,p,s,w		:MULTI_INT_2W_S;
+	v			:MULTI_INT_2W_U;
+	hex_substr	:ansistring;
 	Signeg,
 	Zeroneg,
-	M_Val_All_Zero		:boolean;
-begin
-Multi_Int_ERROR:= FALSE;
+	All_Zero	:boolean;
 
+begin
 mi.Overflow_flag:=FALSE;
 mi.Defined_flag:= TRUE;
 mi.Negative_flag:= FALSE;
-Signeg:= FALSE;
+mi:= 0;
+
+if	(length(v1) = 0) then exit;
+
 Zeroneg:= FALSE;
+Signeg:= FALSE;
 
-n:=0;
-while (n <= Multi_X4_maxi)
-do begin M_Val[n]:= 0; inc(n); end;
+w:= (MULTI_INT_1W_SIZE div 4);
 
-if	(length(v1) > 0) then
+bi:= low(ansistring);
+b:= 0;
+if	(v1[bi] = '-') then
 	begin
-	b:=low(ansistring);
-	e:=b + MULTI_INT_2W_U(length(v1)) - 1;
-	if	(v1[b] = '-') then
-		begin
-		Signeg:= TRUE;
-		INC(b);
-		end;
+	Signeg:= TRUE;
+	INC(b);
+	end;
+bs:= (bi + b);
 
-	c:= b;
-	while (c <= e) do
+L:= (length(v1) - b);
+s:= (L div w);
+if	((L mod w) > 0) then Inc(s);
+if (s > Multi_X4_size) then
+	begin
+	mi.Overflow_flag:= TRUE;
+	mi.Defined_flag:= FALSE;
+	Multi_Int_ERROR:= TRUE;
+	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
+		Raise EIntOverflow.create('Overflow');
+	exit;
+	end;
+
+All_Zero:= TRUE;
+i:= 0;
+L:= w;
+p:= (bi + length(v1) - w);
+repeat
+	if	(p < bs) then
 		begin
+	    L:= (w - (bs - p));
+		p:= bs;
+		end;
+	if	(L > 0) then
+		begin
+		hex_substr:= AnsiMidStr(v1,p,L);
 		try
-			i:=Hex2Dec(v1[c]);
+			v:= Hex2Dec64(hex_substr);
 			except
-				on EConvertError do
-					begin
-					Multi_Int_ERROR:= TRUE;
-					mi.Overflow_flag:=TRUE;
-					mi.Defined_flag:= FALSE;
-					if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
-						begin
-						Raise;
-						end;
-					end;
+				Multi_Int_ERROR:= TRUE;
+				mi.Overflow_flag:=TRUE;
+				mi.Defined_flag:= FALSE;
+				if Multi_Int_RAISE_EXCEPTIONS_ENABLED then Raise;
+				exit;
 			end;
-		if mi.Defined_flag = FALSE then exit;
-
-		M_Val[0]:=(M_Val[0] * 16) + i;
-		n:=1;
-		while (n <= Multi_X4_maxi) do
-			begin
-			M_Val[n]:=(M_Val[n] * 16);
-			inc(n);
-			end;
-
-		n:=0;
-		while (n < Multi_X4_maxi) do
-			begin
-			if	M_Val[n] > MULTI_INT_1W_U_MAXINT then
-				begin
-				M_Val[n+1]:=M_Val[n+1] + (M_Val[n] DIV MULTI_INT_1W_U_MAXINT_1);
-				M_Val[n]:=(M_Val[n] MOD MULTI_INT_1W_U_MAXINT_1);
-				end;
-
-			inc(n);
-			end;
-
-		if	M_Val[n] > MULTI_INT_1W_U_MAXINT then
-			begin
-			mi.Defined_flag:=FALSE;
-			mi.Overflow_flag:=TRUE;
-			Multi_Int_ERROR:= TRUE;
-			if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
-				begin
-				Raise EIntOverflow.create('Overflow');
-				end;
-			exit;
-			end;
-		Inc(c);
+		mi.M_Value[i]:= v;
+		if v <> 0 then All_Zero:= FALSE;
+		p:= (p - w);
+		Inc(i);
 		end;
-	end;
+until L = 0;
 
-M_Val_All_Zero:= TRUE;
-n:=0;
-while (n <= Multi_X4_maxi) do
-	begin
-	mi.M_Value[n]:= M_Val[n];
-	if M_Val[n] > 0 then M_Val_All_Zero:= FALSE;
-	inc(n);
-	end;
-if M_Val_All_Zero then Zeroneg:= TRUE;
+if All_Zero then Zeroneg:= TRUE;
 
 if Zeroneg then mi.Negative_flag:= Multi_UBool_FALSE
 else if Signeg then mi.Negative_flag:= Multi_UBool_TRUE
@@ -18148,6 +18099,6 @@ by the compiler. So whenever I change the define, I also
 change the value assigned to T, which forces a re-compile.
 }
 
-Force_recompile:= 0;
+Force_recompile:= 1;
 end.
 
