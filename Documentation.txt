@@ -23,13 +23,13 @@ The Multi_Int_XV type has a minimum size of 2 half-words.
 
 The maximum size of the Multi_Int_XV type is defined by the calling code in a parameter to the initialisation procedure; this is in half-words. So, in a 64bit environment, if you specify 128, this equals 64 whole words, which equals 4096 bits. For example:   Multi_Int_Initialisation(32); // This equals 1024 bits
 
-From version 4.88 you can now specify the maximum size of the Multi_Int_XV type in number of decimal digits, by setting the optional DEC_DIGITS parameter to TRUE; for example:
-Multi_Int_Initialisation(1000, TRUE); 
+From version 4.88 you can now specify the maximum size of the Multi_Int_XV type in number of decimal digits, by setting the optional DEC_DIGITS parameter; for example:
+Multi_Int_Initialisation(1000, DEC_DIGITS); 
 
 The maximum size can be changed by calling Multi_Int_Set_XV_Limit, where you can specify an alternate maximum size, like this:
  Multi_Int_Set_XV_Limit(48);  
 or by setting the optional DEC_DIGITS parameter to TRUE, like this:
- Multi_Int_Set_XV_Limit(2000,TRUE);  
+ Multi_Int_Set_XV_Limit(2000,DEC_DIGITS);  
 
 As the number contained in a Multi_Int_XV variable gets larger, the size of the variable expands to a size that can contain the number. If the maximum size limit is reached, an overflow exception/error is generated.
 
