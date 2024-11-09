@@ -214,6 +214,10 @@ v4.88
 -	4.	fix the "Can't determine which overloaded function to call" error
 -	5.	improve the way decimal digit count is specified
 
+v4.89
+-	1.	speed up Multi_Int_X2/3/4_to_ansistring
+-	2.	bug fixes in Multi_Int_X2/3/4 sqroot
+
 *)
 
 INTERFACE
@@ -224,7 +228,7 @@ uses	sysutils
 ;
 
 const
-	version = '4.88.04';
+	version = '4.89.00';
 
 const
 
@@ -2999,11 +3003,12 @@ hex_to_Multi_Int_X2(v1,Result);
 end;
 
 
-(******************************************)
+(********************v2********************)
 procedure Multi_Int_X2_to_ansistring(const v1:Multi_Int_X2; out v2:ansistring); 
 var
-	s		:ansistring = '';
-	M_Val	:array[0..Multi_X2_maxi] of MULTI_INT_2W_U;
+	s,ts	:ansistring;
+	M_Val	:array[0..Multi_X3_maxi] of MULTI_INT_2W_U;
+	wf,wl	:MULTI_INT_2W_S;
 begin
 if	(Not v1.Defined_flag)
 then
@@ -3028,6 +3033,15 @@ then
 	exit;
 	end;
 
+{$ifdef 64bit}
+wf:= 1000000000; wl:= 9;
+{$endif}
+{$ifdef 32bit}
+wf:= 10000; wl:= 4;
+{$endif}
+
+s:= '';
+
 M_Val[0]:= v1.M_Value[0];
 M_Val[1]:= v1.M_Value[1];
 M_Val[2]:= v1.M_Value[2];
@@ -3035,17 +3049,19 @@ M_Val[3]:= v1.M_Value[3];
 
 repeat
 
-	M_Val[2]:= M_Val[2] + (MULTI_INT_1W_U_MAXINT_1 * (M_Val[3] MOD 10));
-	M_Val[3]:= (M_Val[3] DIV 10);
+	M_Val[2]:= M_Val[2] + (MULTI_INT_1W_U_MAXINT_1 * (M_Val[3] MOD wf));
+	M_Val[3]:= (M_Val[3] DIV wf);
 
-	M_Val[1]:= M_Val[1] + (MULTI_INT_1W_U_MAXINT_1 * (M_Val[2] MOD 10));
-	M_Val[2]:= (M_Val[2] DIV 10);
+	M_Val[1]:= M_Val[1] + (MULTI_INT_1W_U_MAXINT_1 * (M_Val[2] MOD wf));
+	M_Val[2]:= (M_Val[2] DIV wf);
 
-	M_Val[0]:= M_Val[0] + (MULTI_INT_1W_U_MAXINT_1 * (M_Val[1] MOD 10));
-	M_Val[1]:= (M_Val[1] DIV 10);
+	M_Val[0]:= M_Val[0] + (MULTI_INT_1W_U_MAXINT_1 * (M_Val[1] MOD wf));
+	M_Val[1]:= (M_Val[1] DIV wf);
 
-	s:= inttostr(M_Val[0] MOD 10) + s;
-	M_Val[0]:= (M_Val[0] DIV 10);
+	ts:= inttostr(M_Val[0] MOD wf);
+	ts:= AddChar('0',ts,wl);
+	s:= ts + s;
+	M_Val[0]:= (M_Val[0] DIV wf);
 
 until	(0=0)
 and		(M_Val[0] = 0)
@@ -3053,6 +3069,9 @@ and		(M_Val[1] = 0)
 and		(M_Val[2] = 0)
 and		(M_Val[3] = 0)
 ;
+
+s:= TrimLeftSet(s, ['0']);
+if (s = '') then s:= '0';
 
 if	(v1.Negative_flag = Multi_UBool_TRUE) then s:='-' + s;
 
@@ -4214,7 +4233,7 @@ end;
 
 
 (***********v2************)
-procedure SqRoot(const v1:Multi_Int_X2; out VR,VREM:Multi_Int_X2);
+procedure SqRoot_v2(const v1:Multi_Int_X2; out VR,VREM:Multi_Int_X2);
 var
 D,D2		:MULTI_INT_2W_S;
 HS,LS		:ansistring;
@@ -4321,6 +4340,135 @@ repeat
 until finished;
 
 VREM:= (v1 - (LPC * LPC));
+VR:= LPC;
+VR.Negative_flag:= Multi_UBool_FALSE;
+VREM.Negative_flag:= Multi_UBool_FALSE;
+
+end;
+
+
+(***********v2************)
+procedure SqRoot(const v1:Multi_Int_X2; out VR,VREM:Multi_Int_X2);
+var
+D,D2		:MULTI_INT_2W_S;
+HS,LS,TS	:ansistring;
+H,L,
+C,CC,
+LPC,TC,
+Q,R,T		:Multi_Int_X2;
+finished	:boolean;
+
+begin
+if	(Not v1.Defined_flag)
+then
+	begin
+	VR:= 0;
+	VR.Defined_flag:= FALSE;
+	VREM:= 0;
+	VREM.Defined_flag:= FALSE;
+	Multi_Int_ERROR:= TRUE;
+	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
+		begin
+		Raise EInterror.create('Uninitialised variable');
+		end;
+	exit;
+	end;
+if	(v1.Overflow_flag)
+then
+	begin
+	VR:= 0;
+	VR.Defined_flag:= FALSE;
+	VREM:= 0;
+	VREM.Defined_flag:= FALSE;
+	Multi_Int_ERROR:= TRUE;
+	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
+		begin
+		Raise EIntOverflow.create('Overflow');
+		end;
+	exit;
+	end;
+
+if	(v1.Negative_flag = Multi_UBool_TRUE)
+then
+	begin
+	VR:= 0;
+	VR.Defined_flag:= FALSE;
+	VREM:= 0;
+	VREM.Defined_flag:= FALSE;
+	Multi_Int_ERROR:= TRUE;
+	if Multi_Int_RAISE_EXCEPTIONS_ENABLED then
+		begin
+		Raise EIntOverflow.create('Overflow');
+		end;
+	exit;
+	end;
+
+VR.Defined_flag:= FALSE;
+VREM.Defined_flag:= FALSE;
+
+if	(v1 >= 100) then
+	begin
+	TS:= v1.ToStr;
+	D:= length(TS);
+	D2:= D div 2;
+	if ((D mod 2)=0) then
+		begin
+		LS:= '1' + AddCharR('0','',D2-1);
+		HS:= '1' + AddCharR('0','',D2);
+		H:= HS;
+		L:= LS;
+		end
+	else
+		begin
+		LS:= '1' + AddCharR('0','',D2);
+		HS:= '1' + AddCharR('0','',D2+1);
+		H:= HS;
+		L:= LS;
+		end;
+
+	T:= (H-L);
+	ShiftDown_MultiBits_Multi_Int_X2(T, 1);
+	C:= (L+T);
+	end
+else
+	begin
+	C:= (v1 div 2);
+	if	(C = 0) then C:= 1;
+	end;
+
+finished:= FALSE;
+LPC:= v1;
+repeat
+	begin
+	// CC:= ((C + (v1 div C)) div 2);
+    intdivide_taylor_warruth_X2(v1, C, Q, R);
+	if (Multi_Int_ERROR) then exit;
+
+	CC:= (C + Q);
+	if (Multi_Int_ERROR) then exit;
+
+    ShiftDown_MultiBits_Multi_Int_X2(CC, 1);
+
+	TC:= (C - CC);
+	if (Multi_Int_ERROR) then exit;
+
+	if	(ABS(TC) < 2) then
+		begin
+		if	(CC < LPC) then
+			LPC:= CC
+		else if (CC >= LPC) then
+			finished:= TRUE
+		end;
+	C:= CC;
+	end
+until finished;
+
+TC:= (LPC * LPC);
+if (Multi_Int_ERROR) then exit;
+
+VREM:= (v1 - TC);
+if (Multi_Int_ERROR) then exit;
+
 VR:= LPC;
 VR.Negative_flag:= Multi_UBool_FALSE;
 VREM.Negative_flag:= Multi_UBool_FALSE;
@@ -6573,11 +6721,12 @@ hex_to_Multi_Int_X3(v1,Result);
 end;
 
 
-(******************************************)
+(*********************v2*******************)
 procedure Multi_Int_X3_to_ansistring(const v1:Multi_Int_X3; out v2:ansistring); 
 var
-	s		:ansistring = '';
+	s,ts	:ansistring;
 	M_Val	:array[0..Multi_X3_maxi] of MULTI_INT_2W_U;
+	wf,wl	:MULTI_INT_2W_S;
 begin
 if	(Not v1.Defined_flag)
 then
@@ -6602,6 +6751,15 @@ then
 	exit;
 	end;
 
+{$ifdef 64bit}
+wf:= 1000000000; wl:= 9;
+{$endif}
+{$ifdef 32bit}
+wf:= 10000; wl:= 4;
+{$endif}
+
+s:= '';
+
 M_Val[0]:= v1.M_Value[0];
 M_Val[1]:= v1.M_Value[1];
 M_Val[2]:= v1.M_Value[2];
@@ -6611,32 +6769,36 @@ M_Val[5]:= v1.M_Value[5];
 
 repeat
 
-	M_Val[4]:= M_Val[4] + (MULTI_INT_1W_U_MAXINT_1 * (M_Val[5] MOD 10));
-	M_Val[5]:= (M_Val[5] DIV 10);
+	M_Val[4]:= M_Val[4] + (MULTI_INT_1W_U_MAXINT_1 * (M_Val[5] MOD wf));
+	M_Val[5]:= (M_Val[5] DIV wf);
 
-	M_Val[3]:= M_Val[3] + (MULTI_INT_1W_U_MAXINT_1 * (M_Val[4] MOD 10));
-	M_Val[4]:= (M_Val[4] DIV 10);
+	M_Val[3]:= M_Val[3] + (MULTI_INT_1W_U_MAXINT_1 * (M_Val[4] MOD wf));
+	M_Val[4]:= (M_Val[4] DIV wf);
 
-	M_Val[2]:= M_Val[2] + (MULTI_INT_1W_U_MAXINT_1 * (M_Val[3] MOD 10));
-	M_Val[3]:= (M_Val[3] DIV 10);
+	M_Val[2]:= M_Val[2] + (MULTI_INT_1W_U_MAXINT_1 * (M_Val[3] MOD wf));
+	M_Val[3]:= (M_Val[3] DIV wf);
 
-	M_Val[1]:= M_Val[1] + (MULTI_INT_1W_U_MAXINT_1 * (M_Val[2] MOD 10));
-	M_Val[2]:= (M_Val[2] DIV 10);
+	M_Val[1]:= M_Val[1] + (MULTI_INT_1W_U_MAXINT_1 * (M_Val[2] MOD wf));
+	M_Val[2]:= (M_Val[2] DIV wf);
 
-	M_Val[0]:= M_Val[0] + (MULTI_INT_1W_U_MAXINT_1 * (M_Val[1] MOD 10));
-	M_Val[1]:= (M_Val[1] DIV 10);
+	M_Val[0]:= M_Val[0] + (MULTI_INT_1W_U_MAXINT_1 * (M_Val[1] MOD wf));
+	M_Val[1]:= (M_Val[1] DIV wf);
 
-	s:= inttostr(M_Val[0] MOD 10) + s;
-	M_Val[0]:= (M_Val[0] DIV 10);
+	ts:= inttostr(M_Val[0] MOD wf);
+	ts:= AddChar('0',ts,wl);
+	s:= ts + s;
+	M_Val[0]:= (M_Val[0] DIV wf);
 
-until	(0=0)
-and		(M_Val[0] = 0)
+until	(M_Val[0] = 0)
 and		(M_Val[1] = 0)
 and		(M_Val[2] = 0)
 and		(M_Val[3] = 0)
 and		(M_Val[4] = 0)
 and		(M_Val[5] = 0)
 ;
+
+s:= TrimLeftSet(s, ['0']);
+if (s = '') then s:= '0';
 
 if	(v1.Negative_flag = Multi_UBool_TRUE) then s:='-' + s;
 
@@ -7899,13 +8061,14 @@ then
 end;
 
 
-(***********v2************)
+(***********v3************)
 procedure SqRoot(const v1:Multi_Int_X3; out VR,VREM:Multi_Int_X3);
 var
 D,D2		:MULTI_INT_2W_S;
-HS,LS		:ansistring;
+HS,LS,TS	:ansistring;
 H,L,
-C,CC,LPC,
+C,CC,
+LPC,TC,
 Q,R,T		:Multi_Int_X3;
 finished	:boolean;
 
@@ -7959,7 +8122,8 @@ VREM.Defined_flag:= FALSE;
 
 if	(v1 >= 100) then
 	begin
-	D:= length(v1.ToStr);
+	TS:= v1.ToStr;
+	D:= length(TS);
 	D2:= D div 2;
 	if ((D mod 2)=0) then
 		begin
@@ -7991,11 +8155,18 @@ LPC:= v1;
 repeat
 	begin
 	// CC:= ((C + (v1 div C)) div 2);
-    intdivide_taylor_warruth_X3(v1,C,Q,R);
-	CC:= (C+Q);
-    ShiftDown_MultiBits_Multi_Int_X3(CC, 1);
+    intdivide_taylor_warruth_X3(v1, C, Q, R);
 	if (Multi_Int_ERROR) then exit;
-	if	(ABS(C-CC) < 2) then
+
+	CC:= (C + Q);
+	if (Multi_Int_ERROR) then exit;
+
+    ShiftDown_MultiBits_Multi_Int_X3(CC, 1);
+
+	TC:= (C - CC);
+	if (Multi_Int_ERROR) then exit;
+
+	if	(ABS(TC) < 2) then
 		begin
 		if	(CC < LPC) then
 			LPC:= CC
@@ -8006,7 +8177,12 @@ repeat
 	end
 until finished;
 
-VREM:= (v1 - (LPC * LPC));
+TC:= (LPC * LPC);
+if (Multi_Int_ERROR) then exit;
+
+VREM:= (v1 - TC);
+if (Multi_Int_ERROR) then exit;
+
 VR:= LPC;
 VR.Negative_flag:= Multi_UBool_FALSE;
 VREM.Negative_flag:= Multi_UBool_FALSE;
@@ -10425,11 +10601,12 @@ Multi_Int_X4_to_hex(self, Result, LZ);
 end;
 
 
-(******************************************)
-procedure Multi_Int_X4_to_ansistring(const v1:Multi_Int_X4; out v2:ansistring); 
+(*********************v2*******************)
+procedure Multi_Int_X4_to_ansistring(const v1:Multi_Int_X4; out v2:ansistring);
 var
-	s		:ansistring = '';
+	s,ts	:ansistring;
 	M_Val	:array[0..Multi_X4_maxi] of MULTI_INT_2W_U;
+	wf,wl	:MULTI_INT_2W_S;
 begin
 if	(Not v1.Defined_flag)
 then
@@ -10454,6 +10631,15 @@ then
 	exit;
 	end;
 
+{$ifdef 64bit}
+wf:= 1000000000; wl:= 9;
+{$endif}
+{$ifdef 32bit}
+wf:= 10000; wl:= 4;
+{$endif}
+
+s:= '';
+
 M_Val[0]:= v1.M_Value[0];
 M_Val[1]:= v1.M_Value[1];
 M_Val[2]:= v1.M_Value[2];
@@ -10465,32 +10651,33 @@ M_Val[7]:= v1.M_Value[7];
 
 repeat
 
-	M_Val[6]:= M_Val[6] + (MULTI_INT_1W_U_MAXINT_1 * (M_Val[7] MOD 10));
-	M_Val[7]:= (M_Val[7] DIV 10);
+	M_Val[6]:= M_Val[6] + (MULTI_INT_1W_U_MAXINT_1 * (M_Val[7] MOD wf));
+	M_Val[7]:= (M_Val[7] DIV wf);
 
-	M_Val[5]:= M_Val[5] + (MULTI_INT_1W_U_MAXINT_1 * (M_Val[6] MOD 10));
-	M_Val[6]:= (M_Val[6] DIV 10);
+	M_Val[5]:= M_Val[5] + (MULTI_INT_1W_U_MAXINT_1 * (M_Val[6] MOD wf));
+	M_Val[6]:= (M_Val[6] DIV wf);
 
-	M_Val[4]:= M_Val[4] + (MULTI_INT_1W_U_MAXINT_1 * (M_Val[5] MOD 10));
-	M_Val[5]:= (M_Val[5] DIV 10);
+	M_Val[4]:= M_Val[4] + (MULTI_INT_1W_U_MAXINT_1 * (M_Val[5] MOD wf));
+	M_Val[5]:= (M_Val[5] DIV wf);
 
-	M_Val[3]:= M_Val[3] + (MULTI_INT_1W_U_MAXINT_1 * (M_Val[4] MOD 10));
-	M_Val[4]:= (M_Val[4] DIV 10);
+	M_Val[3]:= M_Val[3] + (MULTI_INT_1W_U_MAXINT_1 * (M_Val[4] MOD wf));
+	M_Val[4]:= (M_Val[4] DIV wf);
 
-	M_Val[2]:= M_Val[2] + (MULTI_INT_1W_U_MAXINT_1 * (M_Val[3] MOD 10));
-	M_Val[3]:= (M_Val[3] DIV 10);
+	M_Val[2]:= M_Val[2] + (MULTI_INT_1W_U_MAXINT_1 * (M_Val[3] MOD wf));
+	M_Val[3]:= (M_Val[3] DIV wf);
 
-	M_Val[1]:= M_Val[1] + (MULTI_INT_1W_U_MAXINT_1 * (M_Val[2] MOD 10));
-	M_Val[2]:= (M_Val[2] DIV 10);
+	M_Val[1]:= M_Val[1] + (MULTI_INT_1W_U_MAXINT_1 * (M_Val[2] MOD wf));
+	M_Val[2]:= (M_Val[2] DIV wf);
 
-	M_Val[0]:= M_Val[0] + (MULTI_INT_1W_U_MAXINT_1 * (M_Val[1] MOD 10));
-	M_Val[1]:= (M_Val[1] DIV 10);
+	M_Val[0]:= M_Val[0] + (MULTI_INT_1W_U_MAXINT_1 * (M_Val[1] MOD wf));
+	M_Val[1]:= (M_Val[1] DIV wf);
 
-	s:= inttostr(M_Val[0] MOD 10) + s;
-	M_Val[0]:= (M_Val[0] DIV 10);
+	ts:= inttostr(M_Val[0] MOD wf);
+	ts:= AddChar('0',ts,wl);
+	s:= ts + s;
+	M_Val[0]:= (M_Val[0] DIV wf);
 
-until	(0=0)
-and		(M_Val[0] = 0)
+until	(M_Val[0] = 0)
 and		(M_Val[1] = 0)
 and		(M_Val[2] = 0)
 and		(M_Val[3] = 0)
@@ -10499,6 +10686,9 @@ and		(M_Val[5] = 0)
 and		(M_Val[6] = 0)
 and		(M_Val[7] = 0)
 ;
+
+s:= TrimLeftSet(s, ['0']);
+if (s = '') then s:= '0';
 
 if	(v1.Negative_flag = Multi_UBool_TRUE) then s:='-' + s;
 
@@ -11821,13 +12011,14 @@ then
 end;
 
 
-(***********v2************)
+(***********v3************)
 procedure SqRoot(const v1:Multi_Int_X4; out VR,VREM:Multi_Int_X4);
 var
 D,D2		:MULTI_INT_2W_S;
-HS,LS		:ansistring;
+HS,LS,TS	:ansistring;
 H,L,
-C,CC,LPC,
+C,CC,
+LPC,TC,
 Q,R,T		:Multi_Int_X4;
 finished	:boolean;
 
@@ -11881,7 +12072,8 @@ VREM.Defined_flag:= FALSE;
 
 if	(v1 >= 100) then
 	begin
-	D:= length(v1.ToStr);
+	TS:= v1.ToStr;
+	D:= length(TS);
 	D2:= D div 2;
 	if ((D mod 2)=0) then
 		begin
@@ -11913,11 +12105,18 @@ LPC:= v1;
 repeat
 	begin
 	// CC:= ((C + (v1 div C)) div 2);
-    intdivide_taylor_warruth_X4(v1,C,Q,R);
-	CC:= (C+Q);
-    ShiftDown_MultiBits_Multi_Int_X4(CC, 1);
+    intdivide_taylor_warruth_X4(v1, C, Q, R);
 	if (Multi_Int_ERROR) then exit;
-	if	(ABS(C-CC) < 2) then
+
+	CC:= (C + Q);
+	if (Multi_Int_ERROR) then exit;
+
+    ShiftDown_MultiBits_Multi_Int_X4(CC, 1);
+
+	TC:= (C - CC);
+	if (Multi_Int_ERROR) then exit;
+
+	if	(ABS(TC) < 2) then
 		begin
 		if	(CC < LPC) then
 			LPC:= CC
@@ -11928,7 +12127,12 @@ repeat
 	end
 until finished;
 
-VREM:= (v1 - (LPC * LPC));
+TC:= (LPC * LPC);
+if (Multi_Int_ERROR) then exit;
+
+VREM:= (v1 - TC);
+if (Multi_Int_ERROR) then exit;
+
 VR:= LPC;
 VR.Negative_flag:= Multi_UBool_FALSE;
 VREM.Negative_flag:= Multi_UBool_FALSE;
@@ -17944,6 +18148,6 @@ by the compiler. So whenever I change the define, I also
 change the value assigned to T, which forces a re-compile.
 }
 
-Force_recompile:= 1;
+Force_recompile:= 0;
 end.
 
