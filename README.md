@@ -7,5 +7,5 @@ Will compile and run on 32bit and 64bit environments.
 Written purely in Pascal to be portable and reliable (no assembly or C language code).
 
 Changes in this version:
--	1.	speed up Multi_Int_X2/3/4 to heximal ansistring
--	2.	speed up Multi_Int_X2/3/4 from heximal ansistring
+-	speed up Multi_Int_X2/3/4 to heximal ansistring
+-	speed up Multi_Int_X2/3/4 from heximal ansistring
