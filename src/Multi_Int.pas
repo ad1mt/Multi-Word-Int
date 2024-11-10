@@ -222,6 +222,10 @@ v4.90
 -	1.	speed up Multi_Int_X2/3/4 to heximal ansistring
 -	2.	speed up Multi_Int_X2/3/4 from heximal ansistring
 
+v4.91
+-	1.	64bit override now works in 32bit compiler
+-	2.	resize bug in Multi_Int_XV division
+
 *)
 
 INTERFACE
@@ -232,7 +236,7 @@ uses	sysutils
 ;
 
 const
-	version = '4.90.00';
+	version = '4.91.00';
 
 const
 
@@ -15510,11 +15514,11 @@ end;
 (*******************v4B*********************)
 procedure INTERNAL_add_Multi_Int_XV(const v1,v2:Multi_Int_XV; var Result:Multi_Int_XV; const INTERNAL_CALL:boolean=FALSE);
 var
-i,cv,
+i,
 vz1,vz2,
 rs,rz,ro,
-z1,z2,
-tv,tv1,tv2		:MULTI_INT_2W_S;
+z1,z2			:MULTI_INT_2W_S;
+tv,tv1,tv2,cv	:MULTI_INT_2W_U;
 M_Val_All_Zero	:boolean;
 zf				:boolean;
 
@@ -15589,7 +15593,7 @@ i:= 0;
 
 while (i <= vz1) do
 	begin
-	tv:= cv + (v1.M_Value[i] + v2.M_Value[i]);
+	tv:= cv + MULTI_INT_2W_U(v1.M_Value[i]) + MULTI_INT_2W_U(v2.M_Value[i]);
 	if	tv > MULTI_INT_1W_U_MAXINT then
 		begin
 		Result.M_Value[i]:= (tv - MULTI_INT_1W_U_MAXINT_1);
@@ -16735,7 +16739,7 @@ repeat
 			then
 				begin
 				h:= (i+j);
-                tv:= Result.M_Value[h] + (v1.M_Value[i] * v2.M_Value[j]);
+                tv:= MULTI_INT_2W_U(Result.M_Value[h]) + (MULTI_INT_2W_U(v1.M_Value[i]) * MULTI_INT_2W_U(v2.M_Value[j]));
 				Result.M_Value[h]:= (tv MOD MULTI_INT_1W_U_MAXINT_1);
                 tv:= (tv DIV MULTI_INT_1W_U_MAXINT_1);
 				while (tv > 0) and (h < rs) do
@@ -16937,7 +16941,7 @@ repeat
 	then
 		begin
 		h:= i+1;
-		tv:= (v1.M_Value[i] * v2) + Result.M_Value[i];
+		tv:= (MULTI_INT_2W_U(v1.M_Value[i]) * MULTI_INT_2W_U(v2)) + MULTI_INT_2W_U(Result.M_Value[i]);
 		Result.M_Value[i]:= (tv MOD MULTI_INT_1W_U_MAXINT_1);
 		Result.M_Value[h]:= (tv DIV MULTI_INT_1W_U_MAXINT_1);
 		end;
@@ -17646,8 +17650,10 @@ RESIZE:
 	else
 		if (hi <= orig_size ) then
 			begin
-			Reset_XV_Size(P_quotient,orig_size);
-			Reset_XV_Size(P_remainder,orig_size);
+			Inc(hi);
+			if (hi < Multi_XV_min_size) then hi:= Multi_XV_min_size;
+			Reset_XV_Size(P_quotient,hi);
+			Reset_XV_Size(P_remainder,hi);
 			if Multi_Int_ERROR then exit;
 			end
 		else
