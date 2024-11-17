@@ -7,8 +7,8 @@ Will compile and run on 32bit and 64bit environments.
 Written purely in Pascal to be portable and reliable (no assembly or C language code).
 
 Changes in this version:
--	speed up multiply_Multi_Int_X2/3/4/5 using multiply_Multi_Int_XV algorithm
+-	slightly faster multiply_Multi_Int_X2/3/4/5 routines
 -	several bug fixes in Multi_Int_X5 definition
--	speed up subtract_Multi_Int_X2/3/4/5 using multiply_Multi_Int_XV algorithm
--	speed up add_Multi_Int_X2/3/4/5 using multiply_Multi_Int_XV algorithm
--	overflow bug fixes in add_Multi_Int_X2/3/4/5
+-	slightly faster subtract_Multi_Int_X2/3/4/5 routines
+-	slightly faster add_Multi_Int_X2/3/4/5 routines
+-	overflow bug fixes in add_Multi_Int_X2/3/4/5 routines
