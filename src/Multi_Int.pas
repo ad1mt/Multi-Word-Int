@@ -1,12 +1,15 @@
 UNIT Multi_Int;
 
-(******************************************************************************)
-// This code is public domain.
-// No copyright.
-// No license.
-// No warranty.
-// If you want to take this code and copyright it yourself, feel free.
-(******************************************************************************)
+(* 
+Multi-Word-Int by ad1mt (Mark Taylor)
+
+To the extent possible under law, the person who associated CC0 with
+Multi-Word-Int has waived all copyright and related or neighboring rights
+to adm1t (Mark Taylor).
+
+You should have received a copy of the CC0 legalcode along with this
+work.  If not, see <https://creativecommons.org/publicdomain/zero/1.0/>. 
+*)
 
 {$MODE OBJFPC}
 {$MODESWITCH ADVANCEDRECORDS}
